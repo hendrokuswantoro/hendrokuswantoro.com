@@ -161,13 +161,23 @@ adalah klaim tentang diri Anda, jadi mohon diperiksa:
    yang tampak pada proyek Anda, tetapi tulisan atas nama Anda sebaiknya
    Anda baca ulang dan akui sendiri kalimatnya.
 
-## Langkah berikutnya, migrasi ke Next.js
+## Dua versi dalam satu repositori
 
-Menunggu Node.js terpasang, disarankan versi 22 LTS. Sesudah itu:
+| Folder | Isi | Status |
+| --- | --- | --- |
+| akar repositori | HTML, CSS, JavaScript biasa | sudah teruji, siap terbit |
+| `next/` | Next.js 15 + TypeScript, static export | ditulis lengkap, **belum pernah dibangun** karena Node.js belum terpasang |
 
-- `app/layout.tsx` memuat header, footer, dan tab bar
-- `app/page.tsx`, `app/about/page.tsx`, `app/project/page.tsx`
-- `app/blog/page.tsx` dan `app/blog/[slug]/page.tsx`, isinya pindah ke MDX
-- `next/font/google` untuk Inter dan Outfit agar fontnya di-host sendiri
-- konten dwibahasa pindah ke dua berkas kamus, bukan atribut `data-ind`
-- `assets/css/style.css` dipakai kembali sebagai `app/globals.css`
+Keduanya menghasilkan situs yang sama. Yang berbeda hanya cara membangunnya,
+dan bentuk alamatnya: versi akar memakai `/about.html`, versi Next memakai
+`/about/`. Pakai salah satu, jangan keduanya sekaligus, dan pasang pengalihan
+alamat kalau suatu saat berpindah.
+
+Petunjuk lengkap versi Next ada di `next/README.md`. Ringkasnya:
+
+```bash
+cd next
+npm install
+npm run typecheck
+npm run build      # menghasilkan next/out/
+```
