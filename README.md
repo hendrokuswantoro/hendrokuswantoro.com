@@ -20,13 +20,21 @@ step dan tanpa dependensi. Empat menu: Home, About, Project, Blog.
 Semua diukur terhadap putih. Ambang WCAG AA adalah 4,5:1 untuk teks biasa dan
 3,0:1 untuk grafis.
 
-| Token | Nilai | Kontras | Dipakai untuk |
+Halamannya berlatar abu abu dan kartunya putih, supaya kartu terangkat dari
+latar dan layar tidak menyilaukan.
+
+| Token | Terang | Gelap | Dipakai untuk |
 | --- | --- | --- | --- |
-| `--ink` | `#000000` | 21:1 | judul, tombol, panel, kaki halaman |
-| `--ink-2` | `#4a4a4a` | 8,9:1 | teks isi |
-| `--ink-3` | `#6b6b6b` | 5,3:1 | keterangan |
-| `--accent` | `#276ef1` | 4,6:1 | tautan, nama belakang di logo |
-| `--surface` | `#f6f6f6` | latar seksi | |
+| `--bg` | `#f2f3f5` | `#17181a` | latar halaman |
+| `--card` | `#ffffff` | `#1f2124` | kartu, panel, tombol putih |
+| `--surface` | `#e9ebee` | `#202225` | pita seksi |
+| `--ink` | `#000000` | `#f5f5f5` | judul dan tombol |
+| `--ink-2` | `#4a4a4a` | `#c7c7c7` | teks isi |
+| `--ink-3` | `#6b6b6b` | `#9a9a9a` | keterangan |
+| `--accent` | `#276ef1` | `#6f9dff` | tautan dan keadaan aktif |
+
+Kontras teks isi terhadap latarnya 8,0:1 pada tema terang dan 10,6:1 pada tema
+gelap, keduanya di atas ambang WCAG AA.
 
 ## Mode gelap
 
@@ -44,16 +52,36 @@ peta dasarnya selalu terang.
 ## Peta karya
 
 `assets/js/peta.js` menggambar tujuh titik karya di peta Indonesia. Pustaka
-MapLibre disimpan sendiri di `assets/vendor/maplibre/`, bukan dari CDN, supaya
-aturan keamanan tetap ketat dan situs tidak bergantung pada pihak lain.
+MapLibre disimpan sendiri di `assets/vendor/maplibre/`, bukan dari CDN, dan
+baru diunduh ketika bagian petanya mendekati layar.
 
-Ubinnya dari **OpenFreeMap**, gratis dan tanpa API key, gaya Positron.
-CARTO sempat dicoba dan sekarang menimpa tiap ubin dengan tulisan
-API KEY REQUIRED, jadi tidak bisa dipakai tanpa akun. OpenStreetMap standar
-juga bisa, tetapi warnanya ramai untuk situs hitam putih.
+**Tiga peta dasar.** Peta memakai OpenFreeMap, gratis tanpa kunci. Satelit dan
+Mapbox memakai ubin Mapbox bila tokennya ada. Tanpa token, pilihan Mapbox
+disembunyikan dan Satelit jatuh ke citra Esri yang juga tanpa kunci.
 
-Titik titiknya adalah penanda lokasi, bukan batas wilayah kajian, dan itu
-ditulis di bawah petanya.
+**2D dan 3D.** Tombol 3D memiringkan kamera dan menyalakan relief sungguhan
+dari ubin ketinggian terrarium milik AWS Open Data, gratis tanpa kunci.
+Gedung ikut ditegakkan pada perbesaran tinggi bila peta dasarnya memuat tinggi
+bangunan. Sumber relief hidup terpisah dari gaya peta, jadi 3D tetap menyala
+waktu peta dasarnya diganti.
+
+**Legendanya dinamis.** Angkanya menghitung penanda yang benar benar berada di
+dalam layar saat itu dan berubah tiap kali peta digeser. Klik satu baris untuk
+menyaring satu jenis karya, klik lagi untuk kembali.
+
+Titik titiknya penanda lokasi, bukan batas wilayah kajian, dan itu ditulis di
+bawah petanya.
+
+### Token Mapbox
+
+Token ada di `assets/js/konfigurasi.js`, yang **tidak ikut masuk git**.
+Contohnya ada di `konfigurasi.contoh.js`. Token `pk.` memang dirancang tampil
+di sumber halaman, tetapi tetap batasi pemakaiannya: di console.mapbox.com,
+bagian Tokens, isi URL restriction dengan `https://www.hendrokuswantoro.com/*`
+supaya kuota Anda tidak dipakai situs lain.
+
+Kalau berkas itu hilang atau tokennya kosong, petanya tetap jalan dengan
+sumber yang tidak butuh kunci.
 
 Berkas `_headers` memuat pengecualian yang diperlukan peta: alamat
 OpenFreeMap di `img-src` dan `connect-src`, serta `worker-src blob:` karena

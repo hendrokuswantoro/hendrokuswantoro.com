@@ -19,3 +19,6 @@ dist/
 
 # Upload bundle, rebuilt on demand by tools/build_dist.py
 dist-*.zip
+
+# Local settings that carry a key
+assets/js/konfigurasi.js

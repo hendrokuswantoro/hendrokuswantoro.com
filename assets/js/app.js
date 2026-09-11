@@ -189,9 +189,11 @@
 
       Promise.all([
         loadOnce("css", "/assets/vendor/maplibre/maplibre-gl.css"),
-        loadOnce("js", "/assets/vendor/maplibre/maplibre-gl.js")
+        loadOnce("js", "/assets/vendor/maplibre/maplibre-gl.js"),
+        /* optional, the map falls back to key free sources when it is absent */
+        loadOnce("js", "/assets/js/konfigurasi.js").catch(function () { return null; })
       ])
-        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=11"); })
+        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=12"); })
         .then(function () {
           wrap.classList.add("is-live");
           window.HK_PETA_MAP = window.HK_PETA.build(canvas);

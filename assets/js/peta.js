@@ -1,19 +1,73 @@
 /*!
- * Work map. MapLibre GL JS over OpenFreeMap vector tiles.
+ * Work map. MapLibre GL JS.
  *
  * The module is fetched only when the map section is about to enter the
  * screen, then the map builds itself. No button, nothing to press.
  *
- * The points are label positions, not study area boundaries. Each one marks
- * roughly where the work was done, close enough to find on a map of
- * Indonesia and never presented as a survey coordinate.
+ * Three basemaps, two of which need no key at all, and a 2D or 3D view with
+ * real terrain. The points are label positions, not study area boundaries:
+ * each marks roughly where the work was done, close enough to find on a map
+ * of Indonesia and never presented as a survey coordinate.
  */
 (function () {
   "use strict";
 
-  var STYLE = "https://tiles.openfreemap.org/styles/positron";
+  var TOKEN = (window.HK_KONFIG && window.HK_KONFIG.mapboxToken) || "";
 
-  /* one colour per kind of work, all four readable on the pale basemap */
+  /* free, no key, OpenStreetMap data rendered as quiet vector tiles */
+  var STYLE_PETA = "https://tiles.openfreemap.org/styles/positron";
+
+  /* terrain for the 3D view, free elevation tiles in terrarium encoding */
+  var DEM = {
+    type: "raster-dem",
+    tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
+    encoding: "terrarium",
+    tileSize: 256,
+    maxzoom: 14,
+    attribution: "Elevation: Mapzen, AWS Open Data"
+  };
+
+  function rasterStyle(tiles, attribution, maxzoom) {
+    return {
+      version: 8,
+      sources: { dasar: { type: "raster", tiles: [tiles], tileSize: 256, maxzoom: maxzoom || 19, attribution: attribution } },
+      layers: [
+        { id: "latar", type: "background", paint: { "background-color": "#e9ebee" } },
+        { id: "dasar", type: "raster", source: "dasar" }
+      ]
+    };
+  }
+
+  var ESRI_IMAGERY =
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+
+  function mapboxRaster(style) {
+    return (
+      "https://api.mapbox.com/styles/v1/mapbox/" + style +
+      "/tiles/256/{z}/{x}/{y}@2x?access_token=" + TOKEN
+    );
+  }
+
+  /* the satellite view prefers Mapbox when a token is present, otherwise it
+     falls back to Esri imagery, which needs no key */
+  var BASEMAPS = [
+    { id: "peta", en: "Map", ind: "Peta", style: STYLE_PETA, vector: true },
+    {
+      id: "satelit", en: "Satellite", ind: "Satelit",
+      style: TOKEN
+        ? rasterStyle(mapboxRaster("satellite-streets-v12"), "&copy; Mapbox &copy; OpenStreetMap &copy; Maxar")
+        : rasterStyle(ESRI_IMAGERY, "Imagery: Esri, Maxar, Earthstar Geographics", 18)
+    }
+  ];
+
+  if (TOKEN) {
+    BASEMAPS.push({
+      id: "mapbox", en: "Mapbox", ind: "Mapbox",
+      style: rasterStyle(mapboxRaster("streets-v12"), "&copy; Mapbox &copy; OpenStreetMap")
+    });
+  }
+
+  /* one colour per kind of work, all four readable on every basemap */
   var KIND = {
     app: { colour: "#276ef1", en: "Map app", ind: "Aplikasi peta" },
     analysis: { colour: "#0b0b0b", en: "Map analysis", ind: "Analisis peta" },
@@ -39,9 +93,9 @@
   ];
 
   var TEXT = {
+    basemap: { en: "Basemap", ind: "Peta dasar" },
+    view: { en: "View", ind: "Tampilan" },
     legend: { en: "Legend", ind: "Legenda" },
-    all: { en: "All work", ind: "Semua karya" },
-    inView: { en: "in view", ind: "terlihat" },
     open: { en: "See the project", ind: "Lihat proyek" },
     reset: { en: "Reset view", ind: "Kembalikan tampilan" }
   };
@@ -56,9 +110,9 @@
 
   /* ----------------------------------------------------------- basemap tone */
 
-  /* Positron is already quiet. These few nudges pull it the rest of the way
-     towards the site palette: paper white land, cool grey water, hairline
-     roads. Every change is guarded, a missing layer must never break the map. */
+  /* Positron is already quiet. These nudges pull it the rest of the way
+     towards the site palette. Every change is guarded, a missing layer must
+     never break the map. */
   function tuneBasemap(map) {
     var tweaks = [
       ["water", "fill-color", "#dbe3ea"],
@@ -74,6 +128,55 @@
         if (map.getLayer(item[0])) map.setPaintProperty(item[0], item[1], item[2]);
       } catch (e) { /* style changed upstream, leave that layer alone */ }
     });
+  }
+
+  /* ------------------------------------------------------------ 2D and 3D */
+
+  /* Terrain rides on its own source, so it survives a basemap change: the
+     source is added again after every style load. Buildings are only raised
+     where the style actually carries them, which is the vector basemap. */
+  function applyRelief(map, three) {
+    if (!map.getSource("dem")) {
+      try { map.addSource("dem", DEM); } catch (e) { return; }
+    }
+
+    if (three) {
+      map.setTerrain({ source: "dem", exaggeration: 1.35 });
+      if (!map.getLayer("langit")) {
+        try {
+          map.addLayer({
+            id: "langit",
+            type: "sky",
+            paint: {
+              "sky-type": "atmosphere",
+              "sky-atmosphere-sun-intensity": 6,
+              "sky-atmosphere-color": "#cfdae6"
+            }
+          });
+        } catch (e) { /* older style spec, the map simply has no sky */ }
+      }
+      if (map.getLayer("building") && !map.getLayer("gedung3d")) {
+        try {
+          map.addLayer({
+            id: "gedung3d",
+            type: "fill-extrusion",
+            source: map.getLayer("building").source,
+            "source-layer": "building",
+            minzoom: 13,
+            paint: {
+              "fill-extrusion-color": "#d6d9dd",
+              "fill-extrusion-height": ["coalesce", ["get", "render_height"], 8],
+              "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
+              "fill-extrusion-opacity": 0.85
+            }
+          });
+        } catch (e) { /* no building heights in this style */ }
+      }
+    } else {
+      map.setTerrain(null);
+      if (map.getLayer("gedung3d")) map.removeLayer("gedung3d");
+      if (map.getLayer("langit")) map.removeLayer("langit");
+    }
   }
 
   /* ---------------------------------------------------------------- markers */
@@ -97,37 +200,84 @@
     );
   }
 
-  /* ----------------------------------------------------------------- legend */
+  /* ------------------------------------------------------------------ panel */
 
-  function buildLegend(map, markers, bounds) {
+  function chip(text, pressed) {
+    var el = document.createElement("button");
+    el.type = "button";
+    el.className = "peta__chip";
+    el.textContent = text;
+    el.setAttribute("aria-pressed", pressed ? "true" : "false");
+    return el;
+  }
+
+  function buildPanel(map, markers, bounds, state) {
     var box = document.createElement("div");
     box.className = "peta__legenda";
 
-    var head = document.createElement("p");
-    head.className = "peta__legenda-judul";
-    box.appendChild(head);
+    var groups = {};
+    function group(key) {
+      var wrap = document.createElement("div");
+      wrap.className = "peta__grup";
+      var title = document.createElement("p");
+      title.className = "peta__legenda-judul";
+      wrap.appendChild(title);
+      box.appendChild(wrap);
+      groups[key] = { wrap: wrap, title: title };
+      return wrap;
+    }
 
+    /* basemap */
+    var baseWrap = group("basemap");
+    var baseRow = document.createElement("div");
+    baseRow.className = "peta__chips";
+    baseWrap.appendChild(baseRow);
+    var baseChips = BASEMAPS.map(function (base, index) {
+      var el = chip(say(base), index === 0);
+      el.addEventListener("click", function () { state.setBasemap(base.id); });
+      baseRow.appendChild(el);
+      return { id: base.id, el: el, base: base };
+    });
+
+    /* 2D or 3D */
+    var viewWrap = group("view");
+    var viewRow = document.createElement("div");
+    viewRow.className = "peta__chips";
+    viewWrap.appendChild(viewRow);
+    var flat = chip("2D", true);
+    var relief = chip("3D", false);
+    flat.addEventListener("click", function () { state.setThree(false); });
+    relief.addEventListener("click", function () { state.setThree(true); });
+    viewRow.appendChild(flat);
+    viewRow.appendChild(relief);
+
+    /* legend */
+    var legendWrap = group("legend");
     var rows = {};
     Object.keys(KIND).forEach(function (key) {
       var row = document.createElement("button");
       row.type = "button";
       row.className = "peta__baris";
       row.setAttribute("data-kind", key);
-      row.innerHTML = "<i></i><span class=\"peta__nama\"></span><span class=\"peta__angka\">0</span>";
-      box.appendChild(row);
+      row.setAttribute("aria-pressed", "false");
+      row.innerHTML = '<i></i><span class="peta__nama"></span><span class="peta__angka">0</span>';
+      row.addEventListener("click", function () { state.filter(key); });
+      legendWrap.appendChild(row);
       rows[key] = row;
     });
 
     var reset = document.createElement("button");
     reset.type = "button";
     reset.className = "peta__reset";
-    box.appendChild(reset);
-
-    var active = null;
+    reset.addEventListener("click", function () { state.reset(); });
+    legendWrap.appendChild(reset);
 
     function label() {
-      head.textContent = say(TEXT.legend);
+      groups.basemap.title.textContent = say(TEXT.basemap);
+      groups.view.title.textContent = say(TEXT.view);
+      groups.legend.title.textContent = say(TEXT.legend);
       reset.textContent = say(TEXT.reset);
+      baseChips.forEach(function (entry) { entry.el.textContent = say(entry.base); });
       Object.keys(rows).forEach(function (key) {
         rows[key].querySelector(".peta__nama").textContent = say(KIND[key]);
       });
@@ -139,37 +289,13 @@
       var seen = { app: 0, analysis: 0, satellite: 0, design: 0 };
       markers.forEach(function (entry) {
         if (entry.marker.getElement().classList.contains("is-off")) return;
-        if (view.contains(entry.item)) seen[entry.item.kind]++;
+        if (view.contains([entry.item.lng, entry.item.lat])) seen[entry.item.kind]++;
       });
       Object.keys(rows).forEach(function (key) {
         rows[key].querySelector(".peta__angka").textContent = seen[key];
         rows[key].classList.toggle("is-empty", seen[key] === 0);
       });
     }
-
-    function filter(kind) {
-      active = active === kind ? null : kind;
-      var visible = new maplibregl.LngLatBounds();
-      markers.forEach(function (entry) {
-        var show = !active || entry.item.kind === active;
-        entry.marker.getElement().classList.toggle("is-off", !show);
-        if (show) visible.extend([entry.item.lng, entry.item.lat]);
-      });
-      Object.keys(rows).forEach(function (key) {
-        rows[key].setAttribute("aria-pressed", active === key ? "true" : "false");
-      });
-      box.classList.toggle("is-filtered", Boolean(active));
-      map.fitBounds(active ? visible : bounds, { padding: 56, maxZoom: active ? 7 : 6, duration: 700 });
-    }
-
-    Object.keys(rows).forEach(function (key) {
-      rows[key].setAttribute("aria-pressed", "false");
-      rows[key].addEventListener("click", function () { filter(key); });
-    });
-    reset.addEventListener("click", function () {
-      if (active) { filter(active); return; }
-      map.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: 700 });
-    });
 
     label();
     map.on("moveend", count);
@@ -183,7 +309,25 @@
       });
     });
 
-    return { node: box, count: count };
+    return {
+      node: box,
+      count: count,
+      markBasemap: function (id) {
+        baseChips.forEach(function (entry) {
+          entry.el.setAttribute("aria-pressed", entry.id === id ? "true" : "false");
+        });
+      },
+      markView: function (three) {
+        flat.setAttribute("aria-pressed", three ? "false" : "true");
+        relief.setAttribute("aria-pressed", three ? "true" : "false");
+      },
+      markFilter: function (kind) {
+        Object.keys(rows).forEach(function (key) {
+          rows[key].setAttribute("aria-pressed", kind === key ? "true" : "false");
+        });
+        box.classList.toggle("is-filtered", Boolean(kind));
+      }
+    };
   }
 
   /* ------------------------------------------------------------------ build */
@@ -194,23 +338,20 @@
 
     var map = new maplibregl.Map({
       container: container,
-      style: STYLE,
+      style: BASEMAPS[0].style,
       bounds: bounds,
       fitBoundsOptions: { padding: 56, maxZoom: 6 },
       minZoom: 2.5,
-      maxZoom: 16,
+      maxZoom: 17,
+      maxPitch: 75,
       attributionControl: false,
       cooperativeGestures: true
     });
 
-    /* compass turns with the map, scale bar keeps the distances honest */
-    map.addControl(
-      new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }),
-      "top-right"
-    );
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), "top-right");
     map.addControl(new maplibregl.ScaleControl({ maxWidth: 110, unit: "metric" }), "bottom-left");
     map.addControl(new maplibregl.FullscreenControl(), "top-right");
-    /* the style ships its own credit line, adding ours would repeat it */
+    /* every style ships its own credit line, adding ours would repeat it */
     map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
 
     var markers = WORK.map(function (item) {
@@ -223,24 +364,71 @@
       return { item: item, marker: marker, popup: popup };
     });
 
-    var legend = buildLegend(map, markers, bounds);
+    var current = { basemap: BASEMAPS[0].id, three: false, filter: null };
+    var panel;
+
+    function dressStyle() {
+      if (current.basemap === "peta") tuneBasemap(map);
+      applyRelief(map, current.three);
+    }
+
+    var state = {
+      setBasemap: function (id) {
+        if (id === current.basemap) return;
+        var base = BASEMAPS.filter(function (item) { return item.id === id; })[0];
+        if (!base) return;
+        current.basemap = id;
+        panel.markBasemap(id);
+        map.setStyle(base.style);
+        map.once("styledata", function () { dressStyle(); });
+      },
+      setThree: function (three) {
+        if (three === current.three) return;
+        current.three = three;
+        panel.markView(three);
+        applyRelief(map, three);
+        map.easeTo({ pitch: three ? 58 : 0, bearing: three ? -18 : 0, duration: 900 });
+      },
+      filter: function (kind) {
+        current.filter = current.filter === kind ? null : kind;
+        panel.markFilter(current.filter);
+        var visible = new maplibregl.LngLatBounds();
+        markers.forEach(function (entry) {
+          var show = !current.filter || entry.item.kind === current.filter;
+          entry.marker.getElement().classList.toggle("is-off", !show);
+          if (show) visible.extend([entry.item.lng, entry.item.lat]);
+        });
+        map.fitBounds(current.filter ? visible : bounds, {
+          padding: 56,
+          maxZoom: current.filter ? 7 : 6,
+          duration: 700
+        });
+      },
+      reset: function () {
+        if (current.filter) { state.filter(current.filter); return; }
+        map.easeTo({ pitch: current.three ? 58 : 0, bearing: current.three ? -18 : 0, duration: 500 });
+        map.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: 700 });
+      }
+    };
+
+    panel = buildPanel(map, markers, bounds, state);
     var section = container.parentNode.parentNode;
-    section.insertBefore(legend.node, section.querySelector(".peta__ket"));
+    section.insertBefore(panel.node, section.querySelector(".peta__ket"));
 
     map.on("load", function () {
-      tuneBasemap(map);
+      dressStyle();
       map.resize();
       map.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: 0 });
-      map.once("idle", legend.count);
+      map.once("idle", panel.count);
       container.parentNode.classList.add("is-ready");
     });
 
     map.on("error", function () {
-      container.parentNode.classList.add("is-failed");
+      container.parentNode.parentNode.classList.add("is-failed");
     });
 
     return map;
   }
 
-  window.HK_PETA = { build: build, count: WORK.length };
+  window.HK_PETA = { build: build, count: WORK.length, basemaps: BASEMAPS.length };
 })();
