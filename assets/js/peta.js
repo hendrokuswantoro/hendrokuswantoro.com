@@ -152,47 +152,43 @@
      source is added again after every style load. Buildings are only raised
      where the style actually carries them, which is the vector basemap. */
   function applyRelief(map, three) {
-    if (!map.getSource("dem")) {
-      try { map.addSource("dem", DEM); } catch (e) { return; }
+    /* Trying and retrying beats asking first. isStyleLoaded() stays false for
+       as long as tiles keep arriving, so waiting on it meant the relief was
+       never applied on a slow connection. */
+    function run() {
+      try {
+        if (!map.getSource("dem")) map.addSource("dem", DEM);
+
+        if (three) {
+          map.setTerrain({ source: "dem", exaggeration: 1.35 });
+          if (map.getLayer("building") && !map.getLayer("gedung3d")) {
+            map.addLayer({
+              id: "gedung3d",
+              type: "fill-extrusion",
+              source: map.getLayer("building").source,
+              "source-layer": "building",
+              minzoom: 13,
+              paint: {
+                "fill-extrusion-color": "#d6d9dd",
+                "fill-extrusion-height": ["coalesce", ["get", "render_height"], 8],
+                "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
+                "fill-extrusion-opacity": 0.85
+              }
+            });
+          }
+        } else {
+          map.setTerrain(null);
+          if (map.getLayer("gedung3d")) map.removeLayer("gedung3d");
+        }
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
 
-    if (three) {
-      map.setTerrain({ source: "dem", exaggeration: 1.35 });
-      if (!map.getLayer("langit")) {
-        try {
-          map.addLayer({
-            id: "langit",
-            type: "sky",
-            paint: {
-              "sky-type": "atmosphere",
-              "sky-atmosphere-sun-intensity": 6,
-              "sky-atmosphere-color": "#cfdae6"
-            }
-          });
-        } catch (e) { /* older style spec, the map simply has no sky */ }
-      }
-      if (map.getLayer("building") && !map.getLayer("gedung3d")) {
-        try {
-          map.addLayer({
-            id: "gedung3d",
-            type: "fill-extrusion",
-            source: map.getLayer("building").source,
-            "source-layer": "building",
-            minzoom: 13,
-            paint: {
-              "fill-extrusion-color": "#d6d9dd",
-              "fill-extrusion-height": ["coalesce", ["get", "render_height"], 8],
-              "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
-              "fill-extrusion-opacity": 0.85
-            }
-          });
-        } catch (e) { /* no building heights in this style */ }
-      }
-    } else {
-      map.setTerrain(null);
-      if (map.getLayer("gedung3d")) map.removeLayer("gedung3d");
-      if (map.getLayer("langit")) map.removeLayer("langit");
-    }
+    if (run()) return;
+    map.once("styledata", run);
+    map.once("idle", run);
   }
 
   /* ------------------------------------------------------- home control */
@@ -511,15 +507,34 @@
         if (!base) return;
         current.basemap = id;
         panel.markBasemap(id);
+        /* terrain points at a source the new style will not have yet, so it
+           comes off first and goes back on once the style has settled */
+        try { map.setTerrain(null); } catch (e) { /* none was set */ }
         map.setStyle(base.style);
-        map.once("styledata", function () { dressStyle(); });
+        map.once("styledata", function () {
+          dressStyle();
+          map.once("idle", function () {
+            dressStyle();
+            if (current.three && map.getPitch() < 10) {
+              map.easeTo({ pitch: 58, bearing: -18, duration: ms(600) });
+            }
+          });
+        });
       },
       setThree: function (three) {
         if (three === current.three) return;
         current.three = three;
         panel.markView(three);
         applyRelief(map, three);
-        map.easeTo({ pitch: three ? 58 : 0, bearing: three ? -18 : 0, duration: ms(900) });
+        /* switching terrain on rebuilds the camera transform, which cancels
+           any move started in the same tick. The tilt waits one frame. */
+        window.requestAnimationFrame(function () {
+          map.easeTo({
+            pitch: three ? 58 : 0,
+            bearing: three ? -18 : 0,
+            duration: ms(900)
+          });
+        });
       },
       filter: function (kind) {
         current.filter = current.filter === kind ? null : kind;
@@ -575,9 +590,30 @@
       container.parentNode.classList.add("is-ready");
     });
 
-    map.on("error", function () {
-      container.parentNode.parentNode.classList.add("is-failed");
+    /* Only a map that never starts counts as a failure. A single tile that
+       404s, or a style layer the renderer skips, must not replace a working
+       map with an error message. */
+    var booted = false;
+    var section = container.parentNode.parentNode;
+
+    map.on("load", function () { booted = true; });
+    map.on("error", function (event) {
+      var note = {
+        message: (event && event.error && event.error.message) || String(event && event.type),
+        source: (event && event.sourceId) || null,
+        booted: booted
+      };
+      (window.HK_PETA_ERRORS = window.HK_PETA_ERRORS || []).push(note);
+      if (booted) return;
+      if (note.source) return;
+      section.classList.add("is-failed");
     });
+    /* no blanket timeout here: a slow connection is not a failure, and a
+       reader on a weak signal should get the map late rather than a notice
+       saying it broke */
+
+    /* exposed for the browser console, handy when checking the map by hand */
+    window.HK_PETA_STATE = state;
 
     return map;
   }

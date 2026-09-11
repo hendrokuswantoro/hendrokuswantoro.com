@@ -600,7 +600,8 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 .maplibregl-ctrl-group button + button { border-top-color: #e0e4e8 !important; }
 .maplibregl-ctrl-group button span { filter: none !important; }
 .peta__rumah { color: #1c1f22; }
-.peta__rumah:hover { background: #eef0f2; }
+.peta__rumah:hover { background: #eef0f2; color: #000; }
+.peta__rumah:focus-visible { outline-offset: -2px; }
 
 .maplibregl-popup-content { background: var(--card) !important; color: var(--ink); }
 .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--card) !important; }
@@ -692,10 +693,9 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 /* home control and the live legend summary */
 .peta__rumah {
   display: grid; place-items: center; width: 29px; height: 29px;
-  background: transparent; border: 0; cursor: pointer; color: var(--ink);
+  background: transparent; border: 0; cursor: pointer;
 }
-.peta__rumah svg { width: 16px; height: 16px; }
-.peta__rumah:hover { background: var(--surface); }
+.peta__rumah svg { width: 17px; height: 17px; }
 .peta__ringkas {
   margin: 0 0 4px; font-size: .6875rem; line-height: 1.45; color: var(--ink-3);
 }
@@ -733,3 +733,7 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 @media (prefers-reduced-motion: reduce) {
   .peta__lipat { transition: none; }
 }
+
+/* jumping to a card from the map popup used to hide it under the sticky
+   header, so every anchor target keeps the header height clear */
+[id^="karya-"], #main { scroll-margin-top: calc(var(--header-h) + 16px); }
