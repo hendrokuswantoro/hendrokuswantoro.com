@@ -42,72 +42,271 @@
      cannot resolve, and the raster version of the same style carries no
      building heights, which is why the 3D buildings never appeared. Reading
      the vector tiles directly fixes both. */
+  /* Labels follow the language switch: Indonesian shows the local name, and
+     English falls back to the international one. */
+  function labelField() {
+    return isId()
+      ? ["coalesce", ["get", "name"], ["get", "name_en"]]
+      : ["coalesce", ["get", "name_en"], ["get", "name"]];
+  }
+
+  /* Province names are missing from the Mapbox place_label layer for
+     Indonesia: its "state" class covers other countries but returns nothing
+     here, checked at zoom 4 through 9. The thirty eight names below are
+     carried by the site itself so the provinces can be read at island zoom.
+     Each coordinate is a spot to hang the label on, inside the province but
+     not its centroid and never a boundary. The boundary lines themselves
+     still come from the Mapbox admin layer. */
+  var PROVINSI_ID = {
+    type: "FeatureCollection",
+    features: [
+      ["Aceh", "Aceh", 96.9, 4.7],
+      ["Sumatera Utara", "North Sumatra", 99.0, 2.3],
+      ["Sumatera Barat", "West Sumatra", 100.5, -0.8],
+      ["Riau", "Riau", 101.6, 0.5],
+      ["Kepulauan Riau", "Riau Islands", 104.6, 0.9],
+      ["Jambi", "Jambi", 102.4, -1.7],
+      ["Sumatera Selatan", "South Sumatra", 104.0, -3.3],
+      ["Bengkulu", "Bengkulu", 102.3, -3.6],
+      ["Lampung", "Lampung", 105.0, -4.9],
+      ["Kepulauan Bangka Belitung", "Bangka Belitung Islands", 106.6, -2.7],
+      ["Banten", "Banten", 106.1, -6.4],
+      ["DKI Jakarta", "Jakarta", 106.83, -6.2],
+      ["Jawa Barat", "West Java", 107.6, -7.0],
+      ["Jawa Tengah", "Central Java", 110.0, -7.3],
+      ["DI Yogyakarta", "Yogyakarta", 110.42, -7.92],
+      ["Jawa Timur", "East Java", 112.5, -7.8],
+      ["Bali", "Bali", 115.1, -8.4],
+      ["Nusa Tenggara Barat", "West Nusa Tenggara", 117.4, -8.7],
+      ["Nusa Tenggara Timur", "East Nusa Tenggara", 121.0, -8.9],
+      ["Kalimantan Barat", "West Kalimantan", 110.0, 0.2],
+      ["Kalimantan Tengah", "Central Kalimantan", 113.4, -1.8],
+      ["Kalimantan Selatan", "South Kalimantan", 115.3, -2.9],
+      ["Kalimantan Timur", "East Kalimantan", 116.5, 0.6],
+      ["Kalimantan Utara", "North Kalimantan", 116.5, 3.2],
+      ["Sulawesi Utara", "North Sulawesi", 124.5, 1.2],
+      ["Gorontalo", "Gorontalo", 122.4, 0.7],
+      ["Sulawesi Tengah", "Central Sulawesi", 120.6, -1.5],
+      ["Sulawesi Barat", "West Sulawesi", 119.3, -2.6],
+      ["Sulawesi Selatan", "South Sulawesi", 120.0, -4.2],
+      ["Sulawesi Tenggara", "Southeast Sulawesi", 122.0, -4.3],
+      ["Maluku", "Maluku", 129.3, -3.4],
+      ["Maluku Utara", "North Maluku", 127.8, 0.9],
+      ["Papua Barat", "West Papua", 132.6, -1.6],
+      ["Papua Barat Daya", "Southwest Papua", 131.3, -1.0],
+      ["Papua", "Papua", 139.5, -3.3],
+      ["Papua Tengah", "Central Papua", 136.5, -3.9],
+      ["Papua Pegunungan", "Highland Papua", 138.5, -4.3],
+      ["Papua Selatan", "South Papua", 139.8, -7.3]
+    ].map(function (p) {
+      return {
+        type: "Feature",
+        properties: { name: p[0], name_en: p[1] },
+        geometry: { type: "Point", coordinates: [p[2], p[3]] }
+      };
+    })
+  };
+
   function mapboxStyle() {
     var source = "https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?access_token=" + TOKEN;
-    var font = ["DIN Pro Regular", "Arial Unicode MS Regular"];
+    var reguler = ["DIN Pro Regular", "Arial Unicode MS Regular"];
+    var tebal = ["DIN Pro Medium", "Arial Unicode MS Regular"];
+    var miring = ["DIN Pro Italic", "Arial Unicode MS Regular"];
+    var nama = labelField();
+
+    /* road classes grouped the way a driver reads them: toll roads and trunks
+       first, then the arteries, then the streets you actually turn into */
+    var TOL = ["motorway", "motorway_link", "trunk", "trunk_link"];
+    var ARTERI = ["primary", "primary_link", "secondary", "secondary_link"];
+    var SEDANG = ["tertiary", "tertiary_link"];
+    var JALAN = ["street", "street_limited", "residential", "service", "track"];
+
+    function isClass(list) {
+      return ["in", ["get", "class"], ["literal", list]];
+    }
 
     return {
       version: 8,
       glyphs: "https://api.mapbox.com/fonts/v1/mapbox/{fontstack}/{range}.pbf?access_token=" + TOKEN,
       sources: {
         jalan: { type: "vector", tiles: [source], minzoom: 0, maxzoom: 16, attribution: MAPBOX_ATTRIBUTION },
-        dem: DEM
+        dem: DEM,
+        provinsi: { type: "geojson", data: PROVINSI_ID }
       },
       layers: [
-        { id: "latar", type: "background", paint: { "background-color": "#eef1f5" } },
+        { id: "latar", type: "background", paint: { "background-color": "#e8ecf1" } },
         { id: "bayangan", type: "hillshade", source: "dem",
-          paint: { "hillshade-exaggeration": 0.35, "hillshade-shadow-color": "#93a1ad", "hillshade-highlight-color": "#ffffff" } },
+          paint: { "hillshade-exaggeration": 0.32, "hillshade-shadow-color": "#96a4b0", "hillshade-highlight-color": "#ffffff" } },
         { id: "hijau", type: "fill", source: "jalan", "source-layer": "landuse",
-          filter: ["in", ["get", "class"], ["literal", ["park", "grass", "wood", "scrub", "agriculture", "national_park", "pitch"]]],
-          paint: { "fill-color": "#e0e9dd", "fill-opacity": 0.85 } },
+          filter: ["in", ["get", "class"], ["literal", ["park", "grass", "wood", "scrub", "agriculture", "national_park", "pitch", "cemetery"]]],
+          paint: { "fill-color": "#dfe9dc", "fill-opacity": 0.85 } },
         { id: "air", type: "fill", source: "jalan", "source-layer": "water",
-          paint: { "fill-color": "#c7d9e8" } },
+          paint: { "fill-color": "#c3d7e8" } },
         { id: "sungai", type: "line", source: "jalan", "source-layer": "waterway",
-          paint: { "line-color": "#c7d9e8", "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.6, 16, 2.4] } },
-        { id: "jalan-tepi", type: "line", source: "jalan", "source-layer": "road", minzoom: 6,
-          filter: ["in", ["get", "class"], ["literal", ["motorway", "trunk", "primary", "secondary", "tertiary", "street", "street_limited"]]],
-          layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#c3d7e8", "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.6, 16, 2.4] } },
+
+        /* administrative boundaries, smallest unit first so the larger ones
+           draw over it: kabupaten, then provinsi, then negara */
+        { id: "batas-kabupaten", type: "line", source: "jalan", "source-layer": "admin", minzoom: 5,
+          filter: ["all", ["==", ["get", "admin_level"], 2], ["!=", ["get", "maritime"], "true"]],
           paint: {
-            "line-color": "#d3dae1",
-            "line-width": ["interpolate", ["exponential", 1.4], ["zoom"], 6, 1.2, 12, 4, 18, 22]
+            "line-color": "#98a6b3",
+            "line-dasharray": [1.4, 1.6],
+            "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 10, 1.2, 14, 1.8],
+            "line-opacity": 0.8
           } },
-        { id: "jalan-isi", type: "line", source: "jalan", "source-layer": "road", minzoom: 6,
-          filter: ["in", ["get", "class"], ["literal", ["motorway", "trunk", "primary", "secondary", "tertiary", "street", "street_limited"]]],
-          layout: { "line-cap": "round", "line-join": "round" },
+        { id: "batas-provinsi", type: "line", source: "jalan", "source-layer": "admin",
+          filter: ["all", ["==", ["get", "admin_level"], 1], ["!=", ["get", "maritime"], "true"]],
           paint: {
-            "line-color": ["match", ["get", "class"], "motorway", "#ffffff", "trunk", "#ffffff", "#fbfcfd"],
-            "line-width": ["interpolate", ["exponential", 1.4], ["zoom"], 6, 0.5, 12, 2.4, 18, 17]
+            "line-color": "#6d7e8e",
+            "line-dasharray": [3, 1.6],
+            "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.8, 8, 1.7, 14, 2.8]
           } },
+        { id: "batas-negara", type: "line", source: "jalan", "source-layer": "admin",
+          filter: ["==", ["get", "admin_level"], 0],
+          paint: {
+            "line-color": "#54626f",
+            "line-width": ["interpolate", ["linear"], ["zoom"], 2, 0.8, 8, 2, 14, 3.4]
+          } },
+
+        /* Four tiers, casings first and bodies on top, so the network reads
+           as a route map: amber for the toll roads and trunks, a warm cream
+           for the arteries, white for everything you turn into. */
+        { id: "jalan-kecil-tepi", type: "line", source: "jalan", "source-layer": "road", minzoom: 12,
+          filter: isClass(JALAN), layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#c2ccd9", "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 12, 1.5, 18, 14] } },
+        { id: "jalan-sedang-tepi", type: "line", source: "jalan", "source-layer": "road", minzoom: 10,
+          filter: isClass(SEDANG), layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#b5c2d1", "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 10, 1.6, 14, 5, 18, 17] } },
+        { id: "arteri-tepi", type: "line", source: "jalan", "source-layer": "road", minzoom: 7,
+          filter: isClass(ARTERI), layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#d8bd7e", "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 7, 1.8, 12, 5.5, 18, 21] } },
+        { id: "tol-tepi", type: "line", source: "jalan", "source-layer": "road", minzoom: 4,
+          filter: isClass(TOL), layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#dd9a2b", "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 4, 2, 10, 6.4, 18, 25] } },
+
+        { id: "jalan-kecil", type: "line", source: "jalan", "source-layer": "road", minzoom: 12,
+          filter: isClass(JALAN), layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#ffffff", "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 12, 0.6, 18, 11] } },
+        { id: "jalan-sedang", type: "line", source: "jalan", "source-layer": "road", minzoom: 10,
+          filter: isClass(SEDANG), layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#ffffff", "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 10, 0.7, 14, 2.8, 18, 13] } },
+        { id: "arteri", type: "line", source: "jalan", "source-layer": "road", minzoom: 7,
+          filter: isClass(ARTERI), layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#ffefcd", "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 7, 0.8, 12, 3.4, 18, 17] } },
+        { id: "tol", type: "line", source: "jalan", "source-layer": "road", minzoom: 4,
+          filter: isClass(TOL), layout: { "line-cap": "round", "line-join": "round" },
+          paint: { "line-color": "#ffd27f", "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 4, 1, 10, 4.4, 18, 20] } },
+
         { id: "gedung", type: "fill", source: "jalan", "source-layer": "building", minzoom: 14,
           filter: ["!=", ["get", "underground"], true],
-          paint: { "fill-color": "#dfe4ea", "fill-outline-color": "#ccd3db" } },
-        { id: "batas", type: "line", source: "jalan", "source-layer": "admin",
-          filter: ["<=", ["get", "admin_level"], 2],
-          paint: {
-            "line-color": "#a7b1bc",
-            "line-dasharray": [2.5, 1.5],
-            "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.6, 10, 1.4]
-          } },
-        { id: "nama-tempat", type: "symbol", source: "jalan", "source-layer": "place_label",
-          filter: ["in", ["get", "class"], ["literal", ["country", "state", "settlement", "settlement_subdivision"]]],
+          paint: { "fill-color": "#dde2e9", "fill-outline-color": "#c7cfd9" } },
+
+        /* Labels, ordered small to large. MapLibre places symbols from the
+           top of the stack downwards, so the last layer here wins a clash:
+           a country name is never pushed off the map by a village. */
+        { id: "nama-alam", type: "symbol", source: "jalan", "source-layer": "natural_label", minzoom: 3,
+          filter: ["in", ["get", "class"], ["literal", ["sea", "ocean", "bay", "water", "landform"]]],
           layout: {
-            "text-field": ["get", "name_en"],
-            "text-font": font,
-            "text-size": ["interpolate", ["linear"], ["zoom"], 3, 10, 8, 13, 14, 16],
+            "text-field": nama,
+            "text-font": miring,
+            "text-size": ["interpolate", ["linear"], ["zoom"], 3, 10, 10, 13],
             "text-max-width": 8
           },
-          paint: { "text-color": "#41505e", "text-halo-color": "#ffffff", "text-halo-width": 1.4 } },
-        { id: "nama-alam", type: "symbol", source: "jalan", "source-layer": "natural_label", minzoom: 4,
-          filter: ["in", ["get", "class"], ["literal", ["sea", "ocean", "bay"]]],
+          paint: { "text-color": "#7593aa", "text-halo-color": "#ffffff", "text-halo-width": 1 } },
+
+        /* place names, from the village up to the country */
+        { id: "nama-kelurahan", type: "symbol", source: "jalan", "source-layer": "place_label", minzoom: 12,
+          filter: ["==", ["get", "class"], "settlement_subdivision"],
           layout: {
-            "text-field": ["get", "name_en"],
-            "text-font": font,
-            "text-size": ["interpolate", ["linear"], ["zoom"], 4, 10, 10, 13],
+            "text-field": nama,
+            "text-font": reguler,
+            "text-size": 11,
+            "text-max-width": 8,
+            "symbol-sort-key": ["to-number", ["get", "symbolrank"], 20]
+          },
+          paint: { "text-color": "#68757f", "text-halo-color": "#ffffff", "text-halo-width": 1.2 } },
+
+        /* settlements thin out as you pull back: filterrank 1 is a capital,
+           5 is a hamlet, so low zoom keeps only the ranks that fit */
+        { id: "nama-kota", type: "symbol", source: "jalan", "source-layer": "place_label", minzoom: 3,
+          filter: ["all",
+            ["==", ["get", "class"], "settlement"],
+            ["<=", ["to-number", ["get", "filterrank"], 5],
+              ["step", ["zoom"], 2, 5, 3, 7, 4, 9, 5]]],
+          layout: {
+            "text-field": nama,
+            "text-font": tebal,
+            "text-size": ["interpolate", ["linear"], ["zoom"], 4, 10, 9, 13, 14, 17],
+            "text-max-width": 8,
+            "symbol-sort-key": ["to-number", ["get", "symbolrank"], 20]
+          },
+          paint: { "text-color": "#2f3b46", "text-halo-color": "#ffffff", "text-halo-width": 1.5 } },
+        /* road names ride along the line, the way a driver map shows them */
+        { id: "nama-jalan", type: "symbol", source: "jalan", "source-layer": "road", minzoom: 13,
+          filter: ["all", ["has", "name"], isClass(TOL.concat(ARTERI, SEDANG, JALAN))],
+          layout: {
+            "symbol-placement": "line",
+            "symbol-spacing": 250,
+            "text-field": nama,
+            "text-font": reguler,
+            "text-size": ["interpolate", ["linear"], ["zoom"], 13, 11, 18, 13],
+            "text-max-angle": 40,
+            "text-padding": 2,
+            "text-rotation-alignment": "map"
+          },
+          paint: { "text-color": "#46535f", "text-halo-color": "#ffffff", "text-halo-width": 1.6 } },
+
+        { id: "nama-provinsi", type: "symbol", source: "jalan", "source-layer": "place_label", minzoom: 5, maxzoom: 11,
+          filter: ["==", ["get", "class"], "state"],
+          layout: {
+            "text-field": nama,
+            "text-font": reguler,
+            "text-size": ["interpolate", ["linear"], ["zoom"], 4, 10, 8, 12],
+            "text-transform": "uppercase",
+            "text-letter-spacing": 0.12,
+            "text-max-width": 9
+          },
+          paint: { "text-color": "#6d7e8e", "text-halo-color": "#ffffff", "text-halo-width": 1.3 } },
+        { id: "nama-provinsi-id", type: "symbol", source: "provinsi", minzoom: 5, maxzoom: 10.5,
+          layout: {
+            "text-field": nama,
+            "text-font": reguler,
+            "text-size": ["interpolate", ["linear"], ["zoom"], 4, 10, 8, 12.5],
+            "text-transform": "uppercase",
+            "text-letter-spacing": 0.12,
+            "text-max-width": 9
+          },
+          paint: { "text-color": "#67788a", "text-halo-color": "#ffffff", "text-halo-width": 1.6 } },
+        { id: "nama-negara", type: "symbol", source: "jalan", "source-layer": "place_label", maxzoom: 5,
+          filter: ["==", ["get", "class"], "country"],
+          layout: {
+            "text-field": nama,
+            "text-font": tebal,
+            "text-size": ["interpolate", ["linear"], ["zoom"], 2, 11, 6, 15],
+            "text-transform": "uppercase",
+            "text-letter-spacing": 0.1,
             "text-max-width": 8
           },
-          paint: { "text-color": "#7d94a8", "text-halo-color": "#ffffff", "text-halo-width": 1 } }
+          paint: { "text-color": "#33404c", "text-halo-color": "#ffffff", "text-halo-width": 1.6 } }
       ]
     };
+  }
+
+  /* every layer that carries a name, kept here so the language switch can
+     retitle them without rebuilding the whole style */
+  var LAYER_NAMA = [
+    "nama-jalan", "nama-kelurahan", "nama-kota", "nama-provinsi", "nama-provinsi-id",
+    "nama-negara", "nama-alam"
+  ];
+
+  function retitleLabels(map) {
+    var field = labelField();
+    LAYER_NAMA.forEach(function (id) {
+      try {
+        if (map.getLayer(id)) map.setLayoutProperty(id, "text-field", field);
+      } catch (e) { /* style not ready, the next switch will catch it */ }
+    });
   }
 
   var FALLBACK_STYLE = "https://tiles.openfreemap.org/styles/positron";
@@ -479,6 +678,7 @@
     document.addEventListener("hk:lang", function () {
       label();
       count();
+      if (TOKEN) retitleLabels(map);
       markers.forEach(function (entry) {
         entry.marker.getElement().title = say(entry.item);
         entry.marker.getElement().setAttribute("aria-label", say(entry.item));
