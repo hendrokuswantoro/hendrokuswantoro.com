@@ -97,8 +97,21 @@
     view: { en: "View", ind: "Tampilan" },
     legend: { en: "Legend", ind: "Legenda" },
     open: { en: "See the project", ind: "Lihat proyek" },
-    reset: { en: "Reset view", ind: "Kembalikan tampilan" }
+    reset: { en: "Reset view", ind: "Kembalikan tampilan" },
+    home: { en: "Back to the starting view", ind: "Kembali ke posisi semula" },
+    inView: { en: "in view", ind: "terlihat" },
+    of: { en: "of", ind: "dari" },
+    none: { en: "Nothing in view", ind: "Tidak ada yang terlihat" },
+    more: { en: "and %n more", ind: "dan %n lainnya" }
   };
+
+  function reducedMotion() {
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  function ms(duration) {
+    return reducedMotion() ? 0 : duration;
+  }
 
   function isId() {
     return document.documentElement.getAttribute("lang") === "id";
@@ -179,6 +192,42 @@
     }
   }
 
+  /* ------------------------------------------------------- home control */
+
+  function HomeControl(onClick) {
+    this._click = onClick;
+  }
+
+  HomeControl.prototype.onAdd = function () {
+    var wrap = document.createElement("div");
+    wrap.className = "maplibregl-ctrl maplibregl-ctrl-group";
+
+    var button = document.createElement("button");
+    button.type = "button";
+    button.className = "peta__rumah";
+    button.title = say(TEXT.home);
+    button.setAttribute("aria-label", say(TEXT.home));
+    button.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"></path>' +
+      '<path d="M9 21v-7h6v7"></path></svg>';
+    button.addEventListener("click", this._click);
+
+    document.addEventListener("hk:lang", function () {
+      button.title = say(TEXT.home);
+      button.setAttribute("aria-label", say(TEXT.home));
+    });
+
+    wrap.appendChild(button);
+    this._wrap = wrap;
+    return wrap;
+  };
+
+  HomeControl.prototype.onRemove = function () {
+    if (this._wrap && this._wrap.parentNode) this._wrap.parentNode.removeChild(this._wrap);
+  };
+
   /* ---------------------------------------------------------------- markers */
 
   function markerElement(item) {
@@ -253,6 +302,10 @@
 
     /* legend */
     var legendWrap = group("legend");
+
+    var summary = document.createElement("p");
+    summary.className = "peta__ringkas";
+    legendWrap.appendChild(summary);
     var rows = {};
     Object.keys(KIND).forEach(function (key) {
       var row = document.createElement("button");
@@ -283,25 +336,56 @@
       });
     }
 
-    /* the numbers answer one question only: what is on screen right now */
+    /* the numbers answer one question only: what is on screen right now, and
+       they are recomputed while the map is still moving, not after it stops */
     function count() {
       var view = map.getBounds();
       var seen = { app: 0, analysis: 0, satellite: 0, design: 0 };
+      var names = [];
+      var total = 0;
+
       markers.forEach(function (entry) {
         if (entry.marker.getElement().classList.contains("is-off")) return;
-        if (view.contains([entry.item.lng, entry.item.lat])) seen[entry.item.kind]++;
+        total++;
+        if (!view.contains([entry.item.lng, entry.item.lat])) return;
+        seen[entry.item.kind]++;
+        names.push(say(entry.item));
       });
+
+      var shown = names.length;
       Object.keys(rows).forEach(function (key) {
         rows[key].querySelector(".peta__angka").textContent = seen[key];
         rows[key].classList.toggle("is-empty", seen[key] === 0);
       });
+
+      if (shown === 0) {
+        summary.textContent = say(TEXT.none);
+      } else {
+        var head = shown + " " + say(TEXT.of) + " " + total + " " + say(TEXT.inView);
+        var list = names.slice(0, 2).join(", ");
+        if (names.length > 2) {
+          list += ", " + say(TEXT.more).replace("%n", names.length - 2);
+        }
+        summary.textContent = head + ". " + list + ".";
+      }
+    }
+
+    var pending = 0;
+    function countSoon() {
+      if (pending) return;
+      pending = window.requestAnimationFrame(function () {
+        pending = 0;
+        count();
+      });
     }
 
     label();
+    map.on("move", countSoon);
     map.on("moveend", count);
-    map.on("zoomend", count);
+    map.on("zoom", countSoon);
     document.addEventListener("hk:lang", function () {
       label();
+      count();
       markers.forEach(function (entry) {
         entry.marker.getElement().title = say(entry.item);
         entry.marker.getElement().setAttribute("aria-label", say(entry.item));
@@ -349,6 +433,7 @@
     });
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), "top-right");
+    map.addControl(new HomeControl(function () { state.home(); }), "top-right");
     map.addControl(new maplibregl.ScaleControl({ maxWidth: 110, unit: "metric" }), "bottom-left");
     map.addControl(new maplibregl.FullscreenControl(), "top-right");
     /* every style ships its own credit line, adding ours would repeat it */
@@ -387,7 +472,7 @@
         current.three = three;
         panel.markView(three);
         applyRelief(map, three);
-        map.easeTo({ pitch: three ? 58 : 0, bearing: three ? -18 : 0, duration: 900 });
+        map.easeTo({ pitch: three ? 58 : 0, bearing: three ? -18 : 0, duration: ms(900) });
       },
       filter: function (kind) {
         current.filter = current.filter === kind ? null : kind;
@@ -401,13 +486,33 @@
         map.fitBounds(current.filter ? visible : bounds, {
           padding: 56,
           maxZoom: current.filter ? 7 : 6,
-          duration: 700
+          duration: ms(700)
         });
+        panel.count();
       },
       reset: function () {
-        if (current.filter) { state.filter(current.filter); return; }
-        map.easeTo({ pitch: current.three ? 58 : 0, bearing: current.three ? -18 : 0, duration: 500 });
-        map.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: 700 });
+        state.home();
+      },
+      /* back to the view the map opened with: every marker shown, the whole
+         country in frame, north up unless the 3D view is on */
+      home: function () {
+        if (current.filter) {
+          current.filter = null;
+          panel.markFilter(null);
+          markers.forEach(function (entry) {
+            entry.marker.getElement().classList.remove("is-off");
+          });
+        }
+        markers.forEach(function (entry) {
+          if (entry.popup.isOpen()) entry.popup.remove();
+        });
+        map.easeTo({
+          pitch: current.three ? 58 : 0,
+          bearing: current.three ? -18 : 0,
+          duration: ms(500)
+        });
+        map.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: ms(750) });
+        panel.count();
       }
     };
 

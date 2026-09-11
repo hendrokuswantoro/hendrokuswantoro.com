@@ -45,6 +45,11 @@
         el.setAttribute("data-eng-alt", el.getAttribute("alt") || "");
       }
     });
+    each(doc.querySelectorAll("[data-ind-gagal]"), function (el) {
+      if (!el.hasAttribute("data-eng-gagal")) {
+        el.setAttribute("data-eng-gagal", el.getAttribute("data-gagal") || "");
+      }
+    });
   }
 
   function applyLang(lang) {
@@ -65,6 +70,11 @@
     each(doc.querySelectorAll("[data-ind-alt]"), function (el) {
       var value = useId ? el.getAttribute("data-ind-alt") : el.getAttribute("data-eng-alt");
       if (value) el.setAttribute("alt", value);
+    });
+
+    each(doc.querySelectorAll("[data-ind-gagal]"), function (el) {
+      var value = useId ? el.getAttribute("data-ind-gagal") : el.getAttribute("data-eng-gagal");
+      if (value) el.setAttribute("data-gagal", value);
     });
 
     doc.documentElement.setAttribute("lang", useId ? "id" : "en");
@@ -193,7 +203,7 @@
         /* optional, the map falls back to key free sources when it is absent */
         loadOnce("js", "/assets/js/konfigurasi.js").catch(function () { return null; })
       ])
-        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=12"); })
+        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=15"); })
         .then(function () {
           wrap.classList.add("is-live");
           window.HK_PETA_MAP = window.HK_PETA.build(canvas);
