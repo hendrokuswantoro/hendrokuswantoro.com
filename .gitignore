@@ -16,3 +16,6 @@ node_modules/
 .next/
 out/
 dist/
+
+# Upload bundle, rebuilt on demand by tools/build_dist.py
+dist-*.zip

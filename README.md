@@ -120,23 +120,45 @@ python tools/build_icons.py
 
 Warna di kedua berkas itu harus sama dengan `assets/css/style.css`.
 
-## Menerbitkan ke https://www.hendrokuswantoro.com
+## Menerbitkan ke Cloudflare Pages
 
-Tidak ada proses build, jadi cukup unggah isi folder ini apa adanya.
+Situs ini tidak punya proses build, jadi yang diunggah adalah berkasnya apa
+adanya. Ada dua jalan.
 
-**Cloudflare Pages (disarankan).** Dorong folder ini ke repositori Git, buat
-project baru, build command dikosongkan, output directory diisi `/`. Lalu di
-**Custom domains** tambahkan `www.hendrokuswantoro.com`, dan arahkan
-`hendrokuswantoro.com` ke www. Berkas `_headers` otomatis terbaca.
+### A. Unggah langsung, paling cepat, tanpa GitHub
 
-**Netlify.** Sama persis: publish directory `.`, tanpa build command.
+`dist-hendrokuswantoro.zip` di folder ini berisi 21 berkas yang perlu
+disajikan, tanpa README, tanpa `tools/`, tanpa folder `next/`. Bangkitkan
+ulang kapan saja dengan `python tools/build_dist.py`.
 
-**GitHub Pages.** Berkas `CNAME` sudah berisi domainnya. Aktifkan Pages dari
-cabang `main` folder root. Perlu dicatat, GitHub Pages tidak membaca
-`_headers`, jadi tajuk keamanannya tidak ikut terpasang.
+1. Buka `dash.cloudflare.com`, pilih **Workers & Pages**, lalu **Create**.
+2. Pindah ke tab **Pages**, pilih **Upload assets**.
+3. Beri nama proyek, misalnya `hendrokuswantoro`, lalu seret berkas zip itu
+   ke kotak unggahan. Cloudflare membongkarnya sendiri.
+4. Tekan **Deploy site**. Beberapa detik kemudian situsnya hidup di alamat
+   `nama-proyek.pages.dev`.
 
-DNS: `www` sebagai CNAME ke host yang diberikan penyedia, dan `@` diarahkan
-ke `www` memakai ALIAS, ANAME, atau A sesuai penyedia.
+### B. Lewat Git, supaya tiap perubahan terbit sendiri
+
+Repositori git-nya sudah ada di folder ini, tinggal didorong ke GitHub atau
+GitLab, lalu di Cloudflare pilih **Connect to Git**. Build command dikosongkan
+dan build output directory diisi `/`. Untuk versi Next.js, root directory
+diisi `next`, build command `npm run build`, dan output `out`.
+
+### Memasang domainnya
+
+1. Di proyek Pages, buka **Custom domains**, tekan **Set up a custom domain**.
+2. Masukkan `www.hendrokuswantoro.com`, lalu ulangi untuk
+   `hendrokuswantoro.com`.
+3. Kalau domainnya sudah berada di akun Cloudflare yang sama, catatan DNS-nya
+   dibuat otomatis. Kalau belum, pindahkan dulu nameserver domainnya ke
+   Cloudflare, atau tambahkan CNAME `www` ke alamat `.pages.dev` di penyedia
+   DNS yang sekarang.
+4. Pengalihan dari tanpa www ke dengan www sudah disiapkan di berkas
+   `_redirects`, dan baru aktif sesudah kedua domain terpasang.
+
+Berkas `_headers` ikut terbaca otomatis, termasuk Content Security Policy dan
+HSTS. Sertifikat TLS diterbitkan Cloudflare sendiri.
 
 ## Sesudah terbit, periksa ini
 

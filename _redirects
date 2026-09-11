@@ -1,0 +1,4 @@
+# Cloudflare Pages reads this file. The rule only fires once both
+# hendrokuswantoro.com and www.hendrokuswantoro.com are attached to the
+# project as custom domains.
+https://hendrokuswantoro.com/* https://www.hendrokuswantoro.com/:splat 301!
