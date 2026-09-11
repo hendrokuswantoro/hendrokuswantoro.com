@@ -52,8 +52,9 @@
 
   --header-h: 72px;
   --tabbar-h: 66px;
-  --maxw: 1320px;
-  --gutter: 24px;
+  --maxw: 1440px;
+  --maxw-wide: 1760px;
+  --gutter: 32px;
   --ease: cubic-bezier(.2, .7, .3, 1);
 
   color-scheme: light;
@@ -134,6 +135,9 @@ ul { margin: 0; padding: 0; list-style: none; }
 
 /* ---------- layout ---------- */
 .wrap { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: var(--gutter); }
+/* the bars run wider than the text, so the logo and the menu sit near the
+   edges of the screen instead of floating in the middle of it */
+.header .wrap, .footer .wrap { max-width: var(--maxw-wide); }
 .section { padding: clamp(48px, 7vw, 88px) 0; }
 .section--surface { background: var(--surface); }
 .eyebrow {
@@ -737,3 +741,5 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 /* jumping to a card from the map popup used to hide it under the sticky
    header, so every anchor target keeps the header height clear */
 [id^="karya-"], #main { scroll-margin-top: calc(var(--header-h) + 16px); }
+
+@media (max-width: 1024px) { :root { --gutter: 24px; } }

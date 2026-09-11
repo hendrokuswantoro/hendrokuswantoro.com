@@ -14,57 +14,106 @@
 
   var TOKEN = (window.HK_KONFIG && window.HK_KONFIG.mapboxToken) || "";
 
-  /* free, no key, OpenStreetMap data rendered as quiet vector tiles */
-  var STYLE_PETA = "https://tiles.openfreemap.org/styles/positron";
+  /* Elevation for the relief. Mapbox ships a proper DEM, and without a token
+     the free terrarium tiles stand in. */
+  var DEM = TOKEN
+    ? {
+        type: "raster-dem",
+        tiles: ["https://api.mapbox.com/v4/mapbox.mapbox-terrain-dem-v1/{z}/{x}/{y}.pngraw?access_token=" + TOKEN],
+        encoding: "mapbox",
+        tileSize: 512,
+        maxzoom: 14
+      }
+    : {
+        type: "raster-dem",
+        tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
+        encoding: "terrarium",
+        tileSize: 256,
+        maxzoom: 14,
+        attribution: "Elevation: Mapzen, AWS Open Data"
+      };
 
-  /* terrain for the 3D view, free elevation tiles in terrarium encoding */
-  var DEM = {
-    type: "raster-dem",
-    tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
-    encoding: "terrarium",
-    tileSize: 256,
-    maxzoom: 14,
-    attribution: "Elevation: Mapzen, AWS Open Data"
-  };
+  var MAPBOX_ATTRIBUTION =
+    '&copy; <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener">Mapbox</a> ' +
+    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
 
-  function rasterStyle(tiles, attribution, maxzoom) {
+  /* One basemap, drawn here rather than pulled from a Mapbox style URL.
+     Mapbox styles address their sources with mapbox:// URLs that MapLibre
+     cannot resolve, and the raster version of the same style carries no
+     building heights, which is why the 3D buildings never appeared. Reading
+     the vector tiles directly fixes both. */
+  function mapboxStyle() {
+    var source = "https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?access_token=" + TOKEN;
+    var font = ["DIN Pro Regular", "Arial Unicode MS Regular"];
+
     return {
       version: 8,
-      sources: { dasar: { type: "raster", tiles: [tiles], tileSize: 256, maxzoom: maxzoom || 19, attribution: attribution } },
+      glyphs: "https://api.mapbox.com/fonts/v1/mapbox/{fontstack}/{range}.pbf?access_token=" + TOKEN,
+      sources: {
+        jalan: { type: "vector", tiles: [source], minzoom: 0, maxzoom: 16, attribution: MAPBOX_ATTRIBUTION },
+        dem: DEM
+      },
       layers: [
-        { id: "latar", type: "background", paint: { "background-color": "#e9ebee" } },
-        { id: "dasar", type: "raster", source: "dasar" }
+        { id: "latar", type: "background", paint: { "background-color": "#eef1f5" } },
+        { id: "bayangan", type: "hillshade", source: "dem",
+          paint: { "hillshade-exaggeration": 0.35, "hillshade-shadow-color": "#93a1ad", "hillshade-highlight-color": "#ffffff" } },
+        { id: "hijau", type: "fill", source: "jalan", "source-layer": "landuse",
+          filter: ["in", ["get", "class"], ["literal", ["park", "grass", "wood", "scrub", "agriculture", "national_park", "pitch"]]],
+          paint: { "fill-color": "#e0e9dd", "fill-opacity": 0.85 } },
+        { id: "air", type: "fill", source: "jalan", "source-layer": "water",
+          paint: { "fill-color": "#c7d9e8" } },
+        { id: "sungai", type: "line", source: "jalan", "source-layer": "waterway",
+          paint: { "line-color": "#c7d9e8", "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.6, 16, 2.4] } },
+        { id: "jalan-tepi", type: "line", source: "jalan", "source-layer": "road", minzoom: 6,
+          filter: ["in", ["get", "class"], ["literal", ["motorway", "trunk", "primary", "secondary", "tertiary", "street", "street_limited"]]],
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: {
+            "line-color": "#d3dae1",
+            "line-width": ["interpolate", ["exponential", 1.4], ["zoom"], 6, 1.2, 12, 4, 18, 22]
+          } },
+        { id: "jalan-isi", type: "line", source: "jalan", "source-layer": "road", minzoom: 6,
+          filter: ["in", ["get", "class"], ["literal", ["motorway", "trunk", "primary", "secondary", "tertiary", "street", "street_limited"]]],
+          layout: { "line-cap": "round", "line-join": "round" },
+          paint: {
+            "line-color": ["match", ["get", "class"], "motorway", "#ffffff", "trunk", "#ffffff", "#fbfcfd"],
+            "line-width": ["interpolate", ["exponential", 1.4], ["zoom"], 6, 0.5, 12, 2.4, 18, 17]
+          } },
+        { id: "gedung", type: "fill", source: "jalan", "source-layer": "building", minzoom: 14,
+          filter: ["!=", ["get", "underground"], true],
+          paint: { "fill-color": "#dfe4ea", "fill-outline-color": "#ccd3db" } },
+        { id: "batas", type: "line", source: "jalan", "source-layer": "admin",
+          filter: ["<=", ["get", "admin_level"], 2],
+          paint: {
+            "line-color": "#a7b1bc",
+            "line-dasharray": [2.5, 1.5],
+            "line-width": ["interpolate", ["linear"], ["zoom"], 3, 0.6, 10, 1.4]
+          } },
+        { id: "nama-tempat", type: "symbol", source: "jalan", "source-layer": "place_label",
+          filter: ["in", ["get", "class"], ["literal", ["country", "state", "settlement", "settlement_subdivision"]]],
+          layout: {
+            "text-field": ["get", "name_en"],
+            "text-font": font,
+            "text-size": ["interpolate", ["linear"], ["zoom"], 3, 10, 8, 13, 14, 16],
+            "text-max-width": 8
+          },
+          paint: { "text-color": "#41505e", "text-halo-color": "#ffffff", "text-halo-width": 1.4 } },
+        { id: "nama-alam", type: "symbol", source: "jalan", "source-layer": "natural_label", minzoom: 4,
+          filter: ["in", ["get", "class"], ["literal", ["sea", "ocean", "bay"]]],
+          layout: {
+            "text-field": ["get", "name_en"],
+            "text-font": font,
+            "text-size": ["interpolate", ["linear"], ["zoom"], 4, 10, 10, 13],
+            "text-max-width": 8
+          },
+          paint: { "text-color": "#7d94a8", "text-halo-color": "#ffffff", "text-halo-width": 1 } }
       ]
     };
   }
 
-  var ESRI_IMAGERY =
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+  var FALLBACK_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
-  function mapboxRaster(style) {
-    return (
-      "https://api.mapbox.com/styles/v1/mapbox/" + style +
-      "/tiles/256/{z}/{x}/{y}@2x?access_token=" + TOKEN
-    );
-  }
-
-  /* the satellite view prefers Mapbox when a token is present, otherwise it
-     falls back to Esri imagery, which needs no key */
-  var BASEMAPS = [
-    { id: "peta", en: "Map", ind: "Peta", style: STYLE_PETA, vector: true },
-    {
-      id: "satelit", en: "Satellite", ind: "Satelit",
-      style: TOKEN
-        ? rasterStyle(mapboxRaster("satellite-streets-v12"), "&copy; Mapbox &copy; OpenStreetMap &copy; Maxar")
-        : rasterStyle(ESRI_IMAGERY, "Imagery: Esri, Maxar, Earthstar Geographics", 18)
-    }
-  ];
-
-  if (TOKEN) {
-    BASEMAPS.push({
-      id: "mapbox", en: "Mapbox", ind: "Mapbox",
-      style: rasterStyle(mapboxRaster("streets-v12"), "&copy; Mapbox &copy; OpenStreetMap")
-    });
+  function currentStyle() {
+    return TOKEN ? mapboxStyle() : FALLBACK_STYLE;
   }
 
   /* one colour per kind of work, all four readable on every basemap */
@@ -93,8 +142,8 @@
   ];
 
   var TEXT = {
-    basemap: { en: "Basemap", ind: "Peta dasar" },
     view: { en: "View", ind: "Tampilan" },
+    tour: { en: "Tour", ind: "Jelajah" },
     legend: { en: "Legend", ind: "Legenda" },
     open: { en: "See the project", ind: "Lihat proyek" },
     reset: { en: "Reset view", ind: "Kembalikan tampilan" },
@@ -160,25 +209,36 @@
         if (!map.getSource("dem")) map.addSource("dem", DEM);
 
         if (three) {
-          map.setTerrain({ source: "dem", exaggeration: 1.35 });
-          if (map.getLayer("building") && !map.getLayer("gedung3d")) {
+          map.setTerrain({ source: "dem", exaggeration: 1.3 });
+
+          /* Mapbox Streets carries a height on every building, so the
+             extrusion is real rather than a flat guess. The 2D footprints
+             step aside to stop the two fighting over the same pixels. */
+          if (map.getSource("jalan") && !map.getLayer("gedung3d")) {
             map.addLayer({
               id: "gedung3d",
               type: "fill-extrusion",
-              source: map.getLayer("building").source,
+              source: "jalan",
               "source-layer": "building",
-              minzoom: 13,
+              minzoom: 13.5,
+              filter: ["all",
+                ["==", ["get", "extrude"], "true"],
+                ["!=", ["get", "underground"], "true"]],
               paint: {
-                "fill-extrusion-color": "#d6d9dd",
-                "fill-extrusion-height": ["coalesce", ["get", "render_height"], 8],
-                "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
-                "fill-extrusion-opacity": 0.85
+                "fill-extrusion-color": ["interpolate", ["linear"], ["get", "height"],
+                  0, "#e3e7ec", 20, "#d7dce3", 60, "#c9d0d9", 140, "#b9c2cd"],
+                "fill-extrusion-height": ["coalesce", ["get", "height"], 6],
+                "fill-extrusion-base": ["coalesce", ["get", "min_height"], 0],
+                "fill-extrusion-opacity": 0.92,
+                "fill-extrusion-vertical-gradient": true
               }
             });
           }
+          if (map.getLayer("gedung")) map.setLayoutProperty("gedung", "visibility", "none");
         } else {
           map.setTerrain(null);
           if (map.getLayer("gedung3d")) map.removeLayer("gedung3d");
+          if (map.getLayer("gedung")) map.setLayoutProperty("gedung", "visibility", "visible");
         }
         return true;
       } catch (e) {
@@ -317,29 +377,20 @@
       return wrap;
     }
 
-    /* basemap */
-    var baseWrap = group("basemap");
-    var baseRow = document.createElement("div");
-    baseRow.className = "peta__chips";
-    baseWrap.appendChild(baseRow);
-    var baseChips = BASEMAPS.map(function (base, index) {
-      var el = chip(say(base), index === 0);
-      el.addEventListener("click", function () { state.setBasemap(base.id); });
-      baseRow.appendChild(el);
-      return { id: base.id, el: el, base: base };
-    });
-
-    /* 2D or 3D */
+    /* 2D or 3D, and the guided tour */
     var viewWrap = group("view");
     var viewRow = document.createElement("div");
     viewRow.className = "peta__chips";
     viewWrap.appendChild(viewRow);
     var flat = chip("2D", true);
     var relief = chip("3D", false);
+    var tour = chip("", false);
     flat.addEventListener("click", function () { state.setThree(false); });
     relief.addEventListener("click", function () { state.setThree(true); });
+    tour.addEventListener("click", function () { state.toggleTour(); });
     viewRow.appendChild(flat);
     viewRow.appendChild(relief);
+    viewRow.appendChild(tour);
 
     /* legend */
     var legendWrap = group("legend");
@@ -369,11 +420,10 @@
     function label() {
       heading.textContent = say(TEXT.panel);
       paintToggle();
-      groups.basemap.title.textContent = say(TEXT.basemap);
+      tour.textContent = say(TEXT.tour);
       groups.view.title.textContent = say(TEXT.view);
       groups.legend.title.textContent = say(TEXT.legend);
       reset.textContent = say(TEXT.reset);
-      baseChips.forEach(function (entry) { entry.el.textContent = say(entry.base); });
       Object.keys(rows).forEach(function (key) {
         rows[key].querySelector(".peta__nama").textContent = say(KIND[key]);
       });
@@ -439,10 +489,8 @@
     return {
       node: box,
       count: count,
-      markBasemap: function (id) {
-        baseChips.forEach(function (entry) {
-          entry.el.setAttribute("aria-pressed", entry.id === id ? "true" : "false");
-        });
+      markTour: function (running) {
+        tour.setAttribute("aria-pressed", running ? "true" : "false");
       },
       markView: function (three) {
         flat.setAttribute("aria-pressed", three ? "false" : "true");
@@ -465,7 +513,7 @@
 
     var map = new maplibregl.Map({
       container: container,
-      style: BASEMAPS[0].style,
+      style: currentStyle(),
       bounds: bounds,
       fitBoundsOptions: { padding: 56, maxZoom: 6 },
       minZoom: 2.5,
@@ -489,38 +537,38 @@
         .setLngLat([item.lng, item.lat])
         .setPopup(popup)
         .addTo(map);
-      return { item: item, marker: marker, popup: popup };
+      var entry = { item: item, marker: marker, popup: popup };
+      marker.getElement().addEventListener("click", function () {
+        window.setTimeout(function () { state.flyTo(entry, false); }, 0);
+      });
+      return entry;
     });
 
-    var current = { basemap: BASEMAPS[0].id, three: false, filter: null };
+    var current = { three: false, filter: null, tour: 0, tourAt: 0 };
     var panel;
 
     function dressStyle() {
-      if (current.basemap === "peta") tuneBasemap(map);
+      if (!TOKEN) tuneBasemap(map);
       applyRelief(map, current.three);
     }
 
+    /* close enough to read the streets, tilted enough to see the buildings */
+    function flyToWork(entry, openPopup) {
+      map.flyTo({
+        center: [entry.item.lng, entry.item.lat],
+        zoom: 15.2,
+        pitch: current.three ? 62 : 0,
+        bearing: current.three ? -22 : 0,
+        speed: 0.9,
+        curve: 1.5,
+        duration: ms(2600)
+      });
+      /* a click on the marker has already opened its popup, only the tour
+         needs to open one itself */
+      if (openPopup && !entry.popup.isOpen()) entry.marker.togglePopup();
+    }
+
     var state = {
-      setBasemap: function (id) {
-        if (id === current.basemap) return;
-        var base = BASEMAPS.filter(function (item) { return item.id === id; })[0];
-        if (!base) return;
-        current.basemap = id;
-        panel.markBasemap(id);
-        /* terrain points at a source the new style will not have yet, so it
-           comes off first and goes back on once the style has settled */
-        try { map.setTerrain(null); } catch (e) { /* none was set */ }
-        map.setStyle(base.style);
-        map.once("styledata", function () {
-          dressStyle();
-          map.once("idle", function () {
-            dressStyle();
-            if (current.three && map.getPitch() < 10) {
-              map.easeTo({ pitch: 58, bearing: -18, duration: ms(600) });
-            }
-          });
-        });
-      },
       setThree: function (three) {
         if (three === current.three) return;
         current.three = three;
@@ -537,6 +585,7 @@
         });
       },
       filter: function (kind) {
+        state.stopTour();
         current.filter = current.filter === kind ? null : kind;
         panel.markFilter(current.filter);
         var visible = new maplibregl.LngLatBounds();
@@ -552,12 +601,28 @@
         });
         panel.count();
       },
-      reset: function () {
-        state.home();
+      /* one work at a time, close in, until someone touches the map */
+      toggleTour: function () {
+        if (current.tour) { state.stopTour(); return; }
+        current.tourAt = 0;
+        function step() {
+          var entry = markers[current.tourAt % markers.length];
+          current.tourAt++;
+          if (!entry.marker.getElement().classList.contains("is-off")) flyToWork(entry, true);
+        }
+        step();
+        current.tour = window.setInterval(step, 7000);
+        panel.markTour(true);
       },
-      /* back to the view the map opened with: every marker shown, the whole
-         country in frame, north up unless the 3D view is on */
+      stopTour: function () {
+        if (!current.tour) return;
+        window.clearInterval(current.tour);
+        current.tour = 0;
+        panel.markTour(false);
+      },
+      flyTo: flyToWork,
       home: function () {
+        state.stopTour();
         if (current.filter) {
           current.filter = null;
           panel.markFilter(null);
@@ -575,6 +640,9 @@
         });
         map.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: ms(750) });
         panel.count();
+      },
+      reset: function () {
+        state.home();
       }
     };
 
@@ -597,6 +665,11 @@
     var section = container.parentNode.parentNode;
 
     map.on("load", function () { booted = true; });
+
+    /* the tour is a suggestion, not a ride: any hand on the map stops it */
+    ["dragstart", "wheel", "touchstart"].forEach(function (kind) {
+      map.on(kind, function () { state.stopTour(); });
+    });
     map.on("error", function (event) {
       var note = {
         message: (event && event.error && event.error.message) || String(event && event.type),
@@ -618,5 +691,5 @@
     return map;
   }
 
-  window.HK_PETA = { build: build, count: WORK.length, basemaps: BASEMAPS.length };
+  window.HK_PETA = { build: build, count: WORK.length };
 })();

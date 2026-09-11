@@ -55,34 +55,38 @@ peta dasarnya selalu terang.
 MapLibre disimpan sendiri di `assets/vendor/maplibre/`, bukan dari CDN, dan
 baru diunduh ketika bagian petanya mendekati layar.
 
-**Tiga peta dasar.** Peta memakai OpenFreeMap, gratis tanpa kunci. Satelit dan
-Mapbox memakai ubin Mapbox bila tokennya ada. Tanpa token, pilihan Mapbox
-disembunyikan dan Satelit jatuh ke citra Esri yang juga tanpa kunci.
+**Satu peta dasar, Mapbox.** Gayanya ditulis sendiri di berkas itu, bukan
+diambil dari URL gaya Mapbox. Gaya Mapbox menunjuk sumbernya dengan alamat
+`mapbox://` yang tidak bisa dibaca MapLibre, sedangkan versi rasternya tidak
+membawa tinggi bangunan sama sekali. Itulah sebabnya bangunan 3D dulu tidak
+pernah muncul. Membaca ubin vektornya langsung menyelesaikan keduanya.
 
-**2D dan 3D.** Tombol 3D memiringkan kamera dan menyalakan relief sungguhan
-dari ubin ketinggian terrarium milik AWS Open Data, gratis tanpa kunci.
-Gedung ikut ditegakkan pada perbesaran tinggi bila peta dasarnya memuat tinggi
-bangunan. Sumber relief hidup terpisah dari gaya peta, jadi 3D tetap menyala
-waktu peta dasarnya diganti.
+**Bangunan 3D sungguhan.** Lapisan `building` pada Mapbox Streets menyimpan
+tinggi tiap bangunan, jadi tombol 3D menegakkan bangunan dengan tinggi
+aslinya, bukan tinggi tebakan. Di Jakarta terhitung 4.950 bangunan tergambar
+dengan menara tertinggi 383 meter.
+
+**Relief dan bayangan bukit.** Peta memakai DEM Mapbox untuk relief 3D dan
+lapisan hillshade yang tetap terlihat di tampilan 2D.
+
+**Jelajah.** Tombol Jelajah menerbangkan peta dari satu karya ke karya
+berikutnya tiap tujuh detik, dan berhenti begitu tangan menyentuh peta.
+Mengklik penanda juga menerbangkan peta ke karya itu pada perbesaran 15.
 
 **Legendanya dinamis.** Angkanya menghitung penanda yang benar benar berada di
-dalam layar saat itu dan berubah selama peta digeser, bukan sesudah berhenti.
-Ada baris ringkasan yang menyebut apa saja yang sedang terlihat. Klik satu
-baris untuk menyaring satu jenis karya, klik lagi untuk kembali.
+dalam layar saat itu dan berubah selama peta digeser. Ada baris ringkasan yang
+menyebut apa saja yang sedang terlihat. Klik satu baris untuk menyaring satu
+jenis karya.
 
-**Panelnya bisa dilipat.** Tombol panah di pojok kanan panel menyembunyikan
-seluruh isinya dan menyisakan satu keping kecil. Pilihan itu disimpan di
-`localStorage`, jadi tetap terlipat waktu halaman dibuka lagi.
+**Panelnya bisa dilipat**, dan pilihan itu disimpan di `localStorage`.
 
-**Tombol rumah** di deretan kontrol peta mengembalikan tampilan seperti saat
-peta pertama dibuka, membatalkan saringan, dan menutup balon yang terbuka.
+**Tombol rumah** mengembalikan tampilan seperti saat peta pertama dibuka.
 
 **Chrome petanya selalu terang.** Bilah skala, kredit, dan tombol kontrol tidak
-ikut tema gelap, sebab peta dasarnya selalu terang. Sempat mengikuti tema dan
-hasilnya teks gelap di atas kotak gelap yang duduk di atas peta pucat.
+ikut tema gelap, sebab peta dasarnya selalu terang.
 
-Titik titiknya penanda lokasi, bukan batas wilayah kajian, dan itu ditulis di
-bawah petanya.
+Tanpa token Mapbox, peta jatuh ke OpenFreeMap tanpa kunci: semua tetap jalan,
+hanya bangunan 3D-nya yang tidak ada karena ubinnya tidak membawa tinggi.
 
 ### Token Mapbox
 
