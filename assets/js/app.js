@@ -205,6 +205,33 @@
     });
   }
 
+  /* ------------------------------------------------------- reading progress */
+
+  function initProgress() {
+    var bar = doc.querySelector("[data-progres]");
+    var article = doc.querySelector(".article");
+    if (!bar || !article) return;
+
+    var frame = 0;
+    function draw() {
+      frame = 0;
+      var box = article.getBoundingClientRect();
+      var start = window.scrollY + box.top;
+      var span = box.height - window.innerHeight;
+      if (span <= 0) { bar.style.transform = "scaleX(1)"; return; }
+      var seen = (window.scrollY - start) / span;
+      bar.style.transform = "scaleX(" + Math.min(1, Math.max(0, seen)) + ")";
+    }
+    function onScroll() {
+      if (frame) return;
+      frame = window.requestAnimationFrame(draw);
+    }
+
+    draw();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+  }
+
   /* -------------------------------------------------------------- copyright */
 
   function initYear() {
@@ -220,6 +247,7 @@
     initReveal();
     initFilters();
     initMap();
+    initProgress();
     initYear();
   }
 

@@ -28,6 +28,19 @@ Semua diukur terhadap putih. Ambang WCAG AA adalah 4,5:1 untuk teks biasa dan
 | `--accent` | `#276ef1` | 4,6:1 | tautan, nama belakang di logo |
 | `--surface` | `#f6f6f6` | latar seksi | |
 
+## Mode gelap
+
+Situs mengikuti setelan sistem pembaca lewat `prefers-color-scheme`, tanpa
+tombol tambahan di sebelah tombol bahasa. Seluruh warna diambil dari token di
+`:root`, jadi tema gelap hanya menimpa token, bukan menulis ulang aturan.
+
+Kontras pada tema gelap, diukur terhadap `#0b0b0b`: teks isi 11,6:1, judul
+18:1, tombol 19,7:1, keterangan 7:1. Semuanya lolos WCAG AA.
+
+Dua hal sengaja tidak ikut berbalik. Panel ajakan tetap gelap dengan teks
+putih di kedua tema, dan penanda di peta tetap hitam bergaris putih, sebab
+peta dasarnya selalu terang.
+
 ## Peta karya
 
 `assets/js/peta.js` menggambar tujuh titik karya di peta Indonesia. Pustaka

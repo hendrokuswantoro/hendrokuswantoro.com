@@ -10,6 +10,8 @@ import { HeroCard } from "./HeroCard";
 import { ProjectCard } from "./ProjectCard";
 import { ChartIcon, DatabaseIcon, GlobeIcon, MapIcon, SatelliteIcon, SurveyIcon } from "./Icons";
 
+const TOOLS = ["PostGIS", "Python", "QGIS", "MapLibre", "FastAPI", "GDAL", "GeoPandas", "Rasterio", "PostgreSQL", "Docker", "Xarray", "GeoServer"];
+
 const TILE_ICONS: Record<Tile["icon"], ReactNode> = {
   globe: <GlobeIcon />,
   chart: <ChartIcon />,
@@ -47,6 +49,16 @@ export function HomeView() {
           </div>
         </div>
       </section>
+
+
+      {/* decorative, every name appears elsewhere as a real tag */}
+      <div className="pita-alat" aria-hidden="true">
+        <div className="pita-alat__jalur">
+          {[...TOOLS, ...TOOLS].map((tool, index) => (
+            <span key={`${tool}-${index}`}>{tool}</span>
+          ))}
+        </div>
+      </div>
 
       <section className="section section--surface">
         <div className="wrap">

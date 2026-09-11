@@ -1,18 +1,55 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import type { Post } from "@/content/posts";
 import { COMMON } from "@/content/nav";
 import { useLang } from "./LanguageProvider";
 
 export function PostView({ post }: { post: Post }) {
   const { say } = useLang();
+  const bar = useRef<HTMLDivElement>(null);
+  const article = useRef<HTMLElement | null>(null);
+
+  /* the bar tracks how much of the article has gone past the top of the
+     screen, not how far the whole page has scrolled */
+  useEffect(() => {
+    let frame = 0;
+
+    function draw() {
+      frame = 0;
+      if (!bar.current || !article.current) return;
+      const box = article.current.getBoundingClientRect();
+      const span = box.height - window.innerHeight;
+      if (span <= 0) {
+        bar.current.style.transform = "scaleX(1)";
+        return;
+      }
+      const done = Math.min(1, Math.max(0, -box.top / span));
+      bar.current.style.transform = `scaleX(${done})`;
+    }
+
+    function onScroll() {
+      if (frame) return;
+      frame = window.requestAnimationFrame(draw);
+    }
+
+    draw();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
 
   return (
     <main id="main">
+      <div className="progres" ref={bar} />
       <section className="section">
         <div className="wrap">
-          <article className="article">
+          <article className="article" ref={article}>
             <Link className="back-link" href="/blog/">
               {say(COMMON.backToBlog)}
             </Link>
