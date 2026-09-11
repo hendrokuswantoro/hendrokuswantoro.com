@@ -1,0 +1,7 @@
+# Keep line endings stable across Windows and the Linux build machines
+# that Cloudflare Pages uses.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.ico binary
