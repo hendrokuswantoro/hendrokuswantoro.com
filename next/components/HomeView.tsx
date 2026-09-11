@@ -76,8 +76,8 @@ export function HomeView() {
           </div>
 
           <div className="grid">
-            {featured.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+            {featured.map((project, index) => (
+              <ProjectCard key={project.id} project={project} priority={index === 0} />
             ))}
           </div>
 

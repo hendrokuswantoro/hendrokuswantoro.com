@@ -109,6 +109,20 @@ Untuk teks pada atribut seperti `aria-label`, pakai `data-ind-label`.
 Gaya bahasanya jaga tetap sederhana: kalimat pendek, kata sehari-hari,
 satu gagasan per paragraf.
 
+### Gambar karya
+
+Gambar di kartu proyek dibangkitkan dari peta asli di `D:/Projects/Portfolio Kerja`,
+yang berukuran 0,4 sampai 4,7 MB per berkas. Terlalu berat untuk peramban, jadi:
+
+```bash
+python tools/build_work_images.py
+```
+
+Hasilnya `assets/img/work/*.webp`, masing masing sekitar 40 KB, dengan seluruh
+lembar peta tetap terlihat utuh. Tidak ada yang dipotong, sebab peta yang
+legendanya terpotong sudah jadi dokumen lain. Kalau ada karya baru, tambahkan
+satu baris di kamus `WORK` dalam berkas itu.
+
 ### Gambar dan ikon
 
 Gambar pratayang media sosial dan ikon aplikasi dibangkitkan dari kode:

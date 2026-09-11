@@ -2,15 +2,32 @@
 
 import type { Project } from "@/content/projects";
 import { useLang } from "./LanguageProvider";
-import { ProjectCover } from "./ProjectCover";
 
-export function ProjectCard({ project, withMeta = false }: { project: Project; withMeta?: boolean }) {
+export function ProjectCard({
+  project,
+  withMeta = false,
+  priority = false,
+}: {
+  project: Project;
+  withMeta?: boolean;
+  priority?: boolean;
+}) {
   const { say } = useLang();
 
   return (
     <article className="card reveal">
       <div className="card__cover">
-        <ProjectCover kind={project.cover} />
+        {/* plain img on purpose: the export is static and the files are already
+            sized and compressed by tools/build_work_images.py */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={project.image}
+          alt={say(project.alt)}
+          width={800}
+          height={450}
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
+        />
         <span className="card__badge">{say(project.badge)}</span>
       </div>
       <div className="card__body">

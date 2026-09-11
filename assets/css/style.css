@@ -212,8 +212,8 @@ ul { margin: 0; padding: 0; list-style: none; }
   transition: transform .2s var(--ease), box-shadow .2s var(--ease), border-color .2s var(--ease);
 }
 .card:hover { transform: translateY(-4px); box-shadow: var(--sh-2); border-color: var(--green-200); }
-.card__cover { position: relative; aspect-ratio: 16 / 9; background: var(--green-900); }
-.card__cover svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.card__cover { position: relative; aspect-ratio: 16 / 9; background: var(--surface-2); }
+.card__cover img, .card__cover svg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .card__badge {
   position: absolute; left: 14px; top: 14px; z-index: 2;
   background: rgba(255, 255, 255, .94); color: var(--brand-strong);

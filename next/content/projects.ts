@@ -1,11 +1,11 @@
 import type { Copy } from "./i18n";
 
 export type Category = "app" | "analysis" | "satellite" | "design";
-export type CoverKind = "parking" | "fire" | "fish" | "reach" | "landcover" | "sheet";
 
 export type Project = {
   id: string;
-  cover: CoverKind;
+  image: string;
+  alt: Copy;
   categories: Category[];
   badge: Copy;
   title: Copy;
@@ -26,7 +26,8 @@ export const FILTERS: { key: Category | "all"; label: Copy }[] = [
 export const PROJECTS: Project[] = [
   {
     id: "parking",
-    cover: "parking",
+    image: "/assets/img/work/parking.webp",
+    alt: { en: "Screenshot of the parking map app showing the zone and the fee for Jalan Malioboro", id: "Tangkapan layar aplikasi peta parkir, menampilkan zona dan tarif di Jalan Malioboro" },
     categories: ["app"],
     badge: { en: "Map app", id: "Aplikasi peta" },
     title: { en: "Yogyakarta Parking Map", id: "Peta Parkir Yogyakarta" },
@@ -43,7 +44,8 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "fire",
-    cover: "fire",
+    image: "/assets/img/work/fire.webp",
+    alt: { en: "Six small maps of Kalimantan showing where fires ignited through the 2026 season", id: "Enam peta kecil Kalimantan yang menunjukkan titik api sepanjang musim 2026" },
     categories: ["satellite", "analysis"],
     badge: { en: "Satellite data", id: "Data satelit" },
     title: { en: "Kalimantan Fire Maps", id: "Peta Kebakaran Kalimantan" },
@@ -60,7 +62,8 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "fish",
-    cover: "fish",
+    image: "/assets/img/work/fish.webp",
+    alt: { en: "Poster with suitability maps and charts for fish landing sites in Natuna", id: "Poster berisi peta kesesuaian dan grafik lokasi pendaratan ikan di Natuna" },
     categories: ["analysis"],
     badge: { en: "Map analysis", id: "Analisis peta" },
     title: { en: "Fish Landing Sites, Natuna", id: "Lokasi Pendaratan Ikan, Natuna" },
@@ -76,8 +79,33 @@ export const PROJECTS: Project[] = [
     featured: true,
   },
   {
+    id: "pickup",
+    image: "/assets/img/work/pickup.webp",
+    alt: {
+      en: "Map of common pickup points from driver GPS pings in Jakarta",
+      id: "Peta titik jemput umum dari ping GPS pengemudi di Jakarta",
+    },
+    categories: ["analysis"],
+    badge: { en: "Map analysis", id: "Analisis peta" },
+    title: {
+      en: "Pickup Points from GPS Pings, Jakarta",
+      id: "Titik Jemput dari Ping GPS, Jakarta",
+    },
+    body: {
+      en: "Three thousand driver pings around three buildings in Jakarta, grouped into the spots where people actually wait. Each group gets one node at its geometric median.",
+      id: "Tiga ribu ping pengemudi di sekitar tiga gedung di Jakarta dikelompokkan jadi titik tempat orang benar benar menunggu. Tiap kelompok diberi satu simpul di median geometrisnya.",
+    },
+    tags: ["Python", "DBSCAN", "QGIS"],
+    meta: {
+      en: "The result is one map sheet with three close ups",
+      id: "Hasilnya satu lembar peta dengan tiga perbesaran",
+    },
+    featured: false,
+  },
+  {
     id: "reach",
-    cover: "reach",
+    image: "/assets/img/work/reach.webp",
+    alt: { en: "Map sheet of service accessibility in Biak Numfor", id: "Lembar peta aksesibilitas layanan di Biak Numfor" },
     categories: ["analysis", "design"],
     badge: { en: "Service reach", id: "Jangkauan layanan" },
     title: { en: "Service Reach, Biak Numfor", id: "Jangkauan Layanan, Biak Numfor" },
@@ -94,7 +122,8 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "landcover",
-    cover: "landcover",
+    image: "/assets/img/work/landcover.webp",
+    alt: { en: "Land cover map sheet of the Yogyakarta urban area", id: "Lembar peta tutupan lahan kawasan perkotaan Yogyakarta" },
     categories: ["design", "satellite"],
     badge: { en: "Map design", id: "Desain peta" },
     title: { en: "Yogyakarta Land Cover Map", id: "Peta Tutupan Lahan Yogyakarta" },
@@ -107,16 +136,17 @@ export const PROJECTS: Project[] = [
     featured: false,
   },
   {
-    id: "sheet",
-    cover: "sheet",
-    categories: ["design"],
-    badge: { en: "Print map", id: "Peta cetak" },
-    title: { en: "Land Map Sheet, Mimika", id: "Lembar Peta Pertanahan, Mimika" },
+    id: "mimika",
+    image: "/assets/img/work/mimika.webp",
+    alt: { en: "Map of mining excavations and forest cover loss in Mimika", id: "Peta bukaan tambang dan kehilangan tutupan hutan di Mimika" },
+    categories: ["satellite", "design"],
+    badge: { en: "Satellite data", id: "Data satelit" },
+    title: { en: "Mining and Forest Loss, Mimika", id: "Tambang dan Hutan Hilang, Mimika" },
     body: {
-      en: "A large land map sheet. The sheet split, the grid lines, and a map that stays readable in print.",
-      id: "Lembar peta pertanahan ukuran besar. Pembagian lembar, garis grid, dan peta yang tetap terbaca waktu dicetak.",
+      en: "Open pit mining areas mapped year by year, next to the forest lost around them. One sheet, with close ups of the biggest pits.",
+      id: "Bukaan tambang dipetakan tahun demi tahun, bersama hutan yang hilang di sekitarnya. Satu lembar peta, dengan perbesaran di bukaan terbesar.",
     },
-    tags: ["QGIS", "Print layout", "UTM 49S"],
+    tags: ["QGIS", "Raster", "Print layout"],
     meta: { en: "The result is one large print sheet", id: "Hasilnya satu lembar peta cetak ukuran besar" },
     featured: false,
   },

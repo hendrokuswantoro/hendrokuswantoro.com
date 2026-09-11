@@ -40,6 +40,11 @@
         el.setAttribute("data-eng-label", el.getAttribute("aria-label") || "");
       }
     });
+    each(doc.querySelectorAll("[data-ind-alt]"), function (el) {
+      if (!el.hasAttribute("data-eng-alt")) {
+        el.setAttribute("data-eng-alt", el.getAttribute("alt") || "");
+      }
+    });
   }
 
   function applyLang(lang) {
@@ -55,6 +60,11 @@
     each(doc.querySelectorAll("[data-ind-label]"), function (el) {
       var value = useId ? el.getAttribute("data-ind-label") : el.getAttribute("data-eng-label");
       if (value) el.setAttribute("aria-label", value);
+    });
+
+    each(doc.querySelectorAll("[data-ind-alt]"), function (el) {
+      var value = useId ? el.getAttribute("data-ind-alt") : el.getAttribute("data-eng-alt");
+      if (value) el.setAttribute("alt", value);
     });
 
     doc.documentElement.setAttribute("lang", useId ? "id" : "en");
