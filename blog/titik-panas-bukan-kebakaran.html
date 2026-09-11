@@ -24,8 +24,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="/assets/css/style.css?v=24">
-<script defer src="/assets/js/app.js?v=28"></script>
+<link rel="alternate" type="application/rss+xml" title="hendrokuswantoro.com" href="/feed.xml">
+<link rel="stylesheet" href="/assets/css/style.css?v=28">
+<script defer src="/assets/js/app.js?v=31"></script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -114,6 +115,20 @@
         </p>
 
         <p class="mt-32"><a class="btn btn--ghost" href="/blog/" data-ind="Lihat tulisan lain">See other posts</a></p>
+
+        <aside class="rail" aria-label="On this page" data-ind-label="Di halaman ini">
+          <nav class="rail__daftar" hidden>
+            <p class="rail__title" data-ind="Di halaman ini">On this page</p>
+            <ol></ol>
+          </nav>
+          <div>
+            <p class="rail__title" data-ind="Tulisan lain">Other posts</p>
+            <div class="rail__lain">
+            <a href="/blog/kapan-peta-diam.html" data-ind="Kapan peta sebaiknya bilang tidak tahu">When a map should say I do not know</a>
+            <a href="/blog/sumber-di-pojok-peta.html" data-ind="Kenapa sumber selalu saya tulis di pojok peta">Why the source always goes in the corner</a>
+            </div>
+          </div>
+        </aside>
       </article>
     </div>
   </section>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Hendro Kuswantoro</title>
+    <link>https://www.hendrokuswantoro.com/blog/</link>
+    <description>Notes on maps, spatial data and the systems around them.</description>
+    <language>en</language>
+    <atom:link href="https://www.hendrokuswantoro.com/feed.xml" rel="self" type="application/rss+xml"/>
+    <lastBuildDate>Wed, 02 Sep 2026 00:00:00 +0000</lastBuildDate>
+    <item>
+      <title>When a map should say I do not know</title>
+      <link>https://www.hendrokuswantoro.com/blog/kapan-peta-diam.html</link>
+      <guid isPermaLink="true">https://www.hendrokuswantoro.com/blog/kapan-peta-diam.html</guid>
+      <description>My parking map does not answer outside Yogyakarta. Here is why.</description>
+      <pubDate>Wed, 02 Sep 2026 00:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>A hotspot is not a fire</title>
+      <link>https://www.hendrokuswantoro.com/blog/titik-panas-bukan-kebakaran.html</link>
+      <guid isPermaLink="true">https://www.hendrokuswantoro.com/blog/titik-panas-bukan-kebakaran.html</guid>
+      <description>A satellite sees heat, not flames. Small difference, big effect.</description>
+      <pubDate>Mon, 24 Aug 2026 00:00:00 +0000</pubDate>
+    </item>
+    <item>
+      <title>Why the source always goes in the corner</title>
+      <link>https://www.hendrokuswantoro.com/blog/sumber-di-pojok-peta.html</link>
+      <guid isPermaLink="true">https://www.hendrokuswantoro.com/blog/sumber-di-pojok-peta.html</guid>
+      <description>The small text in the corner decides if a map can be trusted.</description>
+      <pubDate>Wed, 12 Aug 2026 00:00:00 +0000</pubDate>
+    </item>
+  </channel>
+</rss>

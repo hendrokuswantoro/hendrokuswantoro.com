@@ -36,4 +36,6 @@ export const COMMON = {
   backToBlog: { en: "Back to the blog", id: "Kembali ke blog" } as Copy,
   otherPosts: { en: "See other posts", id: "Lihat tulisan lain" } as Copy,
   readMore: { en: "Read more", id: "Baca selengkapnya" } as Copy,
+  onThisPage: { en: "On this page", id: "Di halaman ini" } as Copy,
+  morePosts: { en: "Other posts", id: "Tulisan lain" } as Copy,
 };

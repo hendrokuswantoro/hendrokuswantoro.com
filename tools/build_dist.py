@@ -21,6 +21,7 @@ FILES = [
     "404.html",
     "robots.txt",
     "sitemap.xml",
+    "feed.xml",
     "site.webmanifest",
     "_headers",
     "_redirects",

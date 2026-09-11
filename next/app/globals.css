@@ -396,11 +396,29 @@ ul { margin: 0; padding: 0; list-style: none; }
 .post__meta .tag { font-size: .75rem; }
 .post__more { display: inline-block; margin-top: 14px; font-size: .9375rem; font-weight: 600; color: var(--accent); }
 
-.article { max-width: 72ch; margin-inline: auto; }
+/* An article is a reading column plus a rail. Below 1080px the rail drops
+   under the text and the column takes the full width; above it the two sit
+   at the outer edges of the wrap, so the page fills the same width as the
+   header instead of leaving a wide empty margin on both sides. The reading
+   line itself stays at a length the eye can follow. */
+.article { max-width: 78ch; margin-inline: auto; }
 .article__head { margin-bottom: 28px; }
 .article__head h1 { font-size: clamp(1.75rem, 1.3rem + 2vw, 2.75rem); }
 .article p { font-size: 1.0625rem; }
-.article h2 { margin-top: 40px; font-size: 1.375rem; }
+.article h2 {
+  margin-top: 40px; font-size: 1.375rem;
+  scroll-margin-top: calc(var(--header-h) + 20px);
+}
+
+/* a heading you can link to: the mark only appears when you are on it */
+.article h2 .anchor {
+  margin-left: 8px; font-weight: 500; color: var(--ink-3); text-decoration: none;
+  opacity: 0; transition: opacity .16s var(--ease), color .16s var(--ease);
+}
+.article h2:hover .anchor, .article h2 .anchor:focus-visible { opacity: 1; }
+.article h2 .anchor:hover { color: var(--accent); }
+.article h2 .anchor::before { content: "#"; }
+
 .article blockquote {
   margin: 24px 0; padding: 18px 22px; background: var(--surface-2);
   border-left: 4px solid var(--brand); border-radius: 0 var(--r-sm) var(--r-sm) 0;
@@ -408,6 +426,43 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .article blockquote p:last-child { margin-bottom: 0; }
 .back-link { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: .9375rem; margin-bottom: 20px; }
+
+/* the rail */
+.rail { display: grid; gap: 26px; margin-top: 40px; }
+
+/* narrow screens put the rail under the article, where a contents list no
+   longer helps anyone: what stays is the link to the other posts */
+@media (max-width: 1079px) {
+  .rail { border-top: 1px solid var(--line); padding-top: 24px; }
+  .rail__daftar { display: none; }
+}
+.rail__title {
+  margin: 0 0 10px; font-size: .75rem; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.rail ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.rail ol a {
+  display: block; padding: 6px 0 6px 12px; font-size: .9375rem; color: var(--ink-2);
+  border-left: 2px solid var(--line); transition: color .16s var(--ease), border-color .16s var(--ease);
+}
+.rail ol a:hover { color: var(--ink); text-decoration: none; border-left-color: var(--line-strong); }
+.rail ol a.is-now { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+.rail__lain { display: grid; gap: 8px; }
+.rail__lain a { font-size: .9375rem; color: var(--ink-2); line-height: 1.45; }
+.rail__lain a:hover { color: var(--accent); }
+
+@media (min-width: 1080px) {
+  .article {
+    max-width: none; display: grid; align-items: start;
+    grid-template-columns: minmax(0, 84ch) minmax(230px, 290px);
+    justify-content: space-between; column-gap: clamp(40px, 5vw, 104px);
+  }
+  .article > * { grid-column: 1; min-width: 0; }
+  .article > .rail {
+    grid-column: 2; grid-row: 2 / 200; margin-top: 0;
+    position: sticky; top: calc(var(--header-h) + 28px);
+  }
+}
 
 /* ---------- work map ---------- */
 .peta { position: relative; margin-bottom: 32px; }
@@ -560,12 +615,11 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 .section { padding: clamp(56px, 6vw, 96px) 0; }
 .section--surface { background: var(--surface); }
 
-/* blog list: the newest post gets the bigger frame */
+/* blog list: every post gets the same frame, the same title size and the
+   same lede size, so the list reads as a list and not as a ranking */
 .post { padding: 26px; border-radius: var(--r-lg); }
-.post-list > .post:first-child { background: var(--surface); border-color: transparent; }
-.post-list > .post:first-child h3 { font-size: clamp(1.35rem, 1.15rem + 1vw, 1.9rem); line-height: 1.15; }
-.post-list > .post:first-child p { font-size: 1.0625rem; }
-.post h3 { transition: color .18s var(--ease); }
+.post h3 { font-size: clamp(1.1875rem, 1.1rem + .4vw, 1.4375rem); line-height: 1.3; transition: color .18s var(--ease); }
+.post p { font-size: 1rem; }
 .post:hover h3 { color: var(--accent); }
 
 /* reading progress on articles */

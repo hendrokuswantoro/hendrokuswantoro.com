@@ -131,8 +131,10 @@ assets/js/app.js           bahasa, filter proyek, header, animasi, tahun hak cip
 assets/img/                favicon, ikon aplikasi, gambar pratayang
 tools/build_og.py          pembangkit assets/img/og-cover.png
 tools/build_icons.py       pembangkit ikon PNG
+tools/build_feed.py        pembangkit feed.xml, membaca berkas di blog/
 robots.txt                 mengizinkan perayap, menunjuk ke sitemap
 sitemap.xml                tujuh alamat, termasuk tiap tulisan blog
+feed.xml                   umpan RSS, dibangkitkan, jangan disunting tangan
 site.webmanifest           nama, warna, ikon untuk pemasangan di ponsel
 _headers                   tajuk keamanan dan cache untuk Cloudflare Pages / Netlify
 CNAME                      domain untuk GitHub Pages
@@ -176,6 +178,10 @@ Untuk teks pada atribut seperti `aria-label`, pakai `data-ind-label`.
 5. Tambahkan satu kartu `<a class="post">` di `blog/index.html`, paling atas,
    supaya yang terbaru ada di urutan pertama.
 6. Tambahkan satu baris `<url>` di `sitemap.xml`.
+7. Tambahkan judul tulisan baru ke blok `rail__lain` di tiap tulisan lain,
+   dan salin blok `<aside class="rail">` ke tulisan yang baru. Daftar isinya
+   tidak perlu ditulis: `app.js` menyusunnya sendiri dari `<h2>` yang ada.
+8. Jalankan `python tools/build_feed.py` supaya `feed.xml` ikut terbarui.
 
 Gaya bahasanya jaga tetap sederhana: kalimat pendek, kata sehari-hari,
 satu gagasan per paragraf.
@@ -252,7 +258,7 @@ HSTS. Sertifikat TLS diterbitkan Cloudflare sendiri.
 - [ ] Empat menu jalan di ponsel dan desktop, termasuk `/blog/`
 - [ ] Tombol EN/ID mengubah seluruh teks dan pilihannya bertahan saat halaman dimuat ulang
 - [ ] Filter di halaman Project menyaring kartu dengan benar
-- [ ] `/sitemap.xml` dan `/robots.txt` dapat dibuka
+- [ ] `/sitemap.xml`, `/robots.txt` dan `/feed.xml` dapat dibuka
 - [ ] Pratayang tautan di WhatsApp atau LinkedIn menampilkan `og-cover.png`
 
 ## Yang sebaiknya Anda sunting sendiri

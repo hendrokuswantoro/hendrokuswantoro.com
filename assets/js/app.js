@@ -253,6 +253,90 @@
     window.addEventListener("resize", onScroll);
   }
 
+  /* ------------------------------------------------------ article contents */
+
+  /* Builds the rail from the headings already in the article, so a post only
+     has to be written once. Every link carries both languages the same way
+     the rest of the page does, which means the language switch retitles the
+     contents list without this code listening for anything. */
+
+  function slug(text) {
+    return text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+      .slice(0, 60) || "bagian";
+  }
+
+  function initToc() {
+    var rail = doc.querySelector(".rail__daftar");
+    var article = doc.querySelector(".article");
+    if (!rail || !article) return;
+
+    var heads = article.querySelectorAll("h2");
+    if (heads.length < 2) return;
+
+    var list = rail.querySelector("ol");
+    var taken = Object.create(null);
+    var links = [];
+
+    each(heads, function (head) {
+      var english = head.getAttribute("data-eng") || head.innerHTML;
+      var indo = head.getAttribute("data-ind") || english;
+
+      if (!head.id) {
+        var id = slug(english);
+        while (taken[id]) id += "-2";
+        taken[id] = true;
+        head.id = id;
+      }
+
+      var item = doc.createElement("li");
+      var link = doc.createElement("a");
+      link.href = "#" + head.id;
+      link.innerHTML = head.innerHTML;
+      link.setAttribute("data-eng", english);
+      link.setAttribute("data-ind", indo);
+      item.appendChild(link);
+      list.appendChild(item);
+      links.push({ link: link, head: head });
+
+      /* the heading becomes linkable itself, quietly */
+      var mark = doc.createElement("a");
+      mark.className = "anchor";
+      mark.href = "#" + head.id;
+      mark.setAttribute("aria-hidden", "true");
+      mark.setAttribute("tabindex", "-1");
+      head.appendChild(mark);
+    });
+
+    rail.hidden = false;
+
+    /* the entry you are reading is marked, recomputed on a frame so the
+       scroll handler stays cheap */
+    var frame = 0;
+    function mark() {
+      frame = 0;
+      var edge = window.innerHeight * 0.3;
+      var now = links[0];
+      links.forEach(function (pair) {
+        if (pair.head.getBoundingClientRect().top <= edge) now = pair;
+      });
+      links.forEach(function (pair) {
+        pair.link.classList.toggle("is-now", pair === now);
+      });
+    }
+    function onScroll() {
+      if (frame) return;
+      frame = window.requestAnimationFrame(mark);
+    }
+
+    mark();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+  }
+
   /* -------------------------------------------------------------- copyright */
 
   function initYear() {
@@ -269,6 +353,7 @@
     initFilters();
     initMap();
     initProgress();
+    initToc();
     initYear();
   }
 
