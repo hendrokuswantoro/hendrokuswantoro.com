@@ -12,41 +12,12 @@ const stroke = {
   focusable: "false" as const,
 };
 
-const strokeBold = { ...stroke, strokeWidth: 2 };
-
 export function BrandMark({ size = 34 }: { size?: number }) {
   return (
     <svg className="brand__mark" width={size} height={size} viewBox="0 0 48 48" aria-hidden="true" focusable="false">
       <rect width="48" height="48" rx="15" fill="#008a10" />
       <path d="M15 33V15h4.6v6.7h8.8V15H33v18h-4.6v-7.2h-8.8V33z" fill="#fff" />
       <circle cx="37.5" cy="11.5" r="3.5" fill="#9be0a6" />
-    </svg>
-  );
-}
-
-export function PinIcon() {
-  return (
-    <svg viewBox="0 0 24 24" {...strokeBold}>
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
-  );
-}
-
-export function CapIcon() {
-  return (
-    <svg viewBox="0 0 24 24" {...strokeBold}>
-      <path d="M12 3 2 8l10 5 10-5-10-5Z" />
-      <path d="M6 10.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-5.5" />
-    </svg>
-  );
-}
-
-export function CheckIcon() {
-  return (
-    <svg viewBox="0 0 24 24" {...strokeBold}>
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <path d="m9 11 3 3L22 4" />
     </svg>
   );
 }

@@ -46,10 +46,10 @@ export function HeroCard() {
         <g transform="translate(384 40)">
           <rect width="212" height="96" rx="16" fill="#ffffff" />
           <text x="20" y="34" fontFamily="var(--font-inter), sans-serif" fontSize="13" fontWeight="600" fill="#6b7178">
-            Survey points
+            {say(HOME.cardPoints)}
           </text>
           <text x="20" y="70" fontFamily="var(--font-outfit), sans-serif" fontSize="30" fontWeight="700" fill="#00730d">
-            EPSG:32749
+            UTM 49S
           </text>
         </g>
       </svg>

@@ -3,10 +3,6 @@ import type { Copy } from "./i18n";
 export const ABOUT = {
   eyebrow: { en: "About", id: "Tentang" } as Copy,
   title: "Spatial Data & Systems Architect",
-  lede: {
-    en: "I am Hendro Kuswantoro, based in Yogyakarta. I design spatial data and the systems that use it, from the database to the map on the screen.",
-    id: "Saya Hendro Kuswantoro, dari Yogyakarta. Saya merancang data spasial dan sistem yang memakainya, dari basis data sampai peta di layar.",
-  } as Copy,
 
   skillsEyebrow: { en: "Skills", id: "Keahlian" } as Copy,
   skillsTitle: { en: "What I work on", id: "Yang saya kerjakan" } as Copy,
@@ -14,43 +10,43 @@ export const ABOUT = {
     {
       title: { en: "Spatial databases", id: "Basis data spasial" },
       body: {
-        en: "Schema design, indexes, migrations, and PostGIS queries that stay fast as the data grows.",
-        id: "Rancangan skema, indeks, migrasi, dan kueri PostGIS yang tetap cepat waktu datanya membesar.",
+        en: "I design the database and keep it fast when the data grows.",
+        id: "Saya rancang basis datanya dan menjaga tetap cepat waktu datanya besar.",
       },
     },
     {
       title: { en: "Map apps", id: "Aplikasi peta" },
       body: {
-        en: "An API at the back and a map in the browser, including the empty, error and out of coverage states.",
-        id: "API di belakang dan peta di peramban, lengkap dengan keadaan kosong, galat, dan batas cakupan.",
+        en: "An API at the back, a map in front, and a clear message when there is no data.",
+        id: "API di belakang, peta di depan, dan pesan yang jelas waktu datanya tidak ada.",
       },
     },
     {
       title: { en: "Spatial analysis", id: "Analisis spasial" },
       body: {
-        en: "Multi criteria models, road networks, service reach, and site selection.",
-        id: "Multikriteria, jaringan jalan, jangkauan layanan, dan pemilihan lokasi.",
+        en: "I weigh many things on one map to pick the best location.",
+        id: "Saya timbang banyak hal di satu peta untuk memilih lokasi terbaik.",
       },
     },
     {
       title: { en: "Satellite data", id: "Data satelit" },
       body: {
-        en: "Time series, event detection, and raster processing at volume.",
-        id: "Deret waktu, deteksi kejadian, dan pemrosesan raster dalam jumlah besar.",
+        en: "I read change over time from satellite images.",
+        id: "Saya baca perubahan dari waktu ke waktu lewat citra satelit.",
       },
     },
     {
       title: { en: "Cartography", id: "Kartografi" },
       body: {
-        en: "Print map sheets, clear hierarchy, colours with contrast that has been calculated.",
-        id: "Lembar peta cetak, hierarki yang jelas, warna yang kontrasnya dihitung.",
+        en: "Print maps that stay easy to read.",
+        id: "Peta cetak yang tetap gampang dibaca.",
       },
     },
     {
       title: { en: "Pipelines and delivery", id: "Alur data dan rilis" },
       body: {
-        en: "Python automation, Docker packaging, and a handover somebody else can run again.",
-        id: "Otomasi dengan Python, kemasan Docker, dan penyerahan yang bisa dijalankan ulang orang lain.",
+        en: "Python and Docker, so anyone can run the work again.",
+        id: "Python dan Docker, supaya siapa pun bisa menjalankan pekerjaannya lagi.",
       },
     },
   ] as { title: Copy; body: Copy }[],

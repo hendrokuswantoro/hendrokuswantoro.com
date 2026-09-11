@@ -16,7 +16,6 @@ export function AboutView() {
             <div>
               <span className="eyebrow">{say(ABOUT.eyebrow)}</span>
               <h1>{ABOUT.title}</h1>
-              <p className="hero__lede">{say(ABOUT.lede)}</p>
             </div>
           </div>
         </div>

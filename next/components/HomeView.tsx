@@ -8,17 +8,7 @@ import { PROJECTS } from "@/content/projects";
 import { useLang } from "./LanguageProvider";
 import { HeroCard } from "./HeroCard";
 import { ProjectCard } from "./ProjectCard";
-import {
-  CapIcon,
-  ChartIcon,
-  CheckIcon,
-  DatabaseIcon,
-  GlobeIcon,
-  MapIcon,
-  PinIcon,
-  SatelliteIcon,
-  SurveyIcon,
-} from "./Icons";
+import { ChartIcon, DatabaseIcon, GlobeIcon, MapIcon, SatelliteIcon, SurveyIcon } from "./Icons";
 
 const TILE_ICONS: Record<Tile["icon"], ReactNode> = {
   globe: <GlobeIcon />,
@@ -28,8 +18,6 @@ const TILE_ICONS: Record<Tile["icon"], ReactNode> = {
   database: <DatabaseIcon />,
   survey: <SurveyIcon />,
 };
-
-const META_ICONS = [<PinIcon key="pin" />, <CapIcon key="cap" />, <CheckIcon key="check" />];
 
 export function HomeView() {
   const { say } = useLang();
@@ -43,7 +31,6 @@ export function HomeView() {
             <div>
               <span className="eyebrow">{say(HOME.eyebrow)}</span>
               <h1>{say(HOME.title)}</h1>
-              <p className="hero__lede">{say(HOME.lede)}</p>
 
               <div className="hero__actions">
                 <Link className="btn btn--primary" href="/project/">
@@ -54,14 +41,6 @@ export function HomeView() {
                 </Link>
               </div>
 
-              <ul className="hero__meta">
-                {HOME.meta.map((item, index) => (
-                  <li key={item.en}>
-                    {META_ICONS[index]}
-                    <span>{say(item)}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
 
             <HeroCard />
@@ -74,7 +53,6 @@ export function HomeView() {
           <div className="section-head">
             <span className="eyebrow">{say(HOME.doEyebrow)}</span>
             <h2>{say(HOME.doTitle)}</h2>
-            <p>{say(HOME.doLede)}</p>
           </div>
 
           <ul className="tiles reveal">
@@ -95,7 +73,6 @@ export function HomeView() {
           <div className="section-head">
             <span className="eyebrow">{say(HOME.workEyebrow)}</span>
             <h2>{say(HOME.workTitle)}</h2>
-            <p>{say(HOME.workLede)}</p>
           </div>
 
           <div className="grid">
@@ -137,7 +114,6 @@ export function HomeView() {
         <div className="wrap">
           <div className="panel reveal">
             <h2>{say(HOME.ctaTitle)}</h2>
-            <p>{say(HOME.ctaBody)}</p>
             <div className="panel__actions">
               <Link className="btn btn--onbrand" href="/project/">
                 {say(COMMON.seeProjects)}

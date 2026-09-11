@@ -16,7 +16,6 @@ export function BlogIndexView() {
             <div>
               <span className="eyebrow">{say(BLOG.eyebrow)}</span>
               <h1>{say(BLOG.title)}</h1>
-              <p className="hero__lede">{say(BLOG.lede)}</p>
             </div>
           </div>
         </div>

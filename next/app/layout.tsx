@@ -30,8 +30,8 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
-    default: "Hendro Kuswantoro - Maps and map apps",
-    template: "%s - Hendro Kuswantoro",
+    default: "Hendro Kuswantoro, maps and map apps",
+    template: "%s, Hendro Kuswantoro",
   },
   description: "I make maps and map apps in Yogyakarta.",
   authors: [{ name: SITE.name, url: SITE.url }],
