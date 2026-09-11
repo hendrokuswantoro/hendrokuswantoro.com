@@ -66,8 +66,20 @@ bangunan. Sumber relief hidup terpisah dari gaya peta, jadi 3D tetap menyala
 waktu peta dasarnya diganti.
 
 **Legendanya dinamis.** Angkanya menghitung penanda yang benar benar berada di
-dalam layar saat itu dan berubah tiap kali peta digeser. Klik satu baris untuk
-menyaring satu jenis karya, klik lagi untuk kembali.
+dalam layar saat itu dan berubah selama peta digeser, bukan sesudah berhenti.
+Ada baris ringkasan yang menyebut apa saja yang sedang terlihat. Klik satu
+baris untuk menyaring satu jenis karya, klik lagi untuk kembali.
+
+**Panelnya bisa dilipat.** Tombol panah di pojok kanan panel menyembunyikan
+seluruh isinya dan menyisakan satu keping kecil. Pilihan itu disimpan di
+`localStorage`, jadi tetap terlipat waktu halaman dibuka lagi.
+
+**Tombol rumah** di deretan kontrol peta mengembalikan tampilan seperti saat
+peta pertama dibuka, membatalkan saringan, dan menutup balon yang terbuka.
+
+**Chrome petanya selalu terang.** Bilah skala, kredit, dan tombol kontrol tidak
+ikut tema gelap, sebab peta dasarnya selalu terang. Sempat mengikuti tema dan
+hasilnya teks gelap di atas kotak gelap yang duduk di atas peta pucat.
 
 Titik titiknya penanda lokasi, bukan batas wilayah kajian, dan itu ditulis di
 bawah petanya.

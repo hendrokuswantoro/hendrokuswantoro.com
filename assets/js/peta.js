@@ -99,6 +99,9 @@
     open: { en: "See the project", ind: "Lihat proyek" },
     reset: { en: "Reset view", ind: "Kembalikan tampilan" },
     home: { en: "Back to the starting view", ind: "Kembali ke posisi semula" },
+    panel: { en: "Map options", ind: "Pilihan peta" },
+    hide: { en: "Hide", ind: "Sembunyikan" },
+    show: { en: "Show", ind: "Tampilkan" },
     inView: { en: "in view", ind: "terlihat" },
     of: { en: "of", ind: "dari" },
     none: { en: "Nothing in view", ind: "Tidak ada yang terlihat" },
@@ -260,9 +263,51 @@
     return el;
   }
 
+  var PANEL_KEY = "hk-peta-panel";
+
+  function readPanelState() {
+    try { return window.localStorage.getItem(PANEL_KEY) === "tutup"; } catch (e) { return false; }
+  }
+
+  function writePanelState(collapsed) {
+    try { window.localStorage.setItem(PANEL_KEY, collapsed ? "tutup" : "buka"); } catch (e) { /* private mode */ }
+  }
+
   function buildPanel(map, markers, bounds, state) {
     var box = document.createElement("div");
     box.className = "peta__legenda";
+
+    /* the panel can be folded away, and it remembers that between visits */
+    var header = document.createElement("div");
+    header.className = "peta__kepala";
+    var heading = document.createElement("span");
+    heading.className = "peta__kepala-judul";
+    var toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "peta__lipat";
+    toggle.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>';
+    header.appendChild(heading);
+    header.appendChild(toggle);
+    box.appendChild(header);
+
+    var collapsed = readPanelState();
+
+    function paintToggle() {
+      box.classList.toggle("is-collapsed", collapsed);
+      toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      var word = say(collapsed ? TEXT.show : TEXT.hide) + " " + say(TEXT.panel).toLowerCase();
+      toggle.title = word;
+      toggle.setAttribute("aria-label", word);
+    }
+
+    toggle.addEventListener("click", function () {
+      collapsed = !collapsed;
+      writePanelState(collapsed);
+      paintToggle();
+      window.setTimeout(function () { map.resize(); }, 220);
+    });
 
     var groups = {};
     function group(key) {
@@ -326,6 +371,8 @@
     legendWrap.appendChild(reset);
 
     function label() {
+      heading.textContent = say(TEXT.panel);
+      paintToggle();
       groups.basemap.title.textContent = say(TEXT.basemap);
       groups.view.title.textContent = say(TEXT.view);
       groups.legend.title.textContent = say(TEXT.legend);

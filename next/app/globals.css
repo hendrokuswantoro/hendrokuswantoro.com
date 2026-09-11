@@ -584,21 +584,29 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
   .card:hover .card__cover img { transform: none; }
 }
 
-/* map chrome in both themes */
+/* Map chrome stays light in both themes, because the basemap under it is
+   always light. Following the site theme here turned the scale bar and the
+   credit line into dark text on a dark box sitting on a pale map. */
+.maplibregl-ctrl-scale {
+  background: rgba(255, 255, 255, .92) !important;
+  border: 1px solid #b9bfc5 !important; border-top: 0 !important;
+  color: #1c1f22 !important; font-family: inherit; font-size: .6875rem;
+  border-radius: 0 0 4px 4px; padding: 1px 5px;
+}
+.maplibregl-ctrl-attrib { background: rgba(255, 255, 255, .92) !important; color: #40464c !important; }
+.maplibregl-ctrl-attrib a { color: #1c1f22 !important; }
+.maplibregl-ctrl-attrib-button { background-color: rgba(255, 255, 255, .92) !important; filter: none !important; }
+.maplibregl-ctrl-group { background: #ffffff !important; border: 1px solid #c9cfd5 !important; }
+.maplibregl-ctrl-group button + button { border-top-color: #e0e4e8 !important; }
+.maplibregl-ctrl-group button span { filter: none !important; }
+.peta__rumah { color: #1c1f22; }
+.peta__rumah:hover { background: #eef0f2; }
+
 .maplibregl-popup-content { background: var(--card) !important; color: var(--ink); }
 .maplibregl-popup-anchor-top .maplibregl-popup-tip { border-bottom-color: var(--card) !important; }
 .maplibregl-popup-anchor-bottom .maplibregl-popup-tip { border-top-color: var(--card) !important; }
 .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--card) !important; }
 .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--card) !important; }
-.maplibregl-ctrl-group { background: var(--card) !important; border: 1px solid var(--line); }
-.maplibregl-ctrl-group button + button { border-top-color: var(--line) !important; }
-.maplibregl-ctrl-group button span { filter: var(--ctrl-filter, none); }
-.maplibregl-ctrl-attrib { background: var(--card) !important; color: var(--ink-3); }
-.maplibregl-ctrl-attrib a { color: var(--ink-3); }
-@media (prefers-color-scheme: dark) {
-  :root { --ctrl-filter: invert(1); }
-  .maplibregl-ctrl-attrib-button { filter: invert(1); }
-}
 
 /* ---------- map legend and controls ---------- */
 .peta__legenda {
@@ -642,10 +650,6 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 .peta__kind--design { color: #05944f; }
 .peta__pin.is-off { display: none; }
 
-.maplibregl-ctrl-scale {
-  background: var(--card) !important; border-color: var(--line) !important;
-  color: var(--ink-3); font-family: inherit; font-size: .6875rem; border-radius: 4px;
-}
 
 /* on a phone the legend would cover a third of the map, so it drops below it
    and turns into a row of chips */
@@ -703,4 +707,29 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
   content: attr(data-gagal); position: absolute; inset: 0; z-index: 4;
   display: grid; place-content: center; padding: 24px; text-align: center;
   color: var(--ink-3); font-size: .875rem;
+}
+
+/* folding the map panel away */
+.peta__kepala {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.peta__kepala-judul {
+  font-size: .625rem; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+.peta__lipat {
+  display: grid; place-items: center; width: 24px; height: 24px; flex: none;
+  border: 0; border-radius: 6px; background: transparent; color: var(--ink-2); cursor: pointer;
+  transition: background-color .16s var(--ease), transform .22s var(--ease);
+}
+.peta__lipat:hover { background: var(--surface); color: var(--ink); }
+.peta__lipat svg { width: 15px; height: 15px; }
+.peta__legenda.is-collapsed .peta__lipat { transform: rotate(-90deg); }
+.peta__legenda.is-collapsed .peta__grup { display: none; }
+.peta__legenda.is-collapsed { min-width: 0; max-width: none; padding: 6px 8px; }
+.peta__legenda.is-collapsed .peta__kepala { gap: 6px; }
+.peta__legenda .peta__grup:first-of-type { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+
+@media (prefers-reduced-motion: reduce) {
+  .peta__lipat { transition: none; }
 }
