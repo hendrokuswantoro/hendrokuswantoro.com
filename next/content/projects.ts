@@ -165,12 +165,6 @@ export const PROJECT_PAGE = {
   filterAria: { en: "Filter by kind", id: "Saring menurut jenis" } as Copy,
   empty: { en: "Nothing here yet for this kind.", id: "Belum ada proyek di jenis ini." } as Copy,
   ctaTitle: { en: "Curious how it works?", id: "Penasaran cara kerjanya?" } as Copy,
-  mapTitle: { en: "Work map", id: "Peta karya" } as Copy,
-  mapLede: {
-    en: "Seven works on a map of Indonesia. The map loads after you press the button, so the page stays light.",
-    id: "Tujuh karya di peta Indonesia. Petanya dimuat setelah tombol ditekan, supaya halaman tetap ringan.",
-  } as Copy,
-  mapButton: { en: "Show the map", id: "Tampilkan peta" } as Copy,
   mapNote: {
     en: "Marker points, not study area boundaries. Map tiles from OpenFreeMap and OpenStreetMap.",
     id: "Titik penanda, bukan batas wilayah kajian. Ubin peta dari OpenFreeMap dan OpenStreetMap.",

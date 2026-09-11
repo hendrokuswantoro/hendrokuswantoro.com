@@ -1,7 +1,9 @@
 # Cloudflare Pages and Netlify read this file.
 #
-# The work map needs three exceptions: the OpenFreeMap host for the style,
-# the vector tiles, the sprites and the glyphs,
+# The work map needs four exceptions: the OpenFreeMap host for the style,
+# the vector tiles, the sprites and the glyphs, blob workers, and inline
+# styles, which MapLibre writes onto its own controls and markers. Scripts
+# stay restricted to this origin, which is the part that carries real risk.
 # blob workers because MapLibre builds its worker at runtime, and blob plus
 # data URLs for the canvas textures it draws into.
 /*

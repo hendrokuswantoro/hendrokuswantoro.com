@@ -23,8 +23,8 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: {
-    default: "Hendro Kuswantoro, maps and map apps",
-    template: "%s, Hendro Kuswantoro",
+    default: "Hendro Kuswantoro",
+    template: "%s",
   },
   description: "I make maps and map apps in Yogyakarta.",
   authors: [{ name: SITE.name, url: SITE.url }],

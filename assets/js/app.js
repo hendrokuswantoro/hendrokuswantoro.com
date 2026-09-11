@@ -179,30 +179,39 @@
     var wrap = doc.querySelector("[data-peta]");
     if (!wrap) return;
 
-    var button = wrap.querySelector("[data-peta-mulai]");
     var canvas = wrap.querySelector("[data-peta-kanvas]");
-    if (!button || !canvas) return;
+    if (!canvas) return;
 
-    button.addEventListener("click", function () {
-      button.disabled = true;
-      wrap.setAttribute("aria-busy", "true");
+    var started = false;
+    function start() {
+      if (started) return;
+      started = true;
 
       Promise.all([
         loadOnce("css", "/assets/vendor/maplibre/maplibre-gl.css"),
         loadOnce("js", "/assets/vendor/maplibre/maplibre-gl.js")
       ])
-        .then(function () { return loadOnce("js", "/assets/js/peta.js"); })
+        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=11"); })
         .then(function () {
           wrap.classList.add("is-live");
-          wrap.removeAttribute("aria-busy");
           window.HK_PETA_MAP = window.HK_PETA.build(canvas);
         })
         .catch(function () {
-          button.disabled = false;
-          wrap.removeAttribute("aria-busy");
           wrap.classList.add("is-failed");
         });
-    });
+    }
+
+    /* the library is heavier than the rest of the site, so it waits until the
+       section is about to be looked at, then loads without being asked */
+    if (!("IntersectionObserver" in window)) { start(); return; }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        io.disconnect();
+        start();
+      });
+    }, { rootMargin: "500px 0px" });
+    io.observe(wrap);
   }
 
   /* ------------------------------------------------------- reading progress */
