@@ -6,6 +6,7 @@ export type Project = {
   id: string;
   image: string;
   alt: Copy;
+  point: { lng: number; lat: number };
   categories: Category[];
   badge: Copy;
   title: Copy;
@@ -26,6 +27,7 @@ export const FILTERS: { key: Category | "all"; label: Copy }[] = [
 export const PROJECTS: Project[] = [
   {
     id: "parking",
+    point: { lng: 110.3656, lat: -7.7925 },
     image: "/assets/img/work/parking.webp",
     alt: { en: "Screenshot of the parking map app showing the zone and the fee for Jalan Malioboro", id: "Tangkapan layar aplikasi peta parkir, menampilkan zona dan tarif di Jalan Malioboro" },
     categories: ["app"],
@@ -44,6 +46,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "fire",
+    point: { lng: 113.2, lat: -1.6 },
     image: "/assets/img/work/fire.webp",
     alt: { en: "Six small maps of Kalimantan showing where fires ignited through the 2026 season", id: "Enam peta kecil Kalimantan yang menunjukkan titik api sepanjang musim 2026" },
     categories: ["satellite", "analysis"],
@@ -62,6 +65,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "fish",
+    point: { lng: 108.22, lat: 3.7 },
     image: "/assets/img/work/fish.webp",
     alt: { en: "Poster with suitability maps and charts for fish landing sites in Natuna", id: "Poster berisi peta kesesuaian dan grafik lokasi pendaratan ikan di Natuna" },
     categories: ["analysis"],
@@ -80,6 +84,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "pickup",
+    point: { lng: 106.82, lat: -6.21 },
     image: "/assets/img/work/pickup.webp",
     alt: {
       en: "Map of common pickup points from driver GPS pings in Jakarta",
@@ -104,6 +109,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "reach",
+    point: { lng: 136.08, lat: -1.18 },
     image: "/assets/img/work/reach.webp",
     alt: { en: "Map sheet of service accessibility in Biak Numfor", id: "Lembar peta aksesibilitas layanan di Biak Numfor" },
     categories: ["analysis", "design"],
@@ -122,6 +128,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "landcover",
+    point: { lng: 110.405, lat: -7.755 },
     image: "/assets/img/work/landcover.webp",
     alt: { en: "Land cover map sheet of the Yogyakarta urban area", id: "Lembar peta tutupan lahan kawasan perkotaan Yogyakarta" },
     categories: ["design", "satellite"],
@@ -137,6 +144,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "mimika",
+    point: { lng: 137.0, lat: -4.35 },
     image: "/assets/img/work/mimika.webp",
     alt: { en: "Map of mining excavations and forest cover loss in Mimika", id: "Peta bukaan tambang dan kehilangan tutupan hutan di Mimika" },
     categories: ["satellite", "design"],
@@ -157,4 +165,15 @@ export const PROJECT_PAGE = {
   filterAria: { en: "Filter by kind", id: "Saring menurut jenis" } as Copy,
   empty: { en: "Nothing here yet for this kind.", id: "Belum ada proyek di jenis ini." } as Copy,
   ctaTitle: { en: "Curious how it works?", id: "Penasaran cara kerjanya?" } as Copy,
+  mapTitle: { en: "Work map", id: "Peta karya" } as Copy,
+  mapLede: {
+    en: "Seven works on a map of Indonesia. The map loads after you press the button, so the page stays light.",
+    id: "Tujuh karya di peta Indonesia. Petanya dimuat setelah tombol ditekan, supaya halaman tetap ringan.",
+  } as Copy,
+  mapButton: { en: "Show the map", id: "Tampilkan peta" } as Copy,
+  mapNote: {
+    en: "Marker points, not study area boundaries. Map tiles from OpenFreeMap and OpenStreetMap.",
+    id: "Titik penanda, bukan batas wilayah kajian. Ubin peta dari OpenFreeMap dan OpenStreetMap.",
+  } as Copy,
+  seeProject: { en: "See the project", id: "Lihat proyek" } as Copy,
 };

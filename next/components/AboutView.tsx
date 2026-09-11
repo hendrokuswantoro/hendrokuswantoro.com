@@ -15,7 +15,7 @@ export function AboutView() {
           <div className="hero__grid" style={{ gridTemplateColumns: "1fr", paddingBottom: 0 }}>
             <div>
               <span className="eyebrow">{say(ABOUT.eyebrow)}</span>
-              <h1>{ABOUT.title}</h1>
+              <h1>{say(ABOUT.title)}</h1>
             </div>
           </div>
         </div>

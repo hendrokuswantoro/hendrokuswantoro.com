@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Outfit } from "next/font/google";
+import { Poppins } from "next/font/google";
 import { SITE } from "@/content/nav";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
@@ -9,22 +9,15 @@ import { TabBar } from "@/components/TabBar";
 import "./globals.css";
 
 /**
- * The fonts are self hosted by next/font, so the exported site makes no
- * request to Google at runtime. The CSS variables match the family names the
- * stylesheet already asks for.
+ * Poppins is self hosted by next/font, so the exported site makes no request
+ * to Google at runtime. It stands in for the Gojek lettering, which is not
+ * publicly licensed.
  */
-const inter = Inter({
+const poppins = Poppins({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
-  variable: "--font-inter",
-});
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  display: "swap",
-  variable: "--font-outfit",
+  variable: "--font-poppins",
 });
 
 export const metadata: Metadata = {
@@ -51,14 +44,14 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#00aa13",
+  themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${outfit.variable}`}>
+    <html lang="en" className={poppins.variable}>
       <body>
         <LanguageProvider>
           <Header />

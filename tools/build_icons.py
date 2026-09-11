@@ -10,8 +10,8 @@ The SVG favicon stays the source of truth for browsers that support it.
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
-GREEN = (0, 138, 16)
-ACCENT = (155, 224, 166)
+INK = (0, 0, 0)
+ACCENT = (39, 110, 241)
 WHITE = (255, 255, 255)
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -33,7 +33,7 @@ def build(size, radius_ratio=0.24):
     big = size * scale
     img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
-    draw.rounded_rectangle([0, 0, big - 1, big - 1], radius=int(big * radius_ratio), fill=GREEN)
+    draw.rounded_rectangle([0, 0, big - 1, big - 1], radius=int(big * radius_ratio), fill=INK)
     draw.text((big * 0.5, big * 0.53), "H", font=load(int(big * 0.56)), fill=WHITE, anchor="mm")
     r = big * 0.075
     cx, cy = big * 0.78, big * 0.24

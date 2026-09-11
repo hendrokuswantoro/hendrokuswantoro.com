@@ -3,36 +3,50 @@
 Situs pribadi Hendro Kuswantoro. HTML, CSS, dan JavaScript biasa, tanpa build
 step dan tanpa dependensi. Empat menu: Home, About, Project, Blog.
 
-- Gaya antarmuka mengikuti aplikasi Gojek: warna rata tanpa gradasi, kartu
-  bersudut besar, tombol pil, kisi ikon layanan, dan tab bar di bawah layar
-  pada ponsel.
-- Bahasanya sengaja sederhana. Kalimat pendek, kata sehari-hari, tanpa
-  istilah teknis yang tidak perlu.
-- Warna utama hijau Gojek `#00aa13`. Catatan: dokumen spesifikasi awal
-  menyebut Deep Cobalt Blue, lalu diganti hijau atas permintaan pemilik pada
-  11 September 2026. Kalau suatu saat kembali ke biru, yang diubah cukup blok
-  `:root` di `assets/css/style.css` ditambah warna di dua berkas `tools/`.
-- Tipografi Google Fonts: **Inter** untuk teks, **Outfit** untuk wordmark dan
-  angka besar.
+- Tata letaknya mengikuti pola aplikasi Gojek: kartu, tombol pil, kisi ikon
+  layanan, dan tab bar di bawah layar pada ponsel.
+- **Warnanya mengikuti aplikasi Uber**: hitam, putih, abu abu, dengan satu
+  aksen biru `#276ef1` untuk tautan dan keadaan aktif.
+- **Hurufnya Poppins**, pengganti paling dekat untuk huruf Gojek yang memang
+  tidak dilisensikan untuk umum.
+- Bahasanya sengaja sederhana. Kalimat pendek, tanpa tanda strip dan titik dua.
 - Dwibahasa Inggris dan Indonesia lewat tombol EN/ID.
-- **Tidak ada bagian kontak.** Ini disengaja. Tidak ada alamat surel, formulir,
-  maupun nomor di seluruh halaman.
+- **Tidak ada bagian kontak.** Ini disengaja.
+- Halaman Proyek memuat peta karya, MapLibre dengan ubin OpenFreeMap, yang
+  baru dimuat setelah tombolnya ditekan.
 
 ## Warna dan kontras
 
-Hijau Gojek terang bagus untuk bidang besar, tetapi terlalu terang untuk
-menyangga teks putih berukuran biasa. Karena itu ada tiga nada, dan masing
-masing punya tugas sendiri. Angkanya dihitung terhadap putih.
+Semua diukur terhadap putih. Ambang WCAG AA adalah 4,5:1 untuk teks biasa dan
+3,0:1 untuk grafis.
 
 | Token | Nilai | Kontras | Dipakai untuk |
 | --- | --- | --- | --- |
-| `--brand` | `#00aa13` | 3,11:1 | bidang besar, ikon, garis, keadaan aktif |
-| `--brand-btn` | `#008a10` | 4,52:1 | tombol yang memuat teks putih |
-| `--brand-ink` | `#00730d` | 6,07:1 | teks dan tautan hijau di atas putih |
+| `--ink` | `#000000` | 21:1 | judul, tombol, panel, kaki halaman |
+| `--ink-2` | `#4a4a4a` | 8,9:1 | teks isi |
+| `--ink-3` | `#6b6b6b` | 5,3:1 | keterangan |
+| `--accent` | `#276ef1` | 4,6:1 | tautan, nama belakang di logo |
+| `--surface` | `#f6f6f6` | latar seksi | |
 
-Ambang WCAG AA adalah 4,5:1 untuk teks biasa dan 3,0:1 untuk grafis.
-**Jangan menaruh teks putih berukuran biasa di atas `--brand`.** Pakai
-`--brand-btn`. Kalau warnanya diganti, hitung ulang ketiganya.
+## Peta karya
+
+`assets/js/peta.js` menggambar tujuh titik karya di peta Indonesia. Pustaka
+MapLibre disimpan sendiri di `assets/vendor/maplibre/`, bukan dari CDN, supaya
+aturan keamanan tetap ketat dan situs tidak bergantung pada pihak lain.
+
+Ubinnya dari **OpenFreeMap**, gratis dan tanpa API key, gaya Positron.
+CARTO sempat dicoba dan sekarang menimpa tiap ubin dengan tulisan
+API KEY REQUIRED, jadi tidak bisa dipakai tanpa akun. OpenStreetMap standar
+juga bisa, tetapi warnanya ramai untuk situs hitam putih.
+
+Titik titiknya adalah penanda lokasi, bukan batas wilayah kajian, dan itu
+ditulis di bawah petanya.
+
+Berkas `_headers` memuat pengecualian yang diperlukan peta: alamat
+OpenFreeMap di `img-src` dan `connect-src`, serta `worker-src blob:` karena
+MapLibre membuat pekerjanya sendiri saat berjalan. **Uji perubahan aturan itu
+dengan menyajikan situs beserta tajuknya**, jangan hanya dengan `python -m
+http.server`, sebab galat CSP tidak muncul tanpa tajuk aslinya.
 
 ## Menjalankan secara lokal
 

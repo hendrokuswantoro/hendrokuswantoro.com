@@ -15,9 +15,9 @@ const stroke = {
 export function BrandMark({ size = 34 }: { size?: number }) {
   return (
     <svg className="brand__mark" width={size} height={size} viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-      <rect width="48" height="48" rx="15" fill="#008a10" />
+      <rect width="48" height="48" rx="14" fill="#000000" />
       <path d="M15 33V15h4.6v6.7h8.8V15H33v18h-4.6v-7.2h-8.8V33z" fill="#fff" />
-      <circle cx="37.5" cy="11.5" r="3.5" fill="#9be0a6" />
+      <circle className="mark-dot" cx="37.5" cy="11.5" r="3.5" fill="#276ef1" />
     </svg>
   );
 }

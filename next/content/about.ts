@@ -2,7 +2,7 @@ import type { Copy } from "./i18n";
 
 export const ABOUT = {
   eyebrow: { en: "About", id: "Tentang" } as Copy,
-  title: "Spatial Data & Systems Architect",
+  title: { en: "A spatial data & systems architect", id: "Seorang spatial data & systems architect" } as Copy,
 
   skillsEyebrow: { en: "Skills", id: "Keahlian" } as Copy,
   skillsTitle: { en: "What I work on", id: "Yang saya kerjakan" } as Copy,

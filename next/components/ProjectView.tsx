@@ -6,6 +6,7 @@ import { COMMON } from "@/content/nav";
 import { FILTERS, PROJECTS, PROJECT_PAGE, type Category } from "@/content/projects";
 import { useLang } from "./LanguageProvider";
 import { ProjectCard } from "./ProjectCard";
+import { WorkMap } from "./WorkMap";
 
 type FilterKey = Category | "all";
 
@@ -31,6 +32,8 @@ export function ProjectView() {
 
       <section className="section">
         <div className="wrap">
+          <WorkMap />
+
           <div className="filters" role="group" aria-label={say(PROJECT_PAGE.filterAria)}>
             {FILTERS.map((filter) => (
               <button

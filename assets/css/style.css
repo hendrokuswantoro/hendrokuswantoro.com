@@ -1,54 +1,46 @@
 /* ==========================================================================
    hendrokuswantoro.com - design system
-   Gojek style palette: one bright green, white, and light greys. Flat fills,
-   soft shadows, large radii.
+   Palette follows the Uber app: black, white, grey, one blue accent.
+   Typography is Poppins, the closest freely licensed match to the Gojek
+   lettering, since the Gojek typeface itself is not public.
 
-   Contrast, checked against white:
-     --brand      #00aa13  3.11:1  large fills, icons, active states only
-     --brand-btn  #008a10  4.52:1  button fills that carry white text
-     --brand-ink  #00730d  6.07:1  green text and links on white
-   Text on white: --ink 16.1:1, --ink-2 8.3:1, --ink-3 5.3:1.
-   Do not put white text on --brand at body size; use --brand-btn.
+   Contrast against white: --ink 21:1, --ink-2 8.9:1, --ink-3 5.3:1,
+   --accent 4.6:1. White on --brand is 21:1.
    ========================================================================== */
 
 :root {
-  --green-50:  #e8f8ea;
-  --green-100: #ccefd2;
-  --green-200: #9be0a6;
-  --green-300: #5fcc72;
-  --green-400: #22b83c;
-  --green-500: #00aa13;
-  --green-600: #008a10;
-  --green-700: #00730d;
-  --green-800: #005c0a;
-  --green-900: #0b2f14;
+  --ink: #000000;
+  --ink-2: #4a4a4a;
+  --ink-3: #6b6b6b;
 
-  --brand: var(--green-500);
-  --brand-btn: var(--green-600);
-  --brand-ink: var(--green-700);
-  --brand-strong: var(--green-700);
-
-  --ink: #1c1e21;
-  --ink-2: #4a4f55;
-  --ink-3: #6b7178;
   --bg: #ffffff;
-  --surface: #f6f7f8;
-  --surface-2: #eef0f2;
-  --line: #e5e8ea;
+  --surface: #f6f6f6;
+  --surface-2: #eeeeee;
+  --line: #e2e2e2;
+  --line-strong: #c9c9c9;
 
-  --r-sm: 14px;
-  --r-md: 20px;
-  --r-lg: 28px;
+  --brand: #000000;
+  --brand-btn: #000000;
+  --brand-ink: #000000;
+  --brand-strong: #000000;
+  --brand-hover: #333333;
+
+  --accent: #276ef1;
+  --accent-soft: #eef3fe;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
   --r-pill: 999px;
 
-  --sh-1: 0 1px 2px rgba(28, 30, 33, .05), 0 6px 18px rgba(28, 30, 33, .06);
-  --sh-2: 0 2px 6px rgba(28, 30, 33, .06), 0 16px 40px rgba(28, 30, 33, .10);
-  --sh-brand: 0 8px 20px rgba(0, 138, 16, .28);
+  --sh-1: 0 1px 2px rgba(0, 0, 0, .05), 0 4px 14px rgba(0, 0, 0, .05);
+  --sh-2: 0 2px 6px rgba(0, 0, 0, .06), 0 14px 34px rgba(0, 0, 0, .10);
+  --sh-brand: 0 6px 16px rgba(0, 0, 0, .22);
 
-  --header-h: 64px;
+  --header-h: 72px;
   --tabbar-h: 66px;
-  --maxw: 1140px;
-  --gutter: 20px;
+  --maxw: 1320px;
+  --gutter: 24px;
   --ease: cubic-bezier(.2, .7, .3, 1);
 
   color-scheme: light;
@@ -58,7 +50,7 @@
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body {
   margin: 0;
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   font-size: 16px;
   line-height: 1.65;
   color: var(--ink-2);
@@ -67,13 +59,16 @@ body {
 }
 img, svg { max-width: 100%; }
 img { height: auto; display: block; }
-a { color: var(--brand-ink); text-decoration: none; }
+a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 h1, h2, h3, h4 { color: var(--ink); line-height: 1.2; margin: 0 0 .5em; letter-spacing: -.02em; font-weight: 700; }
 h1 { font-size: clamp(2rem, 1.3rem + 3vw, 3.25rem); letter-spacing: -.035em; }
 h2 { font-size: clamp(1.5rem, 1.15rem + 1.5vw, 2.25rem); letter-spacing: -.03em; }
 h3 { font-size: 1.175rem; }
 p { margin: 0 0 1rem; }
+.hero__lede, .section-head p, .card__body p, .post p, .article p, .peta__ajakan p, .panel p, .footer__desc {
+  text-align: justify; text-justify: inter-word; hyphens: auto;
+}
 ul { margin: 0; padding: 0; list-style: none; }
 :focus-visible { outline: 3px solid var(--brand-btn); outline-offset: 3px; border-radius: 6px; }
 
@@ -89,10 +84,10 @@ ul { margin: 0; padding: 0; list-style: none; }
 .eyebrow {
   display: inline-flex; align-items: center; gap: 8px;
   font-size: .8125rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
-  color: var(--brand-strong); background: var(--green-50);
+  color: var(--brand-strong); background: var(--surface-2);
   border-radius: var(--r-pill); padding: 6px 14px; margin-bottom: 16px;
 }
-.section-head { max-width: 62ch; margin-bottom: 32px; }
+.section-head { max-width: 68ch; margin-bottom: 28px; }
 .section-head p { color: var(--ink-3); font-size: 1.0625rem; }
 .skip-link {
   position: absolute; left: 12px; top: -80px; z-index: 200;
@@ -113,11 +108,11 @@ ul { margin: 0; padding: 0; list-style: none; }
 .btn:active { transform: translateY(0); }
 .btn svg { width: 18px; height: 18px; flex: none; }
 .btn--primary { background: var(--brand-btn); color: #fff; box-shadow: var(--sh-brand); }
-.btn--primary:hover { background: var(--green-700); }
+.btn--primary:hover { background: var(--brand); }
 .btn--ghost { background: #fff; color: var(--brand-strong); border-color: var(--line); box-shadow: var(--sh-1); }
-.btn--ghost:hover { border-color: var(--green-300); }
+.btn--ghost:hover { border-color: var(--line-strong); }
 .btn--onbrand { background: #fff; color: var(--brand-strong); }
-.btn--onbrand:hover { background: var(--green-50); }
+.btn--onbrand:hover { background: var(--surface-2); }
 .btn--outline-light { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .55); }
 .btn--outline-light:hover { background: rgba(255, 255, 255, .12); }
 .btn--sm { padding: 10px 18px; font-size: .875rem; }
@@ -136,9 +131,9 @@ ul { margin: 0; padding: 0; list-style: none; }
 .header .wrap { display: flex; align-items: center; gap: 16px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 700; letter-spacing: -.02em; }
 .brand:hover { text-decoration: none; }
-.brand__mark { width: 34px; height: 34px; border-radius: 11px; flex: none; box-shadow: var(--sh-brand); }
-.brand__name { font-family: "Outfit", "Inter", system-ui, sans-serif; font-size: 1.0625rem; white-space: nowrap; }
-.brand__name span { color: var(--brand-ink); }
+.brand__mark { width: 40px; height: 40px; border-radius: 12px; flex: none; box-shadow: var(--sh-brand); }
+.brand__name { font-family: "Poppins", system-ui, sans-serif; font-size: 1.375rem; font-weight: 700; letter-spacing: -.03em; white-space: nowrap; }
+.brand__name span { color: var(--accent); }
 .nav { margin-left: auto; }
 .nav__list { display: flex; align-items: center; gap: 4px; }
 .nav__link {
@@ -147,7 +142,7 @@ ul { margin: 0; padding: 0; list-style: none; }
   transition: background-color .18s var(--ease), color .18s var(--ease);
 }
 .nav__link:hover { background: var(--surface-2); color: var(--ink); text-decoration: none; }
-.nav__link[aria-current="page"] { background: var(--green-50); color: var(--brand-strong); }
+.nav__link[aria-current="page"] { background: var(--ink); color: #fff; }
 .header__actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 .nav + .header__actions { margin-left: 0; }
 .lang { display: inline-flex; padding: 3px; gap: 2px; background: var(--surface-2); border-radius: var(--r-pill); }
@@ -164,7 +159,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .hero { position: relative; overflow: hidden; background: var(--bg); }
 .hero::before {
   content: ""; position: absolute; inset: 0 0 auto; height: 78%;
-  background: linear-gradient(180deg, var(--green-50) 0%, var(--green-50) 62%, rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-2) 62%, rgba(255, 255, 255, 0) 100%);
   pointer-events: none;
 }
 .hero .wrap { position: relative; }
@@ -198,8 +193,8 @@ ul { margin: 0; padding: 0; list-style: none; }
   border-radius: var(--r-md); box-shadow: var(--sh-1); color: inherit;
   transition: transform .2s var(--ease), box-shadow .2s var(--ease), border-color .2s var(--ease);
 }
-.tile:hover { transform: translateY(-4px); box-shadow: var(--sh-2); border-color: var(--green-200); text-decoration: none; }
-.tile__icon { width: 46px; height: 46px; border-radius: var(--r-sm); flex: none; display: grid; place-items: center; background: var(--green-50); color: var(--brand-ink); }
+.tile:hover { transform: translateY(-4px); box-shadow: var(--sh-2); border-color: var(--line-strong); text-decoration: none; }
+.tile__icon { width: 46px; height: 46px; border-radius: var(--r-sm); flex: none; display: grid; place-items: center; background: var(--surface-2); color: var(--brand-ink); }
 .tile__icon svg { width: 24px; height: 24px; }
 .tile__label { font-size: .875rem; font-weight: 600; color: var(--ink); line-height: 1.35; }
 
@@ -211,7 +206,7 @@ ul { margin: 0; padding: 0; list-style: none; }
   box-shadow: var(--sh-1); overflow: hidden;
   transition: transform .2s var(--ease), box-shadow .2s var(--ease), border-color .2s var(--ease);
 }
-.card:hover { transform: translateY(-4px); box-shadow: var(--sh-2); border-color: var(--green-200); }
+.card:hover { transform: translateY(-4px); box-shadow: var(--sh-2); border-color: var(--line-strong); }
 .card__cover { position: relative; aspect-ratio: 16 / 9; background: var(--surface-2); }
 .card__cover img, .card__cover svg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .card__badge {
@@ -227,7 +222,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .tags { display: flex; flex-wrap: wrap; gap: 7px; }
 .tag {
   font-size: .75rem; font-weight: 600; color: var(--brand-strong);
-  background: var(--green-50); border-radius: var(--r-pill); padding: 5px 11px; overflow-wrap: anywhere;
+  background: var(--surface-2); border-radius: var(--r-pill); padding: 5px 11px; overflow-wrap: anywhere;
 }
 .tag--muted { color: var(--ink-3); background: var(--surface-2); }
 
@@ -235,23 +230,23 @@ ul { margin: 0; padding: 0; list-style: none; }
 .stats { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 760px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .stat { min-width: 0; background: #fff; border: 1px solid var(--line); border-radius: var(--r-md); padding: 22px; box-shadow: var(--sh-1); }
-.stat__num { font-family: "Outfit", "Inter", sans-serif; font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem); font-weight: 700; color: var(--brand-ink); line-height: 1.1; letter-spacing: -.03em; }
+.stat__num { font-family: "Poppins", sans-serif; font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem); font-weight: 700; color: var(--brand-ink); line-height: 1.1; letter-spacing: -.03em; }
 .stat__label { font-size: .875rem; color: var(--ink-3); margin-top: 4px; }
 
 /* ---------- gradient panel ---------- */
 .panel {
   position: relative; overflow: hidden; color: #fff;
-  background: var(--green-700);
-  border-radius: var(--r-lg); padding: clamp(28px, 4.5vw, 56px);
+  background: var(--brand);
+  border-radius: var(--r-lg); padding: clamp(22px, 2.6vw, 34px);
 }
 .panel::after {
-  content: ""; position: absolute; right: -80px; top: -90px; width: 320px; height: 320px;
-  border-radius: 50%; background: rgba(255, 255, 255, .10);
+  content: ""; position: absolute; right: -60px; top: -70px; width: 190px; height: 190px;
+  border-radius: 50%; background: rgba(255, 255, 255, .07);
   pointer-events: none;
 }
-.panel h2, .panel h3 { color: #fff; }
-.panel p { color: rgba(255, 255, 255, .92); max-width: 58ch; }
-.panel__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; position: relative; z-index: 1; }
+.panel h2, .panel h3 { color: #fff; font-size: clamp(1.25rem, 1.1rem + .7vw, 1.6rem); margin-bottom: .35em; }
+.panel p { color: rgba(255, 255, 255, .92); max-width: 62ch; font-size: .9375rem; margin-bottom: 0; }
+.panel__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; position: relative; z-index: 1; }
 
 /* ---------- project filter ---------- */
 .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
@@ -261,13 +256,13 @@ ul { margin: 0; padding: 0; list-style: none; }
   background: #fff; color: var(--ink-2); border: 1.5px solid var(--line);
   transition: background-color .18s var(--ease), color .18s var(--ease), border-color .18s var(--ease);
 }
-.filter:hover { border-color: var(--green-300); color: var(--ink); }
+.filter:hover { border-color: var(--line-strong); color: var(--ink); }
 .filter[aria-pressed="true"] { background: var(--brand-btn); border-color: var(--brand-btn); color: #fff; }
 .is-hidden { display: none !important; }
 .empty { padding: 40px 0; color: var(--ink-3); text-align: center; }
 
 /* ---------- footer ---------- */
-.footer { background: var(--green-900); color: rgba(255, 255, 255, .82); padding: 28px 0; }
+.footer { background: var(--brand); color: rgba(255, 255, 255, .82); padding: 28px 0; }
 .footer a { color: rgba(255, 255, 255, .88); }
 .footer a:hover { color: #fff; }
 .footer__bottom {
@@ -292,13 +287,29 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .tabbar__link:hover { text-decoration: none; }
 .tabbar__link svg { width: 22px; height: 22px; }
-.tabbar__link[aria-current="page"] { color: var(--brand-ink); }
+.tabbar__link[aria-current="page"] { color: var(--ink); }
 @media (max-width: 719px) {
   .tabbar { display: flex; }
   body { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
   .nav { display: none; }
 }
 @media (max-width: 420px) { .header__actions .btn { display: none; } }
+
+/* the wordmark is large on purpose, but it cannot push the header wider
+   than the phone it is read on */
+@media (max-width: 520px) {
+  :root { --gutter: 16px; --header-h: 64px; }
+  .brand__name { font-size: 1.125rem; }
+  .brand__mark { width: 34px; height: 34px; border-radius: 10px; }
+  .header .wrap { gap: 10px; }
+}
+
+@media (max-width: 380px) {
+  .brand__name { font-size: 1rem; }
+  .brand__mark { width: 32px; height: 32px; }
+  .header .wrap { gap: 8px; }
+  .lang__btn { padding: 6px 10px; font-size: .75rem; }
+}
 
 /* ---------- utilities ---------- */
 .mt-24 { margin-top: 24px; }
@@ -319,22 +330,127 @@ ul { margin: 0; padding: 0; list-style: none; }
   border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--sh-1);
   transition: transform .2s var(--ease), box-shadow .2s var(--ease), border-color .2s var(--ease);
 }
-.post:hover { transform: translateY(-3px); box-shadow: var(--sh-2); border-color: var(--green-200); text-decoration: none; }
+.post:hover { transform: translateY(-3px); box-shadow: var(--sh-2); border-color: var(--line-strong); text-decoration: none; }
 .post h3 { margin: 6px 0 8px; }
 .post p { margin: 0; color: var(--ink-2); font-size: .9375rem; }
 .post__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: .8125rem; color: var(--ink-3); }
 .post__meta .tag { font-size: .75rem; }
-.post__more { display: inline-block; margin-top: 14px; font-size: .9375rem; font-weight: 600; color: var(--brand-ink); }
+.post__more { display: inline-block; margin-top: 14px; font-size: .9375rem; font-weight: 600; color: var(--accent); }
 
-.article { max-width: 68ch; }
+.article { max-width: 72ch; margin-inline: auto; }
 .article__head { margin-bottom: 28px; }
 .article__head h1 { font-size: clamp(1.75rem, 1.3rem + 2vw, 2.75rem); }
 .article p { font-size: 1.0625rem; }
 .article h2 { margin-top: 40px; font-size: 1.375rem; }
 .article blockquote {
-  margin: 24px 0; padding: 18px 22px; background: var(--green-50);
+  margin: 24px 0; padding: 18px 22px; background: var(--surface-2);
   border-left: 4px solid var(--brand); border-radius: 0 var(--r-sm) var(--r-sm) 0;
   color: var(--ink); font-size: 1.0625rem;
 }
 .article blockquote p:last-child { margin-bottom: 0; }
 .back-link { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: .9375rem; margin-bottom: 20px; }
+
+/* ---------- work map ---------- */
+.peta { margin-bottom: 32px; }
+.peta__frame {
+  position: relative; overflow: hidden; border-radius: var(--r-lg);
+  border: 1px solid var(--line); box-shadow: var(--sh-1);
+  background: var(--surface-2); aspect-ratio: 4 / 3;
+}
+@media (min-width: 720px) { .peta__frame { aspect-ratio: 21 / 9; } }
+/* two class selector on purpose: maplibre-gl.css loads later and its own
+   .maplibregl-map { position: relative } would otherwise win, collapsing this
+   box to zero height and hiding the whole map */
+.peta__frame .peta__kanvas { position: absolute; inset: 0; height: 100%; }
+.peta__ajakan {
+  position: absolute; inset: 0; z-index: 2; display: grid; place-content: center;
+  gap: 6px; text-align: center; padding: 24px; background: var(--surface-2);
+}
+.peta__ajakan h2 { margin: 0; font-size: clamp(1.25rem, 1.1rem + .8vw, 1.75rem); }
+.peta__ajakan p { margin: 0 auto; max-width: 46ch; color: var(--ink-3); font-size: .9375rem; }
+.peta__ajakan .btn { justify-self: center; margin-top: 10px; }
+.peta.is-live .peta__ajakan { display: none; }
+.peta__ket { margin: 12px 0 0; font-size: .8125rem; color: var(--ink-3); }
+
+.peta__pin {
+  width: 18px; height: 18px; padding: 0; border-radius: 50%; cursor: pointer;
+  background: var(--brand-btn); border: 3px solid #fff;
+  box-shadow: 0 2px 6px rgba(28, 30, 33, .35);
+  transition: transform .15s var(--ease);
+}
+.peta__pin:hover { transform: scale(1.25); }
+
+.peta__popup .maplibregl-popup-content {
+  font-family: inherit; border-radius: var(--r-sm); padding: 14px 16px;
+  box-shadow: var(--sh-2); display: grid; gap: 6px; max-width: 230px;
+}
+.peta__popup .peta__kind {
+  font-size: .6875rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.peta__popup strong { color: var(--ink); font-size: .9375rem; line-height: 1.3; }
+.peta__popup a { font-size: .875rem; font-weight: 600; }
+.maplibregl-ctrl-attrib { font-size: .6875rem; }
+
+/* hero variant without the side by side split */
+.hero__grid--solo { grid-template-columns: 1fr; padding-bottom: 0; }
+@media (min-width: 900px) { .hero__grid--solo { grid-template-columns: 1fr; } }
+.wrap--narrow { max-width: 680px; }
+
+/* ---------- signature motion ----------
+   Three small things, all switched off when the visitor asks for less
+   motion: the dot on the logo breathes, the nav underlines itself on
+   hover, and the route on the hero map draws itself once on load. */
+.brand__mark .mark-dot { transform-origin: 37.5px 11.5px; animation: markDot 3.6s var(--ease) infinite; }
+@keyframes markDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(.55); opacity: .55; }
+}
+
+.nav__link { position: relative; }
+.nav__link::after {
+  content: ""; position: absolute; left: 16px; right: 16px; bottom: 4px; height: 2px;
+  background: currentColor; transform: scaleX(0); transform-origin: left;
+  transition: transform .25s var(--ease);
+}
+.nav__link:hover::after { transform: scaleX(1); }
+.nav__link[aria-current="page"]::after { display: none; }
+
+.hero__card .jalur-utama { stroke-dasharray: 1200; stroke-dashoffset: 1200; animation: gambarJalur 1.9s var(--ease) .25s forwards; }
+.hero__card .jalur-titik { stroke-dasharray: 14 10; animation: jalanTitik 24s linear infinite; }
+@keyframes gambarJalur { to { stroke-dashoffset: 0; } }
+@keyframes jalanTitik { to { stroke-dashoffset: -480; } }
+.hero__card .denyut { transform-origin: 258px 252px; animation: denyut 2.6s var(--ease) infinite; }
+@keyframes denyut {
+  0% { transform: scale(.6); opacity: .9; }
+  70%, 100% { transform: scale(1.7); opacity: 0; }
+}
+
+.btn { position: relative; overflow: hidden; }
+.btn::after {
+  content: ""; position: absolute; inset: 0; background: #fff; opacity: 0;
+  transition: opacity .25s var(--ease);
+}
+.btn:active::after { opacity: .14; transition-duration: 0s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .brand__mark .mark-dot,
+  .hero__card .jalur-utama,
+  .hero__card .jalur-titik,
+  .hero__card .denyut { animation: none; }
+  .hero__card .jalur-utama { stroke-dashoffset: 0; }
+  .nav__link::after { transition: none; }
+}
+
+/* ---------- map polish ---------- */
+.peta__frame { background: var(--surface); }
+.peta__pin {
+  width: 16px; height: 16px; border-radius: 50%; padding: 0; cursor: pointer;
+  background: var(--ink); border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .4);
+  transition: transform .18s var(--ease);
+}
+.peta__pin:hover, .peta__pin:focus-visible { transform: scale(1.35); }
+.peta__popup .maplibregl-popup-content { border: 1px solid var(--line); }
+.maplibregl-ctrl-group { border-radius: var(--r-sm) !important; }
+.maplibregl-ctrl-group button { width: 32px !important; height: 32px !important; }

@@ -1,10 +1,16 @@
+# Cloudflare Pages and Netlify read this file.
+#
+# The work map needs three exceptions: the OpenFreeMap host for the style,
+# the vector tiles, the sprites and the glyphs,
+# blob workers because MapLibre builds its worker at runtime, and blob plus
+# data URLs for the canvas textures it draws into.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), interest-cohort=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://tiles.openfreemap.org; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' blob:; worker-src blob:; child-src blob:; connect-src 'self' https://tiles.openfreemap.org; object-src 'none'; upgrade-insecure-requests
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable

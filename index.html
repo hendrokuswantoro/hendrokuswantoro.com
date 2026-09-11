@@ -6,7 +6,7 @@
 <title data-ind="Hendro Kuswantoro, peta dan aplikasi peta">Hendro Kuswantoro, maps and map apps</title>
 <meta name="description" data-ind="Saya bikin peta dan aplikasi peta di Yogyakarta." content="I make maps and map apps in Yogyakarta.">
 <link rel="canonical" href="https://www.hendrokuswantoro.com/">
-<meta name="theme-color" content="#00aa13">
+<meta name="theme-color" content="#000000">
 <meta name="author" content="Hendro Kuswantoro">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Hendro Kuswantoro">
@@ -25,9 +25,9 @@
 <link rel="manifest" href="/site.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap">
-<link rel="stylesheet" href="/assets/css/style.css">
-<script defer src="/assets/js/app.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/assets/css/style.css?v=3">
+<script defer src="/assets/js/app.js?v=3"></script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -47,9 +47,9 @@
   <div class="wrap">
     <a class="brand" href="/" aria-label="Hendro Kuswantoro, home" data-ind-label="Hendro Kuswantoro, beranda">
       <svg class="brand__mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-        <rect width="48" height="48" rx="15" fill="#008a10"></rect>
+        <rect width="48" height="48" rx="14" fill="#000000"></rect>
         <path d="M15 33V15h4.6v6.7h8.8V15H33v18h-4.6v-7.2h-8.8V33z" fill="#fff"></path>
-        <circle cx="37.5" cy="11.5" r="3.5" fill="#9be0a6"></circle>
+        <circle class="mark-dot" cx="37.5" cy="11.5" r="3.5" fill="#276ef1"></circle>
       </svg>
       <span class="brand__name">hendro<span>kuswantoro</span></span>
     </a>
@@ -91,31 +91,31 @@
 
         <figure class="hero__card reveal">
           <svg viewBox="0 0 640 420" role="img" aria-label="A green map with a route and three points on it" data-ind-label="Peta hijau dengan rute dan tiga titik di atasnya">
-            <rect width="640" height="420" fill="#00730d"></rect>
-            <g stroke="#ffffff" stroke-opacity="0.12" stroke-width="1">
+            <rect width="640" height="420" fill="#111111"></rect>
+            <g stroke="#ffffff" stroke-opacity="0.10" stroke-width="1">
               <path d="M0 60h640M0 120h640M0 180h640M0 240h640M0 300h640M0 360h640"></path>
               <path d="M80 0v420M160 0v420M240 0v420M320 0v420M400 0v420M480 0v420M560 0v420"></path>
             </g>
-            <g fill="#ffffff" fill-opacity="0.08">
-              <rect x="52" y="86" width="118" height="72" rx="10"></rect>
-              <rect x="205" y="62" width="86" height="110" rx="10"></rect>
-              <rect x="352" y="96" width="140" height="64" rx="10"></rect>
-              <rect x="84" y="228" width="150" height="92" rx="10"></rect>
-              <rect x="290" y="252" width="104" height="68" rx="10"></rect>
-              <rect x="440" y="220" width="132" height="122" rx="10"></rect>
+            <g fill="#ffffff" fill-opacity="0.06">
+              <rect x="52" y="86" width="118" height="72" rx="8"></rect>
+              <rect x="205" y="62" width="86" height="110" rx="8"></rect>
+              <rect x="352" y="96" width="140" height="64" rx="8"></rect>
+              <rect x="84" y="228" width="150" height="92" rx="8"></rect>
+              <rect x="290" y="252" width="104" height="68" rx="8"></rect>
+              <rect x="440" y="220" width="132" height="122" rx="8"></rect>
             </g>
-            <path d="M-10 330c90-18 132-96 224-104 92-8 128 62 214 46 62-12 96-62 222-46" fill="none" stroke="#00aa13" stroke-width="10" stroke-linecap="round"></path>
-            <path d="M60 386C140 300 176 268 258 252c82-16 120 26 186-10 48-26 72-74 138-96" fill="none" stroke="#9be0a6" stroke-width="4" stroke-dasharray="14 10" stroke-linecap="round"></path>
+            <path class="jalur-utama" d="M-10 330c90-18 132-96 224-104 92-8 128 62 214 46 62-12 96-62 222-46" fill="none" stroke="#276ef1" stroke-width="9" stroke-linecap="round"></path>
+            <path class="jalur-titik" d="M60 386C140 300 176 268 258 252c82-16 120 26 186-10 48-26 72-74 138-96" fill="none" stroke="#ffffff" stroke-opacity="0.7" stroke-width="3" stroke-linecap="round"></path>
             <g>
-              <circle cx="258" cy="252" r="9" fill="#ffffff"></circle>
-              <circle cx="258" cy="252" r="18" fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="2"></circle>
-              <circle cx="444" cy="242" r="7" fill="#9be0a6"></circle>
-              <circle cx="120" cy="330" r="7" fill="#9be0a6"></circle>
+              <circle class="denyut" cx="258" cy="252" r="14" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2"></circle>
+              <circle cx="258" cy="252" r="8" fill="#ffffff"></circle>
+              <circle cx="444" cy="242" r="6" fill="#276ef1"></circle>
+              <circle cx="120" cy="330" r="6" fill="#276ef1"></circle>
             </g>
             <g transform="translate(384 40)">
-              <rect width="212" height="96" rx="16" fill="#ffffff"></rect>
-              <text x="20" y="34" font-family="Inter, sans-serif" font-size="13" font-weight="600" fill="#6b7178" data-ind="Titik survei">Survey points</text>
-              <text x="20" y="70" font-family="Outfit, Inter, sans-serif" font-size="30" font-weight="700" fill="#00730d">UTM 49S</text>
+              <rect width="212" height="92" rx="12" fill="#ffffff"></rect>
+              <text x="20" y="34" font-family="Poppins, sans-serif" font-size="13" font-weight="500" fill="#6b6b6b" data-ind="Titik survei">Survey points</text>
+              <text x="20" y="68" font-family="Poppins, sans-serif" font-size="26" font-weight="700" fill="#000000">UTM 49S</text>
             </g>
           </svg>
           <figcaption>

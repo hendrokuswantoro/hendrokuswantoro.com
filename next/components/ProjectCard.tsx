@@ -15,7 +15,7 @@ export function ProjectCard({
   const { say } = useLang();
 
   return (
-    <article className="card reveal">
+    <article className="card reveal" id={`karya-${project.id}`}>
       <div className="card__cover">
         {/* plain img on purpose: the export is static and the files are already
             sized and compressed by tools/build_work_images.py */}

@@ -6,7 +6,7 @@
 <title data-ind="Proyek, Hendro Kuswantoro">Project, Hendro Kuswantoro</title>
 <meta name="description" data-ind="Tujuh proyek peta, dari aplikasi peta sampai peta cetak." content="Seven map projects, from map apps to print maps.">
 <link rel="canonical" href="https://www.hendrokuswantoro.com/project.html">
-<meta name="theme-color" content="#00aa13">
+<meta name="theme-color" content="#000000">
 <meta name="author" content="Hendro Kuswantoro">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Hendro Kuswantoro">
@@ -23,9 +23,9 @@
 <link rel="manifest" href="/site.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap">
-<link rel="stylesheet" href="/assets/css/style.css">
-<script defer src="/assets/js/app.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/assets/css/style.css?v=3">
+<script defer src="/assets/js/app.js?v=3"></script>
 </head>
 <body>
 <a class="skip-link" href="#main" data-ind="Lompat ke isi">Skip to content</a>
@@ -34,9 +34,9 @@
   <div class="wrap">
     <a class="brand" href="/" aria-label="Hendro Kuswantoro, home" data-ind-label="Hendro Kuswantoro, beranda">
       <svg class="brand__mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-        <rect width="48" height="48" rx="15" fill="#008a10"></rect>
+        <rect width="48" height="48" rx="14" fill="#000000"></rect>
         <path d="M15 33V15h4.6v6.7h8.8V15H33v18h-4.6v-7.2h-8.8V33z" fill="#fff"></path>
-        <circle cx="37.5" cy="11.5" r="3.5" fill="#9be0a6"></circle>
+        <circle class="mark-dot" cx="37.5" cy="11.5" r="3.5" fill="#276ef1"></circle>
       </svg>
       <span class="brand__name">hendro<span>kuswantoro</span></span>
     </a>
@@ -63,7 +63,7 @@
 
   <section class="hero">
     <div class="wrap">
-      <div class="hero__grid" style="grid-template-columns:1fr;padding-bottom:0">
+      <div class="hero__grid hero__grid--solo">
         <div>
           <h1 data-ind="Proyek">Project</h1>
         </div>
@@ -73,6 +73,19 @@
 
   <section class="section">
     <div class="wrap">
+
+      <section class="peta" data-peta>
+        <div class="peta__frame">
+          <div class="peta__kanvas" data-peta-kanvas></div>
+          <div class="peta__ajakan">
+            <h2 data-ind="Peta karya">Work map</h2>
+            <p data-ind="Tujuh karya di peta Indonesia. Petanya dimuat setelah tombol ditekan, supaya halaman tetap ringan.">Seven works on a map of Indonesia. The map loads after you press the button, so the page stays light.</p>
+            <button class="btn btn--primary" type="button" data-peta-mulai data-ind="Tampilkan peta">Show the map</button>
+          </div>
+        </div>
+        <p class="peta__ket" data-ind="Titik penanda, bukan batas wilayah kajian. Ubin peta dari OpenFreeMap dan OpenStreetMap.">Marker points, not study area boundaries. Map tiles from OpenFreeMap and OpenStreetMap.</p>
+      </section>
+
       <div class="filters" role="group" aria-label="Filter by kind" data-ind-label="Saring menurut jenis">
         <button class="filter" type="button" data-filter="all" aria-pressed="true" data-ind="Semua">All</button>
         <button class="filter" type="button" data-filter="app" aria-pressed="false" data-ind="Aplikasi peta">Map apps</button>
@@ -83,7 +96,7 @@
 
       <div class="grid">
 
-        <article class="card reveal" data-category="app">
+        <article class="card reveal" id="karya-parking" data-category="app">
           <div class="card__cover">
             <img src="/assets/img/work/parking.webp" width="800" height="450" loading="lazy" decoding="async"
                  alt="Screenshot of the parking map app showing the zone and the fee for Jalan Malioboro" data-ind-alt="Tangkapan layar aplikasi peta parkir, menampilkan zona dan tarif di Jalan Malioboro">
@@ -97,7 +110,7 @@
           </div>
         </article>
 
-        <article class="card reveal" data-category="satellite analysis">
+        <article class="card reveal" id="karya-fire" data-category="satellite analysis">
           <div class="card__cover">
             <img src="/assets/img/work/fire.webp" width="800" height="450" loading="lazy" decoding="async"
                  alt="Six small maps of Kalimantan showing where fires ignited through the 2026 season" data-ind-alt="Enam peta kecil Kalimantan yang menunjukkan titik api sepanjang musim 2026">
@@ -111,7 +124,7 @@
           </div>
         </article>
 
-        <article class="card reveal" data-category="analysis">
+        <article class="card reveal" id="karya-fish" data-category="analysis">
           <div class="card__cover">
             <img src="/assets/img/work/fish.webp" width="800" height="450" loading="lazy" decoding="async"
                  alt="Poster with suitability maps and charts for fish landing sites in Natuna" data-ind-alt="Poster berisi peta kesesuaian dan grafik lokasi pendaratan ikan di Natuna">
@@ -125,7 +138,7 @@
           </div>
         </article>
 
-        <article class="card reveal" data-category="analysis">
+        <article class="card reveal" id="karya-pickup" data-category="analysis">
           <div class="card__cover">
             <img src="/assets/img/work/pickup.webp" width="800" height="450" loading="lazy" decoding="async"
                  alt="Map of common pickup points from driver GPS pings in Jakarta" data-ind-alt="Peta titik jemput umum dari ping GPS pengemudi di Jakarta">
@@ -139,7 +152,7 @@
           </div>
         </article>
 
-        <article class="card reveal" data-category="analysis design">
+        <article class="card reveal" id="karya-reach" data-category="analysis design">
           <div class="card__cover">
             <img src="/assets/img/work/reach.webp" width="800" height="450" loading="lazy" decoding="async"
                  alt="Map sheet of service accessibility in Biak Numfor" data-ind-alt="Lembar peta aksesibilitas layanan di Biak Numfor">
@@ -153,7 +166,7 @@
           </div>
         </article>
 
-        <article class="card reveal" data-category="design satellite">
+        <article class="card reveal" id="karya-landcover" data-category="design satellite">
           <div class="card__cover">
             <img src="/assets/img/work/landcover.webp" width="800" height="450" loading="lazy" decoding="async"
                  alt="Land cover map sheet of the Yogyakarta urban area" data-ind-alt="Lembar peta tutupan lahan kawasan perkotaan Yogyakarta">
@@ -167,7 +180,7 @@
           </div>
         </article>
 
-        <article class="card reveal" data-category="satellite design">
+        <article class="card reveal" id="karya-mimika" data-category="satellite design">
           <div class="card__cover">
             <img src="/assets/img/work/mimika.webp" width="800" height="450" loading="lazy" decoding="async"
                  alt="Map of mining excavations and forest cover loss in Mimika" data-ind-alt="Peta bukaan tambang dan kehilangan tutupan hutan di Mimika">

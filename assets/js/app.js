@@ -72,6 +72,8 @@
     each(doc.querySelectorAll(".lang__btn"), function (btn) {
       btn.setAttribute("aria-pressed", btn.getAttribute("data-lang") === lang ? "true" : "false");
     });
+
+    doc.dispatchEvent(new CustomEvent("hk:lang", { detail: { lang: lang } }));
   }
 
   function initLang() {
@@ -153,6 +155,56 @@
     run("all");
   }
 
+  /* --------------------------------------------------------------- work map */
+
+  function loadOnce(kind, url) {
+    return new Promise(function (resolve, reject) {
+      var el;
+      if (kind === "css") {
+        el = doc.createElement("link");
+        el.rel = "stylesheet";
+        el.href = url;
+      } else {
+        el = doc.createElement("script");
+        el.src = url;
+        el.defer = true;
+      }
+      el.onload = function () { resolve(); };
+      el.onerror = function () { reject(new Error(url)); };
+      doc.head.appendChild(el);
+    });
+  }
+
+  function initMap() {
+    var wrap = doc.querySelector("[data-peta]");
+    if (!wrap) return;
+
+    var button = wrap.querySelector("[data-peta-mulai]");
+    var canvas = wrap.querySelector("[data-peta-kanvas]");
+    if (!button || !canvas) return;
+
+    button.addEventListener("click", function () {
+      button.disabled = true;
+      wrap.setAttribute("aria-busy", "true");
+
+      Promise.all([
+        loadOnce("css", "/assets/vendor/maplibre/maplibre-gl.css"),
+        loadOnce("js", "/assets/vendor/maplibre/maplibre-gl.js")
+      ])
+        .then(function () { return loadOnce("js", "/assets/js/peta.js"); })
+        .then(function () {
+          wrap.classList.add("is-live");
+          wrap.removeAttribute("aria-busy");
+          window.HK_PETA_MAP = window.HK_PETA.build(canvas);
+        })
+        .catch(function () {
+          button.disabled = false;
+          wrap.removeAttribute("aria-busy");
+          wrap.classList.add("is-failed");
+        });
+    });
+  }
+
   /* -------------------------------------------------------------- copyright */
 
   function initYear() {
@@ -167,6 +219,7 @@
     initHeader();
     initReveal();
     initFilters();
+    initMap();
     initYear();
   }
 
