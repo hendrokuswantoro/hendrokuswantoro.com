@@ -32,12 +32,26 @@ class Pengaturan(BaseSettings):
     laju_jumlah: int = Field(default=120, alias="LAJU_JUMLAH")
     laju_jendela_detik: int = Field(default=60, alias="LAJU_JENDELA_DETIK")
 
+    # --- autentikasi ---
+    jwt_rahasia: str = Field(default="", alias="JWT_SECRET")
+    akses_umur_menit: int = Field(default=15, alias="AKSES_UMUR_MENIT")
+    refresh_umur_hari: int = Field(default=14, alias="REFRESH_UMUR_HARI")
+    masuk_gagal_maks: int = Field(default=5, alias="MASUK_GAGAL_MAKS")
+    masuk_jendela_menit: int = Field(default=15, alias="MASUK_JENDELA_MENIT")
+    cookie_aman: bool = Field(default=True, alias="COOKIE_AMAN")
+
     kolam_min: int = Field(default=1, alias="KOLAM_MIN")
     kolam_maks: int = Field(default=8, alias="KOLAM_MAKS")
 
     @property
     def siap(self) -> bool:
         return bool(self.dsn)
+
+    @property
+    def auth_siap(self) -> bool:
+        """Tanpa JWT_SECRET, seluruh jalur admin ditutup, bukan dibuka dengan
+        rahasia bawaan. Rahasia bawaan adalah rahasia yang sudah bocor."""
+        return bool(self.jwt_rahasia) and len(self.jwt_rahasia) >= 32
 
 
 @functools.lru_cache

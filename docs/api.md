@@ -109,3 +109,55 @@ yang dicegahnya.
 
 Autentikasi belum ada. Sampai Fase 4 selesai, **seluruh titik akhir publik dan
 tidak satu pun bisa menulis**.
+
+## Autentikasi
+
+Fase 4. Sudah jalan dan diuji.
+
+| Method | Jalur | Otorisasi |
+| --- | --- | --- |
+| POST | `/api/v1/auth/login` | publik, dibatasi laju |
+| POST | `/api/v1/auth/refresh` | cookie refresh |
+| POST | `/api/v1/auth/logout` | cookie refresh |
+| POST | `/api/v1/auth/logout-semua` | admin |
+| GET | `/api/v1/auth/saya` | admin |
+
+Memasang sandi:
+
+```bash
+python backend/db/buat_admin.py
+```
+
+Sandinya diminta lewat prompt, tidak pernah lewat argumen. Argumen tersimpan
+di riwayat shell dan terlihat di daftar proses.
+
+### Yang dijaga
+
+| | Cara |
+| --- | --- |
+| Sandi | Argon2id, parameter RFC 9106, di-hash ulang diam diam saat parameternya naik |
+| Access token | JWT HS256, umur 15 menit. Tidak bisa dicabut, jadi dibuat cepat mati |
+| Refresh token | cookie HttpOnly Secure SameSite=Strict, **tidak pernah masuk badan jawaban** |
+| Putaran | tiap refresh menerbitkan token baru dan mematikan yang lama |
+| Token bekas pakai | ditolak 401 |
+| Pencabutan | di Postgres, bukan Redis, supaya tidak lenyap saat cache dinyalakan ulang |
+| Yang disimpan | hanya SHA-256 tokennya. Basis data yang bocor tidak memberi kunci masuk |
+| Tebak sandi | lima kegagalan per 15 menit lalu 429 |
+| Alamat IP | diringkas SHA-256, tidak pernah disimpan apa adanya |
+| Waktu jawaban | email asing dan sandi salah dijawab sama, termasuk lamanya |
+
+Baris terakhir itu bukan hiasan. Kalau email yang tidak terdaftar dijawab
+lebih cepat, selisih waktunya saja sudah memberi tahu penebak email mana
+yang ada, dan itu separuh pekerjaannya. Karena itu hash umpan yang sungguhan
+tetap dihitung walau penggunanya tidak ada.
+
+**Tanpa `JWT_SECRET`, seluruh jalur admin menjawab 503**, bukan terbuka
+dengan rahasia bawaan. Rahasia bawaan adalah rahasia yang sudah bocor.
+
+### Yang belum: passkey
+
+Rancangan menyebut WebAuthn sebagai jalur masuk utama dan sandi sebagai
+cadangan. Yang terpasang sekarang baru cadangannya. Passkey menuntut pustaka
+tersendiri dan alur pendaftaran perangkat, dan bab 15.8 melarang membuat
+protokol kriptografi sendiri, jadi itu pekerjaan tersendiri dengan ujinya
+sendiri, bukan tempelan.

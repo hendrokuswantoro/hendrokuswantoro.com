@@ -183,6 +183,24 @@ jobs:
       - name: API tests
         run: python -m pytest tests/test_api.py -q
 
+      - name: Auth tests
+        env:
+          JWT_SECRET: rahasia-uji-yang-panjangnya-lebih-dari-tiga-puluh-dua
+          COOKIE_AMAN: "false"
+        run: |
+          python - <<'PY'
+          import os, sys, pathlib
+          sys.path.insert(0, str(pathlib.Path.cwd()))
+          import psycopg
+          from backend.core.keamanan import hash_sandi
+          with psycopg.connect(os.environ["DSN"]) as s, s.cursor() as k:
+              k.execute("UPDATE users SET sandi_hash=%s WHERE lower(email)=lower(%s)",
+                        (hash_sandi("sandi-uji-lokal-panjang"),
+                         "kuswantoro.hendro01@gmail.com"))
+              s.commit()
+          PY
+          python -m pytest tests/test_auth.py -q
+
   bangun:
     name: Build
     runs-on: ubuntu-latest
