@@ -195,6 +195,8 @@ benar benar sampai. Alamat yang diperiksa diambil dari variabel repositori
 - [docs/arsitektur.md](docs/arsitektur.md) - bentuk sistemnya, dan kenapa
   tidak ada basis data
 - [docs/pengujian.md](docs/pengujian.md) - apa yang dijaga tiap uji
+- [docs/rancangan-platform.md](docs/rancangan-platform.md) - rancangan
+  gabungan kedua spesifikasi: basis data, API, keamanan, fase, dan biayanya
 - [docs/status.md](docs/status.md) - pemeriksaan baris demi baris terhadap
   spesifikasi: apa yang sudah, apa yang tidak berlaku, apa yang belum
 - [docs/keamanan.md](docs/keamanan.md) - apa yang menahan apa, dan satu
