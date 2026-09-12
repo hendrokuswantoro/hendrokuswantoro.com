@@ -1,0 +1,101 @@
+# Health Check, the last step of the pipeline in the specification.
+#
+# It runs against the published site, not against the working copy, because
+# what matters is whether a visitor can read the page, not whether the files
+# looked right before they were uploaded. Cloudflare does the deploying, so
+# this watches from outside rather than pretending to be part of it.
+#
+# The address lives in a repository variable named SITUS so it can move to
+# the real domain without editing this file. Settings, Secrets and variables,
+# Actions, Variables tab.
+
+name: Health Check
+
+on:
+  schedule:
+    - cron: '17 1 * * *'
+  workflow_dispatch:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  periksa:
+    name: Live site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve the address
+        id: alamat
+        run: |
+          situs="${{ vars.SITUS }}"
+          if [ -z "$situs" ]; then
+            situs="https://hendrokuswantoro-com.kuswantoro-hendro01.workers.dev"
+          fi
+          echo "situs=$situs" >> "$GITHUB_OUTPUT"
+          echo "checking $situs"
+
+      - name: Every page answers
+        run: |
+          situs="${{ steps.alamat.outputs.situs }}"
+          gagal=0
+          for jalur in / /about.html /project.html /blog/ \
+                       /blog/kapan-peta-diam.html \
+                       /blog/titik-panas-bukan-kebakaran.html \
+                       /blog/sumber-di-pojok-peta.html \
+                       /robots.txt /sitemap.xml /feed.xml; do
+            kode=$(curl -s -o /dev/null -w '%{http_code}' "$situs$jalur")
+            if [ "$kode" != "200" ]; then
+              echo "FAIL $jalur -> $kode"
+              gagal=1
+            else
+              echo "ok   $jalur"
+            fi
+          done
+          exit $gagal
+
+      - name: A missing page answers 404, not 200
+        run: |
+          situs="${{ steps.alamat.outputs.situs }}"
+          kode=$(curl -s -o /dev/null -w '%{http_code}' "$situs/tidak-ada-halaman-ini")
+          test "$kode" = "404" || { echo "expected 404, got $kode"; exit 1; }
+          echo "ok"
+
+      - name: The security headers survived the deploy
+        run: |
+          situs="${{ steps.alamat.outputs.situs }}"
+          kepala=$(curl -sSD - -o /dev/null "$situs/" | tr 'A-Z' 'a-z')
+          gagal=0
+          for arahan in content-security-policy strict-transport-security \
+                        x-content-type-options x-frame-options referrer-policy; do
+            if ! printf '%s' "$kepala" | grep -q "$arahan"; then
+              echo "FAIL header missing: $arahan"
+              gagal=1
+            else
+              echo "ok   $arahan"
+            fi
+          done
+          exit $gagal
+
+      - name: The feed is well formed
+        run: |
+          situs="${{ steps.alamat.outputs.situs }}"
+          curl -sS "$situs/feed.xml" -o umpan.xml
+          python3 -c "import xml.etree.ElementTree as ET; \
+            d = ET.parse('umpan.xml'); \
+            n = len(d.findall('.//item')); \
+            print(n, 'posts in the feed'); \
+            raise SystemExit(0 if n >= 3 else 1)"
+
+      - name: The map still asks Mapbox for its tiles
+        run: |
+          situs="${{ steps.alamat.outputs.situs }}"
+          curl -sS "$situs/assets/js/konfigurasi.js" -o konfigurasi.js
+          if grep -q 'mapboxToken: ""' konfigurasi.js; then
+            echo "the deployed site has no token: the map fell back to OpenFreeMap"
+            exit 1
+          fi
+          grep -q 'mapboxToken: "pk\.' konfigurasi.js
+          echo "token present"

@@ -157,6 +157,47 @@ python -m http.server 8080
 
 Lalu buka `http://localhost:8080`.
 
+## Pengujian dan CI
+
+```bash
+pip install -r tests/requirements.txt
+python -m pytest
+```
+
+140 uji, jalannya di bawah satu detik, tanpa peramban dan tanpa jaringan.
+Rinciannya di [docs/pengujian.md](docs/pengujian.md).
+
+Tiap `git push` ke `main` menjalankan `.github/workflows/ci.yml`:
+
+```
+Lint -> Type Check -> Test -> Security Scan -> Build
+```
+
+Deploy sengaja tidak ada di pipeline itu. Cloudflare membangun dan
+menerbitkan sendiri ketika `main` bergerak, jadi menaruh deploy kedua di
+GitHub Actions berarti memberi situs ini dua tuan. Yang dikerjakan pipeline
+itu adalah menolak membiarkan sebuah push sampai ke sana dalam keadaan rusak
+tanpa ketahuan.
+
+`Type Check` menjalankan `tsc --noEmit` pada port Next.js di runner GitHub.
+Itu satu satunya tempat port kedua pernah diperiksa, sebab mesin tempat situs
+ini ditulis tidak punya Node.
+
+Health Check terpisah di `.github/workflows/kesehatan.yml`, jalan tiap hari
+dan sesudah CI. Isinya memeriksa situs yang sudah terbit, bukan salinan
+kerja: sepuluh halaman menjawab 200, halaman yang tidak ada menjawab 404,
+kelima header keamanan masih terkirim, umpan RSS terbaca, dan token petanya
+benar benar sampai. Alamat yang diperiksa diambil dari variabel repositori
+`SITUS`, jadi bisa pindah ke domain asli tanpa menyunting berkasnya.
+
+## Dokumentasi
+
+- [docs/arsitektur.md](docs/arsitektur.md) - bentuk sistemnya, dan kenapa
+  tidak ada basis data
+- [docs/pengujian.md](docs/pengujian.md) - apa yang dijaga tiap uji
+- [docs/pemecahan-masalah.md](docs/pemecahan-masalah.md) - yang sudah pernah
+  rusak, sebabnya, dan cara mengenalinya lagi
+
 ## Susunan berkas
 
 ```
@@ -172,11 +213,20 @@ assets/img/                favicon, ikon aplikasi, gambar pratayang
 tools/build_og.py          pembangkit assets/img/og-cover.png
 tools/build_icons.py       pembangkit ikon PNG
 tools/build_feed.py        pembangkit feed.xml, membaca berkas di blog/
+tools/bangun_situs.sh      pembangun dist/, dipakai Cloudflare saat build
+tools/konfigurasi.sh       penulis token dari MAPBOX_TOKEN, dipanggil di atas
+assets/js/peta.js          peta karya, 31 lapisan di atas ubin vektor Mapbox
+assets/vendor/maplibre/    MapLibre GL JS, disimpan sendiri, bukan dari CDN
+tests/                     140 uji, tanpa peramban dan tanpa jaringan
+docs/                      arsitektur, panduan uji, pemecahan masalah
+.github/workflows/ci.yml   lint, type check, test, security scan, build
+.github/workflows/kesehatan.yml  health check terhadap situs yang sudah terbit
+wrangler.toml              menunjuk ./dist, dibaca alur Workers
 robots.txt                 mengizinkan perayap, menunjuk ke sitemap
 sitemap.xml                tujuh alamat, termasuk tiap tulisan blog
 feed.xml                   umpan RSS, dibangkitkan, jangan disunting tangan
 site.webmanifest           nama, warna, ikon untuk pemasangan di ponsel
-_headers                   tajuk keamanan dan cache untuk Cloudflare Pages / Netlify
+_headers                   tajuk keamanan dan cache, dibaca Workers dan Pages
 CNAME                      domain untuk GitHub Pages
 ```
 

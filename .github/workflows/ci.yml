@@ -1,0 +1,146 @@
+# Git Push -> Lint -> Type Check -> Test -> Security Scan -> Build
+#
+# Deploy is not here on purpose. Cloudflare builds and publishes on its own
+# when main moves, so putting a second deploy in this file would give the
+# site two masters. What this pipeline does is refuse to let a push reach
+# that point silently broken.
+#
+# Health Check lives in kesehatan.yml, because it has to run against the
+# site after Cloudflare has finished, not before.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Shell scripts parse
+        run: |
+          for berkas in tools/*.sh; do
+            sh -n "$berkas"
+            echo "ok $berkas"
+          done
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Python compiles
+        run: python -m compileall -q tools tests
+
+      - name: No tab indentation in the stylesheet
+        run: |
+          if grep -Pn '^\t' assets/css/style.css; then
+            echo "the stylesheet is indented with spaces everywhere else"
+            exit 1
+          fi
+
+      - name: JavaScript has no syntax error
+        run: |
+          for berkas in assets/js/app.js assets/js/peta.js; do
+            node --check "$berkas"
+            echo "ok $berkas"
+          done
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: next
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # npm install rather than npm ci: the port has no lockfile yet, because
+      # the machine it was written on has no Node installed.
+      - run: npm install --no-audit --no-fund
+
+      - name: TypeScript
+        run: npm run typecheck
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r tests/requirements.txt
+      - run: python -m pytest tests -q
+
+  keamanan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: No secret may enter the repository
+        run: |
+          pola='pk\.eyJ[A-Za-z0-9]|sk\.eyJ[A-Za-z0-9]|BEGIN [A-Z ]*PRIVATE KEY|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,}'
+          if git grep -nIE "$pola" -- . ':!tests/test_peta.py' ':!.github/workflows/ci.yml'; then
+            echo "a credential is about to be published"
+            exit 1
+          fi
+          echo "clean"
+
+      - name: The token file stays out of git
+        run: |
+          if git ls-files --error-unmatch assets/js/konfigurasi.js 2>/dev/null; then
+            echo "konfigurasi.js is tracked, and it carries the Mapbox token"
+            exit 1
+          fi
+          grep -q 'assets/js/konfigurasi.js' .gitignore
+          echo "ignored, as it should be"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Dependency audit
+        working-directory: next
+        run: |
+          npm install --package-lock-only --no-audit --no-fund
+          npm audit --audit-level=high
+
+  bangun:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [lint, test, keamanan]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the folder Cloudflare serves
+        env:
+          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+        run: sh tools/bangun_situs.sh
+
+      - name: Every page reached dist/
+        run: |
+          for berkas in index.html about.html project.html 404.html \
+                        robots.txt sitemap.xml feed.xml _headers \
+                        assets/js/peta.js assets/css/style.css \
+                        blog/index.html; do
+            test -f "dist/$berkas" || { echo "missing dist/$berkas"; exit 1; }
+          done
+          echo "dist/ holds $(find dist -type f | wc -l) files"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: situs
+          path: dist
+          retention-days: 7
