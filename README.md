@@ -18,33 +18,67 @@ step dan tanpa dependensi. Empat menu: Home, About, Project, Blog.
 
 ## Warna dan kontras
 
-Semua diukur terhadap putih. Ambang WCAG AA adalah 4,5:1 untuk teks biasa dan
-3,0:1 untuk grafis.
+Abu abunya **netral**, mengikuti Uber Base: `#f6f6f6`, `#eeeeee`, `#e2e2e2`,
+`#cbcbcb`, tanpa rona sama sekali. Yang sebelumnya sedikit lebih dingin
+(`#f2f3f5`, `#e9ebee`) dan terbaca samar kebiruan di sebelah kartu putih,
+yaitu persis hal yang dihindari palet Uber.
 
-Halamannya berlatar abu abu dan kartunya putih, supaya kartu terangkat dari
-latar dan layar tidak menyilaukan.
+Halamannya berlatar putih keabuan dan kartunya putih bersih, supaya kartu
+terangkat dari latar dan layarnya tidak menyilaukan.
 
 | Token | Terang | Gelap | Dipakai untuk |
 | --- | --- | --- | --- |
-| `--bg` | `#f2f3f5` | `#17181a` | latar halaman |
+| `--bg` | `#f6f6f6` | `#17181a` | latar halaman |
 | `--card` | `#ffffff` | `#1f2124` | kartu, panel, tombol putih |
-| `--surface` | `#e9ebee` | `#202225` | pita seksi |
+| `--surface` | `#eeeeee` | `#202225` | pita seksi |
+| `--surface-2` | `#ececec` | `#26292d` | pil, tag, ikon |
+| `--line` | `#e2e2e2` | `#303438` | garis pemisah |
 | `--ink` | `#000000` | `#f5f5f5` | judul dan tombol |
-| `--ink-2` | `#4a4a4a` | `#c7c7c7` | teks isi |
-| `--ink-3` | `#6b6b6b` | `#9a9a9a` | keterangan |
-| `--accent` | `#276ef1` | `#6f9dff` | tautan dan keadaan aktif |
+| `--ink-2` | `#545454` | `#c7c7c7` | teks isi |
+| `--ink-3` | `#666666` | `#9a9a9a` | keterangan |
+| `--accent` | `#1f63e0` | `#6f9dff` | tautan dan keadaan aktif |
 
-Kontras teks isi terhadap latarnya 8,0:1 pada tema terang dan 10,6:1 pada tema
-gelap, keduanya di atas ambang WCAG AA.
+Pasangan terendah di seluruh palet terang adalah `--accent` di atas
+`--surface-2`, 4,54:1; di palet gelap `--ink-3` di atas `--surface-2`, 5,19:1.
+Ambang WCAG AA untuk teks biasa 4,5:1.
+
+`--accent` satu langkah lebih gelap daripada biru Uber `#276ef1`, sebab ia
+membawa teks tautan dan `#276ef1` hanya mencapai 4,24:1 di atas `#f6f6f6`.
+Titik di logo tetap `#276ef1`: ia grafis, dan ambangnya 3:1.
+
+**Jangan mengubah satu warna pun tanpa menghitung ulang seluruh matriksnya:**
+
+```bash
+python tools/kontras.py
+```
+
+Angkanya dibaca langsung dari `style.css`, bukan diketik ulang, dan
+`tests/test_gaya.py` menggagalkan uji kalau angka di komentar tidak lagi sama
+dengan angka yang dihitung.
 
 ## Mode gelap
 
-Situs mengikuti setelan sistem pembaca lewat `prefers-color-scheme`, tanpa
-tombol tambahan di sebelah tombol bahasa. Seluruh warna diambil dari token di
-`:root`, jadi tema gelap hanya menimpa token, bukan menulis ulang aturan.
+**Bawaannya terang, dan gelap adalah pilihan pembaca.** Saklarnya di sebelah
+saklar bahasa.
 
-Kontras pada tema gelap, diukur terhadap `#0b0b0b`: teks isi 11,6:1, judul
-18:1, tombol 19,7:1, keterangan 7:1. Semuanya lolos WCAG AA.
+Dulu palet gelap menempel pada `prefers-color-scheme`. Akibatnya pembaca yang
+laptopnya gelap tidak pernah melihat palet terang sama sekali, dan tidak punya
+cara memintanya. Aplikasi Uber sendiri terbuka terang dan menyimpan saklar;
+situs ini sekarang begitu juga.
+
+Pilihannya disimpan di `localStorage["hk-tema"]`. Yang memasangnya sebelum
+bingkai pertama adalah tiga baris skrip di dalam `<head>`, bukan `app.js`:
+`app.js` dimuat dengan `defer`, jadi kalau temanya baru dipasang dari sana,
+pembaca yang memilih gelap akan melihat satu bingkai putih lebih dulu.
+
+Skrip sebaris itu diizinkan CSP lewat **hash sha256**, bukan lewat
+`'unsafe-inline'`. Bedanya besar: `'unsafe-inline'` membuka seluruh skrip
+sebaris, termasuk yang disuntikkan lewat XSS. Harganya, tiap kali skripnya
+berubah satu byte pun hashnya wajib dihitung ulang:
+
+```bash
+python tools/hash_skrip.py
+```
 
 Dua hal sengaja tidak ikut berbalik. Panel ajakan tetap gelap dengan teks
 putih di kedua tema, dan penanda di peta tetap hitam bergaris putih, sebab
@@ -164,7 +198,16 @@ pip install -r tests/requirements.txt
 python -m pytest
 ```
 
-140 uji, jalannya di bawah satu detik, tanpa peramban dan tanpa jaringan.
+**437 uji.** 406 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
+dalam hitungan detik; 31 sisanya menjalankan Chromium sungguhan dan dipisah
+lewat tanda `peramban` supaya tidak memperlambat putaran biasa.
+
+```bash
+python -m pytest                 # 406, cepat
+python -m pytest -m peramban     # 31, Chromium
+sh tools/verifikasi.sh           # seluruhnya, berurutan
+```
+
 Rinciannya di [docs/pengujian.md](docs/pengujian.md).
 
 Tiap `git push` ke `main` menjalankan `.github/workflows/ci.yml`:
@@ -179,9 +222,15 @@ GitHub Actions berarti memberi situs ini dua tuan. Yang dikerjakan pipeline
 itu adalah menolak membiarkan sebuah push sampai ke sana dalam keadaan rusak
 tanpa ketahuan.
 
-`Type Check` menjalankan `tsc --noEmit` pada port Next.js di runner GitHub.
-Itu satu satunya tempat port kedua pernah diperiksa, sebab mesin tempat situs
-ini ditulis tidak punya Node.
+`Type Check` menjalankan `npm ci`, `tsc --noEmit`, lalu `npm run build` pada
+port Next.js. Sejak Node 24 terpasang di mesin pengembangan, ketiganya juga
+bisa dijalankan sendiri di `next/`, jadi runner GitHub bukan lagi satu satunya
+tempat port kedua pernah diperiksa.
+
+`Lint` ikut memeriksa empat hal yang mudah bergeser diam diam: seluruh
+pasangan warna masih lolos WCAG, hash CSP masih cocok dengan skrip sebarisnya,
+salinan CSS di port Next.js belum tertinggal, dan konfigurasi nginx lolos
+`nginx -t` di dalam kontainer nginx sungguhan.
 
 Health Check terpisah di `.github/workflows/kesehatan.yml`, jalan tiap hari
 dan sesudah CI. Isinya memeriksa situs yang sudah terbit, bukan salinan
@@ -211,6 +260,8 @@ benar benar sampai. Alamat yang diperiksa diambil dari variabel repositori
   temuan yang belum selesai beserta alasannya
 - [docs/pemecahan-masalah.md](docs/pemecahan-masalah.md) - yang sudah pernah
   rusak, sebabnya, dan cara mengenalinya lagi
+- [docs/vps.md](docs/vps.md) - nginx, systemd, deploy otomatis, cadangan
+  terjadwal, biayanya, dan alasan kenapa VPS itu mungkin belum perlu
 
 ## Susunan berkas
 

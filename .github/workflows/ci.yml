@@ -58,6 +58,35 @@ jobs:
             echo "ok $berkas"
           done
 
+      - name: Infrastructure shell scripts parse
+        run: |
+          for berkas in infrastructure/*.sh; do
+            sh -n "$berkas"
+            echo "ok $berkas"
+          done
+
+      # Angka rasio kontras yang ditulis di kepala style.css hanya benar
+      # sampai ada yang menggeser satu warna tanpa menghitung ulang.
+      - name: Every text colour still passes WCAG AA
+        run: python tools/kontras.py
+
+      # Skrip tema sebaris diizinkan CSP lewat hash. Berubah satu byte tanpa
+      # hashnya ikut diperbarui berarti temanya berhenti bekerja di peramban
+      # tanpa satu pun pesan di halaman.
+      - name: The inline script hash matches _headers
+        run: python tools/hash_skrip.py
+
+      # Dua salinan sistem desain adalah dua tempat yang harus diubah tiap
+      # kali satu warna bergeser, dan yang kedua selalu tertinggal.
+      - name: The Next.js port's stylesheet is not behind
+        run: python tools/gaya_next.py --periksa
+
+      # Diperiksa nginx sungguhan di dalam kontainer. Salah ketik satu titik
+      # koma di sini jauh lebih murah daripada `systemctl reload nginx` yang
+      # menolak menyala saat situsnya sudah hidup.
+      - name: The nginx config is valid
+        run: sh infrastructure/periksa_nginx.sh
+
   typecheck:
     name: Type Check
     runs-on: ubuntu-latest
@@ -70,15 +99,16 @@ jobs:
         with:
           node-version: '20'
 
-      # npm install rather than npm ci: the port has no lockfile yet, because
-      # the machine it was written on has no Node installed.
-      - run: npm install --no-audit --no-fund
+      # npm ci, bukan npm install: lockfile-nya sudah ada sejak Node
+      # terpasang di mesin pengembangan, dan ci memasang persis versi yang
+      # tertulis di sana, bukan versi terbaru yang kebetulan cocok.
+      - run: npm ci --no-audit --no-fund
 
       - name: TypeScript
         run: npm run typecheck
 
       # Type check membuktikan tipenya benar, bukan bahwa aplikasinya bisa
-      # dibangun. Port ini belum pernah dibangun sekali pun sampai hari ini.
+      # dibangun.
       - name: Build
         env:
           NEXT_PUBLIC_MAPBOX_TOKEN: ""
@@ -208,10 +238,37 @@ jobs:
           PY
           python -m pytest tests/test_auth.py -q
 
-      - name: Backup and restore, actually exercised
+      - name: Passkey tests
+        env:
+          JWT_SECRET: rahasia-uji-yang-panjangnya-lebih-dari-tiga-puluh-dua
+          COOKIE_AMAN: "false"
+        run: python -m pytest tests/test_passkey.py -q
+
+      - name: Backup and restore, without encryption
         run: |
           python backend/db/cadangan.py buat
           python backend/db/cadangan.py uji-pulih
+
+      # Langkah yang sama, kali ini terenkripsi. Cadangan yang bisa dibuat
+      # tetapi tidak bisa dibuka lagi adalah cadangan yang tidak ada, dan itu
+      # baru ketahuan pada hari ia dibutuhkan.
+      - name: Backup, encrypted, and restored again
+        run: |
+          eval "$(python backend/db/enkripsi.py kunci | head -1 | sed 's/^/export /')"
+          python backend/db/cadangan.py buat | tee dibuat.txt
+          grep -q 'terenkripsi' dibuat.txt
+          python backend/db/cadangan.py daftar
+          python backend/db/cadangan.py uji-pulih
+
+      - name: The shipping script refuses anything unencrypted
+        run: |
+          mkdir -p /tmp/cadangan-palsu
+          printf 'ini bukan berkas terenkripsi' > /tmp/cadangan-palsu/hk-2026-01-01-0000.sql.gz.enc
+          if CADANGAN_FOLDER=/tmp/cadangan-palsu CADANGAN_TUJUAN=palsu:bucket              sh infrastructure/kirim.sh --coba; then
+            echo "pengirim menerima berkas yang tidak terenkripsi"
+            exit 1
+          fi
+          echo "ditolak, seperti seharusnya"
 
       - name: Admin write tests
         env:

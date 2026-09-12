@@ -32,7 +32,7 @@ lewat() {
 }
 
 langkah "Lint, shell scripts parse"
-for berkas in tools/*.sh; do
+for berkas in tools/*.sh infrastructure/*.sh; do
   sh -n "$berkas"
 done
 lulus
@@ -50,12 +50,32 @@ else
   lewat "node is not installed on this machine"
 fi
 
-langkah "Type Check, the Next.js port"
+langkah "Type Check and Build, the Next.js port"
 if command -v npm >/dev/null 2>&1; then
-  (cd next && npm install --no-audit --no-fund --silent && npm run typecheck)
+  (cd next && npm ci --no-audit --no-fund --silent      && npm run typecheck && npm run build >/dev/null)
   lulus
 else
   lewat "npm is not installed, CI runs this instead"
+fi
+
+langkah "Lint, every text colour still passes WCAG AA"
+python tools/kontras.py >/dev/null
+lulus
+
+langkah "Lint, the inline script hash matches _headers"
+python tools/hash_skrip.py >/dev/null
+lulus
+
+langkah "Lint, the Next.js stylesheet is not behind"
+python tools/gaya_next.py --periksa >/dev/null
+lulus
+
+langkah "Reverse proxy, the nginx config is valid"
+if command -v docker >/dev/null 2>&1; then
+  sh infrastructure/periksa_nginx.sh >/dev/null
+  lulus
+else
+  lewat "docker is not running, CI checks this instead"
 fi
 
 langkah "Lint, blog pages match their content"
@@ -83,6 +103,15 @@ if git grep -nIE "$POLA" -- . ':!tests/test_peta.py' ':!tools/verifikasi.sh' ':!
   exit 1
 fi
 lulus
+
+langkah "Backup, an encrypted backup can be restored"
+if [ -n "${DSN:-}" ] || grep -q '^DSN=.' .env 2>/dev/null; then
+  python backend/db/cadangan.py buat >/dev/null
+  python backend/db/cadangan.py uji-pulih >/dev/null
+  lulus
+else
+  lewat "no database configured on this machine"
+fi
 
 langkah "Security Check, the token file is ignored"
 if git ls-files --error-unmatch assets/js/konfigurasi.js >/dev/null 2>&1; then

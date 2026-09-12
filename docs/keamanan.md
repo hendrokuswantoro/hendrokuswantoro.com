@@ -8,17 +8,35 @@ yang belum selesai, dan alasan kenapa belum.
 | | Nilai | Diperiksa oleh |
 | --- | --- | --- |
 | TLS | dipaksa Cloudflare, HSTS 2 tahun, preload | `kesehatan.yml` |
-| CSP | `script-src 'self' blob:`, tanpa `unsafe-inline` | `test_terbit.py` |
+| CSP | `script-src 'self' blob:` plus satu hash sha256, tanpa `unsafe-inline` | `test_terbit.py`, `test_gaya.py` |
 | Clickjacking | `X-Frame-Options: DENY`, `frame-ancestors 'none'` | `test_terbit.py` |
 | MIME sniffing | `X-Content-Type-Options: nosniff` | `test_terbit.py` |
 | Referrer | `strict-origin-when-cross-origin` | `test_terbit.py` |
 | Izin peramban | geolocation, camera, microphone, payment semuanya ditutup | `_headers` |
-| Rahasia | tidak ada satu pun di git, disisir tiap push | `ci.yml`, `test_peta.py` |
+| Rahasia | tidak ada satu pun di git, disisir tiap push | `ci.yml`, `test_peta.py`, `test_infrastruktur.py` |
+| Masuk | Passkey WebAuthn, atau Argon2id + JWT | `test_passkey.py`, `test_auth.py` |
+| Sesi | refresh berputar, dicabut di Postgres, hanya SHA-256-nya disimpan | `test_auth.py` |
+| Cadangan | AES-256-GCM, satu bit yang berubah gagal dibuka | `test_cadangan.py` |
+| Layanan di VPS | systemd yang dikeraskan, soket Unix bukan porta | `test_infrastruktur.py` |
 
-Situs ini tidak menerima masukan dari siapa pun. Tidak ada formulir, tidak ada
-login, tidak ada komentar, tidak ada basis data. Seluruh permukaan serangan
-yang biasa dibahas di bab 11 — injeksi SQL, CSRF, brute force, SSRF — tidak
-punya pintu masuk di sini. Yang tersisa hanya dua: berkas yang disajikan, dan
+**Permukaan serangannya sudah tidak sekecil dulu.** Kalimat di tempat ini dulu
+berbunyi: tidak ada formulir, tidak ada login, tidak ada basis data, jadi
+injeksi SQL, CSRF, dan brute force tidak punya pintu masuk. Itu benar sampai
+Fase 1. Sekarang ada basis data, ada yang login, dan ada jalur yang menulis.
+
+Yang menggantikannya bukan kalimat yang lebih menenangkan melainkan daftar
+yang bisa diperiksa:
+
+| Pintu yang terbuka | Yang menjaganya |
+| --- | --- |
+| Injeksi SQL | seluruh kueri berparameter, dan SQL hanya ada di lapisan repositori, dijaga `test_api.py` |
+| CSRF | cookie refresh `SameSite=Strict`, dan seluruh jalur tulis menuntut header `Authorization`, yang tidak ikut terkirim sendiri |
+| Tebak sandi | lima kegagalan per 15 menit lalu 429, plus pembatas laju nginx 10 per menit di `/api/v1/auth/` |
+| Halaman palsu | passkey terikat pada `rp_id`; tanda tangan untuk alamat lain tidak berlaku |
+| Token yang bocor | access token mati dalam 15 menit, refresh diputar dan yang lama langsung mati |
+| Berkas cadangan yang bocor | terenkripsi sebelum keluar dari mesin |
+
+Yang tersisa sama seperti dulu, dan tidak hilang: berkas yang disajikan, dan
 pustaka pihak ketiga yang ikut terunduh ke peramban.
 
 ## Temuan yang sudah ditutup

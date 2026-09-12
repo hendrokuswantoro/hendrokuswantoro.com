@@ -203,3 +203,99 @@ def test_nama_jalan_muncul_di_zoom_kota(halaman, situs):
         "() => window.HK_PETA_MAP.queryRenderedFeatures({layers:['nama-jalan']}).length"
     )
     assert jumlah > 0, "tidak ada nama jalan tergambar di zoom kota"
+
+
+# ------------------------------------------------------------------ tema ---
+#
+# Warna latar hanya bisa dibuktikan di peramban. Membaca CSS membuktikan
+# tokennya ada; ia tidak membuktikan token itu yang benar benar dipakai, dan
+# tidak membuktikan halamannya tidak berkedip putih lebih dulu.
+
+
+def latar(halaman) -> str:
+    return halaman.evaluate("() => getComputedStyle(document.body).backgroundColor")
+
+
+def test_latar_bawaan_putih_keabuan(halaman, situs):
+    """#f6f6f6. Bukan putih polos, bukan gelap, walau sistem pembacanya gelap."""
+    buka(halaman, situs, "/about")
+    assert latar(halaman) == "rgb(246, 246, 246)", latar(halaman)
+
+
+def test_sistem_yang_gelap_tidak_lagi_memaksa_halaman_jadi_gelap(peramban, situs):
+    """Ini yang dulu membuat permintaan "latar putih keabuan" tidak pernah
+    terlihat: paletnya menempel pada prefers-color-scheme, jadi pembaca yang
+    laptopnya gelap melihat halaman gelap dan tidak punya cara memintanya
+    terang."""
+    konteks = peramban.new_context(color_scheme="dark")
+    p = konteks.new_page()
+    try:
+        p.goto(f"{situs}/about", wait_until="networkidle")
+        assert p.evaluate("() => getComputedStyle(document.body).backgroundColor") \
+            == "rgb(246, 246, 246)"
+    finally:
+        konteks.close()
+
+
+def test_saklar_tema_benar_benar_menggelapkan(halaman, situs):
+    buka(halaman, situs, "/about")
+    terang = latar(halaman)
+
+    halaman.click(".tema")
+    halaman.wait_for_timeout(200)
+    gelap = latar(halaman)
+
+    assert gelap != terang, "saklar tema tidak mengubah apa apa"
+    assert halaman.evaluate("() => document.documentElement.dataset.theme") == "dark"
+    assert halaman.locator(".tema").get_attribute("aria-pressed") == "true"
+
+    halaman.click(".tema")
+    halaman.wait_for_timeout(200)
+    assert latar(halaman) == terang, "tidak kembali ke terang"
+
+
+def test_tema_bertahan_antar_halaman_tanpa_berkedip(halaman, situs):
+    """Kedipannya yang penting. app.js dimuat dengan defer, jadi kalau tema
+    baru dipasang dari sana, pembaca yang memilih gelap melihat satu bingkai
+    putih lebih dulu. Yang mencegahnya skrip sebaris di <head>, dan satu
+    satunya cara membuktikannya adalah menanyakan warna latar pada saat
+    dokumennya baru selesai diurai, sebelum skrip defer mana pun berjalan."""
+    buka(halaman, situs, "/about")
+    halaman.click(".tema")
+    halaman.wait_for_timeout(200)
+
+    warna_saat_diurai = []
+    halaman.once("domcontentloaded", lambda: warna_saat_diurai.append(
+        halaman.evaluate("() => document.documentElement.dataset.theme")
+    ))
+    buka(halaman, situs, "/project")
+
+    assert halaman.evaluate("() => document.documentElement.dataset.theme") == "dark"
+    assert latar(halaman) != "rgb(246, 246, 246)"
+    assert warna_saat_diurai == ["dark"], (
+        f"tema belum terpasang saat dokumen selesai diurai: {warna_saat_diurai}"
+    )
+
+
+def test_saklar_tema_ikut_berganti_bahasa(halaman, situs):
+    buka(halaman, situs, "/about")
+    inggris = halaman.locator(".tema").get_attribute("aria-label")
+
+    halaman.click('[data-lang="id"]')
+    halaman.wait_for_timeout(300)
+    assert halaman.locator(".tema").get_attribute("aria-label") != inggris
+
+
+def test_peta_tetap_menggambar_dengan_tema_gelap(halaman, situs):
+    """Tema mengganti warna halaman, bukan warna peta. Kalau suatu saat
+    keduanya tersambung tanpa sengaja, petanya yang akan diam."""
+    buka(halaman, situs, "/project")
+    halaman.click(".tema")
+    peta_siap(halaman)
+
+    hasil = halaman.evaluate("""() => ({
+        galat: (window.HK_PETA_ERRORS || []).length,
+        air: window.HK_PETA_MAP.queryRenderedFeatures({layers: ['air']}).length,
+    })""")
+    assert hasil["galat"] == 0
+    assert hasil["air"] > 0

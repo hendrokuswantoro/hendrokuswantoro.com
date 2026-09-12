@@ -8,7 +8,8 @@ Bab 15.18. Berlaku sejak ada basis data, tidak sebelumnya.
 python backend/db/cadangan.py buat       # buat cadangan
 python backend/db/cadangan.py daftar     # lihat yang ada
 python backend/db/cadangan.py uji-pulih  # buktikan yang terbaru bisa dipulihkan
-python backend/db/cadangan.py pulihkan cadangan/hk-2026-09-12-1654.sql.gz
+python backend/db/cadangan.py pulihkan cadangan/hk-2026-09-12-1855.sql.gz.enc
+python backend/db/enkripsi.py kunci      # buat kunci enkripsi, sekali saja
 ```
 
 ## Apa yang dicadangkan, dan apa yang tidak perlu
@@ -41,13 +42,59 @@ diam.
 
 ## Enkripsi
 
-Cadangan dikompresi, **belum dienkripsi**. Selama berkasnya hanya ada di
-mesin Anda sendiri, enkripsi tidak menambah apa apa: penyerang yang bisa
-membaca `cadangan/` juga bisa membaca `.env` yang memuat kata sandinya.
+Cadangan dipadatkan lalu **dikunci dengan AES-256-GCM**, lihat
+`backend/db/enkripsi.py`. Urutannya begitu dan bukan sebaliknya: keluaran AES
+tidak bisa dipadatkan sama sekali.
 
-**Begitu cadangan dikirim ke object storage atau ke mesin lain, enkripsi jadi
-wajib**, sebab saat itu berkasnya melewati tempat yang tidak Anda kendalikan.
-Itu bagian dari Fase 7 dan belum dikerjakan.
+Tidak ada protokol buatan sendiri. Satu panggilan ke pustaka `cryptography`,
+tanpa pemotongan berbingkai buatan sendiri, dan bentuk berkasnya sesederhana
+yang bisa:
+
+```
+HKCAD1
+   7 bita penanda, supaya berkasnya bisa dikenali tanpa dicoba dibuka
+nonce      12 bita acak, tidak pernah dipakai dua kali dengan kunci yang sama
+ciphertext sisanya, sudah termasuk tag autentikasi 16 bita
+```
+
+GCM memberi kerahasiaan **sekaligus** keutuhan. Itu yang membedakannya dari
+mode yang sekadar menyandi: berkas yang berubah satu bit gagal dibuka, bukan
+terbuka jadi sampah yang dikira data lalu dipulihkan ke basis data sungguhan.
+Diuji dengan benar benar membalik satu bit di empat posisi berbeda,
+`tests/test_cadangan.py`.
+
+### Kuncinya
+
+```bash
+python backend/db/enkripsi.py kunci
+```
+
+Salin barisnya ke `.env`. Kuncinya tidak pernah ada di dalam kode, dan tidak
+pernah ada nilai bawaan: kunci bawaan adalah kunci yang sudah bocor.
+
+**Simpan salinannya di tempat yang bukan mesin ini.** Kunci yang hilang berarti
+seluruh cadangan yang sudah terenkripsi tidak akan pernah bisa dibuka lagi,
+dan Anda akan menyadarinya persis pada hari Anda membutuhkannya.
+
+### Kalau `CADANGAN_KUNCI` kosong
+
+Cadangannya tetap dibuat, hanya tanpa enkripsi, dan perintahnya mengatakan
+begitu. Cadangan yang tidak jadi dibuat karena kuncinya belum disiapkan lebih
+buruk daripada cadangan yang belum terenkripsi di mesin sendiri.
+
+`daftar` menandai mana yang belum terkunci, dan `infrastructure/kirim.sh`
+**menolak** mengirimnya keluar. Di mesin ini, cadangan polos masih bisa
+dimaklumi: siapa pun yang bisa membacanya sudah bisa membaca basis datanya.
+Begitu ia naik ke penyedia lain, alamat email dan hash sandi ada di tangan
+orang lain.
+
+Penolakan itu dibaca dari penanda di dalam berkas, bukan dari akhiran
+namanya. Nama berkas bisa diganti siapa saja.
+
+### Berkas lama tetap bisa dibuka
+
+`pulihkan` dan `uji-pulih` mengenali sendiri mana yang terkunci dari
+penandanya, jadi cadangan yang dibuat sebelum ada enkripsi tidak jadi sampah.
 
 ## Pengujian pemulihan
 
@@ -72,11 +119,27 @@ data sungguhan bukan uji, itu taruhan.
 manual. Cadangan yang belum pernah dipulihkan belum terbukti apa apa, dan
 pemulihan pertama tidak boleh dicoba pada hari datanya benar benar hilang.
 
-Terakhir terbukti: 12 September 2026, 3 tulisan, 7 proyek, 1 pengguna,
-2 migrasi, seluruhnya cocok.
+Terakhir terbukti: 12 September 2026, dari berkas **terenkripsi**
+`hk-2026-09-12-1855.sql.gz.enc`. 3 tulisan, 7 proyek, 1 pengguna, 3 migrasi,
+seluruhnya cocok.
 
-## Yang belum
+## Penjadwalan
 
-Penjadwalan otomatis. Di mesin pengembangan tidak perlu; di VPS nanti
-dijalankan cron harian yang mengunggah hasilnya ke object storage terpisah,
-terenkripsi. Itu Fase 7.
+Di mesin pengembangan tidak perlu. Di VPS, `hk-cadangan.timer` menyala 02:40
+waktu setempat dengan sebaran acak sampai 20 menit, lalu menjalankan tiga
+langkah berurutan: buat, **uji-pulih**, kirim.
+
+Langkah kedua itu yang paling penting, dan ia dijalankan tiap malam, bukan
+sesekali. `Persistent=true` membuat jadwal yang terlewat karena mesinnya mati
+dikejar begitu ia hidup lagi, bukan dilewati diam diam sampai besok.
+
+Kalau salah satunya gagal, `hk-cadangan-gagal@.service` memanggil
+`infrastructure/beritahu.sh`, yang mengirim pesan ke Telegram kalau tokennya
+diisi. Kegagalan yang hanya duduk di journal sampai ada yang kebetulan
+membukanya sama saja dengan tidak ada pemeriksaan.
+
+Berkasnya ada dan lolos pemeriksaan yang bisa dilakukan tanpa server, lihat
+[vps.md](vps.md). **Belum pernah dijalankan systemd sungguhan**, sebab
+servernya belum ada.
+
+Retensi di sisi penyedia 30 hari, diatur `CADANGAN_SIMPAN_HARI`.
