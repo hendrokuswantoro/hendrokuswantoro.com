@@ -195,6 +195,8 @@ benar benar sampai. Alamat yang diperiksa diambil dari variabel repositori
 - [docs/arsitektur.md](docs/arsitektur.md) - bentuk sistemnya, dan kenapa
   tidak ada basis data
 - [docs/pengujian.md](docs/pengujian.md) - apa yang dijaga tiap uji
+- [docs/cadangan.md](docs/cadangan.md) - RPO, RTO, retensi, dan uji
+  pemulihan yang benar benar dijalankan
 - [docs/api.md](docs/api.md) - menjalankan API, bentuk lapisannya, dan
   keputusan yang tidak bisa dibangkitkan OpenAPI
 - [docs/basis-data.md](docs/basis-data.md) - cara menjalankan PostGIS,

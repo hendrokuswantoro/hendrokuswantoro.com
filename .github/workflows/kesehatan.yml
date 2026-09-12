@@ -21,6 +21,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   periksa:
@@ -105,3 +106,61 @@ jobs:
           fi
           grep -q 'mapboxToken: "pk\.' konfigurasi.js
           echo "token present"
+
+      # Bab 15.17 menuntut alerting. Sampai sekarang kegagalan health check
+      # hanya duduk di halaman Actions sampai ada yang membukanya, dan
+      # pemeriksaan yang tidak pernah dibaca sama saja dengan tidak ada.
+      #
+      # Satu isu per kejadian, ditutup sendiri begitu situsnya pulih, supaya
+      # tidak menumpuk jadi kebisingan yang akhirnya diabaikan juga.
+      - name: Open an issue when the site is down
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const judul = "Health check gagal";
+            const { data: terbuka } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: "open", labels: "kesehatan",
+            });
+            const jalur = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}` +
+                          `/actions/runs/${context.runId}`;
+            if (terbuka.length) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: terbuka[0].number,
+                body: `Masih gagal pada ${new Date().toISOString()}. ${jalur}`,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title: judul, labels: ["kesehatan"],
+                body: [
+                  "Situs tidak menjawab sebagaimana mestinya.",
+                  jalur,
+                  "Langkah mana yang gagal ada di log itu. Isu ini akan " +
+                  "ditutup sendiri begitu pemeriksaan berikutnya lolos.",
+                ].join("\n\n"),
+              });
+            }
+
+      - name: Close the issue once the site is healthy again
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: terbuka } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: "open", labels: "kesehatan",
+            });
+            for (const isu of terbuka) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: isu.number,
+                body: `Pulih pada ${new Date().toISOString()}.`,
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: isu.number, state: "closed",
+              });
+            }

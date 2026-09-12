@@ -88,34 +88,28 @@ bukan untuk brosur empat halaman. Syarat kapan keputusan ini gugur ada di
 
 ## Yang benar benar belum dikerjakan
 
-Lima, urut dari yang paling berdampak.
+Dua, turun dari enam.
 
-**1. Tidak ada uji peramban.** 154 uji itu membaca berkas, bukan menjalankan
-situsnya. Yang tidak dijaga siapa pun: petanya benar benar tergambar, tombol
-3D benar benar menegakkan bangunan, saklar bahasa benar benar mengganti
-seluruh teks, dan halaman tidak berantakan di ponsel. Semua itu sejauh ini
-saya periksa dengan tangan. Sebuah pekerjaan Playwright di CI akan
-menutupnya, dan itu satu satunya cara menahan peta kembali rusak diam diam
-seperti yang sudah tiga kali terjadi.
+**1. Tidak ada uji peramban.** Rangkaian ujinya membaca berkas dan memanggil
+API; tidak satu pun menjalankan situsnya di peramban sungguhan. Yang tidak
+dijaga siapa pun: petanya benar benar tergambar, tombol 3D benar benar
+menegakkan bangunan, dan halaman tidak berantakan di ponsel. Sepanjang
+pengerjaan ini saya memeriksanya dengan tangan, dan peta sudah tiga kali
+rusak diam diam.
 
-**2. Bab 18 belum ada isinya.** Cadangannya memang sudah nyata: seluruh situs
-ada di git, di GitHub, dan di zip. Tetapi RPO, RTO, dan prosedur pemulihannya
-belum ditulis, dan yang lebih penting, pemulihannya belum pernah diuji. Bab
-18 menuntut *regular restore testing*, dan cadangan yang belum pernah
-dipulihkan belum terbukti apa apa.
-
-**3. Peringatan belum ada.** Health check berjalan tiap hari, tetapi kalau
-situsnya mati, kegagalannya hanya duduk di halaman GitHub Actions sampai ada
-yang membukanya. Bab 17 menuntut alerting.
-
-**4. Performa belum pernah diukur.** Gambar sudah webp, MapLibre dimuat
+**2. Performa belum pernah diukur.** Gambar sudah webp, MapLibre dimuat
 malas, aset diberi versi dan disimpan setahun. Semuanya masuk akal, tetapi
-tidak satu pun angkanya pernah dilihat. Bab 20 menuntut optimasi, dan optimasi
-tanpa pengukuran adalah tebakan yang kebetulan rapi.
+tidak satu pun angkanya pernah dilihat. Bab 20 menuntut optimasi, dan
+optimasi tanpa pengukuran adalah tebakan yang kebetulan rapi.
 
-**5. Port Next.js belum pernah dibangun.** CI menjalankan `tsc --noEmit`,
-jadi tipenya terbukti benar, tetapi `next build` tidak pernah dijalankan.
-Port itu bisa saja gagal dibangun tanpa ada yang tahu.
+## Yang sudah ditutup sejak pemeriksaan pertama
+
+| | Selesai |
+| --- | --- |
+| MapLibre 4.7.1 dengan GHSA-jrc7-96c5-q579 | naik ke 6.9.0, diverifikasi di peramban |
+| Bab 18 tanpa isi | `backend/db/cadangan.py`, RPO 1 hari, RTO di bawah 15 menit, uji pemulihan jalan di tiap push CI |
+| Tidak ada peringatan | health check yang gagal membuka isu berlabel `kesehatan`, ditutup sendiri saat pulih |
+| Port Next.js belum pernah dibangun | `npm run build` jalan di CI |
 
 ## Yang menunggu, bukan belum dikerjakan
 

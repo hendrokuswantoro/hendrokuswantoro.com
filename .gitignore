@@ -27,3 +27,4 @@ dist-*.zip
 
 # Local settings that carry a key
 assets/js/konfigurasi.js
+cadangan/

@@ -77,6 +77,13 @@ jobs:
       - name: TypeScript
         run: npm run typecheck
 
+      # Type check membuktikan tipenya benar, bukan bahwa aplikasinya bisa
+      # dibangun. Port ini belum pernah dibangun sekali pun sampai hari ini.
+      - name: Build
+        env:
+          NEXT_PUBLIC_MAPBOX_TOKEN: ""
+        run: npm run build
+
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -200,6 +207,11 @@ jobs:
               s.commit()
           PY
           python -m pytest tests/test_auth.py -q
+
+      - name: Backup and restore, actually exercised
+        run: |
+          python backend/db/cadangan.py buat
+          python backend/db/cadangan.py uji-pulih
 
       - name: Admin write tests
         env:
