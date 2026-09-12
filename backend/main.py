@@ -29,9 +29,11 @@ from contextlib import asynccontextmanager
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+import pathlib
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.requests import Request
 
 from backend.api.v1 import admin, auth, kesehatan, peta, proyek, tulisan
@@ -75,6 +77,23 @@ def buat() -> FastAPI:
     app.include_router(kesehatan.rute)
     for bagian in (tulisan.rute, proyek.rute, peta.rute, auth.rute, admin.rute):
         app.include_router(bagian, prefix="/api/v1")
+
+    @app.get("/admin", include_in_schema=False)
+    async def dashboard() -> FileResponse:
+        """Permukaan menulis. Halaman biasa, tanpa langkah build.
+
+        Tidak dibuat dengan Next.js seperti di spesifikasi karena mesin tempat
+        ini ditulis tidak punya Node, jadi hasilnya tidak akan pernah bisa
+        saya jalankan maupun uji. Halaman yang benar benar berjalan dan
+        terbukti lebih berguna daripada halaman yang hanya ada di berkas.
+
+        Tidak diindeks: robots.txt situs tidak menyebutnya, dan halamannya
+        sendiri membawa noindex. Yang menjaganya tetap token, bukan itu.
+        """
+        return FileResponse(
+            pathlib.Path(__file__).resolve().parent / "admin" / "index.html",
+            headers={"X-Robots-Tag": "noindex, nofollow"},
+        )
 
     @app.exception_handler(Exception)
     async def galat_tak_terduga(permintaan: Request, galat: Exception):

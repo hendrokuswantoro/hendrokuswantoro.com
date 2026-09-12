@@ -108,3 +108,55 @@ dashboard admin sudah berdiri, `SumberApi` masuk di belakang antarmuka yang
 sama dan pembangkitnya tidak berubah sama sekali.
 
 Itu sebabnya Fase 0 tidak akan terbuang.
+
+## Lewat dashboard
+
+Sejak Fase 5 ada cara kedua, dan ini yang sebenarnya Anda minta: menulis di
+formulir, bukan di berkas.
+
+```bash
+cd infrastructure && docker compose --env-file ../.env up -d
+cd .. && python backend/jalan.py
+```
+
+Lalu buka <http://127.0.0.1:8000/admin>.
+
+**Sekali saja**, pasang sandi admin:
+
+```bash
+python backend/db/buat_admin.py
+```
+
+### Alurnya
+
+1. Masuk. Kalau cookie sesi masih hidup, sandinya tidak ditanya lagi.
+2. **Tulisan baru**, isi kolomnya. Inggris dan Indonesia berdampingan.
+3. Isinya Markdown, dengan penghitung blok di bawah tiap kolom dan pratinjau
+   di bawahnya. Kalau jumlah bloknya tidak sama, peringatannya muncul
+   **sebelum** Anda menekan Simpan.
+4. **Simpan.** Statusnya draf. Belum terlihat siapa pun.
+5. **Terbitkan.** Statusnya berubah, dan tulisannya muncul di jalur publik API.
+6. Bangkitkan halamannya lalu dorong:
+
+```bash
+python tools/bangun_tulisan.py --sumber api
+```
+
+lalu `python tools/build_feed.py`, `python -m pytest`, `git push`.
+
+### Catatan tentang bentuknya
+
+Dashboard ini halaman HTML biasa yang disajikan FastAPI, **bukan Next.js**
+seperti tertulis di spesifikasi. Alasannya jujur saja: mesin tempat ini
+ditulis tidak punya Node, jadi versi Next.js-nya tidak akan pernah bisa saya
+jalankan maupun uji. Halaman yang benar benar berjalan dan terbukti lebih
+berguna daripada halaman yang hanya ada di berkas.
+
+Token akses disimpan di variabel biasa, bukan `localStorage`. Token di
+`localStorage` bisa diambil satu XSS; yang di memori ikut hilang saat tab
+ditutup. Yang bertahan antar kunjungan adalah cookie refresh yang HttpOnly,
+yang tidak bisa dibaca JavaScript sama sekali.
+
+Pratinjaunya dirakit dengan `createElement`, bukan `innerHTML`. Isi yang Anda
+tulis sendiri memang tidak berbahaya, tetapi kebiasaan merakit lewat
+`innerHTML` itu yang suatu saat dipakai untuk isi yang datang dari luar.

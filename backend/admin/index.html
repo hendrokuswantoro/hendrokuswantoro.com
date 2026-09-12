@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Tulis</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --kartu: #ffffff; --tinta: #16181a; --tinta-2: #5b636b;
+    --garis: #e2e6ea; --garis-kuat: #c8cfd6; --aksen: #276ef1; --bahaya: #b4232a;
+    --hijau: #0b7d3f; --r: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d0f11; --kartu: #1a1d20; --tinta: #f2f4f6; --tinta-2: #9aa3ab;
+      --garis: #2b3035; --garis-kuat: #3d444b; --aksen: #5b93ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--tinta);
+    font: 15px/1.5 "Poppins", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+  header {
+    display: flex; align-items: center; gap: 14px; padding: 14px 20px;
+    background: var(--kartu); border-bottom: 1px solid var(--garis);
+    position: sticky; top: 0; z-index: 5;
+  }
+  header h1 { font-size: 1rem; margin: 0; letter-spacing: -.01em; }
+  header .isi { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  main { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  .kartu {
+    background: var(--kartu); border: 1px solid var(--garis);
+    border-radius: var(--r); padding: 18px; margin-bottom: 16px;
+  }
+  label { display: block; font-size: .75rem; font-weight: 600; letter-spacing: .05em;
+          text-transform: uppercase; color: var(--tinta-2); margin: 0 0 5px; }
+  input, textarea, select {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--garis-kuat);
+    border-radius: 8px; background: var(--bg); color: var(--tinta);
+    font: inherit; font-size: .9375rem;
+  }
+  textarea { resize: vertical; min-height: 90px; font-family: ui-monospace, Consolas, monospace; }
+  textarea.isi { min-height: 320px; }
+  .baris { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+  @media (max-width: 860px) { .baris { grid-template-columns: 1fr; } }
+  .bahasa { font-size: .7rem; color: var(--tinta-2); }
+  button {
+    font: inherit; font-weight: 600; padding: 9px 16px; border-radius: 999px;
+    border: 1px solid var(--garis-kuat); background: var(--kartu);
+    color: var(--tinta); cursor: pointer;
+  }
+  button.utama { background: var(--tinta); color: var(--bg); border-color: var(--tinta); }
+  button.bahaya { color: var(--bahaya); border-color: var(--bahaya); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--garis); }
+  th { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--tinta-2); }
+  .tanda { font-size: .7rem; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--garis-kuat); }
+  .tanda.terbit { color: var(--hijau); border-color: var(--hijau); }
+  .kabar { padding: 11px 14px; border-radius: 8px; margin-bottom: 14px; font-size: .9rem; }
+  .kabar.salah { background: rgba(180,35,42,.12); color: var(--bahaya); }
+  .kabar.baik { background: rgba(11,125,63,.12); color: var(--hijau); }
+  .sembunyi { display: none !important; }
+  .pratinjau { border-left: 3px solid var(--garis); padding-left: 14px; color: var(--tinta-2); }
+  .pratinjau h2 { font-size: 1.1rem; color: var(--tinta); margin: 18px 0 6px; }
+  .pratinjau blockquote { margin: 12px 0; padding-left: 12px; border-left: 3px solid var(--aksen); }
+  .masuk { max-width: 380px; margin: 80px auto; }
+  .petunjuk { font-size: .8rem; color: var(--tinta-2); margin: 6px 0 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Tulis</h1>
+  <div class="isi">
+    <span id="siapa" class="bahasa"></span>
+    <button id="keluar" class="sembunyi">Keluar</button>
+  </div>
+</header>
+
+<main>
+  <div id="kabar" class="kabar sembunyi"></div>
+
+  <!-- masuk -->
+  <section id="layar-masuk" class="kartu masuk">
+    <h2 style="margin-top:0">Masuk</h2>
+    <div style="margin-bottom:12px">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username">
+    </div>
+    <div style="margin-bottom:16px">
+      <label for="sandi">Sandi</label>
+      <input id="sandi" type="password" autocomplete="current-password">
+    </div>
+    <button id="tombol-masuk" class="utama" style="width:100%">Masuk</button>
+  </section>
+
+  <!-- daftar -->
+  <section id="layar-daftar" class="kartu sembunyi">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <h2 style="margin:0;font-size:1.05rem">Tulisan</h2>
+      <button id="tombol-baru" class="utama" style="margin-left:auto">Tulisan baru</button>
+    </div>
+    <table>
+      <thead><tr><th>Judul</th><th>Status</th><th>Tanggal</th><th></th></tr></thead>
+      <tbody id="daftar"></tbody>
+    </table>
+  </section>
+
+  <!-- penyunting -->
+  <section id="layar-sunting" class="sembunyi">
+    <div class="kartu">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+        <h2 style="margin:0;font-size:1.05rem" id="judul-sunting">Tulisan baru</h2>
+        <span id="tanda-status" class="tanda"></span>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button id="tombol-kembali">Kembali</button>
+          <button id="tombol-simpan" class="utama">Simpan</button>
+          <button id="tombol-terbit" class="sembunyi">Terbitkan</button>
+          <button id="tombol-hapus" class="bahaya sembunyi">Hapus</button>
+        </div>
+      </div>
+
+      <div class="baris">
+        <div><label for="slug">Slug, jadi alamatnya</label><input id="slug" placeholder="kenapa-proyeksi-penting"></div>
+        <div><label for="tanggal">Tanggal</label><input id="tanggal" type="date"></div>
+      </div>
+
+      <div class="baris">
+        <div><label for="judul_en">Judul <span class="bahasa">Inggris</span></label><input id="judul_en"></div>
+        <div><label for="judul_id">Judul <span class="bahasa">Indonesia</span></label><input id="judul_id"></div>
+      </div>
+      <div class="baris">
+        <div><label for="ringkas_en">Ringkasan kartu <span class="bahasa">EN</span></label><textarea id="ringkas_en" rows="2"></textarea></div>
+        <div><label for="ringkas_id">Ringkasan kartu <span class="bahasa">ID</span></label><textarea id="ringkas_id" rows="2"></textarea></div>
+      </div>
+      <div class="baris">
+        <div><label for="keterangan_en">Keterangan mesin pencari <span class="bahasa">EN</span></label><textarea id="keterangan_en" rows="2"></textarea></div>
+        <div><label for="keterangan_id">Keterangan mesin pencari <span class="bahasa">ID</span></label><textarea id="keterangan_id" rows="2"></textarea></div>
+      </div>
+      <div class="baris">
+        <div><label for="lede_en">Paragraf pembuka <span class="bahasa">EN</span></label><textarea id="lede_en" rows="2"></textarea></div>
+        <div><label for="lede_id">Paragraf pembuka <span class="bahasa">ID</span></label><textarea id="lede_id" rows="2"></textarea></div>
+      </div>
+      <div class="baris">
+        <div><label for="tag_en">Tag <span class="bahasa">EN</span></label><input id="tag_en"></div>
+        <div><label for="tag_id">Tag <span class="bahasa">ID</span></label><input id="tag_id"></div>
+      </div>
+      <div class="baris">
+        <div><label for="baca_en">Lama baca <span class="bahasa">EN</span></label><input id="baca_en" placeholder="4 min read"></div>
+        <div><label for="baca_id">Lama baca <span class="bahasa">ID</span></label><input id="baca_id" placeholder="4 menit baca"></div>
+      </div>
+    </div>
+
+    <div class="kartu">
+      <div class="baris">
+        <div>
+          <label for="isi_en">Isi <span class="bahasa">Inggris, Markdown</span></label>
+          <textarea id="isi_en" class="isi"></textarea>
+          <p class="petunjuk" id="hitung_en"></p>
+        </div>
+        <div>
+          <label for="isi_id">Isi <span class="bahasa">Indonesia, Markdown</span></label>
+          <textarea id="isi_id" class="isi"></textarea>
+          <p class="petunjuk" id="hitung_id"></p>
+        </div>
+      </div>
+      <p class="petunjuk">
+        Didukung: <code>## judul</code>, paragraf, <code>&gt; kutipan</code>,
+        <code>**tebal**</code>, <code>*miring*</code>, <code>`kode`</code>,
+        <code>[teks](/alamat)</code>. Selain itu ditolak dengan nomor barisnya.
+      </p>
+      <div id="cocok" class="kabar sembunyi"></div>
+    </div>
+
+    <div class="kartu">
+      <label>Pratinjau, Inggris</label>
+      <div id="pratinjau" class="pratinjau"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* Token akses disimpan di variabel biasa, bukan localStorage.
+   Token di localStorage bisa diambil satu XSS; yang di memori ikut hilang
+   saat tab ditutup, dan itu justru yang diinginkan. Yang bertahan antar
+   kunjungan adalah cookie refresh yang HttpOnly, yang tidak bisa dibaca
+   JavaScript sama sekali. */
+let AKSES = null;
+let SLUG_KINI = null;
+let STATUS_KINI = null;
+
+const $ = (id) => document.getElementById(id);
+const KOLOM = ["slug","tanggal","judul_en","judul_id","ringkas_en","ringkas_id",
+  "keterangan_en","keterangan_id","lede_en","lede_id","tag_en","tag_id",
+  "baca_en","baca_id","isi_en","isi_id"];
+
+function kabar(teks, jenis = "salah") {
+  const k = $("kabar");
+  k.textContent = teks;
+  k.className = "kabar " + jenis;
+  if (!teks) k.classList.add("sembunyi");
+}
+
+async function panggil(jalur, pilihan = {}) {
+  const kepala = { "Content-Type": "application/json", ...(pilihan.headers || {}) };
+  if (AKSES) kepala.Authorization = "Bearer " + AKSES;
+
+  let jawaban = await fetch(jalur, { ...pilihan, headers: kepala, credentials: "same-origin" });
+
+  /* Access token berumur 15 menit. Kalau kedaluwarsa di tengah menulis,
+     sekali coba perpanjang lalu ulangi, supaya tulisannya tidak hilang. */
+  if (jawaban.status === 401 && AKSES) {
+    const putar = await fetch("/api/v1/auth/refresh", { method: "POST", credentials: "same-origin" });
+    if (putar.ok) {
+      AKSES = (await putar.json()).akses;
+      kepala.Authorization = "Bearer " + AKSES;
+      jawaban = await fetch(jalur, { ...pilihan, headers: kepala, credentials: "same-origin" });
+    }
+  }
+  return jawaban;
+}
+
+function pesanGalat(isi) {
+  if (!isi) return "gagal";
+  if (typeof isi.detail === "string") return isi.detail;
+  if (Array.isArray(isi.detail)) {
+    return isi.detail.map((d) => (d.loc ? d.loc.slice(1).join(".") + ": " : "") + d.msg).join("\n");
+  }
+  return JSON.stringify(isi);
+}
+
+/* --- masuk ---------------------------------------------------------- */
+
+async function masuk() {
+  kabar("");
+  const jawaban = await fetch("/api/v1/auth/login", {
+    method: "POST", credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: $("email").value.trim(), sandi: $("sandi").value }),
+  });
+  const isi = await jawaban.json().catch(() => null);
+  if (!jawaban.ok) { kabar(pesanGalat(isi)); return; }
+
+  AKSES = isi.akses;
+  $("sandi").value = "";
+  $("siapa").textContent = isi.nama;
+  $("keluar").classList.remove("sembunyi");
+  $("layar-masuk").classList.add("sembunyi");
+  await muatDaftar();
+}
+
+async function keluar() {
+  await panggil("/api/v1/auth/logout", { method: "POST" });
+  AKSES = null;
+  location.reload();
+}
+
+/* --- daftar --------------------------------------------------------- */
+
+async function muatDaftar() {
+  const jawaban = await panggil("/api/v1/admin/blog");
+  if (!jawaban.ok) { kabar(pesanGalat(await jawaban.json().catch(() => null))); return; }
+
+  const isi = (await jawaban.json()).isi;
+  const badan = $("daftar");
+  badan.replaceChildren();
+
+  for (const t of isi) {
+    const baris = document.createElement("tr");
+
+    const judul = document.createElement("td");
+    judul.textContent = t.judul_id || t.judul_en;
+
+    const status = document.createElement("td");
+    const tanda = document.createElement("span");
+    tanda.className = "tanda" + (t.status === "terbit" ? " terbit" : "");
+    tanda.textContent = t.status;
+    status.appendChild(tanda);
+
+    const tanggal = document.createElement("td");
+    tanggal.textContent = t.terbit_pada || "belum";
+
+    const aksi = document.createElement("td");
+    const tombol = document.createElement("button");
+    tombol.textContent = "Sunting";
+    tombol.onclick = () => bukaSunting(t.slug);
+    aksi.appendChild(tombol);
+
+    baris.append(judul, status, tanggal, aksi);
+    badan.appendChild(baris);
+  }
+
+  $("layar-daftar").classList.remove("sembunyi");
+  $("layar-sunting").classList.add("sembunyi");
+}
+
+/* --- penyunting ----------------------------------------------------- */
+
+function kosongkan() {
+  for (const k of KOLOM) if ($(k)) $(k).value = "";
+  $("tanggal").value = new Date().toISOString().slice(0, 10);
+}
+
+function bukaBaru() {
+  SLUG_KINI = null; STATUS_KINI = null;
+  kosongkan();
+  $("judul-sunting").textContent = "Tulisan baru";
+  $("tanda-status").textContent = "belum disimpan";
+  $("tanda-status").className = "tanda";
+  $("slug").disabled = false;
+  $("tombol-terbit").classList.add("sembunyi");
+  $("tombol-hapus").classList.add("sembunyi");
+  $("layar-daftar").classList.add("sembunyi");
+  $("layar-sunting").classList.remove("sembunyi");
+  perbarui();
+}
+
+async function bukaSunting(slug) {
+  const jawaban = await panggil("/api/v1/blog/" + slug);
+  let isi = null;
+  if (jawaban.ok) {
+    const t = await jawaban.json();
+    isi = {
+      slug: t.slug, tanggal: t.tanggal,
+      judul_en: t.judul.en, judul_id: t.judul.id,
+      ringkas_en: t.ringkas.en, ringkas_id: t.ringkas.id,
+      keterangan_en: t.keterangan.en, keterangan_id: t.keterangan.id,
+      lede_en: t.lede.en, lede_id: t.lede.id,
+      tag_en: t.tag.en, tag_id: t.tag.id,
+      baca_en: t.baca.en, baca_id: t.baca.id,
+      isi_en: t.isi_en, isi_id: t.isi_id,
+    };
+  }
+  if (!isi) { kabar("Draf belum bisa dibuka lewat jalur publik. Terbitkan dulu, atau buat baru."); return; }
+
+  SLUG_KINI = slug;
+  for (const k of KOLOM) if ($(k)) $(k).value = isi[k] ?? "";
+  $("slug").disabled = true;
+  $("judul-sunting").textContent = "Sunting";
+  $("tombol-terbit").classList.remove("sembunyi");
+  $("tombol-hapus").classList.remove("sembunyi");
+  $("layar-daftar").classList.add("sembunyi");
+  $("layar-sunting").classList.remove("sembunyi");
+  perbarui();
+}
+
+function kumpulkan() {
+  const isi = {};
+  for (const k of KOLOM) if ($(k)) isi[k] = $(k).value;
+  return isi;
+}
+
+async function simpan() {
+  kabar("");
+  const isi = kumpulkan();
+
+  const jawaban = SLUG_KINI
+    ? await panggil("/api/v1/admin/blog/" + SLUG_KINI, {
+        method: "PATCH",
+        body: JSON.stringify(Object.fromEntries(
+          Object.entries(isi).filter(([k]) => k !== "slug"))),
+      })
+    : await panggil("/api/v1/admin/blog", { method: "POST", body: JSON.stringify(isi) });
+
+  const hasil = await jawaban.json().catch(() => null);
+  if (!jawaban.ok) { kabar(pesanGalat(hasil)); return; }
+
+  SLUG_KINI = hasil.slug;
+  STATUS_KINI = hasil.status;
+  $("slug").disabled = true;
+  $("tanda-status").textContent = hasil.status;
+  $("tombol-terbit").classList.remove("sembunyi");
+  $("tombol-hapus").classList.remove("sembunyi");
+  kabar("Tersimpan sebagai " + hasil.status + ".", "baik");
+}
+
+async function terbitkan() {
+  if (!SLUG_KINI) { kabar("Simpan dulu."); return; }
+  const jawaban = await panggil("/api/v1/admin/blog/" + SLUG_KINI + "/status", {
+    method: "POST", body: JSON.stringify({ status: "terbit" }),
+  });
+  const hasil = await jawaban.json().catch(() => null);
+  if (!jawaban.ok) { kabar(pesanGalat(hasil)); return; }
+  $("tanda-status").textContent = "terbit";
+  $("tanda-status").className = "tanda terbit";
+  kabar("Terbit. Jalankan pembangkit situs supaya halamannya ikut terbit.", "baik");
+}
+
+async function hapus() {
+  if (!SLUG_KINI) return;
+  if (!confirm("Hapus tulisan ini? Tidak bisa dibatalkan.")) return;
+  const jawaban = await panggil("/api/v1/admin/blog/" + SLUG_KINI, { method: "DELETE" });
+  if (!jawaban.ok) { kabar("gagal menghapus"); return; }
+  await muatDaftar();
+}
+
+/* --- pratinjau dan penghitung blok ---------------------------------- */
+
+function blok(teks) {
+  const hasil = [];
+  let kumpul = [], jenis = "p";
+  const tutup = () => { if (kumpul.length) hasil.push({ jenis, teks: kumpul.join(" ") }); kumpul = []; jenis = "p"; };
+
+  for (const baris of (teks || "").split("\n")) {
+    const b = baris.trim();
+    if (!b) { tutup(); continue; }
+    if (b.startsWith("## ")) { tutup(); hasil.push({ jenis: "h2", teks: b.slice(3) }); continue; }
+    if (b.startsWith(">")) { if (jenis !== "quote") { tutup(); jenis = "quote"; } kumpul.push(b.slice(1).trim()); continue; }
+    kumpul.push(b);
+  }
+  tutup();
+  return hasil;
+}
+
+function perbarui() {
+  const en = blok($("isi_en").value);
+  const id = blok($("isi_id").value);
+  $("hitung_en").textContent = en.length + " blok";
+  $("hitung_id").textContent = id.length + " blok";
+
+  const c = $("cocok");
+  if (en.length !== id.length) {
+    c.textContent = "Jumlah blok tidak sama: Inggris " + en.length + ", Indonesia " + id.length +
+                    ". Tulisan seperti ini akan ditolak saat disimpan.";
+    c.className = "kabar salah";
+  } else {
+    const beda = en.findIndex((x, i) => id[i] && x.jenis !== id[i].jenis);
+    if (beda >= 0) {
+      c.textContent = "Blok ke " + (beda + 1) + " beda jenis: " + en[beda].jenis + " lawan " + id[beda].jenis + ".";
+      c.className = "kabar salah";
+    } else {
+      c.classList.add("sembunyi");
+      c.className = "kabar sembunyi";
+    }
+  }
+
+  /* Pratinjau dirakit dengan createElement, bukan innerHTML.
+     Isi yang ditulis sendiri pun tidak dirakit lewat innerHTML: kebiasaan
+     itu yang suatu saat dipakai untuk isi yang datang dari luar. */
+  const p = $("pratinjau");
+  p.replaceChildren();
+  for (const b of en) {
+    if (b.jenis === "h2") {
+      const h = document.createElement("h2"); h.textContent = b.teks; p.appendChild(h);
+    } else if (b.jenis === "quote") {
+      const q = document.createElement("blockquote");
+      const t = document.createElement("p"); t.textContent = b.teks;
+      q.appendChild(t); p.appendChild(q);
+    } else {
+      const t = document.createElement("p"); t.textContent = b.teks; p.appendChild(t);
+    }
+  }
+}
+
+/* --- pasang --------------------------------------------------------- */
+
+$("tombol-masuk").onclick = masuk;
+$("sandi").onkeydown = (e) => { if (e.key === "Enter") masuk(); };
+$("keluar").onclick = keluar;
+$("tombol-baru").onclick = bukaBaru;
+$("tombol-kembali").onclick = muatDaftar;
+$("tombol-simpan").onclick = simpan;
+$("tombol-terbit").onclick = terbitkan;
+$("tombol-hapus").onclick = hapus;
+$("isi_en").oninput = perbarui;
+$("isi_id").oninput = perbarui;
+
+/* Kalau cookie refresh masih hidup, langsung masuk tanpa menanyakan sandi. */
+(async () => {
+  const putar = await fetch("/api/v1/auth/refresh", { method: "POST", credentials: "same-origin" });
+  if (!putar.ok) return;
+  const isi = await putar.json();
+  AKSES = isi.akses;
+  $("siapa").textContent = isi.nama;
+  $("keluar").classList.remove("sembunyi");
+  $("layar-masuk").classList.add("sembunyi");
+  await muatDaftar();
+})();
+</script>
+</body>
+</html>

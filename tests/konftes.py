@@ -14,11 +14,12 @@ from html.parser import HTMLParser
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent
 
-# Every page that is actually served. Three folders are not pages: next/ is a
-# separate application with its own toolchain, dist/ is build output, and
-# content/template/ holds the templates the blog pages are generated from,
-# which carry {{slot}} markers rather than finished markup.
-BUKAN_HALAMAN = {"next", "dist", "content"}
+# Halaman yang benar benar disajikan situs statis. Empat folder bukan halaman:
+# next/ aplikasi terpisah dengan toolchain sendiri, dist/ keluaran build,
+# content/template/ berisi template ber-{{slot}} bukan markup jadi, dan
+# backend/ menyajikan dashboard admin yang bukan bagian situs publik dan
+# memang tidak boleh punya kanonis, umpan RSS, maupun saklar bahasa.
+BUKAN_HALAMAN = {"next", "dist", "content", "backend"}
 
 HALAMAN = sorted(
     p for p in AKAR.rglob("*.html")
