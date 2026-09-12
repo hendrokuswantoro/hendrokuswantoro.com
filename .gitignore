@@ -11,6 +11,11 @@ Desktop.ini
 *.pem
 *.key
 
+# Python bytecode, never source
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
 # Build output, if a build step is added later
 node_modules/
 .next/
