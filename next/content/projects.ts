@@ -166,8 +166,8 @@ export const PROJECT_PAGE = {
   empty: { en: "Nothing here yet for this kind.", id: "Belum ada proyek di jenis ini." } as Copy,
   ctaTitle: { en: "Curious how it works?", id: "Penasaran cara kerjanya?" } as Copy,
   mapNote: {
-    en: "Marker points, not study area boundaries. Map tiles from OpenFreeMap and OpenStreetMap.",
-    id: "Titik penanda, bukan batas wilayah kajian. Ubin peta dari OpenFreeMap dan OpenStreetMap.",
+    en: "Marker points, not study area boundaries. Map tiles from Mapbox and OpenStreetMap.",
+    id: "Titik penanda, bukan batas wilayah kajian. Ubin peta dari Mapbox dan OpenStreetMap.",
   } as Copy,
   seeProject: { en: "See the project", id: "Lihat proyek" } as Copy,
 };

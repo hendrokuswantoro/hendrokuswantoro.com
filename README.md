@@ -12,8 +12,9 @@ step dan tanpa dependensi. Empat menu: Home, About, Project, Blog.
 - Bahasanya sengaja sederhana. Kalimat pendek, tanpa tanda strip dan titik dua.
 - Dwibahasa Inggris dan Indonesia lewat tombol EN/ID.
 - **Tidak ada bagian kontak.** Ini disengaja.
-- Halaman Proyek memuat peta karya, MapLibre dengan ubin OpenFreeMap, yang
-  baru dimuat setelah tombolnya ditekan.
+- Halaman Proyek memuat peta karya, MapLibre di atas ubin vektor Mapbox
+  Streets, yang dimuat sendiri begitu bagian petanya mendekati layar. Tidak
+  ada tombol yang harus ditekan.
 
 ## Warna dan kontras
 
@@ -66,6 +67,43 @@ tinggi tiap bangunan, jadi tombol 3D menegakkan bangunan dengan tinggi
 aslinya, bukan tinggi tebakan. Di Jakarta terhitung 4.950 bangunan tergambar
 dengan menara tertinggi 383 meter.
 
+**Apa saja yang digambar.** Gayanya punya 31 lapisan, disusun begini:
+
+| Kelompok | Lapisan | Muncul mulai zoom |
+| --- | --- | --- |
+| Dasar | latar, bayangan bukit, ruang hijau, air, sungai | 0 |
+| Batas | kabupaten, provinsi, negara | 5, 0, 0 |
+| Jalan | tol dan jalan nasional, arteri, tertiary, jalan kecil, masing-masing garis tepi lalu isinya | 4, 7, 10, 12 |
+| Lain | apron dan landasan bandara, rel kereta beserta palangnya | 10, 11 |
+| Bangunan | tapak 2D, dan `gedung3d` yang menggantikannya saat tombol 3D ditekan | 14 |
+| Tanda | panah arah jalan satu arah, titik POI | 15, 15,5 |
+| Nama | alam, kelurahan, kota, jalan, provinsi, negara, POI | 3 sampai 15,5 |
+
+Empat tingkat jalan dibedakan warnanya seperti peta pengemudi: kuning amber
+untuk tol dan jalan nasional, krem hangat untuk arteri, putih untuk sisanya.
+Tanahnya sengaja digelapkan sedikit ke `#e8ecf1`, sebab dengan latar yang
+lebih terang jalan putihnya menyatu dengan tanah dan jaringannya tidak
+terbaca.
+
+**Urutan lapisan nama itu disengaja.** MapLibre menempatkan simbol dari
+tumpukan paling atas ke bawah, jadi lapisan yang ditulis paling akhir yang
+menang saat berebut tempat. Karena itu namanya disusun dari yang paling kecil
+ke yang paling besar. Sebelum diurutkan begitu, 959 label permukiman pada zoom
+4 menutup nama negara sampai tidak satu pun tergambar. Jumlah permukiman juga
+disaring memakai `filterrank` bawaan Mapbox seiring peta ditarik menjauh.
+
+**Nama provinsi dibawa sendiri.** Lapisan `place_label` Mapbox punya kelas
+`state`, tetapi untuk Indonesia isinya kosong, sudah diperiksa dari zoom 4
+sampai 9 (negara bagian Australia muncul, provinsi Indonesia tidak). Karena
+itu 38 nama provinsi ditulis di `PROVINSI_ID` di dalam `peta.js`.
+**Koordinatnya adalah titik untuk menggantungkan label, bukan titik pusat
+resmi dan bukan batas.** Garis batasnya sendiri tetap datang dari lapisan
+`admin` Mapbox.
+
+**Panah satu arah tidak ikut antre.** Lapisannya disetel
+`text-allow-overlap` dan `text-ignore-placement`, jadi panahnya tidak pernah
+mengambil tempat yang sedang diperebutkan nama jalan.
+
 **Relief dan bayangan bukit.** Peta memakai DEM Mapbox untuk relief 3D dan
 lapisan hillshade yang tetap terlihat di tampilan 2D.
 
@@ -85,8 +123,10 @@ jenis karya.
 **Chrome petanya selalu terang.** Bilah skala, kredit, dan tombol kontrol tidak
 ikut tema gelap, sebab peta dasarnya selalu terang.
 
-Tanpa token Mapbox, peta jatuh ke OpenFreeMap tanpa kunci: semua tetap jalan,
-hanya bangunan 3D-nya yang tidak ada karena ubinnya tidak membawa tinggi.
+Tanpa token Mapbox, peta jatuh ke OpenFreeMap tanpa kunci dan tetap jalan,
+tetapi yang hilang bukan cuma bangunan 3D: batas provinsi dan kabupaten,
+tingkatan jalan, nama jalan, nama tempat, rel, dan titik POI semuanya dibaca
+dari ubin vektor Mapbox Streets, jadi ketiganya ikut hilang bersamaan.
 
 ### Token Mapbox
 

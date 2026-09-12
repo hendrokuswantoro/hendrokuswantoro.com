@@ -25,8 +25,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
 <link rel="alternate" type="application/rss+xml" title="hendrokuswantoro.com" href="/feed.xml">
-<link rel="stylesheet" href="/assets/css/style.css?v=28">
-<script defer src="/assets/js/app.js?v=31"></script>
+<link rel="stylesheet" href="/assets/css/style.css?v=104400">
+<script defer src="/assets/js/app.js?v=33"></script>
 </head>
 <body>
 <a class="skip-link" href="#main" data-ind="Lompat ke isi">Skip to content</a>
@@ -79,7 +79,7 @@
         <div class="peta__frame" data-gagal="The map could not load. The list of work below still works." data-ind-gagal="Petanya gagal dimuat. Daftar karya di bawah tetap bisa dibuka.">
           <div class="peta__kanvas" data-peta-kanvas></div>
         </div>
-        <p class="peta__ket" data-ind="Titik penanda, bukan batas wilayah kajian. Ubin peta dari OpenFreeMap dan OpenStreetMap.">Marker points, not study area boundaries. Map tiles from OpenFreeMap and OpenStreetMap.</p>
+        <p class="peta__ket" data-ind="Titik penanda, bukan batas wilayah kajian. Ubin peta dari Mapbox dan OpenStreetMap.">Marker points, not study area boundaries. Map tiles from Mapbox and OpenStreetMap.</p>
       </section>
 
       <div class="filters" role="group" aria-label="Filter by kind" data-ind-label="Saring menurut jenis">
@@ -99,7 +99,7 @@
             <span class="card__badge" data-ind="Aplikasi peta">Map app</span>
           </div>
           <div class="card__body">
-            <h3 data-ind="Peta Parkir Yogyakarta">Yogyakarta Parking Map</h3>
+            <h2 data-ind="Peta Parkir Yogyakarta">Yogyakarta Parking Map</h2>
             <p data-ind="Pilih titik di peta. Zona dan tarifnya muncul. Di luar kota aplikasinya tidak menampilkan apa apa, sebab aturannya tidak berlaku di sana.">Pick a point on the map. The zone and the fee show up. Outside the city the app shows nothing, because the rule does not apply there.</p>
             <ul class="tags"><li class="tag">FastAPI</li><li class="tag">PostGIS</li><li class="tag">MapLibre</li><li class="tag">Docker</li></ul>
             <p class="card__meta" data-ind="Saya bikin basis data, API, dan tampilan petanya">I built the database, the API and the map screen</p>
@@ -113,7 +113,7 @@
             <span class="card__badge" data-ind="Data satelit">Satellite data</span>
           </div>
           <div class="card__body">
-            <h3 data-ind="Peta Kebakaran Kalimantan">Kalimantan Fire Maps</h3>
+            <h2 data-ind="Peta Kebakaran Kalimantan">Kalimantan Fire Maps</h2>
             <p data-ind="Titik api dari satelit digabung jadi satu kejadian. Petanya menunjukkan api mulai di mana, pindah ke mana, dan lahan mana yang terbakar lagi tiap tahun.">Fire dots from satellites, grouped into one event. The map shows where the fire started, where it moved, and which land burns again every year.</p>
             <ul class="tags"><li class="tag">Python</li><li class="tag">GeoPandas</li><li class="tag">Matplotlib</li></ul>
             <p class="card__meta" data-ind="Hasilnya kumpulan gambar, terang dan gelap">The result is a set of figures, light and dark</p>
@@ -127,7 +127,7 @@
             <span class="card__badge" data-ind="Analisis peta">Map analysis</span>
           </div>
           <div class="card__body">
-            <h3 data-ind="Lokasi Pendaratan Ikan, Natuna">Fish Landing Sites, Natuna</h3>
+            <h2 data-ind="Lokasi Pendaratan Ikan, Natuna">Fish Landing Sites, Natuna</h2>
             <p data-ind="Tiap lokasi diberi nilai. Yang dihitung kedalaman laut, tempat teduh dari ombak, jalan masuk, dan jumlah warga di dekatnya.">Each spot gets a score. The map weighs sea depth, shelter from waves, the road in, and how many people live nearby.</p>
             <ul class="tags"><li class="tag">QGIS</li><li class="tag">GDAL</li><li class="tag">Rasterio</li></ul>
             <p class="card__meta" data-ind="Hasilnya peta nilai lokasi dan satu lembar peta">The result is a score map and one map sheet</p>
@@ -141,7 +141,7 @@
             <span class="card__badge" data-ind="Analisis peta">Map analysis</span>
           </div>
           <div class="card__body">
-            <h3 data-ind="Titik Jemput dari Ping GPS, Jakarta">Pickup Points from GPS Pings, Jakarta</h3>
+            <h2 data-ind="Titik Jemput dari Ping GPS, Jakarta">Pickup Points from GPS Pings, Jakarta</h2>
             <p data-ind="Tiga ribu ping pengemudi di sekitar tiga gedung di Jakarta dikelompokkan jadi titik tempat orang benar benar menunggu. Tiap kelompok diberi satu simpul di median geometrisnya.">Three thousand driver pings around three buildings in Jakarta, grouped into the spots where people actually wait. Each group gets one node at its geometric median.</p>
             <ul class="tags"><li class="tag">Python</li><li class="tag">DBSCAN</li><li class="tag">QGIS</li></ul>
             <p class="card__meta" data-ind="Hasilnya satu lembar peta dengan tiga perbesaran">The result is one map sheet with three close ups</p>
@@ -155,7 +155,7 @@
             <span class="card__badge" data-ind="Jangkauan layanan">Service reach</span>
           </div>
           <div class="card__body">
-            <h3 data-ind="Jangkauan Layanan, Biak Numfor">Service Reach, Biak Numfor</h3>
+            <h2 data-ind="Jangkauan Layanan, Biak Numfor">Service Reach, Biak Numfor</h2>
             <p data-ind="Seberapa jauh warga menempuh jalan untuk sampai ke layanan. Lalu dua calon lokasi pelabuhan ikan, Fandoi dan Bosnik, dilihat lebih dekat.">How far people travel on the road to reach a service. Then a closer look at two spots for a fishing port, Fandoi and Bosnik.</p>
             <ul class="tags"><li class="tag">QGIS</li><li class="tag">Network analysis</li><li class="tag">Layout</li></ul>
             <p class="card__meta" data-ind="Hasilnya tiga lembar peta">The result is three map sheets</p>
@@ -169,7 +169,7 @@
             <span class="card__badge" data-ind="Desain peta">Map design</span>
           </div>
           <div class="card__body">
-            <h3 data-ind="Peta Tutupan Lahan Yogyakarta">Yogyakarta Land Cover Map</h3>
+            <h2 data-ind="Peta Tutupan Lahan Yogyakarta">Yogyakarta Land Cover Map</h2>
             <p data-ind="Citra satelit dipilah jadi kelas tutupan lahan, lalu ditata jadi lembar peta siap cetak.">Satellite images sorted into land cover classes, then laid out as a map sheet ready to print.</p>
             <ul class="tags"><li class="tag">QGIS</li><li class="tag">Raster</li><li class="tag">Layout</li></ul>
             <p class="card__meta" data-ind="Hasilnya lembar peta PDF dan PNG">The result is a map sheet in PDF and PNG</p>
@@ -183,7 +183,7 @@
             <span class="card__badge" data-ind="Data satelit">Satellite data</span>
           </div>
           <div class="card__body">
-            <h3 data-ind="Tambang dan Hutan Hilang, Mimika">Mining and Forest Loss, Mimika</h3>
+            <h2 data-ind="Tambang dan Hutan Hilang, Mimika">Mining and Forest Loss, Mimika</h2>
             <p data-ind="Bukaan tambang dipetakan tahun demi tahun, bersama hutan yang hilang di sekitarnya. Satu lembar peta, dengan perbesaran di bukaan terbesar.">Open pit mining areas mapped year by year, next to the forest lost around them. One sheet, with close ups of the biggest pits.</p>
             <ul class="tags"><li class="tag">QGIS</li><li class="tag">Raster</li><li class="tag">Print layout</li></ul>
             <p class="card__meta" data-ind="Hasilnya satu lembar peta cetak ukuran besar">The result is one large print sheet</p>

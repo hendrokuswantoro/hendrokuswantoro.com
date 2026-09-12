@@ -4,8 +4,10 @@
  * The module is fetched only when the map section is about to enter the
  * screen, then the map builds itself. No button, nothing to press.
  *
- * Three basemaps, two of which need no key at all, and a 2D or 3D view with
- * real terrain. The points are label positions, not study area boundaries:
+ * One basemap, hand written over the Mapbox Streets vector tiles, with a 2D
+ * or 3D view over real terrain. Without a token it falls back to OpenFreeMap
+ * and keeps working, minus the buildings, boundaries and names that only the
+ * vector tiles carry. The points are label positions, not study areas:
  * each marks roughly where the work was done, close enough to find on a map
  * of Indonesia and never presented as a survey coordinate.
  */
@@ -107,6 +109,17 @@
     })
   };
 
+  /* One colour per family of place. They stay muted on purpose: the map is
+     a backdrop for the work markers, and a hospital dot must never compete
+     with the point it sits behind. */
+  var KELOMPOK_POI = ["match", ["get", "class"],
+    "park_like", "#6f9a63",
+    "medical", "#b2626a",
+    "education", "#6b7fa8",
+    ["food_and_drink", "food_and_drink_stores", "store_like", "commercial_services"], "#a8815f",
+    "religion", "#8c7aa6",
+    "#8c99a6"];
+
   function mapboxStyle() {
     var source = "https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?access_token=" + TOKEN;
     var reguler = ["DIN Pro Regular", "Arial Unicode MS Regular"];
@@ -198,9 +211,74 @@
           filter: isClass(TOL), layout: { "line-cap": "round", "line-join": "round" },
           paint: { "line-color": "#ffd27f", "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 4, 1, 10, 4.4, 18, 20] } },
 
+        /* railways, drawn the way an atlas draws them: a solid line with a
+           white hatch laid over it */
+        { id: "apron", type: "fill", source: "jalan", "source-layer": "aeroway", minzoom: 11,
+          filter: ["in", ["get", "type"], ["literal", ["apron", "helipad"]]],
+          paint: { "fill-color": "#dfe4eb" } },
+        { id: "landasan", type: "line", source: "jalan", "source-layer": "aeroway", minzoom: 10,
+          filter: ["in", ["get", "type"], ["literal", ["runway", "taxiway"]]],
+          paint: {
+            "line-color": "#d3dae3",
+            "line-width": ["interpolate", ["exponential", 1.5], ["zoom"],
+              10, ["match", ["get", "type"], "runway", 1.6, 0.6],
+              16, ["match", ["get", "type"], "runway", 14, 5]]
+          } },
+        { id: "rel", type: "line", source: "jalan", "source-layer": "road", minzoom: 11,
+          filter: ["==", ["get", "class"], "major_rail"],
+          paint: { "line-color": "#a6b2bf", "line-width": ["interpolate", ["linear"], ["zoom"], 11, 0.9, 18, 3.2] } },
+        { id: "rel-palang", type: "line", source: "jalan", "source-layer": "road", minzoom: 13,
+          filter: ["==", ["get", "class"], "major_rail"],
+          paint: {
+            "line-color": "#ffffff", "line-dasharray": [2, 3],
+            "line-width": ["interpolate", ["linear"], ["zoom"], 13, 0.8, 18, 2]
+          } },
+
         { id: "gedung", type: "fill", source: "jalan", "source-layer": "building", minzoom: 14,
           filter: ["!=", ["get", "underground"], true],
           paint: { "fill-color": "#dde2e9", "fill-outline-color": "#c7cfd9" } },
+
+        /* which way the traffic runs. The arrows are told to ignore the
+           collision grid, so they never take a slot a street name wanted. */
+        { id: "panah-searah", type: "symbol", source: "jalan", "source-layer": "road", minzoom: 15,
+          filter: ["all", ["==", ["get", "oneway"], "true"], isClass(TOL.concat(ARTERI, SEDANG, JALAN))],
+          layout: {
+            "symbol-placement": "line",
+            "symbol-spacing": 110,
+            "text-field": "\u25b8",
+            "text-font": reguler,
+            "text-size": ["interpolate", ["linear"], ["zoom"], 15, 9, 18, 13],
+            "text-allow-overlap": true,
+            "text-ignore-placement": true,
+            "text-rotation-alignment": "map",
+            "text-keep-upright": false,
+            "text-padding": 0
+          },
+          paint: { "text-color": "#9fadbb", "text-halo-color": "#ffffff", "text-halo-width": 1 } },
+
+        /* the places a rider actually looks for, once the street is close
+           enough to matter. Ranked by Mapbox's own filterrank, so a hospital
+           arrives before a warung. */
+        { id: "titik-poi", type: "circle", source: "jalan", "source-layer": "poi_label", minzoom: 15.5,
+          filter: ["<=", ["to-number", ["get", "filterrank"], 5], ["step", ["zoom"], 1, 16, 2, 17, 3]],
+          paint: {
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 15, 2.2, 18, 3.8],
+            "circle-color": KELOMPOK_POI,
+            "circle-stroke-width": 1,
+            "circle-stroke-color": "#ffffff"
+          } },
+        { id: "nama-poi", type: "symbol", source: "jalan", "source-layer": "poi_label", minzoom: 15.5,
+          filter: ["<=", ["to-number", ["get", "filterrank"], 5], ["step", ["zoom"], 1, 16, 2, 17, 3]],
+          layout: {
+            "text-field": nama,
+            "text-font": reguler,
+            "text-size": ["interpolate", ["linear"], ["zoom"], 15.5, 10, 18, 12],
+            "text-anchor": "top",
+            "text-offset": [0, 0.6],
+            "text-max-width": 9,
+            "symbol-sort-key": ["to-number", ["get", "sizerank"], 30]
+          },
+          paint: { "text-color": "#5d6a77", "text-halo-color": "#ffffff", "text-halo-width": 1.4 } },
 
         /* Labels, ordered small to large. MapLibre places symbols from the
            top of the stack downwards, so the last layer here wins a clash:
@@ -297,7 +375,7 @@
      retitle them without rebuilding the whole style */
   var LAYER_NAMA = [
     "nama-jalan", "nama-kelurahan", "nama-kota", "nama-provinsi", "nama-provinsi-id",
-    "nama-negara", "nama-alam"
+    "nama-negara", "nama-alam", "nama-poi"
   ];
 
   function retitleLabels(map) {

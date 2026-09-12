@@ -31,7 +31,7 @@ export function BlogIndexView() {
                   <time dateTime={post.date}>{say(post.dateLabel)}</time>
                   <span>{say(post.readTime)}</span>
                 </span>
-                <h3>{say(post.title)}</h3>
+                <h2>{say(post.title)}</h2>
                 <p>{say(post.excerpt)}</p>
                 <span className="post__more">{say(COMMON.readMore)}</span>
               </Link>
