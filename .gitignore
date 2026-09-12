@@ -11,6 +11,12 @@ Desktop.ini
 *.pem
 *.key
 
+# ...except the one that lists variable NAMES and never their values.
+# Tanpa baris ini .env.example ikut terjaring .env.* dan tidak pernah sampai
+# ke repositori, sehingga satu satunya keterangan variabel apa saja yang
+# dibutuhkan hanya ada di mesin penulisnya. Sudah terjadi.
+!.env.example
+
 # Python bytecode, never source
 __pycache__/
 *.py[cod]
