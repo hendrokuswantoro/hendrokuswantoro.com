@@ -1,0 +1,31 @@
+; Pemberitahuan saat cadangan gagal.
+;
+; Dipanggil lewat OnFailure= dari hk-cadangan.service. Namanya bertanda @
+; karena ia menerima nama unit yang gagal sebagai parameter, sehingga pesan
+; yang keluar menyebut unit mana yang gagal, bukan sekadar "ada yang gagal".
+;
+; Kenapa ini ada sama sekali: pemeriksaan yang kegagalannya hanya duduk di
+; journal sampai ada yang kebetulan membukanya sama saja dengan tidak ada
+; pemeriksaan. Cadangan adalah hal yang ketiadaannya baru terasa pada hari
+; ia dibutuhkan, dan pada hari itu sudah terlambat untuk mengetahui bahwa ia
+; sudah gagal tiap malam selama tiga bulan.
+;
+; Isinya sengaja hanya memanggil satu skrip. Cara memberitahunya, apakah
+; lewat surel, Telegram, atau isu GitHub, adalah keputusan yang berubah ubah
+; dan tidak perlu menyeret berkas unit ikut berubah.
+
+[Unit]
+Description=Beritahukan kegagalan %i
+
+[Service]
+Type=oneshot
+User=hk
+Group=hk
+EnvironmentFile=-/etc/hendrokuswantoro/env
+ExecStart=/srv/hendrokuswantoro/app/infrastructure/beritahu.sh %i
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+CapabilityBoundingSet=

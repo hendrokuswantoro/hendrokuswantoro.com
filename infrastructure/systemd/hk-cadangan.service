@@ -1,0 +1,63 @@
+; Cadangan terjadwal, terenkripsi, lalu dikirim keluar. Bab 15.18.
+;
+; Dijalankan hk-cadangan.timer, bukan cron. Alasannya bukan selera: timer
+; systemd mencatat kapan terakhir berhasil, mengejar jadwal yang terlewat
+; karena mesinnya mati (Persistent=true), dan kegagalannya masuk journal
+; dengan nama layanan yang jelas. Cron mengirim surel ke pengguna lokal yang
+; tidak pernah dibaca siapa pun.
+;
+; Tiga langkah, berurutan, dan langkah kedua adalah yang paling penting:
+;
+;   1. buat        pg_dump, gzip, lalu kunci dengan AES-256-GCM
+;   2. uji-pulih   pulihkan ke basis data sementara dan hitung barisnya
+;   3. kirim       naikkan ke object storage, menolak berkas yang tidak .enc
+;
+; Cadangan yang belum pernah dipulihkan belum terbukti apa apa. Menjalankan
+; pemulihan tiap malam ke basis data sementara memang memakan waktu beberapa
+; detik lebih; itu harga yang jauh lebih murah daripada menemukan cadangannya
+; rusak pada hari datanya benar benar hilang.
+
+[Unit]
+Description=Cadangan basis data hendrokuswantoro.com, terenkripsi
+Documentation=file:///srv/hendrokuswantoro/app/docs/cadangan.md
+After=network-online.target docker.service
+Wants=network-online.target
+
+; Kalau salah satu langkah gagal, unit ini gagal, dan hk-cadangan-gagal@.service
+; yang menyalakan pemberitahuan. Kegagalan yang hanya duduk di journal sama
+; saja dengan tidak ada cadangan.
+OnFailure=hk-cadangan-gagal@%n.service
+
+[Service]
+Type=oneshot
+User=hk
+Group=hk
+WorkingDirectory=/srv/hendrokuswantoro/app
+EnvironmentFile=/etc/hendrokuswantoro/env
+
+ExecStart=/srv/hendrokuswantoro/venv/bin/python backend/db/cadangan.py buat
+ExecStart=/srv/hendrokuswantoro/venv/bin/python backend/db/cadangan.py uji-pulih
+ExecStart=/srv/hendrokuswantoro/app/infrastructure/kirim.sh
+
+; Satu jam lebih dari cukup. Kalau lewat, ada yang salah dan menggantungnya
+; selamanya hanya menyembunyikan itu.
+TimeoutStartSec=1h
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+CapabilityBoundingSet=
+UMask=0077
+
+; Satu satunya folder yang boleh ditulis. Cadangan berisi salinan lengkap
+; basis data, jadi 0700: hanya pemiliknya.
+ReadWritePaths=/srv/hendrokuswantoro/cadangan
+
+[Install]
+WantedBy=multi-user.target

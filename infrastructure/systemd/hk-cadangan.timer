@@ -1,0 +1,25 @@
+; Jadwal cadangan.
+;
+; 02:40 waktu setempat, bukan jam bulat. Jam bulat adalah saat seluruh dunia
+; menjalankan tugas terjadwalnya sekaligus, termasuk penyedia object storage
+; yang jadi paling sibuk persis di menit itu.
+;
+; Persistent=true yang membedakannya dari cron: kalau VPS-nya mati semalam,
+; cadangannya dijalankan begitu ia hidup lagi, bukan dilewati diam diam
+; sampai besok malam.
+;
+; RandomizedDelaySec menyebar waktu mulainya, sehingga beberapa mesin yang
+; memakai berkas ini tidak menabrak penyedia yang sama pada detik yang sama.
+
+[Unit]
+Description=Jalankan cadangan hendrokuswantoro.com tiap malam
+Documentation=file:///srv/hendrokuswantoro/app/docs/cadangan.md
+
+[Timer]
+OnCalendar=*-*-* 02:40:00
+RandomizedDelaySec=20m
+Persistent=true
+Unit=hk-cadangan.service
+
+[Install]
+WantedBy=timers.target

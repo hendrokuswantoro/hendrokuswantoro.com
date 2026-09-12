@@ -1,0 +1,168 @@
+# Deploy ke VPS. Bab 15, baris Deployment.
+#
+# Ini berjalan HANYA kalau variabel repositori VPS_AKTIF berisi "1". Tanpa itu
+# seluruh pekerjaannya dilewati, dan itu keadaan bawaannya: selama VPS-nya
+# belum ada, alur kerja yang mencoba menghubunginya akan gagal tiap push dan
+# lampu merah yang selalu menyala adalah lampu merah yang berhenti dibaca.
+#
+# Cloudflare tetap menerbitkan situs statisnya. Alur kerja ini untuk bagian
+# yang tidak bisa dikerjakan Cloudflare: API, basis data, dan halaman menulis.
+# Keduanya bisa hidup berdampingan, atau VPS-nya menggantikan keduanya; yang
+# menentukan ke mana pengunjung sampai adalah DNS, bukan berkas ini.
+#
+# Rahasia yang dibutuhkan, di Settings > Secrets and variables > Actions:
+#   VPS_HOST        alamat IP atau nama host
+#   VPS_PENGGUNA    akun SSH yang boleh sudo tanpa sandi untuk dua perintah
+#   VPS_SSH_KUNCI   kunci privat OpenSSH, satu kunci khusus deploy
+#   VPS_PORTA       opsional, bawaannya 22
+# Variabel:
+#   VPS_AKTIF       "1" untuk menyalakan
+#   SITUS           alamat yang diperiksa sesudah deploy
+#
+# Kunci SSH-nya harus kunci tersendiri yang hanya dipakai ini, dengan
+# command= di authorized_keys kalau bisa. Kunci pribadi Anda di dalam secret
+# repositori adalah kunci pribadi yang sudah tidak pribadi lagi.
+
+name: Deploy VPS
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  # Dua deploy yang berjalan bersamaan akan saling menimpa di tengah rsync,
+  # dan hasilnya folder yang separuh versi lama separuh versi baru.
+  group: vps
+  cancel-in-progress: false
+
+jobs:
+  kirim:
+    name: Build, ship, restart, verify
+    runs-on: ubuntu-latest
+    # Tidak pernah men-deploy commit yang CI-nya merah.
+    if: >-
+      vars.VPS_AKTIF == '1' &&
+      (github.event_name == 'workflow_dispatch' ||
+       github.event.workflow_run.conclusion == 'success')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build the static site
+        run: sh tools/bangun_situs.sh
+
+      - name: Load the deploy key
+        env:
+          KUNCI: ${{ secrets.VPS_SSH_KUNCI }}
+          HOST: ${{ secrets.VPS_HOST }}
+          PORTA: ${{ secrets.VPS_PORTA }}
+        run: |
+          test -n "$KUNCI" || { echo "VPS_SSH_KUNCI kosong"; exit 1; }
+          test -n "$HOST"  || { echo "VPS_HOST kosong"; exit 1; }
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$KUNCI" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+
+          # Kunci host diambil sekali lalu disematkan. Tanpa ini, satu satunya
+          # pilihan adalah StrictHostKeyChecking=no, yang berarti menerima
+          # siapa pun yang kebetulan menjawab di alamat itu.
+          ssh-keyscan -p "${PORTA:-22}" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Ship the site and the code
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          AKUN: ${{ secrets.VPS_PENGGUNA }}
+          PORTA: ${{ secrets.VPS_PORTA }}
+        run: |
+          SSH="ssh -i ~/.ssh/deploy -p ${PORTA:-22}"
+
+          # Situs statis lebih dulu. --delete supaya halaman yang dihapus
+          # benar benar hilang, bukan tertinggal jadi alamat hantu.
+          rsync -az --delete -e "$SSH" dist/ "$AKUN@$HOST:/srv/hendrokuswantoro/situs/"
+
+          # Lalu kodenya. cadangan/ dan .env tidak pernah ikut: yang satu
+          # tinggal di server, yang satu tidak pernah ada di repositori.
+          rsync -az --delete -e "$SSH" \
+            --exclude '.git' --exclude 'node_modules' --exclude '__pycache__' \
+            --exclude 'cadangan' --exclude '.env' --exclude 'dist' \
+            ./ "$AKUN@$HOST:/srv/hendrokuswantoro/app/"
+
+      - name: Install dependencies, migrate, restart
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          AKUN: ${{ secrets.VPS_PENGGUNA }}
+          PORTA: ${{ secrets.VPS_PORTA }}
+        run: |
+          ssh -i ~/.ssh/deploy -p "${PORTA:-22}" "$AKUN@$HOST" 'bash -seu' <<'JAUH'
+          cd /srv/hendrokuswantoro/app
+
+          /srv/hendrokuswantoro/venv/bin/pip install -q -r backend/requirements.txt
+
+          # Migrasi sebelum layanan dinyalakan ulang. Urutan sebaliknya
+          # membuat kode baru sempat berjalan di atas skema lama.
+          set -a; . /etc/hendrokuswantoro/env; set +a
+          /srv/hendrokuswantoro/venv/bin/python backend/db/migrasi.py
+
+          sudo systemctl restart hk-api
+          JAUH
+
+      - name: The API answers after the restart
+        env:
+          HOST: ${{ secrets.VPS_HOST }}
+          AKUN: ${{ secrets.VPS_PENGGUNA }}
+          PORTA: ${{ secrets.VPS_PORTA }}
+        run: |
+          # Diperiksa lewat soketnya di dalam mesin, bukan lewat internet.
+          # Yang ditanyakan di sini "apakah layanannya bangun", dan mencampurnya
+          # dengan "apakah DNS dan TLS benar" membuat kegagalannya tidak jelas
+          # datang dari mana.
+          ssh -i ~/.ssh/deploy -p "${PORTA:-22}" "$AKUN@$HOST" 'bash -seu' <<'JAUH'
+          for i in $(seq 1 20); do
+            if curl -sf --unix-socket /run/hk-api/api.sock http://localhost/health >/dev/null; then
+              echo "API menjawab sesudah $i percobaan"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "API tidak menjawab dalam 20 detik"
+          sudo systemctl status hk-api --no-pager -n 40 || true
+          exit 1
+          JAUH
+
+      - name: The published site answers
+        run: |
+          situs="${{ vars.SITUS }}"
+          if [ -z "$situs" ]; then
+            echo "variabel SITUS belum diisi, pemeriksaan luar dilewati"
+            exit 0
+          fi
+          for jalur in / /about /project /blog/; do
+            kode=$(curl -s -o /dev/null -w '%{http_code}' "$situs$jalur")
+            test "$kode" = "200" || { echo "FAIL $jalur -> $kode"; exit 1; }
+            echo "ok   $jalur"
+          done
+
+      - name: Say what to do if this failed
+        if: failure()
+        run: |
+          cat <<'PESAN'
+          Deploy gagal. Yang ada di server TIDAK otomatis dikembalikan.
+
+          Kode lamanya masih ada di git, jadi pengembaliannya:
+            git revert <commit ini>   lalu biarkan alur kerja ini berjalan lagi
+
+          Kalau yang rusak adalah skemanya, cadangan semalam ada di server:
+            sudo -u hk /srv/hendrokuswantoro/venv/bin/python \
+              backend/db/cadangan.py daftar
+          PESAN
