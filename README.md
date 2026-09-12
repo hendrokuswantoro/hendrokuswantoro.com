@@ -271,10 +271,45 @@ ulang kapan saja dengan `python tools/build_dist.py`.
 
 ### B. Lewat Git, supaya tiap perubahan terbit sendiri
 
-Repositori git-nya sudah ada di folder ini, tinggal didorong ke GitHub atau
-GitLab, lalu di Cloudflare pilih **Connect to Git**. Build command dikosongkan
-dan build output directory diisi `/`. Untuk versi Next.js, root directory
-diisi `next`, build command `npm run build`, dan output `out`.
+Repositori git-nya sudah ada di folder ini. Dorong ke GitHub, lalu di
+Cloudflare pilih **Connect to Git** dan arahkan ke repositori itu.
+
+Isian di Cloudflare Pages:
+
+| Isian | Nilai |
+| --- | --- |
+| Framework preset | None |
+| Build command | `sh tools/konfigurasi.sh` |
+| Build output directory | `/` |
+| Environment variable | `MAPBOX_TOKEN` = token `pk.` Anda |
+
+**Kenapa ada build command padahal situsnya statis.** Token Mapbox disimpan di
+`assets/js/konfigurasi.js`, dan berkas itu tidak pernah ikut di-commit, lihat
+`.gitignore`. Jadi salinan yang ada di GitHub tidak punya token, dan tanpa
+token peta jatuh ke OpenFreeMap. `tools/konfigurasi.sh` menulis berkas itu
+saat build dari variabel lingkungan `MAPBOX_TOKEN`, sehingga tokennya cukup
+disimpan sekali di Cloudflare dan repositorinya boleh publik.
+
+Kalau variabelnya lupa diisi, build-nya tetap berhasil dan situsnya tetap
+terbit, hanya petanya yang turun ke OpenFreeMap. Cari baris
+`konfigurasi.sh: MAPBOX_TOKEN is not set` di log build.
+
+Untuk versi Next.js, root directory diisi `next`, build command
+`npm run build`, output `out`, dan variabelnya bernama
+`NEXT_PUBLIC_MAPBOX_TOKEN`.
+
+### Mendorong ke GitHub pertama kali
+
+Buat repositori kosong di <https://github.com/new>, tanpa README, tanpa
+`.gitignore`, tanpa lisensi. Lalu dari folder ini:
+
+```bash
+git remote add origin https://github.com/hendrokuswantoro/NAMA-REPO.git
+git push -u origin main
+```
+
+Git akan meminta izin lewat peramban sekali saja. Sesudah itu tiap perubahan
+cukup `git push`.
 
 ### Memasang domainnya
 

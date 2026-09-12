@@ -1,7 +1,13 @@
-# Keep line endings stable across Windows and the Linux build machines
-# that Cloudflare Pages uses.
+# One line ending in the repository, whatever the machine that wrote it used.
 * text=auto eol=lf
 
+# These are not text and must never be converted.
 *.png binary
+*.webp binary
 *.jpg binary
+*.jpeg binary
 *.ico binary
+*.zip binary
+*.pbf binary
+*.woff binary
+*.woff2 binary
