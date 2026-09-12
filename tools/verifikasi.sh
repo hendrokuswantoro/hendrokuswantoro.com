@@ -58,6 +58,10 @@ else
   lewat "npm is not installed, CI runs this instead"
 fi
 
+langkah "Lint, blog pages match their content"
+python tools/bangun_tulisan.py --periksa >/dev/null
+lulus
+
 langkah "Test"
 python -m pytest
 lulus

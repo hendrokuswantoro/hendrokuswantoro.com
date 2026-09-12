@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-ind="Blog">Blog</title>
+<meta name="description" data-ind="Catatan pendek soal peta dan data." content="Short notes about maps and data.">
+<link rel="canonical" href="https://www.hendrokuswantoro.com/blog/">
+<meta name="theme-color" content="#000000">
+<meta name="author" content="Hendro Kuswantoro">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Hendro Kuswantoro">
+<meta property="og:url" content="https://www.hendrokuswantoro.com/blog/">
+<meta property="og:title" content="Blog, Hendro Kuswantoro">
+<meta property="og:description" content="Short notes about maps and data.">
+<meta property="og:image" content="https://www.hendrokuswantoro.com/assets/img/og-cover.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Blog, Hendro Kuswantoro">
+<meta name="twitter:description" content="Short notes about maps and data.">
+<meta name="twitter:image" content="https://www.hendrokuswantoro.com/assets/img/og-cover.png">
+<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+<link rel="alternate" type="application/rss+xml" title="hendrokuswantoro.com" href="/feed.xml">
+<link rel="stylesheet" href="/assets/css/style.css?v={{versi_css}}">
+<script defer src="/assets/js/app.js?v={{versi_js}}"></script>
+</head>
+<body>
+<a class="skip-link" href="#main" data-ind="Lompat ke isi">Skip to content</a>
+
+<header class="header">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Hendro Kuswantoro, home" data-ind-label="Hendro Kuswantoro, beranda">
+      <svg class="brand__mark" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+        <rect width="48" height="48" rx="14" fill="#000000"></rect>
+        <path d="M15 33V15h4.6v6.7h8.8V15H33v18h-4.6v-7.2h-8.8V33z" fill="#fff"></path>
+        <circle class="mark-dot" cx="37.5" cy="11.5" r="3.5" fill="#276ef1"></circle>
+      </svg>
+      <span class="brand__name">hendro<span>kuswantoro</span></span>
+    </a>
+
+    <nav class="nav" aria-label="Main" data-ind-label="Menu utama">
+      <ul class="nav__list">
+        <li><a class="nav__link" href="/" data-ind="Beranda">Home</a></li>
+        <li><a class="nav__link" href="/about" data-ind="Tentang">About</a></li>
+        <li><a class="nav__link" href="/project" data-ind="Proyek">Project</a></li>
+        <li><a class="nav__link" href="/blog/" aria-current="page" data-ind="Blog">Blog</a></li>
+      </ul>
+    </nav>
+
+    <div class="header__actions">
+      <div class="lang" role="group" aria-label="Language" data-ind-label="Bahasa">
+        <button class="lang__btn" type="button" data-lang="en" aria-pressed="true">EN</button>
+        <button class="lang__btn" type="button" data-lang="id" aria-pressed="false">ID</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero__grid hero__grid--solo">
+        <div>
+          <span class="eyebrow" data-ind="Blog">Blog</span>
+          <h1 data-ind="Catatan pendek soal peta.">Short notes about maps.</h1>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="post-list reveal">
+
+{{daftar}}
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__bottom">
+      <p>&copy; <span data-year>2026</span> <span data-ind="Hendro Kuswantoro. Hak cipta dilindungi.">Hendro Kuswantoro. All rights reserved.</span></p>
+    </div>
+  </div>
+</footer>
+
+<nav class="tabbar" aria-label="Mobile" data-ind-label="Menu ponsel">
+  <a class="tabbar__link" href="/" data-page="home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"></path><path d="M9 21v-7h6v7"></path></svg>
+    <span data-ind="Beranda">Home</span>
+  </a>
+  <a class="tabbar__link" href="/about" data-page="about">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"></path></svg>
+    <span data-ind="Tentang">About</span>
+  </a>
+  <a class="tabbar__link" href="/project" data-page="project">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"></rect><rect x="14" y="3" width="7" height="7" rx="2"></rect><rect x="3" y="14" width="7" height="7" rx="2"></rect><rect x="14" y="14" width="7" height="7" rx="2"></rect></svg>
+    <span data-ind="Proyek">Project</span>
+  </a>
+  <a class="tabbar__link" href="/blog/" data-page="blog" aria-current="page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"></path><path d="M14 3v6h6M9 14h7M9 18h5"></path></svg>
+    <span data-ind="Blog">Blog</span>
+  </a>
+</nav>
+
+</body>
+</html>

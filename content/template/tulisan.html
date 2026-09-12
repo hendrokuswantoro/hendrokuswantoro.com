@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title data-ind="Kenapa sumber selalu saya tulis di pojok peta">Why the source always goes in the corner</title>
-<meta name="description" data-ind="Tulisan kecil di pojok peta menentukan peta itu bisa dipercaya atau tidak. Isinya tiga hal." content="The small text in the corner decides if a map can be trusted. It holds three things.">
-<link rel="canonical" href="https://www.hendrokuswantoro.com/blog/sumber-di-pojok-peta">
+<title data-ind="{{judul_id}}">{{judul_en}}</title>
+<meta name="description" data-ind="{{keterangan_id}}" content="{{keterangan_en}}">
+<link rel="canonical" href="https://www.hendrokuswantoro.com/blog/{{slug}}">
 <meta name="theme-color" content="#000000">
 <meta name="author" content="Hendro Kuswantoro">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Hendro Kuswantoro">
-<meta property="og:url" content="https://www.hendrokuswantoro.com/blog/sumber-di-pojok-peta">
-<meta property="og:title" content="Why the source always goes in the corner">
-<meta property="og:description" content="The small text in the corner decides if a map can be trusted. It holds three things.">
+<meta property="og:url" content="https://www.hendrokuswantoro.com/blog/{{slug}}">
+<meta property="og:title" content="{{judul_en}}">
+<meta property="og:description" content="{{keterangan_en}}">
 <meta property="og:image" content="https://www.hendrokuswantoro.com/assets/img/og-cover.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Why the source always goes in the corner">
-<meta name="twitter:description" content="The small text in the corner decides if a map can be trusted. It holds three things.">
+<meta name="twitter:title" content="{{judul_en}}">
+<meta name="twitter:description" content="{{keterangan_en}}">
 <meta name="twitter:image" content="https://www.hendrokuswantoro.com/assets/img/og-cover.png">
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
@@ -25,16 +25,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
 <link rel="alternate" type="application/rss+xml" title="hendrokuswantoro.com" href="/feed.xml">
-<link rel="stylesheet" href="/assets/css/style.css?v=104400">
-<script defer src="/assets/js/app.js?v=33"></script>
+<link rel="stylesheet" href="/assets/css/style.css?v={{versi_css}}">
+<script defer src="/assets/js/app.js?v={{versi_js}}"></script>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "Why the source always goes in the corner",
-  "datePublished": "2026-08-12",
+  "headline": "{{judul_en}}",
+  "datePublished": "{{tanggal}}",
   "author": { "@type": "Person", "name": "Hendro Kuswantoro", "url": "https://www.hendrokuswantoro.com" },
-  "mainEntityOfPage": "https://www.hendrokuswantoro.com/blog/sumber-di-pojok-peta",
+  "mainEntityOfPage": "https://www.hendrokuswantoro.com/blog/{{slug}}",
   "image": "https://www.hendrokuswantoro.com/assets/img/og-cover.png"
 }
 </script>
@@ -80,34 +80,17 @@
 
         <header class="article__head">
           <p class="post__meta">
-            <span class="tag" data-ind="Desain peta">Map design</span>
-            <time datetime="2026-08-12" data-ind="12 Agu 2026">12 Aug 2026</time>
-            <span data-ind="3 menit baca">3 min read</span>
+            <span class="tag" data-ind="{{tag_id}}">{{tag_en}}</span>
+            <time datetime="{{tanggal}}" data-ind="{{tanggal_label_id}}">{{tanggal_label_en}}</time>
+            <span data-ind="{{baca_id}}">{{baca_en}}</span>
           </p>
-          <h1 data-ind="Kenapa sumber selalu saya tulis di pojok peta">Why the source always goes in the corner</h1>
-          <p data-ind="Peta sering dinilai dari warnanya. Padahal yang menentukan peta itu bisa dipakai atau tidak adalah tulisan kecil di pojok.">
-            A map is often judged by its colours. What decides if it can be used is the small text in the corner.
+          <h1 data-ind="{{judul_id}}">{{judul_en}}</h1>
+          <p data-ind="{{lede_id}}">
+            {{lede_en}}
           </p>
         </header>
 
-        <h2 data-ind="Tiga hal yang harus ada">Three things that must be there</h2>
-        <p data-ind="Datanya dari mana, sebut nama lembaga atau berkasnya, bukan kata internet. Kapan diambil, sebab tutupan lahan tahun lalu dan tahun ini bisa beda jauh. Sistem koordinat dan skalanya, supaya orang tahu jaraknya boleh diukur atau tidak.">
-          Where the data came from, named by agency or by file, not the word internet. When it was taken, because land cover last year and this year can differ a lot. The coordinate system and the scale, so people know if distances may be measured.
-        </p>
-        <p data-ind="Kalau muat saya tambah satu lagi, siapa yang membuat peta dan kapan. Supaya ada yang bisa ditanya kalau ada yang janggal.">
-          If there is room I add one more, who made the map and when. So there is someone to ask when something looks odd.
-        </p>
-        <blockquote>
-          <p data-ind="Peta tanpa keterangan sumber itu bukan peta. Itu gambar berbentuk pulau.">A map with no source note is not a map. It is a picture shaped like an island.</p>
-        </blockquote>
-
-        <h2 data-ind="Kenapa ini penting">Why it matters</h2>
-        <p data-ind="Peta cetak umurnya panjang. Ditempel di dinding, difoto, dikirim ke grup, lalu dipakai setahun kemudian oleh orang yang tidak ikut rapat. Yang tersisa cuma pojok itu.">
-          A printed map lives long. It goes on a wall, gets photographed, gets sent to a group, then used a year later by someone who was not in the meeting. All they have is that corner.
-        </p>
-        <p data-ind="Jadi bagian itu saya tulis lebih dulu, sebelum warna. Kalau sumbernya belum jelas, petanya belum siap.">
-          So I write that part first, before the colours. If the source is not clear, the map is not ready.
-        </p>
+{{isi}}
 
         <p class="mt-32"><a class="btn btn--ghost" href="/blog/" data-ind="Lihat tulisan lain">See other posts</a></p>
 
@@ -119,8 +102,7 @@
           <div>
             <p class="rail__title" data-ind="Tulisan lain">Other posts</p>
             <div class="rail__lain">
-            <a href="/blog/kapan-peta-diam" data-ind="Kapan peta sebaiknya bilang tidak tahu">When a map should say I do not know</a>
-            <a href="/blog/titik-panas-bukan-kebakaran" data-ind="Titik panas bukan berarti kebakaran">A hotspot is not a fire</a>
+{{lain}}
             </div>
           </div>
         </aside>

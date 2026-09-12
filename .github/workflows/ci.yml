@@ -47,6 +47,10 @@ jobs:
             exit 1
           fi
 
+      - name: The committed blog pages match what the content generates
+        run: |
+          python tools/bangun_tulisan.py --periksa
+
       - name: JavaScript has no syntax error
         run: |
           for berkas in assets/js/app.js assets/js/peta.js; do

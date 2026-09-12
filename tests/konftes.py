@@ -14,11 +14,15 @@ from html.parser import HTMLParser
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent
 
-# every page that is actually served, the Next.js port excluded because it is
-# a separate application with its own toolchain
+# Every page that is actually served. Three folders are not pages: next/ is a
+# separate application with its own toolchain, dist/ is build output, and
+# content/template/ holds the templates the blog pages are generated from,
+# which carry {{slot}} markers rather than finished markup.
+BUKAN_HALAMAN = {"next", "dist", "content"}
+
 HALAMAN = sorted(
     p for p in AKAR.rglob("*.html")
-    if "next" not in p.parts and "dist" not in p.parts
+    if not BUKAN_HALAMAN & set(p.parts)
 )
 
 
