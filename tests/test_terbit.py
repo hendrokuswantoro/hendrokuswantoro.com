@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from konftes import AKAR, HALAMAN, nama
+from konftes import AKAR, HALAMAN, berkas_dari_jalur, nama
 
 SITUS = "https://www.hendrokuswantoro.com"
 HEADERS = (AKAR / "_headers").read_text(encoding="utf-8")
@@ -68,21 +68,19 @@ def test_sitemap_menunjuk_berkas_nyata():
 
     for a in alamat:
         assert a.startswith(SITUS), f"sitemap lists a foreign address: {a}"
-        jalur = a[len(SITUS):]
-        berkas = AKAR / "index.html" if jalur in ("", "/") else AKAR / jalur.strip("/")
-        if berkas.is_dir() or jalur.endswith("/"):
-            berkas = AKAR / jalur.strip("/") / "index.html"
+        berkas = berkas_dari_jalur(a[len(SITUS):])
         assert berkas.exists(), f"sitemap lists {a}, which does not exist"
 
 
 def test_setiap_tulisan_terdaftar():
     """A post nobody can find is a post that was never published."""
-    tulisan = sorted(p.name for p in (AKAR / "blog").glob("*.html") if p.name != "index.html")
+    # addresses carry no .html, so the slug is what has to appear
+    tulisan = sorted(p.stem for p in (AKAR / "blog").glob("*.html") if p.stem != "index")
     sitemap = (AKAR / "sitemap.xml").read_text(encoding="utf-8")
     umpan = (AKAR / "feed.xml").read_text(encoding="utf-8")
     for t in tulisan:
-        assert t in sitemap, f"{t} is missing from the sitemap"
-        assert t in umpan, f"{t} is missing from the feed"
+        assert f"/blog/{t}<" in sitemap, f"{t} is missing from the sitemap"
+        assert f"/blog/{t}<" in umpan, f"{t} is missing from the feed"
 
 
 def test_umpan_terbaca():

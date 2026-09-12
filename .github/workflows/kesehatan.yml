@@ -41,11 +41,7 @@ jobs:
         run: |
           situs="${{ steps.alamat.outputs.situs }}"
           gagal=0
-          for jalur in / /about.html /project.html /blog/ \
-                       /blog/kapan-peta-diam.html \
-                       /blog/titik-panas-bukan-kebakaran.html \
-                       /blog/sumber-di-pojok-peta.html \
-                       /robots.txt /sitemap.xml /feed.xml; do
+          for jalur in / /about /project /blog/ \n                       /blog/kapan-peta-diam \n                       /blog/titik-panas-bukan-kebakaran \n                       /blog/sumber-di-pojok-peta \n                       /robots.txt /sitemap.xml /feed.xml; do
             kode=$(curl -s -o /dev/null -w '%{http_code}' "$situs$jalur")
             if [ "$kode" != "200" ]; then
               echo "FAIL $jalur -> $kode"
@@ -55,6 +51,16 @@ jobs:
             fi
           done
           exit $gagal
+
+      - name: The old .html addresses still lead somewhere
+        run: |
+          situs="${{ steps.alamat.outputs.situs }}"
+          kode=$(curl -s -o /dev/null -w '%{http_code}' "$situs/about.html")
+          case "$kode" in
+            30*) echo "ok, /about.html redirects with $kode" ;;
+            200) echo "ok, /about.html is served directly" ;;
+            *) echo "FAIL, /about.html answers $kode"; exit 1 ;;
+          esac
 
       - name: A missing page answers 404, not 200
         run: |

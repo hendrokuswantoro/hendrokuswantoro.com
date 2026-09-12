@@ -76,8 +76,20 @@ def nama(berkas: pathlib.Path) -> str:
 
 
 def berkas_dari_jalur(jalur: str) -> pathlib.Path:
-    """Turns an absolute site path into the file that answers it."""
+    """Turns an address into the file that answers it.
+
+    The site hands out addresses without .html, because Cloudflare answers
+    /about.html with a 307 to /about. This mirrors the rule the host uses:
+    a trailing slash means index.html inside that folder, an address with no
+    extension means the file of that name plus .html, and anything that
+    already carries an extension is taken as written.
+    """
     bersih = jalur.split("#")[0].split("?")[0]
+    if bersih in ("", "/"):
+        return AKAR / "index.html"
     if bersih.endswith("/"):
         return AKAR / bersih.strip("/") / "index.html"
-    return AKAR / bersih.lstrip("/")
+    calon = AKAR / bersih.lstrip("/")
+    if calon.suffix:
+        return calon
+    return calon.with_suffix(".html")
