@@ -335,8 +335,18 @@ cukup `git push`.
    dibuat otomatis. Kalau belum, pindahkan dulu nameserver domainnya ke
    Cloudflare, atau tambahkan CNAME `www` ke alamat `.pages.dev` di penyedia
    DNS yang sekarang.
-4. Pengalihan dari tanpa www ke dengan www sudah disiapkan di berkas
-   `_redirects`, dan baru aktif sesudah kedua domain terpasang.
+4. Pengalihan dari tanpa www ke dengan www **tidak** memakai berkas
+   `_redirects`. Berkas itu dulu ada dan sudah dihapus: Cloudflare Workers
+   menolaknya dengan `Only relative URLs are allowed [code: 100324]`, sebab
+   di Workers `_redirects` hanya boleh memuat jalur relatif, tidak boleh
+   pindah host. Yang dipakai sekarang adalah **Redirect Rule** di dashboard,
+   yang jalan di Workers maupun Pages:
+
+   Dashboard domain `hendrokuswantoro.com` → **Rules** → **Redirect Rules** →
+   **Create rule**. Kondisinya `Hostname` `equals` `hendrokuswantoro.com`,
+   lalu **Dynamic redirect** ke
+   `concat("https://www.hendrokuswantoro.com", http.request.uri.path)`
+   dengan status **301** dan **Preserve query string** dinyalakan.
 
 Berkas `_headers` ikut terbaca otomatis, termasuk Content Security Policy dan
 HSTS. Sertifikat TLS diterbitkan Cloudflare sendiri.

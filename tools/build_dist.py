@@ -24,7 +24,6 @@ FILES = [
     "feed.xml",
     "site.webmanifest",
     "_headers",
-    "_redirects",
     "CNAME",
 ]
 
