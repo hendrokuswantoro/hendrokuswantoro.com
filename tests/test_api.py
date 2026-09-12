@@ -26,8 +26,20 @@ from muat_env import muat  # noqa: E402
 
 muat()
 
-if sys.platform == "win32":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+def _loop_untuk_psycopg() -> None:
+    """psycopg menolak ProactorEventLoop, yang jadi bawaan Windows.
+
+    Disetel di dalam fixture, bukan saat modul diimpor. pytest mengimpor
+    seluruh modul uji saat mengoleksi, bahkan yang tidak akan dijalankan,
+    jadi menyetelnya di tingkat modul ikut meracuni proses yang sedang
+    menjalankan uji Playwright: Playwright justru menuntut ProactorEventLoop
+    untuk menjalankan subproses, dan gagalnya berbunyi NotImplementedError
+    yang tidak menyebut sebabnya.
+    """
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 
 pytest.importorskip("fastapi", reason="backend belum terpasang")
 pytest.importorskip("httpx", reason="httpx belum terpasang")
@@ -54,6 +66,7 @@ ADA_DB = bisa_terhubung()
 
 @pytest.fixture(scope="module")
 def klien():
+    _loop_untuk_psycopg()
     from backend.main import aplikasi
 
     with TestClient(aplikasi) as c:

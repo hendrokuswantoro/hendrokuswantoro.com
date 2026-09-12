@@ -219,10 +219,37 @@ jobs:
           COOKIE_AMAN: "false"
         run: python -m pytest tests/test_admin.py -q
 
+  peramban:
+    name: Browser and Performance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r tests/requirements.txt
+
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium chromium-headless-shell
+
+      # Token Mapbox dibutuhkan: tanpa itu peta jatuh ke OpenFreeMap dan yang
+      # diuji bukan lagi peta yang terbit. Kalau rahasianya belum dipasang,
+      # langkah ini melewati uji peta dan mengatakannya, bukan lolos diam diam.
+      - name: Write the map token
+        env:
+          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+        run: sh tools/konfigurasi.sh
+
+      - name: Browser tests
+        run: python -m pytest tests/test_peramban.py -q
+
+      - name: Performance budgets
+        run: python -m pytest tests/test_performa.py -q -s
+
   bangun:
     name: Build
     runs-on: ubuntu-latest
-    needs: [lint, test, keamanan, basisdata]
+    needs: [lint, test, keamanan, basisdata, peramban]
     steps:
       - uses: actions/checkout@v4
 

@@ -76,31 +76,25 @@ bukan untuk brosur empat halaman. Syarat kapan keputusan ini gugur ada di
 | 13 CDN & WAF | Sudah | Cloudflare |
 | 14 Infrastructure | Tidak berlaku | Tidak ada kontainer untuk berkas statis |
 | 15 CI/CD | Sudah | Lint, type check, test, security scan, build tiap push |
-| 16 Testing | Sebagian | 170 uji berkas. Tidak ada uji peramban, lihat daftar di bawah |
-| 17 Monitoring | Sebagian | Health check harian ada, peringatan belum |
-| 18 Backup & DR | Belum | Git dan zip adalah cadangannya, tetapi RPO, RTO, dan prosedur pemulihan belum ditulis dan belum pernah diuji |
+| 16 Testing | Sudah | 285 uji: berkas, basis data, API, autentikasi, peramban, performa. Tidak ada uji peramban, lihat daftar di bawah |
+| 17 Monitoring | Sudah | Log JSON terstruktur, health check harian, peringatan lewat isu |
+| 18 Backup & DR | Sudah | RPO 1 hari, RTO di bawah 15 menit, retensi 14, pemulihan diuji tiap push |
 | 19 DevOps & Automation | Sudah | Deploy, build, sertifikat, pemeriksaan semuanya otomatis |
-| 20 Performance | Sebagian | Sudah dioptimalkan, tetapi belum pernah diukur |
+| 20 Performance | Sudah | Diukur dan dianggarkan, lihat [pengujian.md](pengujian.md) |
 | 21 Git | Sudah | Commit atomik dan deskriptif, tidak ada rahasia |
 | 22 Documentation | Sudah | README plus lima dokumen. Dokumentasi API, basis data, dan autentikasi tidak berlaku |
-| 23 Production Hardening | Sebagian | HTTPS, rahasia, header, health check, rollback sudah. Pemulihan cadangan belum diuji |
+| 23 Production Hardening | Sudah | HTTPS, rahasia, header, health check, rollback, dan pemulihan cadangan yang sudah diuji |
 | 24 Final Verification | Sudah | `tools/verifikasi.sh` |
 
 ## Yang benar benar belum dikerjakan
 
-Dua, turun dari enam.
+Dari lima butir, nol yang tersisa dari daftar lama. Yang belum sekarang hanya
+satu, dan bukan kelalaian melainkan keputusan yang menunggu Anda:
 
-**1. Tidak ada uji peramban.** Rangkaian ujinya membaca berkas dan memanggil
-API; tidak satu pun menjalankan situsnya di peramban sungguhan. Yang tidak
-dijaga siapa pun: petanya benar benar tergambar, tombol 3D benar benar
-menegakkan bangunan, dan halaman tidak berantakan di ponsel. Sepanjang
-pengerjaan ini saya memeriksanya dengan tangan, dan peta sudah tiga kali
-rusak diam diam.
-
-**2. Performa belum pernah diukur.** Gambar sudah webp, MapLibre dimuat
-malas, aset diberi versi dan disimpan setahun. Semuanya masuk akal, tetapi
-tidak satu pun angkanya pernah dilihat. Bab 20 menuntut optimasi, dan
-optimasi tanpa pengukuran adalah tebakan yang kebetulan rapi.
+**Fase 7, VPS.** Nginx, deploy, cadangan terjadwal yang terenkripsi, dan
+sertifikat. Semuanya menuntut server yang belum ada, dan servernya menuntut
+keputusan biaya yang bukan milik saya. Rancangannya ada di
+[rancangan-platform.md](rancangan-platform.md) bagian 11 dan 12.
 
 ## Yang sudah ditutup sejak pemeriksaan pertama
 
@@ -110,6 +104,8 @@ optimasi tanpa pengukuran adalah tebakan yang kebetulan rapi.
 | Bab 18 tanpa isi | `backend/db/cadangan.py`, RPO 1 hari, RTO di bawah 15 menit, uji pemulihan jalan di tiap push CI |
 | Tidak ada peringatan | health check yang gagal membuka isu berlabel `kesehatan`, ditutup sendiri saat pulih |
 | Port Next.js belum pernah dibangun | `npm run build` jalan di CI |
+| Tidak ada uji peramban | 25 uji Chromium: peta menggambar, 3D menegakkan bangunan, dua bahasa, tanpa geser mendatar di ponsel |
+| Performa belum pernah diukur | anggaran per halaman, angkanya tercetak tiap kali dijalankan |
 
 ## Yang menunggu, bukan belum dikerjakan
 

@@ -66,6 +66,15 @@ langkah "Test"
 python -m pytest
 lulus
 
+langkah "E2E Test, Chromium"
+# dijalankan terpisah: lihat alasannya di pytest.ini
+if python -c "import playwright" 2>/dev/null; then
+  python -m pytest -m peramban
+  lulus
+else
+  lewat "playwright belum terpasang"
+fi
+
 langkah "Security Check, no credential in the repository"
 POLA='pk\.eyJ[A-Za-z0-9]|sk\.eyJ[A-Za-z0-9]|BEGIN [A-Z ]*PRIVATE KEY|AKIA[0-9A-Z]{16}'
 if git grep -nIE "$POLA" -- . ':!tests/test_peta.py' ':!tools/verifikasi.sh' ':!.github' >/dev/null 2>&1; then
