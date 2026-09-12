@@ -201,6 +201,12 @@ jobs:
           PY
           python -m pytest tests/test_auth.py -q
 
+      - name: Admin write tests
+        env:
+          JWT_SECRET: rahasia-uji-yang-panjangnya-lebih-dari-tiga-puluh-dua
+          COOKIE_AMAN: "false"
+        run: python -m pytest tests/test_admin.py -q
+
   bangun:
     name: Build
     runs-on: ubuntu-latest

@@ -169,3 +169,93 @@ class SumberBerkas:
         if len(potong) != 5 or potong[1] != "en" or potong[3] != "id":
             raise IsiSalah("badan harus berisi '=== en ===' lalu '=== id ==='")
         return {"en": potong[2].strip("\n"), "id": potong[4].strip("\n")}
+
+class SumberApi:
+    """Fase 6. Membaca isi dari API, bukan dari berkas.
+
+    Antarmukanya sama persis dengan SumberBerkas, jadi pembangkit situs tidak
+    berubah satu baris pun saat berpindah ke sini. Itu seluruh alasan
+    SumberIsi dibuat sebagai antarmuka sejak Fase 0, bukan dijadikan refactor
+    yang ditunda.
+
+    Memakai urllib dari pustaka standar, bukan requests atau httpx: pembangkit
+    situs berjalan di mesin build Cloudflare, dan menambah dependensi di sana
+    berarti menambah satu hal lagi yang bisa gagal saat menerbitkan.
+    """
+
+    def __init__(self, pangkal: str, waktu_tunggu: int = 20) -> None:
+        self.pangkal = pangkal.rstrip("/")
+        self.waktu_tunggu = waktu_tunggu
+
+    def _ambil(self, jalur: str) -> dict:
+        import json
+        import urllib.error
+        import urllib.request
+
+        alamat = f"{self.pangkal}{jalur}"
+        try:
+            with urllib.request.urlopen(alamat, timeout=self.waktu_tunggu) as jawaban:
+                return json.loads(jawaban.read().decode("utf-8"))
+        except urllib.error.URLError as galat:
+            raise IsiSalah(f"{alamat}: {galat}") from galat
+
+    def tulisan(self) -> list[Tulisan]:
+        daftar = self._ambil("/api/v1/blog?batas=100")["isi"]
+        hasil = []
+        for ringkas in daftar:
+            penuh = self._ambil(f"/api/v1/blog/{ringkas['slug']}")
+            hasil.append(Tulisan(
+                slug=penuh["slug"],
+                tanggal=penuh["tanggal"],
+                tanggal_label=Teks(**_label_tanggal(penuh["tanggal"])),
+                judul=Teks(**penuh["judul"]),
+                tag=Teks(**penuh["tag"]),
+                baca=Teks(**penuh["baca"]),
+                ringkas=Teks(**penuh["ringkas"]),
+                keterangan=Teks(**penuh["keterangan"]),
+                lede=Teks(**penuh["lede"]),
+                isi_en=penuh["isi_en"],
+                isi_id=penuh["isi_id"],
+            ))
+        hasil.sort(key=lambda t: t.tanggal, reverse=True)
+        return hasil
+
+    def proyek(self) -> list[Proyek]:
+        daftar = self._ambil("/api/v1/projects?batas=100")["isi"]
+        hasil = [Proyek(
+            slug=p["slug"],
+            urut=p["urut"],
+            kategori=tuple(p["kategori"]),
+            jenis_peta=p["jenis_peta"],
+            lng=p["lng"],
+            lat=p["lat"],
+            badge=Teks(**p["badge"]),
+            judul=Teks(**p["judul"]),
+            ringkas=Teks(**p["ringkas"]),
+            peran=Teks(**p["peran"]),
+            gambar=p["gambar"],
+            gambar_alt=Teks(**p["gambar_alt"]),
+            teknologi=tuple(p["teknologi"]),
+        ) for p in daftar]
+        hasil.sort(key=lambda p: p.urut)
+        return hasil
+
+
+BULAN_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+BULAN_ID = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+            "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
+
+
+def _label_tanggal(iso: str) -> dict[str, str]:
+    """Label tanggal yang terbaca, dua bahasa.
+
+    Tidak disimpan di basis data karena bisa diturunkan dari tanggalnya, dan
+    data turunan yang ikut disimpan adalah data yang bisa berbeda dari
+    asalnya.
+    """
+    tahun, bulan, hari = (int(x) for x in iso.split("-"))
+    return {
+        "en": f"{hari} {BULAN_EN[bulan - 1]} {tahun}",
+        "id": f"{hari} {BULAN_ID[bulan - 1]} {tahun}",
+    }

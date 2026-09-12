@@ -22,7 +22,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import markah  # noqa: E402
-from isi import SumberBerkas, Tulisan  # noqa: E402
+from isi import SumberApi, SumberBerkas, SumberIsi, Tulisan  # noqa: E402
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent
 ISI = AKAR / "content"
@@ -195,10 +195,21 @@ def main() -> int:
     alasan = argparse.ArgumentParser(description=__doc__)
     alasan.add_argument("--periksa", action="store_true",
                         help="bandingkan saja, keluar 1 bila ada beda")
+    alasan.add_argument("--sumber", default="berkas", choices=["berkas", "api"],
+                        help="dari content/ atau dari API")
+    alasan.add_argument("--api", default="http://127.0.0.1:8000",
+                        help="pangkal API kalau --sumber api")
     pilihan = alasan.parse_args()
 
+    # Seluruh alasan SumberIsi dibuat antarmuka sejak Fase 0 ada di dua baris
+    # ini: berpindah dari berkas ke basis data tidak menyentuh satu pun baris
+    # di bawahnya.
+    sumber: SumberIsi = (
+        SumberApi(pilihan.api) if pilihan.sumber == "api" else SumberBerkas(ISI)
+    )
+
     css, js = versi_aset()
-    semua = SumberBerkas(ISI).tulisan()
+    semua = sumber.tulisan()
     if not semua:
         raise SystemExit("content/blog kosong")
 

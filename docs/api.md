@@ -161,3 +161,50 @@ cadangan. Yang terpasang sekarang baru cadangannya. Passkey menuntut pustaka
 tersendiri dan alur pendaftaran perangkat, dan bab 15.8 melarang membuat
 protokol kriptografi sendiri, jadi itu pekerjaan tersendiri dengan ujinya
 sendiri, bukan tempelan.
+
+## Jalur admin
+
+Fase 5. Seluruhnya di belakang `butuh_admin`, tanpa pengecualian.
+
+| Method | Jalur | Fungsi |
+| --- | --- | --- |
+| GET | `/api/v1/admin/blog` | semua tulisan, termasuk draf |
+| POST | `/api/v1/admin/blog` | tulisan baru, mulai sebagai draf |
+| PATCH | `/api/v1/admin/blog/{slug}` | sunting sebagian |
+| POST | `/api/v1/admin/blog/{slug}/status` | draf, terbit, atau arsip |
+| DELETE | `/api/v1/admin/blog/{slug}` | hapus |
+
+Tulisan baru **selalu** mulai sebagai draf. Tidak ada jalur yang menerbitkan
+dan membuat sekaligus: menerbitkan harus jadi tindakan tersendiri yang
+disengaja.
+
+### Aturan yang sama ditegakkan dua kali
+
+Dua bahasa harus punya jumlah dan urutan blok yang sama. Aturan itu sudah
+dijaga pembangkit situs statis sejak Fase 0, dan sekarang dijaga lagi di
+skema masuk API.
+
+Itu bukan pengulangan yang sia sia. Keduanya pintu masuk yang berbeda: satu
+dari berkas, satu dari dashboard. Aturan yang hanya dijaga di satu pintu
+adalah aturan yang bisa dilewati lewat pintu satunya.
+
+Panjang teks juga dibatasi di skema masuk, bukan diserahkan ke lebar kolom
+basis data. Kalau yang menolak cuma PostgreSQL, yang sampai ke penulis adalah
+500 tanpa penjelasan.
+
+## Fase 6: isi dari API
+
+`tools/isi.py` sekarang punya dua implementasi `SumberIsi`:
+
+```bash
+python tools/bangun_tulisan.py                 # dari content/*.md
+python tools/bangun_tulisan.py --sumber api    # dari basis data lewat API
+```
+
+**Keduanya menghasilkan HTML yang sama persis, sampai ke byte.** Itu bukti
+bahwa `SumberIsi` benar benar antarmuka, dan bahwa Fase 0 tidak terbuang
+saat basis datanya datang. Ada ujinya di `tests/test_admin.py`.
+
+`SumberApi` memakai `urllib` dari pustaka standar, bukan requests atau httpx.
+Pembangkit situs berjalan di mesin build Cloudflare, dan menambah dependensi
+di sana berarti menambah satu hal lagi yang bisa gagal saat menerbitkan.
