@@ -23,7 +23,7 @@ sys.path.insert(0, str(AKAR / "tools"))
 import markah  # noqa: E402
 from isi import IsiSalah, SumberBerkas, Teks  # noqa: E402
 
-SUMBER = SumberBerkas(AKAR / "content" / "blog")
+SUMBER = SumberBerkas(AKAR / "content")
 
 
 def test_semua_tulisan_terbaca():

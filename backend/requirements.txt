@@ -1,0 +1,3 @@
+# Kebutuhan backend. Kebutuhan uji terpisah di tests/requirements.txt supaya
+# pytest tidak pernah ikut ke citra jalan.
+psycopg[binary]==3.2.3

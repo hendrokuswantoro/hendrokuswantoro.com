@@ -25,7 +25,7 @@ import markah  # noqa: E402
 from isi import SumberBerkas, Tulisan  # noqa: E402
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent
-ISI = AKAR / "content" / "blog"
+ISI = AKAR / "content"
 TEMPLATE = AKAR / "content" / "template"
 SITUS = "https://www.hendrokuswantoro.com"
 # tanggal halaman yang isinya tidak datang dari content/

@@ -51,9 +51,34 @@ class Tulisan:
     isi_id: str             # Markdown
 
 
+@dataclass(frozen=True)
+class Proyek:
+    slug: str
+    urut: int
+    kategori: tuple[str, ...]      # app, analysis, satellite, design
+    jenis_peta: str                # yang menentukan warna penanda di peta
+    lng: float
+    lat: float
+    badge: Teks
+    judul: Teks
+    ringkas: Teks
+    peran: Teks
+    gambar: str
+    gambar_alt: Teks
+    teknologi: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        if not self.kategori:
+            raise IsiSalah(f"{self.slug}: kategori kosong")
+        if not 94 <= self.lng <= 142 or not -12 <= self.lat <= 7:
+            raise IsiSalah(f"{self.slug}: titik di luar Indonesia")
+
 class SumberIsi(Protocol):
     def tulisan(self) -> list[Tulisan]:
         """Terbaru lebih dulu."""
+
+    def proyek(self) -> list[Proyek]:
+        """Urut sesuai kolom urut."""
 
 
 PISAH = re.compile(r"^=== (en|id) ===\s*$", re.M)
@@ -63,12 +88,40 @@ class SumberBerkas:
     """Fase 0. Membaca content/blog/*.md."""
 
     def __init__(self, akar: pathlib.Path) -> None:
+        """`akar` adalah folder content/, yang memuat blog/ dan proyek/."""
         self.akar = akar
 
     def tulisan(self) -> list[Tulisan]:
-        hasil = [self._baca(p) for p in sorted(self.akar.glob("*.md"))]
+        hasil = [self._baca(p) for p in sorted((self.akar / "blog").glob("*.md"))]
         hasil.sort(key=lambda t: t.tanggal, reverse=True)
         return hasil
+
+    def proyek(self) -> list[Proyek]:
+        hasil = [self._baca_proyek(p) for p in sorted((self.akar / "proyek").glob("*.md"))]
+        hasil.sort(key=lambda p: p.urut)
+        return hasil
+
+    def _baca_proyek(self, berkas: pathlib.Path) -> Proyek:
+        mentah = berkas.read_text(encoding="utf-8")
+        try:
+            kepala, _ = self._pisah_depan(mentah)
+            return Proyek(
+                slug=berkas.stem,
+                urut=int(kepala["urut"]),
+                kategori=tuple(kepala["kategori"].split()),
+                jenis_peta=kepala["jenis_peta"],
+                lng=float(kepala["lng"]),
+                lat=float(kepala["lat"]),
+                badge=self._dua(kepala, "badge"),
+                judul=self._dua(kepala, "judul"),
+                ringkas=self._dua(kepala, "ringkas"),
+                peran=self._dua(kepala, "peran"),
+                gambar=kepala["gambar"],
+                gambar_alt=self._dua(kepala, "gambar_alt"),
+                teknologi=tuple(x.strip() for x in kepala["teknologi"].split(",")),
+            )
+        except (KeyError, IsiSalah, ValueError) as galat:
+            raise IsiSalah(f"{berkas.name}: {galat}") from galat
 
     def _baca(self, berkas: pathlib.Path) -> Tulisan:
         mentah = berkas.read_text(encoding="utf-8")
