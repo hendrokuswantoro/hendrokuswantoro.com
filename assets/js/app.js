@@ -197,13 +197,20 @@
       if (started) return;
       started = true;
 
+      /* MapLibre 6 ships as an ES module only. There is no UMD bundle to drop
+         in with a script tag, so it is imported and its namespace is put on
+         window for peta.js to read, exactly where the old global used to be.
+         The import is same origin, which script-src 'self' already allows. */
       Promise.all([
         loadOnce("css", "/assets/vendor/maplibre/maplibre-gl.css"),
-        loadOnce("js", "/assets/vendor/maplibre/maplibre-gl.js"),
+        import("/assets/vendor/maplibre/maplibre-gl.mjs").then(function (mod) {
+          window.maplibregl = mod;
+          return mod;
+        }),
         /* optional, the map falls back to key free sources when it is absent */
         loadOnce("js", "/assets/js/konfigurasi.js").catch(function () { return null; })
       ])
-        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=33"); })
+        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=34"); })
         .then(function () {
           wrap.classList.add("is-live");
           window.HK_PETA_MAP = window.HK_PETA.build(canvas);

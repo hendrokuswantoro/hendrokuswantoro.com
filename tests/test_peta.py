@@ -105,28 +105,52 @@ def test_konfigurasi_diabaikan_git():
 
 
 def test_maplibre_terkunci():
-    """The vendored library is the one piece of third party code that reaches
-    a visitor. It carries GHSA-jrc7-96c5-q579, a critical sanitizer bypass
-    that is unfixed below 6.4.1 and cannot be fixed by swapping the file,
-    because MapLibre 6 ships ESM only. See docs/keamanan.md.
+    """MapLibre adalah satu satunya kode pihak ketiga yang sampai ke
+    pengunjung. Versinya dikunci di satu berkas supaya berkas pustaka, angka
+    yang dicatat, dan yang diminta port Next.js tidak bisa berpisah jalan.
 
-    This test does not pretend the advisory is handled. It makes sure the
-    version in the file, the version pinned beside it, and the version the
-    Next.js port asks for cannot drift apart, so nobody upgrades one and
-    believes all three moved.
+    Sejak 6.x pustakanya terbit sebagai ES module dan terpecah empat berkas.
+    Keempatnya wajib ada: tanpa maplibre-gl-worker.mjs peta memuat gayanya
+    lalu diam selamanya, tanpa galat apa pun.
     """
-    versi = (AKAR / "assets" / "vendor" / "maplibre" / "VERSI").read_text(encoding="utf-8").strip()
+    rumah = AKAR / "assets" / "vendor" / "maplibre"
+    versi = (rumah / "VERSI").read_text(encoding="utf-8").strip()
 
-    pustaka = (AKAR / "assets" / "vendor" / "maplibre" / "maplibre-gl.js").read_text(
-        encoding="utf-8", errors="ignore"
-    )[:2000]
-    assert f"/v{versi}/" in pustaka, f"the vendored file is not {versi}"
+    for nama in ("maplibre-gl.mjs", "maplibre-gl-shared.mjs",
+                 "maplibre-gl-worker.mjs", "maplibre-gl.css"):
+        assert (rumah / nama).exists(), f"{nama} hilang dari assets/vendor/maplibre"
+
+    kepala = (rumah / "maplibre-gl.mjs").read_text(encoding="utf-8", errors="ignore")[:600]
+    assert f"/v{versi}/" in kepala, f"berkas pustaka bukan versi {versi}"
+
+    assert not (rumah / "maplibre-gl.js").exists(), (
+        "bundel UMD lama masih ada, dan versinya membawa GHSA-jrc7-96c5-q579"
+    )
 
     paket = (AKAR / "next" / "package.json").read_text(encoding="utf-8")
     mayor = versi.split(".")[0]
     assert f'"maplibre-gl": "^{mayor}.' in paket, (
-        f"the Next.js port asks for a different major than the vendored {versi}"
+        f"port Next.js meminta mayor yang berbeda dari {versi} yang dibawa"
     )
+
+
+def test_versi_maplibre_sudah_di_atas_ghsa():
+    """GHSA-jrc7-96c5-q579 baru diperbaiki di 6.4.1. Turun di bawahnya berarti
+    membawa kembali celah sanitizer yang sudah ditutup."""
+    versi = (AKAR / "assets" / "vendor" / "maplibre" / "VERSI").read_text(
+        encoding="utf-8").strip()
+    angka = tuple(int(x) for x in versi.split("."))
+    assert angka >= (6, 4, 1), f"MapLibre {versi} masih terdampak GHSA-jrc7-96c5-q579"
+
+
+def test_worker_boleh_dari_origin_sendiri():
+    """MapLibre 6 memuat workernya sebagai modul dari origin ini lewat
+    import.meta.url. Dengan worker-src blob: saja, peta memuat gayanya lalu
+    diam tanpa satu pun permintaan ubin dan tanpa galat."""
+    headers = (AKAR / "_headers").read_text(encoding="utf-8")
+    csp = [b for b in headers.splitlines() if "Content-Security-Policy:" in b][0]
+    worker = [b for b in csp.split(";") if "worker-src" in b][0]
+    assert "'self'" in worker, "worker-src menolak origin sendiri, peta akan diam"
 
 
 def test_csp_menahan_muatan_sanitizer():

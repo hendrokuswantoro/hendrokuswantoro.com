@@ -4,15 +4,18 @@
 # the vector tiles, the sprites and the glyphs, blob workers, and inline
 # styles, which MapLibre writes onto its own controls and markers. Scripts
 # stay restricted to this origin, which is the part that carries real risk.
-# blob workers because MapLibre builds its worker at runtime, and blob plus
-# data URLs for the canvas textures it draws into.
+# MapLibre 6 loads its worker as a real module from this origin, resolved
+# through import.meta.url, so worker-src needs 'self' and not only blob:.
+# Version 4 built the worker from a blob, which is why the rule used to be
+# blob: alone. Blob stays because the canvas textures still use blob and
+# data URLs.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), interest-cohort=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://tiles.openfreemap.org https://api.mapbox.com https://server.arcgisonline.com https://s3.amazonaws.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' blob:; worker-src blob:; child-src blob:; connect-src 'self' https://tiles.openfreemap.org https://api.mapbox.com https://events.mapbox.com https://server.arcgisonline.com https://s3.amazonaws.com; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://tiles.openfreemap.org https://api.mapbox.com https://server.arcgisonline.com https://s3.amazonaws.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' blob:; worker-src 'self' blob:; child-src blob:; connect-src 'self' https://tiles.openfreemap.org https://api.mapbox.com https://events.mapbox.com https://server.arcgisonline.com https://s3.amazonaws.com; object-src 'none'; upgrade-insecure-requests
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable

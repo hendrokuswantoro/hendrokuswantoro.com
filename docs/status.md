@@ -6,7 +6,7 @@ Pemeriksaan baris demi baris terhadap `Personal web.docx`. Tiga tanda dipakai:
 - **Tidak berlaku** — tidak relevan untuk situs ini, alasannya ditulis
 - **Belum** — berlaku, tetapi belum dikerjakan
 
-Terakhir diperiksa 12 September 2026.
+Terakhir diperiksa 12 September 2026, sesudah MapLibre naik ke 6.9.0.
 
 ## Bagian satu, permintaan situsnya
 
@@ -71,12 +71,12 @@ bukan untuk brosur empat halaman. Syarat kapan keputusan ini gugur ada di
 | 8 Authentication & IAM | Tidak berlaku | Tidak ada yang login |
 | 9 Authorization | Tidak berlaku | Tidak ada peran |
 | 10 Session & Token | Tidak berlaku | Tidak ada sesi |
-| 11 Security | Sebagian | Header, CSP, HSTS, penyisiran rahasia semuanya ada. Satu temuan terbuka, lihat [keamanan.md](keamanan.md) |
+| 11 Security | Sudah | Header, CSP, HSTS, penyisiran rahasia. Temuan MapLibre ditutup 12 Sep 2026, lihat [keamanan.md](keamanan.md) |
 | 12 Reverse proxy | Digantikan | TLS, routing, kompresi, rate limit dikerjakan tepi Cloudflare |
 | 13 CDN & WAF | Sudah | Cloudflare |
 | 14 Infrastructure | Tidak berlaku | Tidak ada kontainer untuk berkas statis |
 | 15 CI/CD | Sudah | Lint, type check, test, security scan, build tiap push |
-| 16 Testing | Sebagian | 154 uji berkas. Tidak ada uji peramban, lihat daftar di bawah |
+| 16 Testing | Sebagian | 170 uji berkas. Tidak ada uji peramban, lihat daftar di bawah |
 | 17 Monitoring | Sebagian | Health check harian ada, peringatan belum |
 | 18 Backup & DR | Belum | Git dan zip adalah cadangannya, tetapi RPO, RTO, dan prosedur pemulihan belum ditulis dan belum pernah diuji |
 | 19 DevOps & Automation | Sudah | Deploy, build, sertifikat, pemeriksaan semuanya otomatis |
@@ -88,14 +88,9 @@ bukan untuk brosur empat halaman. Syarat kapan keputusan ini gugur ada di
 
 ## Yang benar benar belum dikerjakan
 
-Enam, urut dari yang paling berdampak.
+Lima, urut dari yang paling berdampak.
 
-**1. MapLibre masih di 4.7.1, membawa GHSA-jrc7-96c5-q579 yang CRITICAL.**
-Tidak dapat dieksploitasi pada konfigurasi sekarang, dan CSP menahan
-muatannya, tetapi tetap belum diperbaiki. Perbaikannya menuntut migrasi ke
-ESM, bukan tukar berkas. Analisis lengkapnya di [keamanan.md](keamanan.md).
-
-**2. Tidak ada uji peramban.** 154 uji itu membaca berkas, bukan menjalankan
+**1. Tidak ada uji peramban.** 154 uji itu membaca berkas, bukan menjalankan
 situsnya. Yang tidak dijaga siapa pun: petanya benar benar tergambar, tombol
 3D benar benar menegakkan bangunan, saklar bahasa benar benar mengganti
 seluruh teks, dan halaman tidak berantakan di ponsel. Semua itu sejauh ini
@@ -103,22 +98,22 @@ saya periksa dengan tangan. Sebuah pekerjaan Playwright di CI akan
 menutupnya, dan itu satu satunya cara menahan peta kembali rusak diam diam
 seperti yang sudah tiga kali terjadi.
 
-**3. Bab 18 belum ada isinya.** Cadangannya memang sudah nyata: seluruh situs
+**2. Bab 18 belum ada isinya.** Cadangannya memang sudah nyata: seluruh situs
 ada di git, di GitHub, dan di zip. Tetapi RPO, RTO, dan prosedur pemulihannya
 belum ditulis, dan yang lebih penting, pemulihannya belum pernah diuji. Bab
 18 menuntut *regular restore testing*, dan cadangan yang belum pernah
 dipulihkan belum terbukti apa apa.
 
-**4. Peringatan belum ada.** Health check berjalan tiap hari, tetapi kalau
+**3. Peringatan belum ada.** Health check berjalan tiap hari, tetapi kalau
 situsnya mati, kegagalannya hanya duduk di halaman GitHub Actions sampai ada
 yang membukanya. Bab 17 menuntut alerting.
 
-**5. Performa belum pernah diukur.** Gambar sudah webp, MapLibre dimuat
+**4. Performa belum pernah diukur.** Gambar sudah webp, MapLibre dimuat
 malas, aset diberi versi dan disimpan setahun. Semuanya masuk akal, tetapi
 tidak satu pun angkanya pernah dilihat. Bab 20 menuntut optimasi, dan optimasi
 tanpa pengukuran adalah tebakan yang kebetulan rapi.
 
-**6. Port Next.js belum pernah dibangun.** CI menjalankan `tsc --noEmit`,
+**5. Port Next.js belum pernah dibangun.** CI menjalankan `tsc --noEmit`,
 jadi tipenya terbukti benar, tetapi `next build` tidak pernah dijalankan.
 Port itu bisa saja gagal dibangun tanpa ada yang tahu.
 
