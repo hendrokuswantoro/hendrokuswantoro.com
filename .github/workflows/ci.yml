@@ -143,7 +143,7 @@ jobs:
           echo "vendored MapLibre $versi, advisory recorded"
 
   basisdata:
-    name: DB Verification
+    name: DB and API Verification
     runs-on: ubuntu-latest
     services:
       db:
@@ -179,6 +179,9 @@ jobs:
 
       - name: Database tests
         run: python -m pytest tests/test_basis_data.py -q
+
+      - name: API tests
+        run: python -m pytest tests/test_api.py -q
 
   bangun:
     name: Build
