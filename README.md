@@ -274,14 +274,29 @@ ulang kapan saja dengan `python tools/build_dist.py`.
 Repositori git-nya sudah ada di folder ini. Dorong ke GitHub, lalu di
 Cloudflare pilih **Connect to Git** dan arahkan ke repositori itu.
 
-Isian di Cloudflare Pages:
+Ada dua alur di Cloudflare, dan keduanya sudah disiapkan.
+
+**Alur Workers yang baru** membaca `wrangler.toml` di akar repositori. Berkas
+itu sudah ada, isinya cuma menunjuk `./dist` sebagai folder yang disajikan.
+Tanpa berkas itu, alur ini berhenti dengan pesan *There was a problem parsing
+the Wrangler configuration file*.
+
+**Alur Pages yang lama** tidak membaca `wrangler.toml` sama sekali, cukup diisi
+manual. Masuk lewat tautan **Continue to Pages**.
+
+Isiannya sama untuk keduanya:
 
 | Isian | Nilai |
 | --- | --- |
 | Framework preset | None |
-| Build command | `sh tools/konfigurasi.sh` |
-| Build output directory | `/` |
+| Build command | `sh tools/bangun_situs.sh` |
+| Build output directory | `dist` |
 | Environment variable | `MAPBOX_TOKEN` = token `pk.` Anda |
+
+`tools/bangun_situs.sh` mengerjakan dua hal: menulis tokennya lewat
+`tools/konfigurasi.sh`, lalu menyalin hanya berkas yang pantas disajikan ke
+`dist/`. README, `tools/`, dan versi Next.js tidak ikut, sama persis dengan
+isi zip yang dibuat `tools/build_dist.py`. Keduanya menghasilkan 34 berkas.
 
 **Kenapa ada build command padahal situsnya statis.** Token Mapbox disimpan di
 `assets/js/konfigurasi.js`, dan berkas itu tidak pernah ikut di-commit, lihat

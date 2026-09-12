@@ -1,0 +1,13 @@
+# Cloudflare Workers reads this when the site is deployed from GitHub.
+#
+# The site is static, so the Worker has no code of its own: it only serves
+# what tools/bangun_situs.sh puts in dist/. The _headers and _redirects files
+# copied in there are read by the assets runtime, so the Content Security
+# Policy and the www redirect keep working exactly as they do on Pages.
+
+name = "hendrokuswantoro"
+compatibility_date = "2026-09-12"
+
+[assets]
+directory = "./dist"
+not_found_handling = "404-page"
