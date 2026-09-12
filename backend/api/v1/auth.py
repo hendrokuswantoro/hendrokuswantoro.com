@@ -33,7 +33,9 @@ class JawabanMasuk(BaseModel):
     peran: str
 
 
-def _pasang_cookie(jawaban: Response, hasil: layanan.Masuk) -> None:
+def pasang_cookie(jawaban: Response, hasil: layanan.Masuk) -> None:
+    """Dipakai jalur sandi dan jalur passkey. Satu tempat, supaya tidak
+    mungkin salah satunya lupa httponly atau lupa samesite."""
     atur = pengaturan()
     jawaban.set_cookie(
         NAMA_COOKIE,
@@ -69,7 +71,7 @@ async def login(
         kode = status.HTTP_429_TOO_MANY_REQUESTS if ditolak.terkunci else status.HTTP_401_UNAUTHORIZED
         raise HTTPException(status_code=kode, detail=str(ditolak)) from ditolak
 
-    _pasang_cookie(jawaban, hasil)
+    pasang_cookie(jawaban, hasil)
     return JawabanMasuk(
         akses=hasil.akses, umur_detik=hasil.umur_detik, nama=hasil.nama, peran=hasil.peran
     )
@@ -89,7 +91,7 @@ async def refresh(permintaan: Request, jawaban: Response) -> JawabanMasuk:
             status_code=status.HTTP_401_UNAUTHORIZED, detail=str(ditolak)
         ) from ditolak
 
-    _pasang_cookie(jawaban, hasil)
+    pasang_cookie(jawaban, hasil)
     return JawabanMasuk(
         akses=hasil.akses, umur_detik=hasil.umur_detik, nama=hasil.nama, peran=hasil.peran
     )

@@ -40,12 +40,30 @@ class Pengaturan(BaseSettings):
     masuk_jendela_menit: int = Field(default=15, alias="MASUK_JENDELA_MENIT")
     cookie_aman: bool = Field(default=True, alias="COOKIE_AMAN")
 
+    # --- passkey, WebAuthn ---
+    #
+    # rp_id adalah nama host tanpa skema dan tanpa porta, misalnya
+    # "hendrokuswantoro.com". Ia harus sama dengan atau induk dari host yang
+    # membuka halamannya, dan tidak bisa ditebak dari permintaan: header Host
+    # datang dari peramban, jadi memercayainya berarti membiarkan penyerang
+    # memilih rp_id sendiri. Karena itu ia datang dari environment.
+    webauthn_rp_id: str = Field(default="", alias="WEBAUTHN_RP_ID")
+    webauthn_rp_nama: str = Field(default="Hendro Kuswantoro", alias="WEBAUTHN_RP_NAMA")
+    webauthn_asal: list[str] = Field(default=[], alias="WEBAUTHN_ASAL")
+
     kolam_min: int = Field(default=1, alias="KOLAM_MIN")
     kolam_maks: int = Field(default=8, alias="KOLAM_MAKS")
 
     @property
     def siap(self) -> bool:
         return bool(self.dsn)
+
+    @property
+    def passkey_siap(self) -> bool:
+        """Tanpa rp_id dan daftar asal, jalur passkey menjawab 503, bukan
+        menebak keduanya dari permintaan. Nilai bawaan untuk keduanya adalah
+        cara paling langsung membuat verifikasi asal berhenti berarti."""
+        return self.auth_siap and bool(self.webauthn_rp_id) and bool(self.webauthn_asal)
 
     @property
     def auth_siap(self) -> bool:

@@ -36,7 +36,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.requests import Request
 
-from backend.api.v1 import admin, auth, kesehatan, peta, proyek, tulisan
+from backend.api.v1 import admin, auth, kesehatan, passkey, peta, proyek, tulisan
 from backend.core import basis_data
 from backend.core.catat import CatatPermintaan, pasang
 from backend.core.konfigurasi import pengaturan
@@ -75,7 +75,8 @@ def buat() -> FastAPI:
     app.add_middleware(CatatPermintaan)
 
     app.include_router(kesehatan.rute)
-    for bagian in (tulisan.rute, proyek.rute, peta.rute, auth.rute, admin.rute):
+    for bagian in (tulisan.rute, proyek.rute, peta.rute, auth.rute,
+                   passkey.rute, admin.rute):
         app.include_router(bagian, prefix="/api/v1")
 
     @app.get("/admin", include_in_schema=False)

@@ -10,10 +10,23 @@ berkas. Fixture yang tinggal di satu berkas uji tidak pernah terlihat berkas
 lain, dan kegagalannya berbunyi "fixture not found" yang menyesatkan.
 """
 
+import os
 import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+
+# Pembatas laju menghitung per alamat, dan seluruh rangkaian uji datang dari
+# satu alamat yang sama, "testclient". Dengan batas produksi 120 permintaan
+# per menit, berkas uji yang dijalankan sendiri sendiri lolos sedangkan yang
+# dijalankan bersama sama mulai dijawab 429 di tengah jalan, dan pesan
+# gagalnya menyesatkan: ia berbunyi seolah passkey-nya yang ditolak.
+#
+# Yang dinaikkan hanya batas laju, bukan penguncian setelah lima sandi salah.
+# Keduanya sama sama menjawab 429 tetapi mekanismenya berbeda, dan justru
+# karena batas laju dinaikkan di sini, 429 di test_auth.py hanya mungkin
+# datang dari penguncian yang memang sedang diujinya.
+os.environ.setdefault("LAJU_JUMLAH", "100000")
 
 import http.server
 import socket
