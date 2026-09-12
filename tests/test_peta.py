@@ -102,3 +102,41 @@ def test_token_tidak_pernah_ikut():
 def test_konfigurasi_diabaikan_git():
     abaikan = (AKAR / ".gitignore").read_text(encoding="utf-8")
     assert "assets/js/konfigurasi.js" in abaikan
+
+
+def test_maplibre_terkunci():
+    """The vendored library is the one piece of third party code that reaches
+    a visitor. It carries GHSA-jrc7-96c5-q579, a critical sanitizer bypass
+    that is unfixed below 6.4.1 and cannot be fixed by swapping the file,
+    because MapLibre 6 ships ESM only. See docs/keamanan.md.
+
+    This test does not pretend the advisory is handled. It makes sure the
+    version in the file, the version pinned beside it, and the version the
+    Next.js port asks for cannot drift apart, so nobody upgrades one and
+    believes all three moved.
+    """
+    versi = (AKAR / "assets" / "vendor" / "maplibre" / "VERSI").read_text(encoding="utf-8").strip()
+
+    pustaka = (AKAR / "assets" / "vendor" / "maplibre" / "maplibre-gl.js").read_text(
+        encoding="utf-8", errors="ignore"
+    )[:2000]
+    assert f"/v{versi}/" in pustaka, f"the vendored file is not {versi}"
+
+    paket = (AKAR / "next" / "package.json").read_text(encoding="utf-8")
+    mayor = versi.split(".")[0]
+    assert f'"maplibre-gl": "^{mayor}.' in paket, (
+        f"the Next.js port asks for a different major than the vendored {versi}"
+    )
+
+
+def test_csp_menahan_muatan_sanitizer():
+    """The CSP is what stops GHSA-jrc7-96c5-q579 from executing: an inline
+    event handler needs 'unsafe-inline' in script-src, and there is none.
+    Adding it would quietly turn an unexploitable advisory into a live one."""
+    headers = (AKAR / "_headers").read_text(encoding="utf-8")
+    csp = [b for b in headers.splitlines() if "Content-Security-Policy:" in b][0]
+    naskah = [b for b in csp.split(";") if "script-src" in b][0]
+    assert "unsafe-inline" not in naskah, (
+        "script-src accepted unsafe-inline, which un-mitigates the MapLibre "
+        "sanitizer bypass. See docs/keamanan.md."
+    )
