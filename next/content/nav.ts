@@ -26,6 +26,7 @@ export const COMMON = {
   mainNav: { en: "Main", id: "Menu utama" } as Copy,
   mobileNav: { en: "Mobile", id: "Menu ponsel" } as Copy,
   language: { en: "Language", id: "Bahasa" } as Copy,
+  darkTheme: { en: "Dark theme", id: "Tema gelap" } as Copy,
   rights: {
     en: "Hendro Kuswantoro. All rights reserved.",
     id: "Hendro Kuswantoro. Hak cipta dilindungi.",

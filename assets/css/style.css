@@ -4,23 +4,39 @@
    Typography is Poppins, the closest freely licensed match to the Gojek
    lettering, since the Gojek typeface itself is not public.
 
-   Light contrast against white: --ink 21:1, --ink-2 8.9:1, --ink-3 5.3:1,
-   --accent 4.6:1. Dark contrast against #0b0b0b: --ink 19.6:1,
-   --ink-2 11.4:1, --ink-3 6.4:1, --accent 6.1:1.
+   The greys are Uber Base greys and they are neutral: #f6f6f6, #eeeeee,
+   #e2e2e2, #cbcbcb, with no hue at all. The earlier set was a step cooler
+   (#f2f3f5, #e9ebee, #d8dce1) and read faintly blue next to the white cards,
+   which is exactly what the Uber palette avoids.
+
+   Contrast, measured rather than assumed. The lowest pair in the whole
+   light set is --accent on --surface-2 at 4.54:1, and the lowest in the dark
+   set is --ink-3 on --surface-2 at 5.19:1. Against --bg #f6f6f6: --ink
+   19.43:1, --ink-2 7.01:1, --ink-3 5.31:1, --accent 4.96:1. Against --card
+   #ffffff: 21:1, 7.57:1, 5.74:1, 5.36:1.
+
+   --accent is one step darker than Uber's own #276ef1 because it is link
+   text, and #276ef1 reaches only 4.24:1 on #f6f6f6, under the 4.5:1 that
+   body text needs. The brand dot keeps #276ef1: it is a graphic, and 3:1
+   is its threshold.
+
+   Recompute the whole set before changing any of these:
+       python tools/kontras.py
+
    Buttons always pair --brand with --on-brand, which flips with the theme.
    ========================================================================== */
 
 :root {
   --ink: #000000;
-  --ink-2: #4a4a4a;
-  --ink-3: #6b6b6b;
+  --ink-2: #545454;
+  --ink-3: #666666;
 
-  --bg: #f2f3f5;
+  --bg: #f6f6f6;
   --card: #ffffff;
-  --surface: #e9ebee;
-  --surface-2: #e2e5e9;
-  --line: #d8dce1;
-  --line-strong: #c2c7cd;
+  --surface: #eeeeee;
+  --surface-2: #ececec;
+  --line: #e2e2e2;
+  --line-strong: #cbcbcb;
 
   --brand: #000000;
   --brand-btn: #000000;
@@ -29,8 +45,8 @@
   --brand-hover: #333333;
   --on-brand: #ffffff;
 
-  --bar-bg: rgba(242, 243, 245, .88);
-  --bar-bg-solid: rgba(242, 243, 245, .96);
+  --bar-bg: rgba(246, 246, 246, .88);
+  --bar-bg-solid: rgba(246, 246, 246, .96);
   --panel-bg: #000000;
   --panel-ink: #ffffff;
   --footer-bg: #000000;
@@ -38,8 +54,9 @@
   --mark-bg: #000000;
   --mark-ink: #ffffff;
 
-  --accent: #276ef1;
+  --accent: #1f63e0;
   --accent-soft: #eef3fe;
+  --mark-dot: #276ef1;
 
   --r-sm: 8px;
   --r-md: 12px;
@@ -60,46 +77,51 @@
   color-scheme: light;
 }
 
-/* The Uber app is black first, so the site follows the reader's system
-   setting rather than adding another switch next to the language one. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #f5f5f5;
-    --ink-2: #c7c7c7;
-    --ink-3: #9a9a9a;
+/* Dark is opt in, not the system's decision.
 
-    --bg: #17181a;
-    --card: #1f2124;
-    --surface: #202225;
-    --surface-2: #26292d;
-    --line: #303438;
-    --line-strong: #414650;
+   It used to hang off @media (prefers-color-scheme: dark), which meant a
+   reader whose laptop is in dark mode never saw the light palette at all,
+   and never had a way to ask for it. The Uber app opens light and keeps a
+   switch; so does this. The switch sits next to the language one, writes
+   localStorage["hk-tema"], and a small inline script in <head> applies it
+   before the first paint so the page never flashes the other theme. */
+:root[data-theme="dark"] {
+  --ink: #f5f5f5;
+  --ink-2: #c7c7c7;
+  --ink-3: #9a9a9a;
 
-    --brand: #ffffff;
-    --brand-btn: #ffffff;
-    --brand-ink: #ffffff;
-    --brand-strong: #ffffff;
-    --brand-hover: #dcdcdc;
-    --on-brand: #0b0b0b;
+  --bg: #17181a;
+  --card: #1f2124;
+  --surface: #202225;
+  --surface-2: #26292d;
+  --line: #303438;
+  --line-strong: #414650;
 
-    --bar-bg: rgba(23, 24, 26, .86);
-    --bar-bg-solid: rgba(23, 24, 26, .96);
-    --panel-bg: #1c1c1c;
-    --panel-ink: #ffffff;
-    --footer-bg: #0b0c0d;
+  --brand: #ffffff;
+  --brand-btn: #ffffff;
+  --brand-ink: #ffffff;
+  --brand-strong: #ffffff;
+  --brand-hover: #dcdcdc;
+  --on-brand: #0b0b0b;
 
-    --mark-bg: #ffffff;
-    --mark-ink: #000000;
+  --bar-bg: rgba(23, 24, 26, .86);
+  --bar-bg-solid: rgba(23, 24, 26, .96);
+  --panel-bg: #1c1c1c;
+  --panel-ink: #ffffff;
+  --footer-bg: #0b0c0d;
 
-    --accent: #6f9dff;
-    --accent-soft: #16223a;
+  --mark-bg: #ffffff;
+  --mark-ink: #000000;
 
-    --sh-1: 0 1px 2px rgba(0, 0, 0, .5), 0 4px 14px rgba(0, 0, 0, .45);
-    --sh-2: 0 2px 6px rgba(0, 0, 0, .5), 0 14px 34px rgba(0, 0, 0, .55);
-    --sh-brand: 0 6px 16px rgba(0, 0, 0, .6);
+  --accent: #6f9dff;
+  --accent-soft: #16223a;
+  --mark-dot: #6f9dff;
 
-    color-scheme: dark;
-  }
+  --sh-1: 0 1px 2px rgba(0, 0, 0, .5), 0 4px 14px rgba(0, 0, 0, .45);
+  --sh-2: 0 2px 6px rgba(0, 0, 0, .5), 0 14px 34px rgba(0, 0, 0, .55);
+  --sh-brand: 0 6px 16px rgba(0, 0, 0, .6);
+
+  color-scheme: dark;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -213,6 +235,25 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .lang__btn:hover { color: var(--ink); }
 .lang__btn[aria-pressed="true"] { background: var(--card); color: var(--brand-strong); box-shadow: var(--sh-1); }
+
+/* Saklar tema. Satu tombol, bukan dua seperti bahasa: tema cuma punya dua
+   keadaan dan yang kedua selalu "yang satunya", jadi aria-pressed sudah
+   cukup menyatakannya. Labelnya tetap, "Dark theme", supaya penerjemah
+   data-ind-label tidak berebut dengan JavaScript yang mengubah aria-label. */
+.tema {
+  display: inline-grid; place-items: center; width: 38px; height: 38px; flex: none;
+  padding: 0; background: var(--card); color: var(--ink-2);
+  border: 1px solid var(--line); border-radius: var(--r-pill); cursor: pointer;
+  transition: border-color .16s var(--ease), color .16s var(--ease);
+}
+.tema:hover { border-color: var(--line-strong); color: var(--ink); }
+.tema svg {
+  width: 18px; height: 18px; fill: none; stroke: currentColor;
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+.tema__matahari { display: none; }
+:root[data-theme="dark"] .tema__bulan { display: none; }
+:root[data-theme="dark"] .tema__matahari { display: block; }
 
 /* ---------- hero ---------- */
 .hero { position: relative; overflow: hidden; background: var(--bg); }
@@ -577,7 +618,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 /* the brand mark flips with the theme, CSS wins over the fill attribute */
 .brand__mark rect { fill: var(--mark-bg); }
 .brand__mark path { fill: var(--mark-ink); }
-.brand__mark .mark-dot { fill: var(--accent); }
+.brand__mark .mark-dot { fill: var(--mark-dot); }
 .footer .brand__mark rect { fill: #ffffff; }
 .footer .brand__mark path { fill: #000000; }
 

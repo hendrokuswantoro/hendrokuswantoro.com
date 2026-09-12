@@ -10,6 +10,7 @@
   "use strict";
 
   var STORAGE_KEY = "hk-lang";
+  var TEMA_KEY = "hk-tema";
   var doc = document;
 
   function each(list, fn) {
@@ -98,6 +99,44 @@
         var next = btn.getAttribute("data-lang");
         applyLang(next);
         writeStore(STORAGE_KEY, next);
+      });
+    });
+  }
+
+  /* -------------------------------------------------------------------- tema */
+
+  /* Tema dipilih pembaca, bukan sistem operasinya.
+   *
+   * Dulu palet gelap menempel pada @media (prefers-color-scheme: dark).
+   * Akibatnya pembaca yang laptopnya gelap tidak pernah melihat palet terang
+   * sama sekali, dan tidak punya cara memintanya. Sekarang bawaannya terang
+   * dan gelap adalah pilihan, seperti aplikasi Uber.
+   *
+   * Yang mencegah kedipan bukan fungsi ini melainkan skrip sebaris di <head>:
+   * app.js dimuat dengan defer, jadi kalau atribut data-theme baru dipasang
+   * di sini, pembaca yang memilih gelap akan melihat satu bingkai putih lebih
+   * dulu. Skrip sebaris itu diizinkan CSP lewat hash sha256, bukan lewat
+   * 'unsafe-inline', supaya seluruh skrip lain tetap tertutup.
+   */
+  function applyTema(tema) {
+    var gelap = tema === "dark";
+    doc.documentElement.setAttribute("data-theme", gelap ? "dark" : "light");
+    each(doc.querySelectorAll(".tema"), function (btn) {
+      btn.setAttribute("aria-pressed", gelap ? "true" : "false");
+    });
+    var meta = doc.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", gelap ? "#17181a" : "#f6f6f6");
+    doc.dispatchEvent(new CustomEvent("hk:tema", { detail: { tema: gelap ? "dark" : "light" } }));
+  }
+
+  function initTema() {
+    applyTema(readStore(TEMA_KEY) === "dark" ? "dark" : "light");
+
+    each(doc.querySelectorAll(".tema"), function (btn) {
+      btn.addEventListener("click", function () {
+        var berikut = doc.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        applyTema(berikut);
+        writeStore(TEMA_KEY, berikut);
       });
     });
   }
@@ -355,6 +394,7 @@
 
   function boot() {
     initLang();
+    initTema();
     initHeader();
     initReveal();
     initFilters();

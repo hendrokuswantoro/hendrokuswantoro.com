@@ -8,6 +8,12 @@ import { RevealObserver } from "@/components/RevealObserver";
 import { TabBar } from "@/components/TabBar";
 import "./globals.css";
 
+/** Sama persis dengan skrip sebaris di versi HTML biasa, sampai ke bitanya,
+ *  supaya satu hash CSP di `_headers` berlaku untuk keduanya. */
+const SKRIP_TEMA =
+  'try{var t=localStorage.getItem("hk-tema");' +
+  'if(t==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}';
+
 /**
  * Poppins is self hosted by next/font, so the exported site makes no request
  * to Google at runtime. It stands in for the Gojek lettering, which is not
@@ -44,7 +50,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: "#f6f6f6",
   width: "device-width",
   initialScale: 1,
 };
@@ -52,6 +58,17 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={poppins.variable}>
+      <head>
+        {/* Tema dipasang sebelum bingkai pertama. React baru menyala sesudah
+            hidrasi, jadi tanpa ini pembaca yang memilih gelap melihat satu
+            bingkai putih lebih dulu. Isinya dijaga sama persis dengan yang di
+            versi HTML biasa, termasuk hash CSP-nya. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: SKRIP_TEMA,
+          }}
+        />
+      </head>
       <body>
         <LanguageProvider>
           <Header />
