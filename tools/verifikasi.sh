@@ -93,6 +93,12 @@ langkah "Lint, the vendored font matches its record"
 python tools/ambil_font.py --periksa >/dev/null
 lulus
 
+# /assets/* dijanjikan immutable selama setahun, dan janji itu hanya sah kalau
+# alamatnya berganti tiap kali isinya berganti.
+langkah "Lint, asset versions match their contents"
+python tools/versi_aset.py --periksa >/dev/null
+lulus
+
 # Alur kerjanya sendiri tidak pernah diperiksa sebelum dijalankan di GitHub,
 # dan satu "\n" harfiah di dalamnya membuat health check gagal tiap malam
 # sambil melaporkan situsnya mati.

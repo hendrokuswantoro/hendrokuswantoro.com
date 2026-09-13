@@ -22,7 +22,7 @@ WRANGLER = (AKAR / "wrangler.toml").read_text(encoding="utf-8")
 
 
 def versi(berkas: pathlib.Path, aset: str) -> str | None:
-    cocok = re.search(re.escape(aset) + r"\?v=([0-9]+)", berkas.read_text(encoding="utf-8"))
+    cocok = re.search(re.escape(aset) + r"\?v=([0-9a-z]+)", berkas.read_text(encoding="utf-8"))
     return cocok.group(1) if cocok else None
 
 
@@ -38,7 +38,86 @@ def test_versi_seragam(aset):
 
 def test_peta_ikut_diberi_versi():
     app = (AKAR / "assets" / "js" / "app.js").read_text(encoding="utf-8")
-    assert re.search(r"peta\.js\?v=[0-9]+", app), "peta.js is loaded without a version"
+    assert re.search(r"peta\.js\?v=[0-9a-z]+", app), "peta.js is loaded without a version"
+
+
+# ------------------------------------------------- nomor versi dari isinya ---
+
+# Kenapa bagian ini ada.
+#
+# `/assets/*` disajikan dengan janji `immutable` selama setahun, yang berarti
+# peramban tidak akan pernah menanyakan berkasnya lagi, bahkan tidak dengan
+# permintaan bersyarat. Janji itu hanya sah kalau alamatnya berganti setiap
+# kali isinya berganti.
+#
+# Sampai 13 September 2026 janji itu tidak dipenuhi. Sepuluh commit mengubah
+# assets/js/peta.js dan nomor ?v=34 tidak pernah naik satu pun. maplibre-gl.css
+# diganti seluruhnya saat MapLibre naik dari 4 ke 6, di alamat yang sama.
+# Komentar di style.css sendiri menjelaskan akibatnya: lembar gaya peta yang
+# tidak cocok membuat kotaknya mengerut jadi nol dan seluruh petanya hilang.
+#
+# Sekarang nomornya dihitung dari isi berkasnya oleh tools/versi_aset.py.
+# Nomor yang diketik tangan hanyut; nomor yang dihitung tidak bisa.
+
+
+def test_nomor_aset_tidak_tertinggal_dari_isinya():
+    import subprocess
+    import sys
+
+    hasil = subprocess.run(
+        [sys.executable, str(AKAR / "tools" / "versi_aset.py"), "--periksa"],
+        capture_output=True, text=True, cwd=AKAR,
+    )
+    assert hasil.returncode == 0, hasil.stdout + hasil.stderr
+
+
+def test_nomor_aset_memang_sidik_isinya():
+    """Bukan sekadar ada, melainkan cocok dengan berkas yang dilayani."""
+    import hashlib
+
+    beranda = (AKAR / "index.html").read_text(encoding="utf-8")
+    for aset, jalur in (
+        ("/assets/css/style.css", AKAR / "assets" / "css" / "style.css"),
+        ("/assets/js/app.js", AKAR / "assets" / "js" / "app.js"),
+    ):
+        tertulis = re.search(re.escape(aset) + r"\?v=([0-9a-z]+)", beranda).group(1)
+        sebenarnya = hashlib.sha256(jalur.read_bytes()).hexdigest()[:10]
+        assert tertulis == sebenarnya, (
+            f"{aset} bernomor {tertulis} sedangkan isinya bersidik {sebenarnya}. "
+            "Pembaca lama tidak akan pernah menerima perubahannya."
+        )
+
+
+def test_pustaka_peta_dipanggil_dari_folder_berversi():
+    """Query pada modul induk tidak menurun ke modul yang diimpornya secara
+    relatif, jadi maplibre-gl-shared.mjs tidak bisa dinomori lewat ?v=.
+    Foldernya yang dinomori."""
+    app = (AKAR / "assets" / "js" / "app.js").read_text(encoding="utf-8")
+    versi_pustaka = (AKAR / "assets" / "vendor" / "maplibre" / "VERSI").read_text(
+        encoding="utf-8").strip()
+    for berkas in ("maplibre-gl.css", "maplibre-gl.mjs"):
+        assert f"/assets/vendor/maplibre/{versi_pustaka}/{berkas}" in app, (
+            f"{berkas} dipanggil dari alamat yang tidak memuat versi pustakanya"
+        )
+
+
+def test_konfigurasi_dikecualikan_dari_immutable():
+    """Satu satunya aset yang alamatnya tidak bisa bercap isinya, sebab isinya
+    baru ditulis saat membangun. Kalau ia ikut immutable, pembaca yang
+    kebetulan datang saat tokennya kosong kehilangan petanya selama setahun."""
+    assert "/assets/js/konfigurasi.js" in HEADERS, (
+        "_headers tidak mengecualikan konfigurasi.js dari immutable"
+    )
+    potong = HEADERS.split("/assets/js/konfigurasi.js", 1)[1]
+    aturan = potong.split("\n\n", 1)[0]
+    assert "must-revalidate" in aturan, aturan
+    assert "immutable" not in aturan, aturan
+
+    nginx = (AKAR / "infrastructure" / "nginx" / "hendrokuswantoro.conf").read_text(
+        encoding="utf-8")
+    assert "location = /assets/js/konfigurasi.js" in nginx, (
+        "nginx menyajikan konfigurasi.js sebagai immutable seperti aset lain"
+    )
 
 
 def test_dua_pembangun_sepakat():

@@ -34,5 +34,20 @@
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
+# Satu pengecualian, dan alasannya penting.
+#
+# Janji `immutable` berarti peramban tidak akan pernah menanyakan berkas itu
+# lagi selama setahun, bahkan tidak dengan permintaan bersyarat. Janji itu
+# hanya boleh diberikan untuk alamat yang berganti setiap kali isinya berganti,
+# dan tools/versi_aset.py yang menjaminnya untuk seluruh aset lain.
+#
+# konfigurasi.js tidak bisa ikut. Isinya ditulis saat membangun dari variabel
+# MAPBOX_TOKEN, jadi sidiknya baru diketahui sesudah app.js yang menyebutnya
+# selesai ditulis. Berkasnya 298 bita. Satu permintaan bersyarat per kunjungan
+# jauh lebih murah daripada peta yang mati setahun di peramban seseorang
+# karena ia kebetulan berkunjung saat tokennya sedang kosong.
+/assets/js/konfigurasi.js
+  Cache-Control: public, max-age=0, must-revalidate
+
 /*.html
   Cache-Control: public, max-age=0, must-revalidate

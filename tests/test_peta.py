@@ -127,8 +127,13 @@ def test_maplibre_terkunci():
     Keempatnya wajib ada: tanpa maplibre-gl-worker.mjs peta memuat gayanya
     lalu diam selamanya, tanpa galat apa pun.
     """
-    rumah = AKAR / "assets" / "vendor" / "maplibre"
-    versi = (rumah / "VERSI").read_text(encoding="utf-8").strip()
+    dasar = AKAR / "assets" / "vendor" / "maplibre"
+    versi = (dasar / "VERSI").read_text(encoding="utf-8").strip()
+    # Berkasnya duduk di dalam folder bernama versinya, bukan di samping
+    # VERSI. Alasannya di tools/versi_aset.py: maplibre-gl.mjs mengimpor
+    # maplibre-gl-shared.mjs secara relatif, jadi query pada modul induk
+    # tidak menurun ke anaknya, dan anak yang basi sama merusaknya.
+    rumah = dasar / versi
 
     for nama in ("maplibre-gl.mjs", "maplibre-gl-shared.mjs",
                  "maplibre-gl-worker.mjs", "maplibre-gl.css"):
@@ -137,7 +142,7 @@ def test_maplibre_terkunci():
     kepala = (rumah / "maplibre-gl.mjs").read_text(encoding="utf-8", errors="ignore")[:600]
     assert f"/v{versi}/" in kepala, f"berkas pustaka bukan versi {versi}"
 
-    assert not (rumah / "maplibre-gl.js").exists(), (
+    assert not (rumah / "maplibre-gl.js").exists() and not (dasar / "maplibre-gl.js").exists(), (
         "bundel UMD lama masih ada, dan versinya membawa GHSA-jrc7-96c5-q579"
     )
 

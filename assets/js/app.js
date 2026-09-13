@@ -423,15 +423,15 @@
          window for peta.js to read, exactly where the old global used to be.
          The import is same origin, which script-src 'self' already allows. */
       Promise.all([
-        loadOnce("css", "/assets/vendor/maplibre/maplibre-gl.css"),
-        import("/assets/vendor/maplibre/maplibre-gl.mjs").then(function (mod) {
+        loadOnce("css", "/assets/vendor/maplibre/6.9.0/maplibre-gl.css"),
+        import("/assets/vendor/maplibre/6.9.0/maplibre-gl.mjs").then(function (mod) {
           window.maplibregl = mod;
           return mod;
         }),
         /* optional, the map falls back to key free sources when it is absent */
         loadOnce("js", "/assets/js/konfigurasi.js").catch(function () { return null; })
       ])
-        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=34"); })
+        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=10556b44e2"); })
         .then(function () {
           wrap.classList.add("is-live");
           window.HK_PETA_MAP = window.HK_PETA.build(canvas);

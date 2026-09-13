@@ -34,8 +34,10 @@ TANGGAL_SITUS = "2026-09-11"
 
 def versi_aset() -> tuple[str, str]:
     beranda = (AKAR / "index.html").read_text(encoding="utf-8")
-    css = re.search(r"/assets/css/style\.css\?v=(\d+)", beranda)
-    js = re.search(r"/assets/js/app\.js\?v=(\d+)", beranda)
+    # Nomornya sidik isi berkasnya, sepuluh heksa, bukan angka desimal.
+    # Lihat tools/versi_aset.py.
+    css = re.search(r"/assets/css/style\.css\?v=([0-9a-z]+)", beranda)
+    js = re.search(r"/assets/js/app\.js\?v=([0-9a-z]+)", beranda)
     if not css or not js:
         raise SystemExit("index.html tidak menyebut versi aset")
     return css.group(1), js.group(1)

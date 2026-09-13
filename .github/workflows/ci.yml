@@ -91,6 +91,12 @@ jobs:
       - name: The vendored font matches its record
         run: python tools/ambil_font.py --periksa
 
+      # /assets/* dijanjikan immutable selama setahun. Janji itu hanya sah
+      # kalau alamatnya berganti tiap kali isinya berganti, dan selama ini
+      # tidak: sepuluh commit mengubah peta.js tanpa nomornya naik sekali pun.
+      - name: Asset versions match their contents
+        run: python tools/versi_aset.py --periksa
+
       # Alur kerjanya sendiri tidak pernah diperiksa sebelum dijalankan.
       #
       # Yang dicari bukan hanya sintaks. kesehatan.yml pernah memuat daftar
@@ -212,8 +218,8 @@ jobs:
       - name: The vendored library has not moved without the record moving
         run: |
           versi=$(cat assets/vendor/maplibre/VERSI)
-          test -f assets/vendor/maplibre/maplibre-gl.mjs
-          grep -q "/v$versi/" assets/vendor/maplibre/maplibre-gl.mjs
+          test -f "assets/vendor/maplibre/$versi/maplibre-gl.mjs"
+          grep -q "/v$versi/" "assets/vendor/maplibre/$versi/maplibre-gl.mjs"
           grep -q "GHSA-jrc7-96c5-q579" docs/keamanan.md
           echo "vendored MapLibre $versi, advisory recorded"
 
