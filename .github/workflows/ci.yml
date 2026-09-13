@@ -352,15 +352,31 @@ jobs:
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
         run: sh tools/konfigurasi.sh
 
-      # Hasilnya ikut ditulis ke ringkasan run, bukan hanya ke log.
+      # -m peramban wajib ada, dan ketiadaannya yang menggagalkan langkah ini
+      # berhari hari.
       #
-      # Log runner menuntut hak admin repositori untuk dibaca lewat API,
-      # jadi kegagalan di sini pernah tidak bisa ditelusuri sama sekali dari
-      # luar. Ringkasan run terbuka untuk siapa pun yang bisa membuka
-      # halaman Actions-nya, dan itu cukup untuk tahu uji mana yang jatuh.
+      # pytest.ini memasang addopts `-m "not peramban"` supaya putaran biasa
+      # tidak menyalakan Chromium. Seluruh test_peramban.py bertanda peramban,
+      # jadi tanpa -m peramban di sini pytest tidak mengumpulkan satu uji pun
+      # dan keluar dengan kode 5. Kode 5 berarti "tidak ada uji", bukan "ada
+      # uji yang gagal", dan tampak di halaman Actions hanya sebagai "Process
+      # completed with exit code 5".
+      #
+      # Selama itu tidak ada satu pun uji peramban yang benar benar berjalan
+      # di CI, sementara komentar di langkah di atas menjelaskan panjang lebar
+      # bagaimana empat uji peta akan dilewati dengan alasan yang jelas. Uji
+      # yang tidak pernah dijalankan tidak menjaga apa pun, dan yang paling
+      # buruk, kegagalannya terbaca seolah ada uji yang jatuh.
+      #
+      # tests/test_infrastruktur.py sekarang menolak langkah peramban di
+      # berkas ini yang tidak menyebut -m peramban.
+      #
+      # Hasilnya ikut ditulis ke ringkasan run, bukan hanya ke log. Log runner
+      # menuntut hak admin repositori untuk dibaca lewat API, jadi kegagalan di
+      # sini pernah tidak bisa ditelusuri sama sekali dari luar.
       - name: Browser tests
         run: |
-          python -m pytest tests/test_peramban.py -q --tb=short             | tee hasil-peramban.txt
+          python -m pytest tests/test_peramban.py -q -m peramban --tb=short | tee hasil-peramban.txt
           kode=${PIPESTATUS[0]}
           {
             echo "### Uji peramban"
@@ -369,12 +385,23 @@ jobs:
             tail -40 hasil-peramban.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+          # Anotasi, bukan hanya ringkasan. Log runner menuntut hak
+          # admin repositori untuk dibaca lewat API, dan ringkasan run
+          # pun tidak terbaca dari sana. Anotasi terbaca. Tanpa ini,
+          # satu satunya yang terlihat dari luar adalah "Process
+          # completed with exit code 5", dan menemukan sebabnya
+          # menuntut menebak. Sudah terjadi.
+          if [ "$kode" != "0" ]; then
+            ringkas=$(tail -25 hasil-peramban.txt | sed "s/%/%%/g" | awk '{printf "%s%%0A", $0}')
+            echo "::error title=Uji peramban gagal, kode $kode::$ringkas"
+          fi
           exit "$kode"
         shell: bash
 
       - name: Performance budgets
         run: |
-          python -m pytest tests/test_performa.py -q -s --tb=short             | tee hasil-performa.txt
+          python -m pytest tests/test_performa.py -q -s -m peramban --tb=short | tee hasil-performa.txt
           kode=${PIPESTATUS[0]}
           {
             echo "### Anggaran performa"
@@ -383,6 +410,17 @@ jobs:
             tail -40 hasil-performa.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+          # Anotasi, bukan hanya ringkasan. Log runner menuntut hak
+          # admin repositori untuk dibaca lewat API, dan ringkasan run
+          # pun tidak terbaca dari sana. Anotasi terbaca. Tanpa ini,
+          # satu satunya yang terlihat dari luar adalah "Process
+          # completed with exit code 5", dan menemukan sebabnya
+          # menuntut menebak. Sudah terjadi.
+          if [ "$kode" != "0" ]; then
+            ringkas=$(tail -25 hasil-performa.txt | sed "s/%/%%/g" | awk '{printf "%s%%0A", $0}')
+            echo "::error title=Anggaran performa gagal, kode $kode::$ringkas"
+          fi
           exit "$kode"
         shell: bash
 

@@ -506,3 +506,31 @@ def test_csp_di_blok_assets_sama_dengan_yang_di_server():
     semua = re.findall(r'add_header Content-Security-Policy "([^"]+)"', NGINX)
     assert len(semua) >= 2, "CSP hanya tertulis sekali, blok /assets/ belum punya"
     assert len(set(semua)) == 1, "CSP di nginx tidak seragam antar blok"
+
+
+def test_langkah_peramban_di_ci_menyebut_penandanya():
+    """pytest.ini memasang addopts `-m "not peramban"` supaya putaran biasa
+    tidak menyalakan Chromium. Tanpa `-m peramban` di CI, pytest tidak
+    mengumpulkan satu uji pun dan keluar dengan kode 5, yang berarti "tidak ada
+    uji" dan bukan "ada uji yang gagal". Selama berhari hari tidak satu pun uji
+    peramban berjalan di CI, dan halaman Actions hanya berbunyi "Process
+    completed with exit code 5".
+    """
+    alur = (AKAR / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    perintah = [
+        b.strip() for b in alur.splitlines()
+        if "pytest" in b and ("test_peramban" in b or "test_performa" in b)
+    ]
+    assert len(perintah) == 2, f"harusnya dua langkah peramban, ketemu {len(perintah)}"
+    for b in perintah:
+        assert "-m peramban" in b, (
+            f"langkah ini tidak akan mengumpulkan satu uji pun: {b}"
+        )
+
+
+def test_pytest_ini_memang_mengecualikan_peramban():
+    """Uji di atas hanya masuk akal selama pengecualiannya masih ada. Kalau
+    suatu saat addopts-nya dicabut, uji ini yang memberi tahu, bukan kegagalan
+    membingungkan di CI."""
+    ini = (AKAR / "pytest.ini").read_text(encoding="utf-8")
+    assert 'not peramban' in ini
