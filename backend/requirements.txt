@@ -1,13 +1,19 @@
 # Kebutuhan backend. Kebutuhan uji terpisah di tests/requirements.txt supaya
 # pytest tidak pernah ikut ke citra jalan.
-fastapi==0.118.0
-uvicorn[standard]==0.37.0
+# Versi dinaikkan 13 September 2026 sesudah pip-audit menemukan 24 temuan
+# pada dua paket. Rinciannya di docs/audit-keamanan.md.
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+# Disebut tersurat meski ia dependensi fastapi. Tanpa baris ini pip akan
+# memasang starlette mana pun yang memenuhi ">=0.46.0", termasuk 0.48.0 yang
+# membawa sembilan temuan. Batas bawah dependensi bukan pilihan versi.
+starlette==1.6.0
 psycopg[binary,pool]==3.2.3
 pydantic==2.11.7
 pydantic-settings==2.7.1
 redis==5.2.1
 argon2-cffi==23.1.0
-pyjwt==2.10.1
+pyjwt==2.14.0
 # WebAuthn. Membawa cryptography, cbor2, asn1crypto, dan pyOpenSSL.
 # Dipakai supaya tidak ada satu baris pun kriptografi buatan sendiri
 # di jalur masuk, sesuai larangan di bab 15.8.

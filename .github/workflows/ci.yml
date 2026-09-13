@@ -172,6 +172,22 @@ jobs:
           echo "Advisories above belong to next/, which is not deployed."
           echo "See docs/keamanan.md for the one that is."
 
+      # Ini MEMBLOKIR, tidak seperti npm audit di atas. Bedanya nyata:
+      # paket Python di bawah ini benar benar berjalan di server yang
+      # menghadap internet dan memegang basis data, sedangkan yang di next/
+      # belum pernah diterbitkan sama sekali.
+      #
+      # Penyisiran 13 September 2026 menemukan 24 temuan di dua paket, dan
+      # keduanya sudah dinaikkan. Langkah ini yang menjaga supaya temuan
+      # berikutnya ketahuan pada hari ia diumumkan, bukan berbulan bulan
+      # kemudian. Kalau suatu saat ada temuan yang memang tidak bisa
+      # ditambal, tulis alasannya di docs/audit-keamanan.md lalu kecualikan
+      # ID-nya di sini dengan tersurat, bukan dengan "|| true".
+      - name: Python dependency audit, enforced
+        run: |
+          pip install -q pip-audit
+          pip-audit -r backend/requirements.txt --strict
+
       - name: The vendored library has not moved without the record moving
         run: |
           versi=$(cat assets/vendor/maplibre/VERSI)
@@ -290,8 +306,14 @@ jobs:
         run: python -m playwright install --with-deps chromium chromium-headless-shell
 
       # Token Mapbox dibutuhkan: tanpa itu peta jatuh ke OpenFreeMap dan yang
-      # diuji bukan lagi peta yang terbit. Kalau rahasianya belum dipasang,
-      # langkah ini melewati uji peta dan mengatakannya, bukan lolos diam diam.
+      # diuji bukan lagi peta yang terbit.
+      #
+      # Kalau rahasianya belum dipasang, atau kalau tokennya dibatasi per URL
+      # dan asal runner tidak ada di daftarnya, empat uji peta dilewati dengan
+      # alasan yang menyebut persis apa yang harus dikerjakan. pytest.ini
+      # memakai -rs, jadi alasan itu selalu tercetak di log dan tidak bisa
+      # lolos diam diam. Sampai 13 September 2026 komentar di tempat ini
+      # mengaku begitu padahal ujinya justru GAGAL; sekarang benar.
       - name: Write the map token
         env:
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}

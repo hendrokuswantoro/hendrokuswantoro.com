@@ -103,7 +103,64 @@ def blok(sumber: str) -> list[Blok]:
         kumpul.append(isi.strip())
 
     tutup()
+    # Tautan diperiksa di sini, bukan hanya saat HTML-nya dibangkitkan.
+    #
+    # Bedanya penting. Yang memanggil blok() adalah dua pihak: pembangkit
+    # situs statis, dan validator skema yang menjaga jalur tulis API. Kalau
+    # pemeriksaannya hanya ada di sebaris(), tulisan bertautan javascript:
+    # akan diterima API dengan tenang, tersimpan di basis data, dan baru
+    # meledak berhari hari kemudian saat situsnya dibangun ulang, jauh dari
+    # orang yang menulisnya dan dari sebabnya.
+    for b in hasil:
+        try:
+            sebaris(b.teks)
+        except MarkahSalah as galat:
+            raise MarkahSalah(f"baris {b.baris}: {galat}") from galat
+
     return hasil
+
+
+# Skema yang boleh muncul di dalam href.
+#
+# Escape saja tidak cukup, dan itu ditemukan lewat penyisiran, bukan lewat
+# membaca kode. `[klik](javascript:alert(1))` lolos sempurna: alamatnya
+# di-escape dengan benar, lalu dipasang apa adanya ke dalam href, dan
+# hasilnya tautan yang menjalankan JavaScript begitu diklik. Sama untuk
+# `data:text/html`, yang membuka halaman karangan penulisnya di atas asal
+# situs ini.
+#
+# Penulisnya memang hanya pemilik situs, dan itu justru alasan kenapa ini
+# diperbaiki, bukan alasan membiarkannya: "hanya admin yang bisa" adalah
+# anggapan yang gugur pada hari ada penulis kedua atau ada akun yang diambil
+# orang.
+SKEMA_BOLEH = ("https:", "http:", "mailto:")
+
+
+def periksa_alamat(alamat: str) -> None:
+    """Menolak, bukan membersihkan diam diam.
+
+    Alamat yang dibersihkan tanpa sepengetahuan penulisnya akan terbit jadi
+    tautan yang menuju tempat lain daripada yang dimaksudnya, dan itu lebih
+    membingungkan daripada pesan galat.
+    """
+    bersih = alamat.strip()
+
+    # Relatif: jangkar, akar, atau tetangga. Tidak punya skema sama sekali.
+    if bersih.startswith(("#", "/", "./", "../")):
+        return
+
+    kecil = bersih.lower()
+    if kecil.startswith(SKEMA_BOLEH):
+        return
+
+    # Tanpa titik dua berarti relatif juga, misalnya "tentang.html".
+    if ":" not in kecil.split("/")[0]:
+        return
+
+    raise MarkahSalah(
+        f"skema tautan tidak diizinkan: {bersih[:40]!r}. "
+        f"Yang boleh: {', '.join(SKEMA_BOLEH)}, atau alamat relatif."
+    )
 
 
 def sebaris(teks: str) -> str:
@@ -119,6 +176,7 @@ def sebaris(teks: str) -> str:
             keluar.append("<code>" + html.escape(potong[1:-1], quote=False) + "</code>")
         elif cocok.lastgroup == "tautan":
             label, _, alamat = potong[1:-1].partition("](")
+            periksa_alamat(alamat)
             keluar.append(
                 '<a href="%s">%s</a>'
                 % (html.escape(alamat, quote=True), html.escape(label, quote=False))
