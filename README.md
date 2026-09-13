@@ -201,12 +201,12 @@ pip install -r tests/requirements.txt
 python -m pytest
 ```
 
-**505 uji.** 457 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
+**507 uji.** 459 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
 dalam hitungan detik; 48 sisanya menjalankan Chromium sungguhan dan dipisah
 lewat tanda `peramban` supaya tidak memperlambat putaran biasa.
 
 ```bash
-python -m pytest                 # 457, cepat
+python -m pytest                 # 459, cepat
 python -m pytest -m peramban     # 48, Chromium
 sh tools/verifikasi.sh           # seluruhnya, berurutan
 pip-audit -r backend/requirements.txt --strict
@@ -293,7 +293,7 @@ tools/periksa_alur.py      pemeriksa berkas .github/workflows sebelum CI menjala
 assets/fonts/              delapan woff2 Poppins plus OFL.txt dan sumber.json
 assets/js/peta.js          peta karya, 31 lapisan di atas ubin vektor Mapbox
 assets/vendor/maplibre/    MapLibre GL JS, disimpan sendiri, bukan dari CDN
-tests/                     457 uji tanpa peramban, 48 dengan Chromium
+tests/                     459 uji tanpa peramban, 48 dengan Chromium
 docs/                      arsitektur, panduan uji, pemecahan masalah
 .github/workflows/ci.yml   lint, type check, test, security scan, build
 .github/workflows/kesehatan.yml  health check terhadap situs yang sudah terbit
