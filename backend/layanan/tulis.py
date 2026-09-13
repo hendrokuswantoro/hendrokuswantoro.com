@@ -62,5 +62,20 @@ async def hapus(slug: str) -> None:
         raise TidakAda(slug)
 
 
+async def satu(slug: str) -> dict[str, Any]:
+    """Dipakai penyunting untuk membuka tulisan, termasuk yang masih draf.
+
+    Sampai hari ini penyunting membuka tulisan lewat jalur publik
+    /api/v1/blog/{slug}, yang hanya menjawab kalau statusnya sudah terbit.
+    Akibatnya draf yang baru dibuat tidak pernah bisa dibuka lagi, dan
+    satu satunya jalan keluar adalah menerbitkannya lebih dulu, yaitu
+    persis kebalikan dari gunanya draf.
+    """
+    baris = await repo.satu(slug)
+    if baris is None:
+        raise TidakAda(slug)
+    return baris
+
+
 async def daftar_semua() -> list[dict[str, Any]]:
     return await repo.daftar_semua()

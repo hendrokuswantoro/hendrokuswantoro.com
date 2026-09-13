@@ -34,6 +34,14 @@ async def daftar() -> dict:
     return {"jumlah": len(isi), "isi": isi}
 
 
+@rute.get("/blog/{slug}", summary="Satu tulisan, termasuk draf")
+async def satu(slug: str) -> dict:
+    try:
+        return await layanan.satu(slug)
+    except layanan.TidakAda as galat:
+        raise _ke_http(galat) from galat
+
+
 @rute.post("/blog", status_code=status.HTTP_201_CREATED, summary="Tulisan baru, status draf")
 async def buat(
     masuk: TulisanMasuk,
