@@ -8,7 +8,10 @@ step dan tanpa dependensi. Empat menu: Home, About, Project, Blog.
 - **Warnanya mengikuti aplikasi Uber**: hitam, putih, abu abu, dengan satu
   aksen biru `#276ef1` untuk tautan dan keadaan aktif.
 - **Hurufnya Poppins**, pengganti paling dekat untuk huruf Gojek yang memang
-  tidak dilisensikan untuk umum.
+  tidak dilisensikan untuk umum. Delapan berkas woff2-nya disimpan di
+  `assets/fonts`, bukan dipanggil dari Google: tidak ada satu pun permintaan
+  ke luar asal situs ini, dan huruf pertama tidak lagi menunggu dua jabat
+  tangan TLS ke dua alamat lain. Lihat [docs/ringan.md](docs/ringan.md).
 - Bahasanya sengaja sederhana. Kalimat pendek, tanpa tanda strip dan titik dua.
 - Dwibahasa Inggris dan Indonesia lewat tombol EN/ID.
 - **Tidak ada bagian kontak.** Ini disengaja.
@@ -198,13 +201,13 @@ pip install -r tests/requirements.txt
 python -m pytest
 ```
 
-**463 uji.** 420 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
-dalam hitungan detik; 43 sisanya menjalankan Chromium sungguhan dan dipisah
+**505 uji.** 457 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
+dalam hitungan detik; 48 sisanya menjalankan Chromium sungguhan dan dipisah
 lewat tanda `peramban` supaya tidak memperlambat putaran biasa.
 
 ```bash
-python -m pytest                 # 420, cepat
-python -m pytest -m peramban     # 43, Chromium
+python -m pytest                 # 457, cepat
+python -m pytest -m peramban     # 48, Chromium
 sh tools/verifikasi.sh           # seluruhnya, berurutan
 pip-audit -r backend/requirements.txt --strict
 ```
@@ -245,6 +248,8 @@ benar benar sampai. Alamat yang diperiksa diambil dari variabel repositori
 - [docs/arsitektur.md](docs/arsitektur.md) - bentuk sistemnya, dan kenapa
   tidak ada basis data
 - [docs/pengujian.md](docs/pengujian.md) - apa yang dijaga tiap uji
+- [docs/ringan.md](docs/ringan.md) - berat tiap halaman, dua hal yang
+  dikerjakan untuk meringankannya, dan empat yang diukur lalu sengaja tidak
 - [docs/cadangan.md](docs/cadangan.md) - RPO, RTO, retensi, dan uji
   pemulihan yang benar benar dijalankan
 - [docs/api.md](docs/api.md) - menjalankan API, bentuk lapisannya, dan
@@ -283,9 +288,12 @@ tools/build_icons.py       pembangkit ikon PNG
 tools/build_feed.py        pembangkit feed.xml, membaca berkas di blog/
 tools/bangun_situs.sh      pembangun dist/, dipakai Cloudflare saat build
 tools/konfigurasi.sh       penulis token dari MAPBOX_TOKEN, dipanggil di atas
+tools/ambil_font.py        pengunduh Poppins, penulis @font-face, --periksa luring
+tools/periksa_alur.py      pemeriksa berkas .github/workflows sebelum CI menjalankannya
+assets/fonts/              delapan woff2 Poppins plus OFL.txt dan sumber.json
 assets/js/peta.js          peta karya, 31 lapisan di atas ubin vektor Mapbox
 assets/vendor/maplibre/    MapLibre GL JS, disimpan sendiri, bukan dari CDN
-tests/                     140 uji, tanpa peramban dan tanpa jaringan
+tests/                     457 uji tanpa peramban, 48 dengan Chromium
 docs/                      arsitektur, panduan uji, pemecahan masalah
 .github/workflows/ci.yml   lint, type check, test, security scan, build
 .github/workflows/kesehatan.yml  health check terhadap situs yang sudah terbit
@@ -414,7 +422,9 @@ Isiannya sama untuk keduanya:
 `tools/bangun_situs.sh` mengerjakan dua hal: menulis tokennya lewat
 `tools/konfigurasi.sh`, lalu menyalin hanya berkas yang pantas disajikan ke
 `dist/`. README, `tools/`, dan versi Next.js tidak ikut, sama persis dengan
-isi zip yang dibuat `tools/build_dist.py`. Keduanya menghasilkan 34 berkas.
+isi zip yang dibuat `tools/build_dist.py`. Keduanya menghasilkan 60 berkas,
+naik dari 34 sejak delapan berkas font dan empat belas gambar karya
+berukuran tambahan ikut masuk.
 
 **Kenapa ada build command padahal situsnya statis.** Token Mapbox disimpan di
 `assets/js/konfigurasi.js`, dan berkas itu tidak pernah ikut di-commit, lihat

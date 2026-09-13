@@ -14,11 +14,11 @@ dan berkas VPS masuk.
 | | Permintaan | Status |
 | --- | --- | --- |
 | 1 | UI/UX seperti Gojek | Sudah |
-| 2 | Font seperti Google | Sudah, Poppins |
+| 2 | Font seperti Google | Sudah, Poppins, dan sejak 13 September 2026 disimpan sendiri di `assets/fonts`, bukan dipanggil dari Google |
 | 3 | Warna Deep Cobalt Blue | Diganti atas permintaan Anda, hijau Gojek lalu hitam putih Uber. Abu abunya kini netral seperti Uber Base, latar `#f6f6f6` |
 | 4 | Menu home, about, project | Sudah, plus Blog atas permintaan Anda |
 | 5 | Copyright | Sudah |
-| 6 | Domain hendrokuswantoro.com | Menunggu nameserver menyebar |
+| 6 | Domain hendrokuswantoro.com | **Belum terdaftar.** Otoritas .com menjawab NXDOMAIN, bukan delegasi yang sedang menyebar. Situsnya hidup di workers.dev. Lihat bagian Domain di bawah |
 
 ## Bagian dua, tumpukan teknologi
 
@@ -77,11 +77,11 @@ bukan untuk brosur empat halaman. Syarat kapan keputusan ini gugur ada di
 | 13 CDN & WAF | Sudah | Cloudflare |
 | 14 Infrastructure | Sudah, belum hidup | Compose, unit systemd yang dikeraskan, `pasang.sh` yang idempoten. Belum pernah menyentuh Ubuntu sungguhan |
 | 15 CI/CD | Sudah | Lint, type check, test, security scan, build tiap push |
-| 16 Testing | Sudah | 463 uji: berkas, gaya dan kontras, basis data, API, autentikasi, passkey, enkripsi cadangan, infrastruktur, peramban, performa |
-| 17 Monitoring | Sudah | Log JSON terstruktur, health check harian, peringatan lewat isu |
+| 16 Testing | Sudah | 505 uji: berkas, gaya dan kontras, basis data, API, autentikasi, passkey, enkripsi cadangan, infrastruktur, peramban, performa |
+| 17 Monitoring | Sudah | Log JSON terstruktur, health check harian, peringatan lewat isu. Health check-nya sendiri pernah gagal tiap malam karena cacatnya sendiri, lihat bawah |
 | 18 Backup & DR | Sudah | AES-256-GCM, RPO 1 hari, RTO di bawah 15 menit, retensi 14 lokal dan 30 hari di penyedia, pemulihan diuji tiap push |
 | 19 DevOps & Automation | Sudah | Deploy, build, sertifikat, pemeriksaan semuanya otomatis |
-| 20 Performance | Sudah | Diukur dan dianggarkan, lihat [pengujian.md](pengujian.md) |
+| 20 Performance | Sudah | Diukur dan dianggarkan. Beranda 158 KB dari 233 KB, nol asal luar. Lihat [ringan.md](ringan.md) |
 | 21 Git | Sudah | Commit atomik dan deskriptif, tidak ada rahasia |
 | 22 Documentation | Sudah | README plus sebelas dokumen, termasuk API, basis data, autentikasi, cadangan, dan VPS |
 | 23 Production Hardening | Sudah | HTTPS, rahasia, header, health check, rollback, dan pemulihan cadangan yang sudah diuji |
@@ -104,6 +104,62 @@ storage. Ketiganya menuntut VPS. Langkah demi langkahnya, beserta angka
 biayanya dan alasan kenapa VPS itu mungkin belum perlu sama sekali, ada di
 [vps.md](vps.md).
 
+## Tiga cacat yang ditemukan 13 September 2026, dan semuanya ditutup
+
+Ketiganya punya satu sifat yang sama: tidak satu pun menimbulkan galat di
+tempat yang dilihat orang.
+
+### 1. Health check gagal tiap malam, dan situsnya sehat
+
+`kesehatan.yml` memuat baris ini:
+
+```sh
+for jalur in / /about /project /blog/ \n                       /blog/kapan-peta-diam \n ...
+```
+
+`\n` di situ bukan baris baru, melainkan dua karakter yang dibaca shell
+sebagai satu kata bernilai `n`. Jadi pemeriksaannya meminta `$situs/n`,
+dijawab 404, dan gagal. Karena langkah gagal membuka isu otomatis, ia juga
+melaporkan bahwa situsnya mati. Sepuluh alamat yang sebenarnya diperiksa
+semuanya menjawab 200 sepanjang waktu itu.
+
+`bash -n` tidak bisa menangkapnya: sintaksnya sah sempurna. Yang menangkapnya
+sekarang `tools/periksa_alur.py`, yang memparse tiap berkas alur, menjalankan
+`bash -n` pada tiap blok `run`, dan menolak `\n` harfiah di luar `printf`,
+`echo`, atau `sed`. Dipanggil CI. Empat uji di `test_infrastruktur.py`
+memberi pemeriksanya kembali baris aslinya dan gagal kalau ia meloloskannya.
+
+### 2. Uji peramban gagal di CI karena menunggu jaringan diam
+
+`buka()` memakai `wait_until="networkidle"`. Untuk setiap halaman kecuali satu
+itu sama saja dengan menunggu `app.js` selesai. Pada `/project` tidak: peta
+terus meminta ubin selama masih terlihat, jaringannya tidak pernah diam selama
+500 ms, dan `Page.goto` berjalan sampai batas 30 detik lalu gagal dengan pesan
+yang hanya menyebut timeout.
+
+Di mesin pengembangan ia lolos, dan alasannya memalukan: token Mapbox di sini
+dibatasi per URL, tiap ubin dijawab 403 dalam sekejap, jaringannya diam, dan
+ujinya hijau **karena petanya rusak**. Di CI tanpa rahasia token, peta jatuh
+ke OpenFreeMap yang menjawab sungguhan, ubinnya mengalir, dan ujinya gagal.
+
+Sekarang `app.js` memasang `data-siap` pada `<html>` di akhir `boot()`, dan
+`buka()` menunggu atribut itu. Pernyataan dari kode yang menyiapkan halaman,
+bukan tebakan dari perilaku jaringan.
+
+### 3. Nginx mengirim aset tanpa header keamanan
+
+Blok `location /assets/` memasang `add_header Cache-Control`. Satu `add_header`
+di dalam `location` **menghapus seluruh** `add_header` milik blok server, jadi
+sejak baris itu dipasang, setiap berkas JavaScript, SVG, dan font dikirim tanpa
+`nosniff`, tanpa HSTS, dan tanpa CSP. Jebakan ini sudah dijelaskan panjang di
+blok `/api/` pada berkas yang sama, lalu tetap memakan blok sebelahnya.
+
+Cloudflare tidak punya jebakan ini: `_headers` menumpuk aturan `/*` dan
+`/assets/*`, tidak menggantinya. Jadi nginx dan Cloudflare menyajikan dua situs
+dengan aturan berbeda, persis keadaan yang `test_infrastruktur.py` mengaku
+menjaganya. Keenam header kini diulang di blok itu, dan dua uji baru menolak
+blok `/assets/` yang memasang `add_header` tanpa mengulangnya.
+
 ## Yang sudah ditutup sejak pemeriksaan pertama
 
 | | Selesai |
@@ -119,10 +175,56 @@ biayanya dan alasan kenapa VPS itu mungkin belum perlu sama sekali, ada di
 | Node.js belum terpasang | terpasang, port Next.js dibangun dan lolos type check |
 | Palet gelap memaksa diri lewat setelan sistem | tema jadi pilihan pembaca, bawaannya terang |
 | `.env.example` tidak pernah sampai ke git | terjaring `.env.*` di `.gitignore`, sekarang dikecualikan |
+| Font dipanggil dari dua asal Google | disimpan sendiri di `assets/fonts`, CSP menutup keduanya, beranda turun 75 KB |
+| Satu berkas gambar 800 px untuk kotak 287 px | tiga lebar plus `sizes` yang diturunkan dari pengukuran, bukan dikarang |
+| Alur kerja GitHub tidak pernah diperiksa | `tools/periksa_alur.py`, dipanggil CI, diuji dengan baris yang dulu lolos |
+| Health check gagal tiap malam sementara situsnya sehat | `
+` harfiah di daftar jalur, diganti here-doc |
+| Aset dikirim nginx tanpa header keamanan | keenamnya diulang di blok `/assets/` |
+| `verifikasi.sh` mengaku Node tidak terpasang padahal terpasang | mencari node di jalur Windows yang biasa, dua langkah tidak lagi dilewati |
 
-## Yang menunggu, bukan belum dikerjakan
+## Domain, dan satu klaim di dokumen ini yang ternyata salah
 
-Domain `hendrokuswantoro.com` sedang menunggu nameserver menyebar. Sesudah
-aktif tinggal tiga langkah yang semuanya sudah ditulis di README: pasang dua
-custom domain, pasang Redirect Rule, ganti variabel `SITUS` di GitHub supaya
-health check ikut pindah alamat.
+Sampai 13 September 2026 baris di atas berbunyi "sedang menunggu nameserver
+menyebar". Itu tidak benar, dan ini hasil pengukurannya:
+
+```
+$ curl -H 'accept: application/dns-json' \
+    'https://cloudflare-dns.com/dns-query?name=hendrokuswantoro.com&type=NS'
+{"Status":3, ... "Authority":[{"name":"com","type":6, ...}]}
+```
+
+`Status: 3` adalah NXDOMAIN, dan yang menjawabnya otoritas `com` sendiri, bukan
+nameserver domainnya. Artinya **namanya belum terdaftar sama sekali**. Nama yang
+sedang menyebar punya delegasi yang bisa dilihat; nama ini tidak punya apa apa.
+Dua keadaan itu tampak sama dari peramban, yaitu situsnya tidak terbuka, dan
+hanya yang pertama akan selesai sendiri dengan menunggu.
+
+Yang ikut terkena, dan tidak satu pun menimbulkan galat di mana pun:
+
+- `rel="canonical"` di setiap halaman menunjuk `https://www.hendrokuswantoro.com/...`
+- `sitemap.xml`, `feed.xml`, `og:url`, dan JSON-LD memakai alamat yang sama
+- `robots.txt` menunjuk sitemap di alamat itu
+
+Mesin pencari mengindeks alamat kanonik. Selama nama itu tidak ada, situs ini
+boleh sehat sempurna dan tetap tidak bisa ditemukan, dan tiap tautan di umpan
+RSS-nya mati. Situsnya sendiri hidup dan menjawab 200 di sepuluh alamat, hanya
+di `hendrokuswantoro-com.kuswantoro-hendro01.workers.dev`.
+
+Sekarang ada yang memeriksanya. `kesehatan.yml` punya langkah **The canonical
+address exists**: ia membaca `rel="canonical"` dari beranda yang benar benar
+terbit, menanyakannya ke DNS, dan gagal dengan menyebut kedua jalan keluarnya.
+Selama namanya belum ada, langkah itu akan gagal setiap malam. Itu memang
+maksudnya.
+
+Dua jalan keluarnya:
+
+1. Daftarkan `hendrokuswantoro.com`, arahkan nameserver-nya ke Cloudflare,
+   pasang dua custom domain, pasang Redirect Rule, lalu ganti variabel `SITUS`
+   di GitHub supaya health check ikut pindah alamat. Langkahnya ada di README.
+2. Atau ganti `CNAME` beserta setiap `rel="canonical"`, `sitemap.xml`,
+   `feed.xml`, dan `og:url` ke alamat `workers.dev` yang memang dipakai, lalu
+   kembalikan nanti.
+
+Yang pertama yang Anda maksud. Yang kedua membuat situs ini bisa diindeks
+hari ini.

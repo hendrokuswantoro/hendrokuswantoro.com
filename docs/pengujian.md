@@ -108,15 +108,32 @@ CSP situs ini menolak `unsafe-eval`.
 ### `test_performa.py`
 
 Bab 20 menuntut optimasi, dan optimasi tanpa pengukuran adalah tebakan yang
-kebetulan rapi. Angka yang terukur pada 12 September 2026:
+kebetulan rapi. Angka yang terukur pada 13 September 2026:
 
-| Halaman | Berat | Permintaan |
-| --- | --- | --- |
-| `/` | 186 KB | 7 |
-| `/about` | 62 KB | 4 |
-| `/blog/` | 60 KB | 4 |
-| `/blog/kapan-peta-diam` | 62 KB | 4 |
-| `/project` | 2410 KB | 30 |
+| Halaman | Berat | Permintaan | Sebelumnya |
+| --- | --- | --- | --- |
+| `/` | 158 KB | 10 | 201 KB terukur, 233 KB sebenarnya |
+| `/about` | 113 KB | 7 | 78 KB terukur, 110 KB sebenarnya |
+| `/blog/` | 110 KB | 7 | 75 KB terukur, 107 KB sebenarnya |
+| `/blog/kapan-peta-diam` | 112 KB | 7 | 77 KB terukur, 109 KB sebenarnya |
+| `/project` | 1927 KB | 29 | 2076 KB |
+
+Kolom terakhir memuat dua angka, dan selisihnya yang penting.
+
+**Angka lama tidak mengukur fontnya.** Selama Poppins datang dari
+`fonts.gstatic.com`, Resource Timing melaporkan `transferSize` nol untuk
+berkas dari asal lain yang tidak mengirim `Timing-Allow-Origin`, dan Google
+tidak mengirimnya. Jadi 32 KB font tidak pernah masuk hitungan sama sekali,
+dan anggaran ini mengawasi halaman yang lebih ringan daripada yang benar benar
+dikirim ke pembaca. Sekarang fontnya ada di `assets/fonts`, jadi bitanya
+terhitung; itu sebabnya `/about` **naik** di atas kertas sambil menjadi lebih
+cepat. Lihat [ringan.md](ringan.md).
+
+`/` turun 75 KB, dari 233 KB menjadi 158 KB, karena dua hal sekaligus: font
+dari asal sendiri dan gambar karya dalam tiga lebar. Permintaannya bertambah
+tiga, dan itu memang benar: empat berkas font dari asal ini menggantikan satu
+stylesheet plus empat woff2 dari dua asal lain, dan kelimanya dulu tidak
+terhitung.
 
 `/project` berat karena memuat MapLibre dan ubin peta. Pustakanya sendiri
 sekitar 1 MB, sebab `maplibre-gl-shared.mjs` diunduh **dua kali**: sekali
@@ -125,8 +142,24 @@ ditulis apa adanya dan diberi anggaran sendiri, bukan disembunyikan di balik
 satu anggaran besar untuk semua halaman, sebab anggaran seperti itu membuat
 halaman lain bisa membengkak tanpa ketahuan.
 
-Yang juga dijaga: tidak ada permintaan ke pihak ketiga selain Google Fonts,
-dan empat halaman tanpa peta tidak mengunduh MapLibre sama sekali.
+Yang juga dijaga:
+
+- **Tidak ada satu pun permintaan ke pihak ketiga.** Dulu Google Fonts
+  dikecualikan; sekarang daftarnya kosong.
+- Empat halaman tanpa peta tidak mengunduh MapLibre sama sekali.
+- **Lebar gambar yang dipilih peramban diukur, bukan dihitung.** Enam ukuran
+  layar, dua halaman, dan tiap gambar diperiksa tiga hal: berkasnya tidak
+  lebih sempit daripada kotaknya, tidak lebih dari dua kali lebarnya, dan
+  nilai `sizes` tidak lebih kecil daripada kotak yang sebenarnya. Yang
+  terakhir tidak terlihat di layar biasa; ia hanya muncul di layar padat,
+  sebagai gambar yang sedikit kabur tanpa satu pun pesan galat.
+
+Satu catatan tentang `naturalWidth`: untuk gambar dengan `srcset`
+berdeskriptor `w`, Chromium melaporkannya sebagai lebar berkas dibagi
+kerapatan yang ia hitung dari `sizes`, jadi nilainya mendekati nilai `sizes`
+itu sendiri dan bukan lebar berkasnya. Uji yang memperlakukannya sebagai
+lebar berkas akan menuduh gambar 400 px hanya 253 px. Itu sudah terjadi di
+sini; lebar berkasnya sekarang dibaca dari namanya.
 
 Yang **tidak** diklaim: bahwa di `/project` pun MapLibre ditunda sampai
 digulir. Bagian petanya duduk tinggi di halaman itu, di dalam `rootMargin`
