@@ -198,14 +198,15 @@ pip install -r tests/requirements.txt
 python -m pytest
 ```
 
-**437 uji.** 406 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
-dalam hitungan detik; 31 sisanya menjalankan Chromium sungguhan dan dipisah
+**463 uji.** 420 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
+dalam hitungan detik; 43 sisanya menjalankan Chromium sungguhan dan dipisah
 lewat tanda `peramban` supaya tidak memperlambat putaran biasa.
 
 ```bash
-python -m pytest                 # 406, cepat
-python -m pytest -m peramban     # 31, Chromium
+python -m pytest                 # 420, cepat
+python -m pytest -m peramban     # 43, Chromium
 sh tools/verifikasi.sh           # seluruhnya, berurutan
+pip-audit -r backend/requirements.txt --strict
 ```
 
 Rinciannya di [docs/pengujian.md](docs/pengujian.md).
@@ -262,6 +263,8 @@ benar benar sampai. Alamat yang diperiksa diambil dari variabel repositori
   rusak, sebabnya, dan cara mengenalinya lagi
 - [docs/vps.md](docs/vps.md) - nginx, systemd, deploy otomatis, cadangan
   terjadwal, biayanya, dan alasan kenapa VPS itu mungkin belum perlu
+- [docs/audit-keamanan.md](docs/audit-keamanan.md) - penyisiran 13 September
+  2026: apa yang ditemukan, apa yang ditutup, dan apa yang tidak bisa ditutup
 
 ## Susunan berkas
 

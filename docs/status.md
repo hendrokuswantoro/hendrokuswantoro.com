@@ -24,7 +24,7 @@ dan berkas VPS masuk.
 
 | Lapisan | Teknologi | Status |
 | --- | --- | --- |
-| Frontend | TypeScript + Next.js + React | Sebagian. Port ada di `next/`, **dibangun dan lolos type check di mesin ini sejak Node terpasang**, tetapi belum diterbitkan. Versi HTML biasa yang hidup |
+| Frontend | TypeScript + Next.js + React | Sebagian. Port dibangun dan lolos type check; **halaman admin Next.js sudah dipakai sungguhan** lewat ADMIN_NEXT=1. Halaman publik yang terbit masih versi HTML |
 | Map UI | MapLibre GL JS | Sudah, 31 lapisan di atas ubin vektor Mapbox |
 | Advanced 3D | CesiumJS | Tidak berlaku |
 | Visualisation | Deck.gl | Tidak berlaku |
@@ -72,12 +72,12 @@ bukan untuk brosur empat halaman. Syarat kapan keputusan ini gugur ada di
 | 8 Authentication & IAM | Sudah | Passkey WebAuthn, Argon2id, JWT. 19 + 18 uji, sebagian besar menguji penolakan |
 | 9 Authorization | Sudah | RBAC, `butuh_admin`, 401 dan 403 dibedakan |
 | 10 Session & Token | Sudah | Refresh berputar, dicabut di Postgres, hanya SHA-256-nya yang disimpan |
-| 11 Security | Sudah | Header, CSP, HSTS, penyisiran rahasia. Temuan MapLibre ditutup 12 Sep 2026, lihat [keamanan.md](keamanan.md) |
+| 11 Security | Sudah | Header, CSP, HSTS, penyisiran rahasia. Penyisiran penuh 13 Sep 2026 menutup empat temuan, lihat [audit-keamanan.md](audit-keamanan.md) |
 | 12 Reverse proxy | Sudah, belum hidup | `infrastructure/nginx/`, lolos `nginx -t`, header sama persis dengan `_headers`. Yang menyajikan sekarang masih Cloudflare |
 | 13 CDN & WAF | Sudah | Cloudflare |
 | 14 Infrastructure | Sudah, belum hidup | Compose, unit systemd yang dikeraskan, `pasang.sh` yang idempoten. Belum pernah menyentuh Ubuntu sungguhan |
 | 15 CI/CD | Sudah | Lint, type check, test, security scan, build tiap push |
-| 16 Testing | Sudah | 437 uji: berkas, gaya dan kontras, basis data, API, autentikasi, passkey, enkripsi cadangan, infrastruktur, peramban, performa |
+| 16 Testing | Sudah | 463 uji: berkas, gaya dan kontras, basis data, API, autentikasi, passkey, enkripsi cadangan, infrastruktur, peramban, performa |
 | 17 Monitoring | Sudah | Log JSON terstruktur, health check harian, peringatan lewat isu |
 | 18 Backup & DR | Sudah | AES-256-GCM, RPO 1 hari, RTO di bawah 15 menit, retensi 14 lokal dan 30 hari di penyedia, pemulihan diuji tiap push |
 | 19 DevOps & Automation | Sudah | Deploy, build, sertifikat, pemeriksaan semuanya otomatis |
