@@ -10,6 +10,13 @@ uvicorn[standard]==0.52.4
 starlette==1.6.0
 psycopg[binary,pool]==3.2.3
 pydantic==2.11.7
+# Dituntut EmailStr di backend/api/v1/auth.py. Pydantic mengimpornya baru
+# saat modelnya dibangun, jadi ketiadaannya tidak terlihat sampai aplikasi
+# benar benar dimuat, dan pesannya pun hanya muncul di sana. Di mesin ini ia
+# kebetulan sudah terpasang lewat paket lain; di pemasangan bersih, termasuk
+# CI dan server sungguhan, `import backend.main` langsung gagal. Ketahuan
+# lewat CI yang gagal tiga kali berturut turut, bukan lewat membaca kode.
+email-validator==2.3.0
 pydantic-settings==2.7.1
 redis==5.2.1
 argon2-cffi==23.1.0

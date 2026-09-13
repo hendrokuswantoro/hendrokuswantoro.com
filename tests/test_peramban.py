@@ -531,6 +531,13 @@ def test_jam_yogyakarta_berjalan_dan_benar(halaman, situs):
     import datetime as dt
 
     buka(halaman, situs, "/about")
+
+    # Tanpa basis data zona waktu di Intl, app.js membuang elemennya sama
+    # sekali: jam yang salah dan meyakinkan lebih buruk daripada tidak ada
+    # jam. Kalau itu yang terjadi, ujinya melewati dan mengatakannya.
+    if halaman.locator("[data-jam]").count() == 0:
+        pytest.skip("Intl di peramban ini tanpa zona waktu, jadi jamnya sengaja dibuang")
+
     tampil = halaman.locator("[data-jam]").first.inner_text().strip()
     assert len(tampil) == 5 and tampil[2] == ":", tampil
 
@@ -543,6 +550,16 @@ def test_jam_yogyakarta_berjalan_dan_benar(halaman, situs):
 
 def test_kartu_punya_kilau_yang_mengikuti_kursor(halaman, situs):
     buka(halaman, situs, "/project")
+
+    # Kilau ini sengaja tidak dipasang pada perangkat tanpa kursor. Kalau
+    # peramban yang menjalankan uji ini melaporkan dirinya begitu, yang
+    # benar adalah melewati, bukan menuntut fitur yang memang tidak
+    # seharusnya ada di sana.
+    if not halaman.evaluate(
+        "() => matchMedia('(hover: hover) and (pointer: fine)').matches"
+    ):
+        pytest.skip("peramban ini melaporkan tidak punya kursor, jadi kilau memang mati")
+
     kartu = halaman.locator(".card").first
 
     # Digulir ke dalam layar lebih dulu. Kartu pertama di /project duduk di

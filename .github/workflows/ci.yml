@@ -239,7 +239,18 @@ jobs:
         run: python -m pytest tests/test_basis_data.py -q
 
       - name: API tests
-        run: python -m pytest tests/test_api.py -q
+        run: |
+          python -m pytest tests/test_api.py -q --tb=short | tee hasil-api.txt
+          kode=${PIPESTATUS[0]}
+          {
+            echo "### Uji API"
+            echo
+            echo '```'
+            tail -40 hasil-api.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$kode"
+        shell: bash
 
       - name: Auth tests
         env:
@@ -324,11 +335,39 @@ jobs:
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
         run: sh tools/konfigurasi.sh
 
+      # Hasilnya ikut ditulis ke ringkasan run, bukan hanya ke log.
+      #
+      # Log runner menuntut hak admin repositori untuk dibaca lewat API,
+      # jadi kegagalan di sini pernah tidak bisa ditelusuri sama sekali dari
+      # luar. Ringkasan run terbuka untuk siapa pun yang bisa membuka
+      # halaman Actions-nya, dan itu cukup untuk tahu uji mana yang jatuh.
       - name: Browser tests
-        run: python -m pytest tests/test_peramban.py -q
+        run: |
+          python -m pytest tests/test_peramban.py -q --tb=short             | tee hasil-peramban.txt
+          kode=${PIPESTATUS[0]}
+          {
+            echo "### Uji peramban"
+            echo
+            echo '```'
+            tail -40 hasil-peramban.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$kode"
+        shell: bash
 
       - name: Performance budgets
-        run: python -m pytest tests/test_performa.py -q -s
+        run: |
+          python -m pytest tests/test_performa.py -q -s --tb=short             | tee hasil-performa.txt
+          kode=${PIPESTATUS[0]}
+          {
+            echo "### Anggaran performa"
+            echo
+            echo '```'
+            tail -40 hasil-performa.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$kode"
+        shell: bash
 
   bangun:
     name: Build
