@@ -188,10 +188,15 @@ jobs:
           pip install -q pip-audit
           pip-audit -r backend/requirements.txt --strict
 
+      # maplibre-gl.js, tanpa m, sudah tidak ada sejak versi 6: MapLibre 6
+      # terbit sebagai ES module saja. Langkah ini masih menunjuk ke berkas
+      # lama, jadi ia GAGAL di tiap push sejak 12 September 2026, dan yang
+      # gagal bukan hal yang dijaganya.
       - name: The vendored library has not moved without the record moving
         run: |
           versi=$(cat assets/vendor/maplibre/VERSI)
-          grep -q "/v$versi/" assets/vendor/maplibre/maplibre-gl.js
+          test -f assets/vendor/maplibre/maplibre-gl.mjs
+          grep -q "/v$versi/" assets/vendor/maplibre/maplibre-gl.mjs
           grep -q "GHSA-jrc7-96c5-q579" docs/keamanan.md
           echo "vendored MapLibre $versi, advisory recorded"
 

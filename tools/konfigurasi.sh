@@ -26,8 +26,17 @@ TUJUAN="assets/js/konfigurasi.js"
 # messages about missing layers that said nothing about the real cause. That
 # happened. Every other tool in this repository already reads .env; this one
 # was the exception.
+#
+# Satu sed, bukan rangkaian tr dengan tanda kutip bertumpuk. Percobaan
+# pertama memakai `tr -d` untuk membuang tanda kutip dan carriage return,
+# dan tumpukan kutipnya menyelundupkan satu bita CR ke dalam berkas ini.
+# Bash memaafkannya, dash tidak, jadi `sh -n` di runner gagal sementara di
+# mesin ini lolos. Token Mapbox hanya memuat huruf, angka, titik, garis
+# bawah, dan tanda hubung, jadi cukup ambil yang itu saja: tanda kutip,
+# spasi, dan CR ikut tertinggal dengan sendirinya.
 if [ -z "${MAPBOX_TOKEN:-}" ] && [ -f .env ]; then
-  DARI_ENV=$(sed -n 's/^MAPBOX_TOKEN=//p' .env | head -1 | tr -d '"'"'"'')
+  POLA='s/^MAPBOX_TOKEN=[^A-Za-z0-9._-]*\([A-Za-z0-9._-]*\).*/\1/p'
+  DARI_ENV=$(sed -n "$POLA" .env | head -1)
   if [ -n "$DARI_ENV" ]; then
     MAPBOX_TOKEN="$DARI_ENV"
     echo "konfigurasi.sh: token read from .env"
