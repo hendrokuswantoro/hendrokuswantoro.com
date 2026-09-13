@@ -125,6 +125,70 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+
+/* ==========================================================================
+   Perlindungan isi
+
+   Apa yang benar benar dikerjakan bagian ini, disebut terus terang supaya
+   tidak ada yang mengira ia lebih kuat daripada yang sebenarnya:
+
+   BISA  menghentikan penyalinan sambil lalu, yaitu blok, Ctrl+C, klik kanan,
+         seret teks keluar, dan cetak ke PDF
+   TIDAK menghentikan siapa pun yang membuka Lihat Sumber, mematikan
+         JavaScript, memakai mode baca, memanggil alamatnya lewat curl, atau
+         membaca umpan RSS-nya
+   TIDAK menghentikan tangkapan layar, satu pun caranya
+
+   Teksnya tetap ada di dalam HTML, sebab di situlah mesin pencari dan
+   pembaca layar membacanya. Isi yang benar benar tidak boleh disalin adalah
+   isi yang tidak diterbitkan.
+
+   Kolom isian, area teks, dan elemen yang bisa disunting dikecualikan.
+   Tanpa pengecualian itu, halaman admin dan setiap formulir jadi tidak bisa
+   dipakai, dan cacat semacam itu baru ketahuan lama sesudahnya.
+   ========================================================================== */
+body {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input, textarea, select, [contenteditable="true"], .boleh-salin {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+}
+img, svg, .hero__card, .card__cover { -webkit-user-drag: none; user-drag: none; }
+
+/* Cetak ke PDF adalah jalan paling mudah membawa seluruh tulisan keluar,
+   dan ia tidak menyentuh papan ketik sama sekali. Yang tercetak sekarang
+   satu halaman keterangan, bukan isinya. */
+@media print {
+  body > *:not(.cetak-catatan) { display: none !important; }
+  body::before {
+    content: "hendrokuswantoro.com";
+    display: block; font-size: 22px; font-weight: 700; margin-bottom: 10px;
+  }
+  body::after {
+    content: "Isi halaman ini tidak disertakan dalam cetakan. Bacalah di www.hendrokuswantoro.com. Untuk memakai ulang isinya, hubungi kuswantoro.hendro01@gmail.com.";
+    display: block; font-size: 13px; line-height: 1.6; max-width: 60ch;
+  }
+}
+
+/* Pesan singkat saat ada yang mencoba menyalin. Muncul sebentar lalu pergi
+   sendiri: peringatan yang harus ditutup manual akan terasa seperti hukuman
+   untuk sesuatu yang bukan kejahatan. */
+.salin-catatan {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(8px);
+  z-index: 60; max-width: min(92vw, 460px);
+  padding: 12px 18px; border-radius: var(--r-pill);
+  background: var(--panel-bg); color: var(--panel-ink);
+  font-size: .875rem; line-height: 1.45; text-align: center;
+  box-shadow: var(--sh-2); opacity: 0; pointer-events: none;
+  transition: opacity .22s var(--ease), transform .22s var(--ease);
+}
+.salin-catatan.is-in { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (prefers-reduced-motion: reduce) { .salin-catatan { transition: none; } }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 body {
   margin: 0;
@@ -369,6 +433,10 @@ ul { margin: 0; padding: 0; list-style: none; }
   display: flex; flex-wrap: wrap; gap: 6px 20px; align-items: center; justify-content: space-between; font-size: .875rem;
 }
 .footer__bottom p { margin: 0; }
+/* Jam dan koordinatnya lebih redup daripada hak cipta di sebelahnya: ia
+   keterangan tempat, bukan pernyataan. rgba dipakai langsung, bukan token
+   --ink-3, karena footer selalu gelap di kedua tema. */
+.footer__kini { color: rgba(255, 255, 255, .62); font-variant-numeric: tabular-nums; }
 
 /* ---------- mobile tab bar ---------- */
 .tabbar {
@@ -421,6 +489,50 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .reveal { opacity: 0; transform: translateY(14px); transition: opacity .55s var(--ease), transform .55s var(--ease); }
 .reveal.is-in { opacity: 1; transform: none; }
+
+/* Muncul berurutan, bukan serentak. --i disetel app.js untuk tiap anak di
+   dalam satu .reveal, dan jedanya dibatasi supaya baris kesepuluh tidak
+   menunggu setengah detik hanya demi rapi. */
+.reveal > * { transition-delay: calc(var(--i, 0) * 70ms); }
+.reveal.is-in > * { transition-delay: calc(var(--i, 0) * 70ms); }
+
+/* Kilau yang mengikuti kursor.
+
+   Radiusnya besar dan opasitasnya kecil dengan sengaja: yang diinginkan
+   kesan permukaan yang sadar ada tangan di atasnya, bukan lampu sorot.
+   --mx dan --my disetel app.js; sebelum ada kursor, keduanya 50% sehingga
+   kartunya tetap benar tanpa JavaScript sama sekali. */
+.card, .tile, .post, .stat {
+  position: relative;
+  isolation: isolate;
+}
+.card::after, .tile::after, .post::after, .stat::after {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit; pointer-events: none;
+  opacity: 0; transition: opacity .25s var(--ease);
+  background: radial-gradient(
+    260px circle at var(--mx, 50%) var(--my, 50%),
+    color-mix(in srgb, var(--accent) 12%, transparent),
+    transparent 70%
+  );
+}
+.card:hover::after, .tile:hover::after, .post:hover::after, .stat:hover::after {
+  opacity: 1;
+}
+
+/* Jam Yogyakarta. Satu satunya angka di halaman ini yang benar benar berubah
+   sendiri, dan itu sebabnya ia ada: ia nyata, bukan hiasan yang bergerak.
+   Lebarnya dikunci dengan tabular-nums supaya detiknya tidak menggoyang
+   baris di sebelahnya tiap kali angkanya berganti. */
+.jam { font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.jam__titik { animation: jamTitik 1s steps(1, end) infinite; }
+@keyframes jamTitik { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .25; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal > *, .reveal.is-in > * { transition-delay: 0s; }
+  .card::after, .tile::after, .post::after, .stat::after { display: none; }
+  .jam__titik { animation: none; }
+}
 @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; } }
 
 /* ---------- blog ---------- */
