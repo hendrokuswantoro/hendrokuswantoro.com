@@ -46,6 +46,14 @@ async def ubah(slug: str, nilai: dict[str, Any]) -> dict[str, Any] | None:
     disaring lebih dulu terhadap daftar tetap di berkas ini. Nama kolom
     dinamis dari luar adalah injeksi SQL yang menunggu giliran.
     """
+    # Skema menyebutnya `tanggal`, kolomnya bernama `terbit_pada`. Sampai
+    # hari ini terjemahan itu tidak ada di sini, jadi mengubah tanggal lewat
+    # PATCH tersaring diam diam: jawabannya 200, tanggalnya tidak berubah,
+    # dan tidak ada satu pun pesan yang menyebutkannya.
+    nilai = dict(nilai)
+    if "tanggal" in nilai:
+        nilai["terbit_pada"] = nilai.pop("tanggal")
+
     boleh = {*KOLOM_TULIS, "terbit_pada"}
     bagian = {k: v for k, v in nilai.items() if k in boleh}
     if not bagian:
@@ -75,6 +83,30 @@ async def hapus(slug: str) -> bool:
     async with koneksi() as s, s.cursor() as k:
         await k.execute("DELETE FROM blog_posts WHERE slug = %s", (slug,))
         return k.rowcount > 0
+
+
+async def satu(slug: str) -> dict[str, Any] | None:
+    """Satu tulisan apa pun statusnya, termasuk draf dan arsip.
+
+    Kembarannya di repositori/tulisan.py sengaja menyaring status = 'terbit',
+    sebab itu jalur yang dibaca pengunjung. Yang ini tidak menyaring, dan
+    karena itu ia hidup di repositori tulis, bukan di repositori baca: yang
+    memanggilnya wajib sudah lewat butuh_admin.
+    """
+    async with koneksi() as s, s.cursor() as k:
+        await k.execute(
+            # terbit_pada disebut dua kali dengan sengaja: penyunting
+            # mengenalnya sebagai `tanggal`, dan jawabannya harus bisa
+            # dikirim balik apa adanya lewat PATCH tanpa diterjemahkan lagi
+            # di sisi peramban.
+            "SELECT slug, status, terbit_pada AS tanggal, terbit_pada, "
+            "judul_en, judul_id, ringkas_en, ringkas_id, "
+            "keterangan_en, keterangan_id, lede_en, lede_id, "
+            "tag_en, tag_id, baca_en, baca_id, isi_en, isi_id "
+            "FROM blog_posts WHERE slug = %s",
+            (slug,),
+        )
+        return await k.fetchone()
 
 
 async def daftar_semua() -> list[dict[str, Any]]:

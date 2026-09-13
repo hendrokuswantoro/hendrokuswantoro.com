@@ -98,3 +98,49 @@ Sekarang polanya coba lalu ulangi, tidak pernah menunggu satu penanda.
 Periksa akhiran barisnya. `.gitattributes` memaksa LF di repositori,
 sedangkan Windows menulis CRLF di salinan kerja. Kalau sebuah uji
 membandingkan teks mentah, tulis ujinya supaya tidak peduli akhiran baris.
+
+## Uji peta gagal dengan "peta melaporkan galat", 13 September 2026
+
+**Gejalanya.** Empat uji peramban gagal sekaligus. Pesannya `peta melaporkan
+galat, assert 14 == 0`. Tidak menyebut galat apa, tidak menyebut dari mana.
+
+**Sebabnya dua, bertumpuk.**
+
+Pertama, `assets/js/konfigurasi.js` berisi token kosong. Berkas itu tidak ikut
+git, dan `tools/konfigurasi.sh` menulis ulang isinya dari `$MAPBOX_TOKEN`.
+Di mesin pengembangan variabel itu tidak ada di shell, ia ada di `.env`, dan
+skrip itu satu satunya alat di repositori ini yang tidak pernah membaca
+`.env`. Jadi tiap kali `tools/bangun_situs.sh` dijalankan, tokennya tertimpa
+kosong, diam diam, dan peta jatuh ke OpenFreeMap.
+
+Sekarang `konfigurasi.sh` membaca `.env` kalau environment tidak menyediakan.
+
+Kedua, dan ini yang sebenarnya: **tokennya dibatasi per URL**. Pembatasan itu
+mencocokkan asal, dan `http://127.0.0.1:<porta acak>` tidak ada di daftarnya,
+jadi tiap ubin dijawab **403**. Bukan cacat kode. Bukan token kedaluwarsa.
+Setelan yang bekerja sebagaimana mestinya.
+
+**Kenapa lama ditemukan.** Peta tanpa ubin dan peta yang rusak tampak sama
+persis: kosong. Pesan gagalnya menuduh kodenya.
+
+**Yang diperbaiki supaya tidak terulang.**
+
+1. `tools/konfigurasi.sh` membaca `.env`.
+2. Server uji memakai porta tetap 8099, bukan acak, sehingga satu baris
+   `http://127.0.0.1:8099` di console.mapbox.com cukup untuk selamanya. Porta
+   acak berarti asal yang tidak pernah bisa didaftarkan.
+3. `butuh_ubin()` di `tests/test_peramban.py` membedakan tiga keadaan:
+   token kosong, ubin ditolak 403, dan peta yang benar benar rusak. Dua yang
+   pertama **dilewati** dengan alasan yang menyebut langkah perbaikannya;
+   yang ketiga tetap menggagalkan uji.
+4. `pytest.ini` memakai `-rs`, jadi alasan tiap uji yang dilewati selalu
+   tercetak. Uji yang dilewati diam diam adalah uji yang berhenti menjaga apa
+   pun tanpa ada yang tahu.
+5. Fixture halaman mencatat alamat tiap jawaban yang ditolak. Pesan konsol
+   untuk berkas yang gagal dimuat tidak menyebut alamatnya sama sekali,
+   sehingga 403 dari Mapbox tidak bisa dibedakan dari 403 yang benar benar
+   salah.
+
+**Yang masih perlu Anda kerjakan.** Tambahkan `http://127.0.0.1:8099` pada
+URL restrictions token Mapbox di console.mapbox.com. Sampai itu dilakukan,
+empat uji peta dilewati, dan ia tidak menjaga apa apa.

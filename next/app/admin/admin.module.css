@@ -1,0 +1,169 @@
+/* Halaman admin punya lembar gayanya sendiri, bukan menumpang globals.css.
+   Dua alasan:
+
+   1. globals.css DIBANGKITKAN dari assets/css/style.css oleh
+      tools/gaya_next.py. Apa pun yang ditambahkan ke sana akan hilang pada
+      pembangkitan berikutnya, tanpa pesan apa pun.
+   2. Halaman admin bukan bagian situs yang dibaca pengunjung. Ia alat kerja,
+      dan alat kerja boleh punya kerapatan yang berbeda dari brosur.
+
+   Token warnanya tetap diambil dari globals.css, jadi tema terang dan gelap
+   ikut berlaku di sini tanpa disalin. */
+
+.bingkai {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--ink-2);
+}
+
+.kepala {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px clamp(16px, 4vw, 32px);
+  background: var(--bar-bg-solid);
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: saturate(140%) blur(8px);
+}
+
+.judul {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.lencana {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-3);
+}
+
+.kanan { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+.isi {
+  max-width: 1080px;
+  margin-inline: auto;
+  padding: clamp(16px, 4vw, 32px);
+  display: grid;
+  gap: 20px;
+}
+
+.kartu {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: clamp(16px, 3vw, 24px);
+  box-shadow: var(--sh-1);
+  /* Anak grid bawaannya tidak boleh menyusut lebih sempit daripada isinya,
+     dan tabel di dalamnya punya lebar minimum sendiri. Tanpa baris ini,
+     kartunya melebar mengikuti tabel lalu menyembul keluar layar. */
+  min-width: 0;
+}
+
+.masuk {
+  max-width: 400px;
+  margin: clamp(40px, 12vh, 110px) auto;
+}
+
+.baris { display: grid; gap: 6px; margin-bottom: 14px; }
+.dua { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+
+/* CSS Modules menuntut tiap pemilih memuat setidaknya satu kelas lokal.
+   Aturannya masuk akal: `label { }` di dalam modul akan menyentuh seluruh
+   label di halaman, dan seluruh gunanya modul justru supaya itu tidak
+   terjadi. */
+.baris label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+
+.isian,
+.luas {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: var(--card);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+}
+.isian:focus-visible,
+.luas:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+.luas { min-height: 240px; resize: vertical; font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: 0.86rem; line-height: 1.6; }
+
+.tombol {
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 9px 16px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-strong);
+  background: var(--card);
+  color: var(--ink);
+  transition: border-color 0.16s var(--ease), transform 0.16s var(--ease);
+}
+.tombol:hover { border-color: var(--ink-3); }
+.tombol:active { transform: translateY(1px); }
+.tombol[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+.utama { background: var(--brand-btn); color: var(--on-brand); border-color: var(--brand-btn); }
+.bahaya { color: #b4232a; border-color: #e6b9bc; background: transparent; }
+
+.lebar { width: 100%; }
+
+.kabar {
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: var(--r-sm);
+  font-size: 0.88rem;
+  white-space: pre-line;
+}
+.salah { background: #fdecee; color: #8f1c22; }
+.baik { background: #e8f6ee; color: #0b6b33; }
+
+.tabelBungkus { overflow-x: auto; }
+.tabelBungkus table { width: 100%; border-collapse: collapse; min-width: 460px; }
+.tabelBungkus th,
+.tabelBungkus td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+.tabelBungkus th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); }
+
+.tanda {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-3);
+}
+.terbit { background: #e8f6ee; color: #0b6b33; }
+
+.pisah { display: flex; align-items: center; gap: 10px; margin: 16px 0; color: var(--ink-3); font-size: 0.78rem; }
+.pisah::before, .pisah::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+
+.ket { color: var(--ink-3); font-size: 0.85rem; margin: 0 0 14px; }
+.aksi { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.tumpuk { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.tumpuk h2 { margin: 0; font-size: 1.05rem; color: var(--ink); }
+.tumpuk .kanan { margin-left: auto; }
+
+.pratinjau {
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  padding: 14px 16px;
+  background: var(--surface);
+  font-size: 0.9rem;
+  max-height: 320px;
+  overflow: auto;
+}
+.pratinjau :global(h2) { font-size: 1.05rem; margin: 14px 0 6px; }
+.pratinjau :global(p) { margin: 0 0 8px; }

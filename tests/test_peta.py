@@ -84,13 +84,27 @@ def test_nama_provinsi_sama_di_kedua_port():
 
 
 def test_token_tidak_pernah_ikut():
-    """A public Mapbox token is still a credential the repository must not
-    carry. konfigurasi.js is written at build time and is gitignore'd."""
-    abaikan = {"dist", "node_modules", ".git", ".next"}
+    """Token Mapbox publik tetap kredensial, dan repositori tidak boleh
+    membawanya. konfigurasi.js ditulis saat build dan ada di .gitignore.
+
+    `.env` dikecualikan, dan pengecualian itu ada sebabnya yang mahal. Aturan
+    lama melarang tokennya ada di sana juga, jadi satu satunya salinan di
+    mesin pengembangan hidup di konfigurasi.js, berkas yang ditimpa tiap kali
+    `tools/bangun_situs.sh` dijalankan. Tokennya hilang begitu saja, dan yang
+    memberitahu bukan pesan galat melainkan empat uji peta yang gagal dengan
+    alasan yang menuduh kodenya. Lihat docs/pemecahan-masalah.md.
+
+    `.env` justru tempat yang benar: ia ada di .gitignore, seluruh alat di
+    repositori ini membacanya, dan tidak ada satu pun jalan ia ikut git.
+    Yang dijaga uji ini adalah berkas yang BISA ikut git.
+    """
+    abaikan = {"dist", "node_modules", ".git", ".next", "out"}
     for berkas in AKAR.rglob("*"):
         if not berkas.is_file() or abaikan & set(berkas.parts):
             continue
-        if berkas.name == "konfigurasi.js" or berkas.suffix in {".zip", ".png", ".webp", ".svg", ".ico"}:
+        if berkas.name in {"konfigurasi.js", ".env"}:
+            continue
+        if berkas.suffix in {".zip", ".png", ".webp", ".svg", ".ico"}:
             continue
         try:
             isi = berkas.read_text(encoding="utf-8")

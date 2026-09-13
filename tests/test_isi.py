@@ -106,3 +106,50 @@ def test_html_yang_ter_commit_sama_dengan_hasil_bangkitan():
         "berkas yang ter-commit tidak sama dengan hasil pembangkitan.\n"
         "jalankan: python tools/bangun_tulisan.py\n\n" + hasil.stdout + hasil.stderr
     )
+
+
+# ------------------------------------------------------------ skema tautan ---
+#
+# Ditemukan lewat penyisiran 13 September 2026, bukan lewat membaca kode.
+# markah.py meng-escape seluruh HTML dengan benar dan menolak HTML mentah,
+# tetapi alamat di dalam [label](alamat) hanya di-escape, tidak pernah
+# diperiksa skemanya. `[klik](javascript:alert(1))` lolos sempurna.
+
+
+@pytest.mark.parametrize("jahat", [
+    "[klik](javascript:alert(1))",
+    "[klik](JaVaScRiPt:alert(1))",
+    "[klik](data:text/html,<script>alert(1)</script>)",
+    "[klik](vbscript:msgbox)",
+])
+def test_skema_tautan_berbahaya_ditolak(jahat):
+    with pytest.raises(markah.MarkahSalah):
+        markah.sebaris(jahat)
+
+
+@pytest.mark.parametrize("wajar", [
+    "[k](https://contoh.id)",
+    "[k](http://contoh.id)",
+    "[k](mailto:kuswantoro.hendro01@gmail.com)",
+    "[k](/blog/)",
+    "[k](#bagian)",
+    "[k](tentang.html)",
+    "[k](../naik)",
+])
+def test_tautan_wajar_tetap_lewat(wajar):
+    assert "<a href=" in markah.sebaris(wajar)
+
+
+def test_tautan_diperiksa_juga_saat_memecah_blok():
+    """Kalau pemeriksaannya hanya ada di sebaris(), tulisan bertautan
+    javascript: akan diterima API dengan tenang, tersimpan di basis data, dan
+    baru meledak berhari hari kemudian saat situsnya dibangun ulang."""
+    with pytest.raises(markah.MarkahSalah) as galat:
+        markah.blok("Baris satu.\n\nHalo [klik](javascript:alert(1)) dunia.")
+    assert "baris 3" in str(galat.value), str(galat.value)
+
+
+def test_html_mentah_tetap_ditolak_dan_tag_sebaris_di_escape():
+    with pytest.raises(markah.MarkahSalah):
+        markah.blok("<div>halo</div>")
+    assert "&lt;script&gt;" in markah.sebaris("teks <script>alert(1)</script> biasa")

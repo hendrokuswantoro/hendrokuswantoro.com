@@ -801,6 +801,21 @@
       cooperativeGestures: true
     });
 
+    /* Putaran adalah kejutan paling sering di peta web, dan ini yang bikin
+       petanya terasa "berputar putar ketika di-zoom".
+
+       Bawaan MapLibre: cubitan dua jari **memutar sekaligus memperbesar**,
+       dan seret dengan tombol kanan juga memutar. Pembaca yang cuma ingin
+       memperbesar berakhir dengan peta miring beberapa derajat, lalu
+       memperbaikinya dengan mencubit lagi, dan memiringkannya lagi. Di
+       trackpad hampir mustahil mencubit tanpa memutar sedikit.
+
+       Jadi: cubitan hanya memperbesar. Seret-putar hanya hidup pada mode 3D,
+       tempat sudut pandang memang jadi maksudnya; lihat state.setThree. Peta
+       datar tidak punya alasan untuk miring. */
+    map.touchZoomRotate.disableRotation();
+    map.dragRotate.disable();
+
     map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), "top-right");
     map.addControl(new HomeControl(function () { state.home(); }), "top-right");
     map.addControl(new maplibregl.ScaleControl({ maxWidth: 110, unit: "metric" }), "bottom-left");
@@ -852,6 +867,8 @@
         current.three = three;
         panel.markView(three);
         applyRelief(map, three);
+        /* seret-putar hanya masuk akal kalau ada sudut pandang */
+        if (three) { map.dragRotate.enable(); } else { map.dragRotate.disable(); }
         /* switching terrain on rebuilds the camera transform, which cancels
            any move started in the same tick. The tilt waits one frame. */
         window.requestAnimationFrame(function () {
@@ -944,9 +961,43 @@
 
     map.on("load", function () { booted = true; });
 
-    /* the tour is a suggestion, not a ride: any hand on the map stops it */
-    ["dragstart", "wheel", "touchstart"].forEach(function (kind) {
-      map.on(kind, function () { state.stopTour(); });
+    /* Jelajah itu tawaran, bukan tumpangan: begitu ada tangan di peta, ia
+       berhenti.
+
+       Dulu yang didengarkan hanya dragstart, wheel, dan touchstart pada
+       petanya. Ketiganya tidak pernah menyala saat pembaca menekan tombol
+       + dan - , sebab tombol itu menggerakkan kamera lewat easeTo, yang
+       bagi MapLibre tidak berbeda dengan gerakan yang dimulai Jelajah
+       sendiri. Akibatnya: pembaca memperbesar, lalu tujuh detik kemudian
+       petanya terbang ke kota lain, lalu ia memperbesar lagi. Persis rasa
+       "berputar putar dan tidak stabil" itu.
+
+       Sekarang yang didengarkan pointerdown pada wadahnya, di fase capture,
+       jadi tiap tombol kendali, tiap penanda, dan tiap sentuhan terhitung
+       satu jalan yang sama. */
+    function tanganDiPeta(event) {
+      state.stopTour();
+
+      /* Menghentikan animasi yang sedang berjalan hanya kalau pembacanya
+         memang sedang mengambil alih kamera: menyeret, menggulir, atau
+         menekan tombol kendali. Klik pada penanda justru MEMULAI terbang,
+         dan map.stop() di situ akan membatalkan gerakan yang baru saja
+         dimintanya sendiri. */
+      var sasaran = event && event.target;
+      var kendali = sasaran && sasaran.closest && sasaran.closest(".maplibregl-ctrl-group");
+      if (kendali || event.type === "wheel" || event.type === "dragstart") map.stop();
+    }
+
+    container.addEventListener("pointerdown", tanganDiPeta, true);
+    container.addEventListener("wheel", tanganDiPeta, { capture: true, passive: true });
+    container.addEventListener("keydown", tanganDiPeta, true);
+    map.on("dragstart", tanganDiPeta);
+
+    /* Peta datar harus tetap menghadap utara. Kalau suatu hari ada jalur yang
+       menggeser bearing di mode 2D, ini yang mengembalikannya, sekali, tanpa
+       animasi yang ikut terasa sebagai putaran. */
+    map.on("rotateend", function () {
+      if (!current.three && Math.abs(map.getBearing()) > 0.01) map.setBearing(0);
     });
     map.on("error", function (event) {
       var note = {

@@ -154,13 +154,75 @@ tetap dihitung walau penggunanya tidak ada.
 **Tanpa `JWT_SECRET`, seluruh jalur admin menjawab 503**, bukan terbuka
 dengan rahasia bawaan. Rahasia bawaan adalah rahasia yang sudah bocor.
 
-### Yang belum: passkey
+## Passkey, WebAuthn
 
-Rancangan menyebut WebAuthn sebagai jalur masuk utama dan sandi sebagai
-cadangan. Yang terpasang sekarang baru cadangannya. Passkey menuntut pustaka
-tersendiri dan alur pendaftaran perangkat, dan bab 15.8 melarang membuat
-protokol kriptografi sendiri, jadi itu pekerjaan tersendiri dengan ujinya
-sendiri, bukan tempelan.
+Jalur masuk utama menurut rancangan. Sandi tetap ada sebagai jalan pulang:
+perangkat bisa hilang, dan akun yang satu satunya kunci ikut hilang bersama
+ponselnya adalah akun yang terkunci selamanya.
+
+| Method | Jalur | Butuh |
+| --- | --- | --- |
+| GET | `/api/v1/auth/passkey/siap` | tidak ada |
+| POST | `/api/v1/auth/passkey/daftar/mulai` | admin |
+| POST | `/api/v1/auth/passkey/daftar/selesai` | admin |
+| POST | `/api/v1/auth/passkey/masuk/mulai` | tidak ada |
+| POST | `/api/v1/auth/passkey/masuk/selesai` | tidak ada |
+| GET | `/api/v1/auth/passkey` | admin |
+| DELETE | `/api/v1/auth/passkey/{id}` | admin |
+
+Verifikasinya seluruhnya lewat pustaka `webauthn`. Tidak ada satu baris pun
+kriptografi buatan sendiri, sesuai larangan bab 15.8.
+
+### Kenapa passkey, sebenarnya
+
+Bukan karena lebih praktis. Sandi bisa diketikkan ke halaman palsu; passkey
+tidak bisa. Kunci privatnya tidak pernah meninggalkan perangkat, dan tanda
+tangannya terikat pada `rp_id`, jadi halaman yang alamatnya bukan alamat ini
+tidak akan pernah mendapat tanda tangan yang berlaku. Sebanyak apa pun sandi
+di-hash, ia tidak punya pertahanan yang setara.
+
+### Yang dijaga
+
+| | Cara |
+| --- | --- |
+| Tantangan | lahir di server, sekali pakai, umur 5 menit |
+| Sekali pakai | `UPDATE ... RETURNING` satu pernyataan, bukan baca lalu tandai |
+| Tujuan tantangan | ikut disimpan; tantangan pendaftaran tidak bisa dipakai untuk masuk |
+| Tantangan mana | dibaca dari `clientDataJSON`, bagian yang ikut ditandatangani |
+| rp_id dan origin | dari environment, tidak pernah ditebak dari header `Host` |
+| Penghitung | nilai yang mundur ditolak: kredensialnya disalin |
+| Yang disimpan | hanya kunci publik. Tabelnya bocor seluruhnya pun tidak memberi jalan masuk |
+| Mendaftar | menuntut sudah masuk. Titik akhir pendaftaran yang terbuka adalah pintu belakang |
+| Verifikasi pengguna | `required`, bukan `preferred` |
+| Mencabut milik orang lain | 404, bukan 403 |
+
+`allow_credentials` sengaja dikosongkan saat masuk. Menyebutkan daftar
+kredensial milik sebuah email berarti memberi tahu siapa pun yang bertanya
+bahwa email itu terdaftar dan punya berapa kunci. Passkey discoverable tidak
+membutuhkannya: perangkatnya sendiri yang tahu kunci mana yang cocok.
+
+### Konfigurasi
+
+```
+WEBAUTHN_RP_ID=hendrokuswantoro.com
+WEBAUTHN_ASAL=["https://www.hendrokuswantoro.com"]
+```
+
+`rp_id` adalah nama host saja, tanpa skema dan tanpa porta. Tanpa keduanya
+seluruh jalur passkey menjawab 503, bukan menebak nilainya dari permintaan:
+header `Host` datang dari peramban, dan memercayainya berarti membiarkan
+penyerang memilih `rp_id` sendiri.
+
+### Bagaimana ini diuji tanpa menyentuh kunci keamanan
+
+`tests/otentikator.py` adalah authenticator tiruan yang benar benar membuat
+pasangan kunci P-256 dan benar benar menandatangani, dan tanda tangannya
+diverifikasi pustaka yang sama dengan yang dipakai produksi. Ia juga sengaja
+bisa berbohong: `tanda_tangan_palsu` dan `mundurkan_penghitung` ada supaya
+ada yang membuktikan servernya menolak.
+
+Sembilan belas uji di `tests/test_passkey.py`, dan sebagian besarnya menguji
+penolakan, bukan keberhasilan.
 
 ## Jalur admin
 

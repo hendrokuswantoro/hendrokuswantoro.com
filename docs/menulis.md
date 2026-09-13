@@ -144,13 +144,37 @@ python tools/bangun_tulisan.py --sumber api
 
 lalu `python tools/build_feed.py`, `python -m pytest`, `git push`.
 
-### Catatan tentang bentuknya
+### Dua dashboard, dan cara memilihnya
 
-Dashboard ini halaman HTML biasa yang disajikan FastAPI, **bukan Next.js**
-seperti tertulis di spesifikasi. Alasannya jujur saja: mesin tempat ini
-ditulis tidak punya Node, jadi versi Next.js-nya tidak akan pernah bisa saya
-jalankan maupun uji. Halaman yang benar benar berjalan dan terbukti lebih
-berguna daripada halaman yang hanya ada di berkas.
+Ada dua, dan keduanya memakai API yang sama persis.
+
+| | Di mana | Menuntut |
+| --- | --- | --- |
+| HTML biasa | `backend/admin/index.html` | tidak apa apa |
+| Next.js | `next/app/admin/` | `npm run build` lebih dulu |
+
+Bawaannya yang HTML. Ia satu berkas, tanpa langkah build yang bisa lupa
+dijalankan, dan itu sifat yang berharga untuk alat yang dipakai saat sesuatu
+sedang rusak.
+
+Versi Next.js dinyalakan dengan sengaja:
+
+```bash
+cd next && npm ci && npm run build
+cd .. && ADMIN_NEXT=1 python backend/jalan.py
+```
+
+Kalau hasil buildnya belum ada, yang HTML tetap keluar, bukan 404.
+
+Versi Next.js inilah yang diminta spesifikasi, dan sampai Node terpasang pada
+12 September 2026 ia memang tidak ada. Isinya: masuk dengan sandi atau
+passkey, daftar tulisan termasuk draf, penyunting dua bahasa yang menghitung
+blok tiap bahasa sambil diketik, dan panel passkey.
+
+Ia hidup di luar route group `(situs)`, jadi ia tidak ikut memakai kepala,
+kaki, dan bilah tab milik halaman publik. Sebelum pemisahan itu halaman admin
+punya dua `<header>` sekaligus, lengkap dengan saklar bahasa yang tidak
+berarti apa apa di sana; yang menemukannya uji peramban, bukan mata.
 
 Token akses disimpan di variabel biasa, bukan `localStorage`. Token di
 `localStorage` bisa diambil satu XSS; yang di memori ikut hilang saat tab

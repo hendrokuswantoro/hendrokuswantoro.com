@@ -567,7 +567,7 @@ export function WorkMap() {
       if (entry.popup.isOpen()) entry.popup.remove();
     });
     instance.easeTo({ pitch: three ? 58 : 0, bearing: three ? -18 : 0, duration: ms(500) });
-    import("maplibre-gl").then(({ default: maplibregl }) => {
+    import("maplibre-gl").then((maplibregl) => {
       const bounds = new maplibregl.LngLatBounds();
       PROJECTS.forEach((project) => bounds.extend([project.point.lng, project.point.lat]));
       instance.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: ms(750) });
@@ -581,7 +581,7 @@ export function WorkMap() {
     const next = active === kind ? null : kind;
     setActive(next);
 
-    import("maplibre-gl").then(({ default: maplibregl }) => {
+    import("maplibre-gl").then((maplibregl) => {
       const visible = new maplibregl.LngLatBounds();
       entries.current.forEach((entry) => {
         const show = !next || entry.kind === next;
@@ -617,7 +617,7 @@ export function WorkMap() {
 
     async function start() {
       if (!holder.current || map.current) return;
-      const maplibregl = (await import("maplibre-gl")).default;
+      const maplibregl = await import("maplibre-gl");
       if (cancelled || !holder.current) return;
 
       const bounds = new maplibregl.LngLatBounds();

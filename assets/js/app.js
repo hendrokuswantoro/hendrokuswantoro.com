@@ -10,6 +10,7 @@
   "use strict";
 
   var STORAGE_KEY = "hk-lang";
+  var TEMA_KEY = "hk-tema";
   var doc = document;
 
   function each(list, fn) {
@@ -102,6 +103,44 @@
     });
   }
 
+  /* -------------------------------------------------------------------- tema */
+
+  /* Tema dipilih pembaca, bukan sistem operasinya.
+   *
+   * Dulu palet gelap menempel pada @media (prefers-color-scheme: dark).
+   * Akibatnya pembaca yang laptopnya gelap tidak pernah melihat palet terang
+   * sama sekali, dan tidak punya cara memintanya. Sekarang bawaannya terang
+   * dan gelap adalah pilihan, seperti aplikasi Uber.
+   *
+   * Yang mencegah kedipan bukan fungsi ini melainkan skrip sebaris di <head>:
+   * app.js dimuat dengan defer, jadi kalau atribut data-theme baru dipasang
+   * di sini, pembaca yang memilih gelap akan melihat satu bingkai putih lebih
+   * dulu. Skrip sebaris itu diizinkan CSP lewat hash sha256, bukan lewat
+   * 'unsafe-inline', supaya seluruh skrip lain tetap tertutup.
+   */
+  function applyTema(tema) {
+    var gelap = tema === "dark";
+    doc.documentElement.setAttribute("data-theme", gelap ? "dark" : "light");
+    each(doc.querySelectorAll(".tema"), function (btn) {
+      btn.setAttribute("aria-pressed", gelap ? "true" : "false");
+    });
+    var meta = doc.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", gelap ? "#17181a" : "#f6f6f6");
+    doc.dispatchEvent(new CustomEvent("hk:tema", { detail: { tema: gelap ? "dark" : "light" } }));
+  }
+
+  function initTema() {
+    applyTema(readStore(TEMA_KEY) === "dark" ? "dark" : "light");
+
+    each(doc.querySelectorAll(".tema"), function (btn) {
+      btn.addEventListener("click", function () {
+        var berikut = doc.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        applyTema(berikut);
+        writeStore(TEMA_KEY, berikut);
+      });
+    });
+  }
+
   /* ------------------------------------------------------------------ header */
 
   function initHeader() {
@@ -112,6 +151,188 @@
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
+  }
+
+  /* -------------------------------------------------------- perlindungan isi */
+
+  /* Yang bisa dan tidak bisa dikerjakan bagian ini, disebut di muka supaya
+   * tidak ada yang mengira ia lebih kuat daripada yang sebenarnya.
+   *
+   * BISA  : menghentikan penyalinan sambil lalu. Blok teks, Ctrl+C, klik
+   *         kanan, seret teks keluar, dan cetak ke PDF.
+   * TIDAK : menghentikan Lihat Sumber, JavaScript yang dimatikan, mode baca,
+   *         curl, atau umpan RSS-nya sendiri. Teksnya memang ada di HTML,
+   *         sebab di situlah mesin pencari dan pembaca layar membacanya.
+   * TIDAK : menghentikan tangkapan layar. Tidak ada satu pun cara di web
+   *         untuk itu, dan trik yang beredar, seperti mengaburkan halaman
+   *         saat jendelanya kehilangan fokus, hanya merusak halaman bagi
+   *         pembaca yang jujur sambil tidak menghalangi siapa pun yang
+   *         menekan tombol Print Screen.
+   *
+   * Isi yang benar benar tidak boleh disalin adalah isi yang tidak
+   * diterbitkan. Yang ini menaikkan ongkosnya, bukan menutup pintunya, dan
+   * itu memang sejauh yang bisa dijanjikan.
+   */
+
+  var CATATAN = {
+    en: "This text is © Hendro Kuswantoro. Write to kuswantoro.hendro01@gmail.com to reuse it.",
+    id: "Tulisan ini © Hendro Kuswantoro. Hubungi kuswantoro.hendro01@gmail.com untuk memakainya ulang."
+  };
+
+  var catatanEl = null;
+  var catatanWaktu = 0;
+
+  function beriTahu() {
+    if (!catatanEl) {
+      catatanEl = doc.createElement("div");
+      catatanEl.className = "salin-catatan";
+      /* role=status, bukan alert: ini keterangan, bukan bahaya, dan alert
+         memotong apa pun yang sedang dibacakan pembaca layar. */
+      catatanEl.setAttribute("role", "status");
+      doc.body.appendChild(catatanEl);
+    }
+    catatanEl.textContent = doc.documentElement.getAttribute("lang") === "id"
+      ? CATATAN.id : CATATAN.en;
+    catatanEl.classList.add("is-in");
+
+    window.clearTimeout(catatanWaktu);
+    catatanWaktu = window.setTimeout(function () {
+      catatanEl.classList.remove("is-in");
+    }, 2600);
+  }
+
+  function bolehSalin(node) {
+    /* Kolom isian dan elemen yang bisa disunting tetap normal. Tanpa ini,
+       setiap formulir dan halaman admin jadi tidak bisa dipakai. */
+    if (!node || !node.closest) return false;
+    return Boolean(node.closest("input, textarea, select, [contenteditable='true'], .boleh-salin"));
+  }
+
+  function initLindungi() {
+    doc.addEventListener("copy", function (event) {
+      if (bolehSalin(event.target)) return;
+      event.preventDefault();
+      /* Papan tempel tidak dibiarkan berisi potongan yang kebetulan
+         tersalin sebelum ini: ia diisi ulang dengan barisnya sendiri. */
+      if (event.clipboardData) {
+        event.clipboardData.setData(
+          "text/plain",
+          (doc.documentElement.getAttribute("lang") === "id" ? CATATAN.id : CATATAN.en) +
+          "\n" + window.location.href
+        );
+      }
+      beriTahu();
+    });
+
+    doc.addEventListener("cut", function (event) {
+      if (bolehSalin(event.target)) return;
+      event.preventDefault();
+      beriTahu();
+    });
+
+    doc.addEventListener("contextmenu", function (event) {
+      if (bolehSalin(event.target)) return;
+      event.preventDefault();
+      beriTahu();
+    });
+
+    doc.addEventListener("dragstart", function (event) {
+      if (bolehSalin(event.target)) return;
+      event.preventDefault();
+    });
+
+    /* Ctrl+P dan Cmd+P. Cetakannya sendiri sudah dijaga @media print, jadi
+       ini hanya menjelaskan kenapa yang keluar bukan isinya. */
+    doc.addEventListener("keydown", function (event) {
+      var perintah = event.ctrlKey || event.metaKey;
+      if (perintah && (event.key === "p" || event.key === "P")) beriTahu();
+      if (perintah && (event.key === "s" || event.key === "S")) {
+        event.preventDefault();
+        beriTahu();
+      }
+    });
+  }
+
+  /* -------------------------------------------------------------- kehidupan */
+
+  /* Tiga hal kecil yang membuat halaman terasa ada yang menghuni, dan satu
+   * aturan yang mengikat ketiganya: tidak ada satu pun yang mengarang data.
+   *
+   * Jam Yogyakarta memang jam Yogyakarta, dihitung dari zona waktunya sendiri
+   * lewat Intl, bukan dari jam perangkat pembaca yang bisa di mana saja.
+   * Angka yang berdetak tetapi tidak berarti apa apa lebih buruk daripada
+   * halaman yang diam.
+   */
+
+  var WIB = "Asia/Jakarta";
+
+  function initJam() {
+    var tempat = doc.querySelectorAll("[data-jam]");
+    if (!tempat.length) return;
+
+    var bentuk;
+    try {
+      bentuk = new Intl.DateTimeFormat("en-GB", {
+        timeZone: WIB, hour: "2-digit", minute: "2-digit", hour12: false
+      });
+    } catch (e) {
+      /* Intl tanpa basis data zona waktu. Lebih baik tidak menampilkan jam
+         sama sekali daripada menampilkan jam yang salah dan meyakinkan. */
+      each(tempat, function (el) { el.remove(); });
+      return;
+    }
+
+    function tulis() {
+      var jam = bentuk.format(new Date());
+      each(tempat, function (el) {
+        el.innerHTML = jam.replace(":", '<span class="jam__titik">:</span>');
+      });
+    }
+
+    tulis();
+    /* Sekali per detik, bukan per menit: yang berdenyut titik dua di
+       antaranya, dan denyutnya harus sejalan dengan detik yang sebenarnya. */
+    window.setInterval(tulis, 1000);
+  }
+
+  function initTumpuk() {
+    /* Memberi tiap anak di dalam .reveal nomor urutnya, supaya CSS bisa
+       menundanya berurutan. Dibatasi sepuluh: baris kesebelas yang menunggu
+       hampir satu detik bukan lagi rapi, ia lambat. */
+    each(doc.querySelectorAll(".reveal"), function (induk) {
+      each(induk.children, function (anak, i) {
+        anak.style.setProperty("--i", Math.min(i, 9));
+      });
+    });
+  }
+
+  function initKilau() {
+    /* Kilau yang mengikuti kursor. Tidak dipasang sama sekali pada perangkat
+       sentuh: di sana tidak ada kursor untuk diikuti, dan pendengar
+       pointermove hanya jadi pekerjaan yang dibuang percuma. */
+    if (!window.matchMedia) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+
+    var menunggu = null;
+
+    /* mousemove, bukan pointermove. Keduanya sama saja di peramban
+       sungguhan, tetapi Chromium yang dijalankan Playwright lewat CDP tidak
+       membangkitkan pointermove sama sekali, sehingga fiturnya tidak akan
+       pernah bisa diuji. Fitur yang tidak bisa diuji akan rusak diam diam,
+       dan itu harga yang lebih mahal daripada nama peristiwa yang lebih
+       baru. Perangkat sentuh sudah disaring media query di atas. */
+    doc.addEventListener("mousemove", function (event) {
+      if (menunggu) return;
+      menunggu = window.requestAnimationFrame(function () {
+        menunggu = null;
+        var kartu = event.target.closest && event.target.closest(".card, .tile, .post, .stat");
+        if (!kartu) return;
+        var kotak = kartu.getBoundingClientRect();
+        kartu.style.setProperty("--mx", (event.clientX - kotak.left) + "px");
+        kartu.style.setProperty("--my", (event.clientY - kotak.top) + "px");
+      });
+    }, { passive: true });
   }
 
   /* ------------------------------------------------------------------ reveal */
@@ -355,8 +576,13 @@
 
   function boot() {
     initLang();
+    initTema();
     initHeader();
+    initTumpuk();
     initReveal();
+    initJam();
+    initKilau();
+    initLindungi();
     initFilters();
     initMap();
     initProgress();

@@ -20,6 +20,20 @@ set -eu
 
 TUJUAN="assets/js/konfigurasi.js"
 
+# On a developer machine the token lives in .env, not in the shell. Without
+# this fallback the script quietly wrote an empty token over the working one,
+# the map fell back to OpenFreeMap, and four browser tests failed with
+# messages about missing layers that said nothing about the real cause. That
+# happened. Every other tool in this repository already reads .env; this one
+# was the exception.
+if [ -z "${MAPBOX_TOKEN:-}" ] && [ -f .env ]; then
+  DARI_ENV=$(sed -n 's/^MAPBOX_TOKEN=//p' .env | head -1 | tr -d '"'"'"'')
+  if [ -n "$DARI_ENV" ]; then
+    MAPBOX_TOKEN="$DARI_ENV"
+    echo "konfigurasi.sh: token read from .env"
+  fi
+fi
+
 if [ -z "${MAPBOX_TOKEN:-}" ]; then
   echo "konfigurasi.sh: MAPBOX_TOKEN is not set."
   echo "konfigurasi.sh: the map will fall back to OpenFreeMap."

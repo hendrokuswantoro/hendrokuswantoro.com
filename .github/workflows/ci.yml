@@ -58,6 +58,35 @@ jobs:
             echo "ok $berkas"
           done
 
+      - name: Infrastructure shell scripts parse
+        run: |
+          for berkas in infrastructure/*.sh; do
+            sh -n "$berkas"
+            echo "ok $berkas"
+          done
+
+      # Angka rasio kontras yang ditulis di kepala style.css hanya benar
+      # sampai ada yang menggeser satu warna tanpa menghitung ulang.
+      - name: Every text colour still passes WCAG AA
+        run: python tools/kontras.py
+
+      # Skrip tema sebaris diizinkan CSP lewat hash. Berubah satu byte tanpa
+      # hashnya ikut diperbarui berarti temanya berhenti bekerja di peramban
+      # tanpa satu pun pesan di halaman.
+      - name: The inline script hash matches _headers
+        run: python tools/hash_skrip.py
+
+      # Dua salinan sistem desain adalah dua tempat yang harus diubah tiap
+      # kali satu warna bergeser, dan yang kedua selalu tertinggal.
+      - name: The Next.js port's stylesheet is not behind
+        run: python tools/gaya_next.py --periksa
+
+      # Diperiksa nginx sungguhan di dalam kontainer. Salah ketik satu titik
+      # koma di sini jauh lebih murah daripada `systemctl reload nginx` yang
+      # menolak menyala saat situsnya sudah hidup.
+      - name: The nginx config is valid
+        run: sh infrastructure/periksa_nginx.sh
+
   typecheck:
     name: Type Check
     runs-on: ubuntu-latest
@@ -70,15 +99,16 @@ jobs:
         with:
           node-version: '20'
 
-      # npm install rather than npm ci: the port has no lockfile yet, because
-      # the machine it was written on has no Node installed.
-      - run: npm install --no-audit --no-fund
+      # npm ci, bukan npm install: lockfile-nya sudah ada sejak Node
+      # terpasang di mesin pengembangan, dan ci memasang persis versi yang
+      # tertulis di sana, bukan versi terbaru yang kebetulan cocok.
+      - run: npm ci --no-audit --no-fund
 
       - name: TypeScript
         run: npm run typecheck
 
       # Type check membuktikan tipenya benar, bukan bahwa aplikasinya bisa
-      # dibangun. Port ini belum pernah dibangun sekali pun sampai hari ini.
+      # dibangun.
       - name: Build
         env:
           NEXT_PUBLIC_MAPBOX_TOKEN: ""
@@ -141,6 +171,22 @@ jobs:
           echo
           echo "Advisories above belong to next/, which is not deployed."
           echo "See docs/keamanan.md for the one that is."
+
+      # Ini MEMBLOKIR, tidak seperti npm audit di atas. Bedanya nyata:
+      # paket Python di bawah ini benar benar berjalan di server yang
+      # menghadap internet dan memegang basis data, sedangkan yang di next/
+      # belum pernah diterbitkan sama sekali.
+      #
+      # Penyisiran 13 September 2026 menemukan 24 temuan di dua paket, dan
+      # keduanya sudah dinaikkan. Langkah ini yang menjaga supaya temuan
+      # berikutnya ketahuan pada hari ia diumumkan, bukan berbulan bulan
+      # kemudian. Kalau suatu saat ada temuan yang memang tidak bisa
+      # ditambal, tulis alasannya di docs/audit-keamanan.md lalu kecualikan
+      # ID-nya di sini dengan tersurat, bukan dengan "|| true".
+      - name: Python dependency audit, enforced
+        run: |
+          pip install -q pip-audit
+          pip-audit -r backend/requirements.txt --strict
 
       - name: The vendored library has not moved without the record moving
         run: |
@@ -208,10 +254,37 @@ jobs:
           PY
           python -m pytest tests/test_auth.py -q
 
-      - name: Backup and restore, actually exercised
+      - name: Passkey tests
+        env:
+          JWT_SECRET: rahasia-uji-yang-panjangnya-lebih-dari-tiga-puluh-dua
+          COOKIE_AMAN: "false"
+        run: python -m pytest tests/test_passkey.py -q
+
+      - name: Backup and restore, without encryption
         run: |
           python backend/db/cadangan.py buat
           python backend/db/cadangan.py uji-pulih
+
+      # Langkah yang sama, kali ini terenkripsi. Cadangan yang bisa dibuat
+      # tetapi tidak bisa dibuka lagi adalah cadangan yang tidak ada, dan itu
+      # baru ketahuan pada hari ia dibutuhkan.
+      - name: Backup, encrypted, and restored again
+        run: |
+          eval "$(python backend/db/enkripsi.py kunci | head -1 | sed 's/^/export /')"
+          python backend/db/cadangan.py buat | tee dibuat.txt
+          grep -q 'terenkripsi' dibuat.txt
+          python backend/db/cadangan.py daftar
+          python backend/db/cadangan.py uji-pulih
+
+      - name: The shipping script refuses anything unencrypted
+        run: |
+          mkdir -p /tmp/cadangan-palsu
+          printf 'ini bukan berkas terenkripsi' > /tmp/cadangan-palsu/hk-2026-01-01-0000.sql.gz.enc
+          if CADANGAN_FOLDER=/tmp/cadangan-palsu CADANGAN_TUJUAN=palsu:bucket              sh infrastructure/kirim.sh --coba; then
+            echo "pengirim menerima berkas yang tidak terenkripsi"
+            exit 1
+          fi
+          echo "ditolak, seperti seharusnya"
 
       - name: Admin write tests
         env:
@@ -233,8 +306,14 @@ jobs:
         run: python -m playwright install --with-deps chromium chromium-headless-shell
 
       # Token Mapbox dibutuhkan: tanpa itu peta jatuh ke OpenFreeMap dan yang
-      # diuji bukan lagi peta yang terbit. Kalau rahasianya belum dipasang,
-      # langkah ini melewati uji peta dan mengatakannya, bukan lolos diam diam.
+      # diuji bukan lagi peta yang terbit.
+      #
+      # Kalau rahasianya belum dipasang, atau kalau tokennya dibatasi per URL
+      # dan asal runner tidak ada di daftarnya, empat uji peta dilewati dengan
+      # alasan yang menyebut persis apa yang harus dikerjakan. pytest.ini
+      # memakai -rs, jadi alasan itu selalu tercetak di log dan tidak bisa
+      # lolos diam diam. Sampai 13 September 2026 komentar di tempat ini
+      # mengaku begitu padahal ujinya justru GAGAL; sekarang benar.
       - name: Write the map token
         env:
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}

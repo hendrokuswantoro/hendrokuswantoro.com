@@ -3,11 +3,19 @@
 Versi Next.js 15 + TypeScript dari situs yang ada di folder induk. Isinya
 sama persis, hanya cara membangunnya yang berbeda.
 
-> **Belum pernah dijalankan.** Node.js belum terpasang di mesin tempat berkas
-> ini ditulis, jadi `npm install`, `npm run build`, dan `tsc --noEmit` belum
-> pernah dieksekusi. Jalankan ketiganya lebih dulu sebelum dipakai untuk
-> produksi. Versi HTML biasa di folder induk sudah teruji dan bisa dipakai
-> sementara.
+> **Dibangun, belum diterbitkan.** Sejak Node 24.19.0 terpasang pada
+> 12 September 2026, `npm ci`, `npm run typecheck`, dan `npm run build` semuanya
+> jalan dan lolos: 12 halaman diekspor ke `out/`. Yang belum, ia belum pernah
+> jadi versi yang dilihat pengunjung. Versi HTML biasa di folder induk yang
+> hidup, dan ia yang punya 437 uji.
+>
+> `npm ci`, bukan `npm install`: `package-lock.json` sudah ikut repositori,
+> dan `ci` memasang persis versi yang tertulis di sana.
+
+> **Jangan menyunting `app/globals.css`.** Berkas itu dibangkitkan dari
+> `assets/css/style.css` oleh `python tools/gaya_next.py`. Dua salinan sistem
+> desain adalah dua tempat yang harus diubah tiap kali satu warna bergeser,
+> dan yang kedua selalu tertinggal. Sudah terjadi.
 
 ## Menjalankan
 

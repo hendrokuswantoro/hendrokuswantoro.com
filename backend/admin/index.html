@@ -7,8 +7,8 @@
 <title>Tulis</title>
 <style>
   :root {
-    --bg: #f6f7f9; --kartu: #ffffff; --tinta: #16181a; --tinta-2: #5b636b;
-    --garis: #e2e6ea; --garis-kuat: #c8cfd6; --aksen: #276ef1; --bahaya: #b4232a;
+    --bg: #f6f6f6; --kartu: #ffffff; --tinta: #141414; --tinta-2: #545454;
+    --garis: #e2e2e2; --garis-kuat: #cbcbcb; --aksen: #1f63e0; --bahaya: #b4232a;
     --hijau: #0b7d3f; --r: 12px;
   }
   @media (prefers-color-scheme: dark) {
@@ -95,6 +95,19 @@
       <input id="sandi" type="password" autocomplete="current-password">
     </div>
     <button id="tombol-masuk" class="utama" style="width:100%">Masuk</button>
+
+    <!-- Passkey ditawarkan di atas sandi begitu jalurnya hidup, sebab ia
+         yang tahan halaman palsu. Sandi tetap ada sebagai jalan pulang:
+         perangkat bisa hilang, dan akun yang satu satunya kunci ikut hilang
+         bersama perangkatnya adalah akun yang terkunci selamanya. -->
+    <div id="blok-passkey" class="sembunyi" style="margin-top:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin:14px 0">
+        <hr style="flex:1;border:0;border-top:1px solid var(--garis)">
+        <span style="font-size:.75rem;color:var(--tinta-2)">atau</span>
+        <hr style="flex:1;border:0;border-top:1px solid var(--garis)">
+      </div>
+      <button id="tombol-passkey" style="width:100%">Masuk dengan passkey</button>
+    </div>
   </section>
 
   <!-- daftar -->
@@ -106,6 +119,24 @@
     <table>
       <thead><tr><th>Judul</th><th>Status</th><th>Tanggal</th><th></th></tr></thead>
       <tbody id="daftar"></tbody>
+    </table>
+  </section>
+
+  <!-- passkey -->
+  <section id="layar-kunci" class="kartu sembunyi">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <h2 style="margin:0;font-size:1.05rem">Passkey</h2>
+      <button id="tombol-daftar-kunci" style="margin-left:auto">Daftarkan perangkat ini</button>
+    </div>
+    <p style="margin:0 0 12px;color:var(--tinta-2);font-size:.85rem">
+      Kunci privatnya tidak pernah meninggalkan perangkat, dan tanda tangannya
+      terikat pada alamat situs ini, jadi halaman palsu tidak bisa memintanya.
+      Daftarkan lebih dari satu perangkat: kunci tunggal yang ikut hilang
+      bersama ponselnya akan mengunci akun ini.
+    </p>
+    <table>
+      <thead><tr><th>Nama</th><th>Jenis</th><th>Terakhir dipakai</th><th></th></tr></thead>
+      <tbody id="daftar-kunci"></tbody>
     </table>
   </section>
 
@@ -244,6 +275,13 @@ async function masuk() {
   const isi = await jawaban.json().catch(() => null);
   if (!jawaban.ok) { kabar(pesanGalat(isi)); return; }
 
+  await sesudahMasuk(isi);
+}
+
+/* Satu tempat untuk semua yang terjadi sesudah masuk, apa pun jalannya.
+   Sebelumnya langkahnya disalin di tiga tempat, dan salinan ketiga sudah
+   lupa mengosongkan kolom sandi. */
+async function sesudahMasuk(isi) {
   AKSES = isi.akses;
   $("sandi").value = "";
   $("siapa").textContent = isi.nama;
@@ -256,6 +294,160 @@ async function keluar() {
   await panggil("/api/v1/auth/logout", { method: "POST" });
   AKSES = null;
   location.reload();
+}
+
+/* --- passkey -------------------------------------------------------- */
+
+/* WebAuthn mengirim dan menerima ArrayBuffer, JSON hanya mengenal teks, jadi
+   base64url adalah jembatannya. Dua fungsi ini yang paling sering ditulis
+   salah di contoh contoh di internet: padding "=" harus dikembalikan sebelum
+   atob, dan dibuang lagi sesudah btoa. */
+function keBuffer(teks) {
+  const dasar = teks.replace(/-/g, "+").replace(/_/g, "/");
+  const penuh = dasar + "===".slice((dasar.length + 3) % 4);
+  const biner = atob(penuh);
+  const bita = new Uint8Array(biner.length);
+  for (let i = 0; i < biner.length; i++) bita[i] = biner.charCodeAt(i);
+  return bita.buffer;
+}
+
+function keTeks(buffer) {
+  let biner = "";
+  for (const b of new Uint8Array(buffer)) biner += String.fromCharCode(b);
+  return btoa(biner).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function adaPasskey() {
+  return typeof window.PublicKeyCredential === "function" &&
+         typeof navigator.credentials?.create === "function";
+}
+
+async function masukPasskey() {
+  kabar("");
+  try {
+    const mulai = await fetch("/api/v1/auth/passkey/masuk/mulai", { method: "POST" });
+    if (!mulai.ok) { kabar(pesanGalat(await mulai.json().catch(() => null))); return; }
+
+    const pilihan = JSON.parse((await mulai.json()).pilihan);
+    pilihan.challenge = keBuffer(pilihan.challenge);
+    for (const k of pilihan.allowCredentials || []) k.id = keBuffer(k.id);
+
+    const kredensial = await navigator.credentials.get({ publicKey: pilihan });
+    const jawaban = await fetch("/api/v1/auth/passkey/masuk/selesai", {
+      method: "POST", credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jawaban: {
+        id: kredensial.id,
+        rawId: keTeks(kredensial.rawId),
+        type: kredensial.type,
+        response: {
+          clientDataJSON: keTeks(kredensial.response.clientDataJSON),
+          authenticatorData: keTeks(kredensial.response.authenticatorData),
+          signature: keTeks(kredensial.response.signature),
+          userHandle: kredensial.response.userHandle
+            ? keTeks(kredensial.response.userHandle) : null,
+        },
+        clientExtensionResults: kredensial.getClientExtensionResults(),
+      } }),
+    });
+
+    const isi = await jawaban.json().catch(() => null);
+    if (!jawaban.ok) { kabar(pesanGalat(isi)); return; }
+    await sesudahMasuk(isi);
+  } catch (galat) {
+    /* Dibatalkan pengguna bukan kegagalan, dan menampilkannya sebagai galat
+       merah hanya membuat orang mengira ada yang rusak. */
+    if (galat.name !== "NotAllowedError" && galat.name !== "AbortError") {
+      kabar("passkey gagal: " + galat.message);
+    }
+  }
+}
+
+async function daftarkanKunci() {
+  kabar("");
+  const nama = prompt("Nama untuk perangkat ini", "Laptop kerja");
+  if (nama === null) return;
+
+  try {
+    const mulai = await panggil("/api/v1/auth/passkey/daftar/mulai", { method: "POST" });
+    if (!mulai.ok) { kabar(pesanGalat(await mulai.json().catch(() => null))); return; }
+
+    const pilihan = JSON.parse((await mulai.json()).pilihan);
+    pilihan.challenge = keBuffer(pilihan.challenge);
+    pilihan.user.id = keBuffer(pilihan.user.id);
+    for (const k of pilihan.excludeCredentials || []) k.id = keBuffer(k.id);
+
+    const kredensial = await navigator.credentials.create({ publicKey: pilihan });
+    const jawaban = await panggil("/api/v1/auth/passkey/daftar/selesai", {
+      method: "POST",
+      body: JSON.stringify({ nama, jawaban: {
+        id: kredensial.id,
+        rawId: keTeks(kredensial.rawId),
+        type: kredensial.type,
+        response: {
+          clientDataJSON: keTeks(kredensial.response.clientDataJSON),
+          attestationObject: keTeks(kredensial.response.attestationObject),
+          transports: kredensial.response.getTransports
+            ? kredensial.response.getTransports() : [],
+        },
+        clientExtensionResults: kredensial.getClientExtensionResults(),
+      } }),
+    });
+
+    if (!jawaban.ok) { kabar(pesanGalat(await jawaban.json().catch(() => null))); return; }
+    kabar("perangkat terdaftar", "baik");
+    await muatKunci();
+  } catch (galat) {
+    if (galat.name === "InvalidStateError") {
+      kabar("perangkat ini sudah terdaftar");
+    } else if (galat.name !== "NotAllowedError" && galat.name !== "AbortError") {
+      kabar("pendaftaran gagal: " + galat.message);
+    }
+  }
+}
+
+async function muatKunci() {
+  if (!adaPasskey()) return;
+  const jawaban = await panggil("/api/v1/auth/passkey");
+  if (!jawaban.ok) return;
+
+  const badan = $("daftar-kunci");
+  badan.replaceChildren();
+
+  for (const k of (await jawaban.json()).daftar) {
+    const baris = document.createElement("tr");
+
+    const nama = document.createElement("td");
+    nama.textContent = k.nama;
+
+    const jenis = document.createElement("td");
+    jenis.textContent = k.jenis_perangkat === "multi_device"
+      ? "tersinkron" : "satu perangkat";
+
+    const dipakai = document.createElement("td");
+    dipakai.textContent = k.dipakai_pada ? k.dipakai_pada.slice(0, 10) : "belum pernah";
+
+    const aksi = document.createElement("td");
+    const tombol = document.createElement("button");
+    tombol.className = "bahaya";
+    tombol.textContent = "Cabut";
+    tombol.onclick = () => cabutKunci(k.id, k.nama);
+    aksi.appendChild(tombol);
+
+    baris.append(nama, jenis, dipakai, aksi);
+    badan.appendChild(baris);
+  }
+
+  $("layar-kunci").classList.remove("sembunyi");
+}
+
+async function cabutKunci(id, nama) {
+  if (!confirm(`Cabut passkey "${nama}"? Perangkat itu tidak bisa dipakai masuk lagi.`)) return;
+  const jawaban = await panggil("/api/v1/auth/passkey/" + encodeURIComponent(id),
+                                { method: "DELETE" });
+  if (!jawaban.ok) { kabar(pesanGalat(await jawaban.json().catch(() => null))); return; }
+  kabar("passkey dicabut", "baik");
+  await muatKunci();
 }
 
 /* --- daftar --------------------------------------------------------- */
@@ -295,6 +487,7 @@ async function muatDaftar() {
 
   $("layar-daftar").classList.remove("sembunyi");
   $("layar-sunting").classList.add("sembunyi");
+  await muatKunci();
 }
 
 /* --- penyunting ----------------------------------------------------- */
@@ -314,6 +507,7 @@ function bukaBaru() {
   $("tombol-terbit").classList.add("sembunyi");
   $("tombol-hapus").classList.add("sembunyi");
   $("layar-daftar").classList.add("sembunyi");
+  $("layar-kunci").classList.add("sembunyi");
   $("layar-sunting").classList.remove("sembunyi");
   perbarui();
 }
@@ -343,6 +537,7 @@ async function bukaSunting(slug) {
   $("tombol-terbit").classList.remove("sembunyi");
   $("tombol-hapus").classList.remove("sembunyi");
   $("layar-daftar").classList.add("sembunyi");
+  $("layar-kunci").classList.add("sembunyi");
   $("layar-sunting").classList.remove("sembunyi");
   perbarui();
 }
@@ -458,6 +653,8 @@ function perbarui() {
 /* --- pasang --------------------------------------------------------- */
 
 $("tombol-masuk").onclick = masuk;
+$("tombol-passkey").onclick = masukPasskey;
+$("tombol-daftar-kunci").onclick = daftarkanKunci;
 $("sandi").onkeydown = (e) => { if (e.key === "Enter") masuk(); };
 $("keluar").onclick = keluar;
 $("tombol-baru").onclick = bukaBaru;
@@ -468,16 +665,20 @@ $("tombol-hapus").onclick = hapus;
 $("isi_en").oninput = perbarui;
 $("isi_id").oninput = perbarui;
 
+/* Tombol passkey baru muncul kalau peramban mendukungnya DAN server sudah
+   dikonfigurasi. Tombol yang selalu ada lalu selalu gagal lebih buruk
+   daripada tombol yang tidak ada. */
+(async () => {
+  if (!adaPasskey()) return;
+  const siap = await fetch("/api/v1/auth/passkey/siap").then((j) => j.json()).catch(() => null);
+  if (siap && siap.siap) $("blok-passkey").classList.remove("sembunyi");
+})();
+
 /* Kalau cookie refresh masih hidup, langsung masuk tanpa menanyakan sandi. */
 (async () => {
   const putar = await fetch("/api/v1/auth/refresh", { method: "POST", credentials: "same-origin" });
   if (!putar.ok) return;
-  const isi = await putar.json();
-  AKSES = isi.akses;
-  $("siapa").textContent = isi.nama;
-  $("keluar").classList.remove("sembunyi");
-  $("layar-masuk").classList.add("sembunyi");
-  await muatDaftar();
+  await sesudahMasuk(await putar.json());
 })();
 </script>
 </body>

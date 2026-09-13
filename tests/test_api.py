@@ -171,13 +171,27 @@ def test_koordinat_di_luar_indonesia_ditolak(klien):
 
 
 @butuh_db
-def test_openapi_terbit(klien):
+def test_openapi_terbit():
     """Bab 15.22 menuntut dokumentasi API. FastAPI membuatnya, tetapi hanya
-    kalau tiap rute benar benar punya response_model."""
-    spek = klien.get("/openapi.json").json()
-    jalur = spek["paths"]
+    kalau tiap rute benar benar punya response_model.
+
+    Dibaca dari aplikasinya langsung, bukan lewat HTTP. Sejak penyisiran
+    keamanan 13 September 2026, /openapi.json tertutup kecuali DOKUMEN_API=1,
+    jadi mengambilnya lewat HTTP akan menguji setelan itu, bukan kelengkapan
+    dokumentasinya.
+    """
+    from backend.main import aplikasi
+
+    jalur = aplikasi.openapi()["paths"]
     for wajib in ("/health", "/api/v1/blog", "/api/v1/maps/projects-spatial"):
         assert wajib in jalur, f"{wajib} tidak terdokumentasi"
+
+
+def test_openapi_tertutup_kecuali_diminta(klien, monkeypatch):
+    """Peta lengkap permukaan API, termasuk tiap titik akhir admin, tidak
+    diberikan cuma cuma kepada siapa pun yang membukanya."""
+    for jalur in ("/openapi.json", "/docs", "/redoc"):
+        assert klien.get(jalur).status_code == 404, f"{jalur} terbuka"
 
 
 # --------------------------------------------------------------- lapisan ---

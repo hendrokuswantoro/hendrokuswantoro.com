@@ -40,7 +40,12 @@ class Masuk:
     peran: str
 
 
-async def _terbitkan(pengguna: dict) -> Masuk:
+async def terbitkan(pengguna: dict) -> Masuk:
+    """Menerbitkan sesi. Dipakai jalur sandi dan jalur passkey.
+
+    Satu tempat dengan sengaja: kalau umur token atau cara refresh
+    berputar berubah, tidak mungkin salah satu jalur ikut berubah dan
+    satunya tertinggal."""
     atur = pengaturan()
     akses, umur = keamanan.buat_access_token(str(pengguna["id"]), pengguna["peran"])
     refresh = keamanan.refresh_token_baru()
@@ -74,7 +79,7 @@ async def masuk(email: str, sandi: str, alamat_hash: str) -> Masuk:
         await repo.simpan_hash(pengguna["id"], keamanan.hash_sandi(sandi))
 
     await repo.bersihkan_gagal(email)
-    return await _terbitkan(pengguna)
+    return await terbitkan(pengguna)
 
 
 async def perpanjang(refresh: str) -> Masuk:
@@ -90,7 +95,7 @@ async def perpanjang(refresh: str) -> Masuk:
     pengguna = await repo.cari_id(sesi["pengguna_id"])
     if pengguna is None:
         raise Ditolak("sesi tidak berlaku")
-    return await _terbitkan(pengguna)
+    return await terbitkan(pengguna)
 
 
 async def keluar(refresh: str) -> None:

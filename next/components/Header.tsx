@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { COMMON, NAV } from "@/content/nav";
 import { useLang } from "./LanguageProvider";
 import { LanguageSwitch } from "./LanguageSwitch";
+import { ThemeSwitch } from "./ThemeSwitch";
 import { BrandMark } from "./Icons";
 
 function isCurrent(pathname: string, href: string): boolean {
@@ -58,6 +59,7 @@ export function Header() {
 
           <div className="header__actions">
             <LanguageSwitch />
+            <ThemeSwitch />
           </div>
         </div>
       </header>
