@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { KerangkaSitus } from "@/components/KerangkaSitus";
 
 export const metadata: Metadata = {
   title: "Page not found",
@@ -7,8 +8,11 @@ export const metadata: Metadata = {
 };
 
 export default function NotFound() {
+  /* Halaman ini duduk di akar, di luar (situs), sebab Next memakainya untuk
+     404 seluruh situs. Jadi perabotnya dipasang sendiri di sini. */
   return (
-    <main id="main">
+    <KerangkaSitus>
+      <main id="main">
       <section className="section">
         <div className="wrap center" style={{ maxWidth: 640 }}>
           <span className="eyebrow">Error 404</span>
@@ -23,7 +27,8 @@ export default function NotFound() {
             </Link>
           </p>
         </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </KerangkaSitus>
   );
 }

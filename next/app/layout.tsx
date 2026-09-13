@@ -1,11 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import { SITE } from "@/content/nav";
-import { Footer } from "@/components/Footer";
-import { Header } from "@/components/Header";
-import { LanguageProvider } from "@/components/LanguageProvider";
-import { RevealObserver } from "@/components/RevealObserver";
-import { TabBar } from "@/components/TabBar";
 import "./globals.css";
 
 /** Sama persis dengan skrip sebaris di versi HTML biasa, sampai ke bitanya,
@@ -69,15 +64,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body>
-        <LanguageProvider>
-          <Header />
-          {children}
-          <Footer />
-          <TabBar />
-          <RevealObserver />
-        </LanguageProvider>
-      </body>
+      {/* Kepala, kaki, dan bilah tab tidak ada di sini. Keduanya milik
+          halaman yang dibaca pengunjung, dan tinggal di app/(situs)/layout.tsx.
+          Halaman admin memakai tata letak akar ini saja, jadi ia tidak lagi
+          punya dua <header> bertumpuk. */}
+      <body>{children}</body>
     </html>
   );
 }
