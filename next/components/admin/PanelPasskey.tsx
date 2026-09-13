@@ -33,12 +33,13 @@ export function PanelPasskey() {
 
   if (!bisa) return null;
 
-  async function daftarkan() {
-    const nama = window.prompt("Nama untuk perangkat ini", "Laptop kerja");
+  async function daftarkan(jenis: "perangkat" | "kunci") {
+    const bawaan = jenis === "perangkat" ? "Laptop kerja" : "Kunci USB";
+    const nama = window.prompt("Nama untuk kunci ini", bawaan);
     if (nama === null) return;
     setKabar(null);
     try {
-      await passkey.daftarkan(nama);
+      await passkey.daftarkan(nama, jenis);
       setKabar({ teks: "perangkat terdaftar", baik: true });
       await muat();
     } catch (e) {
@@ -78,19 +79,37 @@ export function PanelPasskey() {
   return (
     <section className={gaya.kartu}>
       <div className={gaya.tumpuk}>
-        <h2>Passkey</h2>
+        <h2>Sidik jari dan passkey</h2>
         <div className={gaya.kanan}>
-          <button type="button" className={gaya.tombol} onClick={daftarkan}>
-            Daftarkan perangkat ini
+          <button
+            type="button"
+            className={`${gaya.tombol} ${gaya.utama}`}
+            onClick={() => void daftarkan("perangkat")}
+          >
+            Daftarkan sidik jari perangkat ini
+          </button>
+          <button type="button" className={gaya.tombol} onClick={() => void daftarkan("kunci")}>
+            Daftarkan kunci USB
           </button>
         </div>
       </div>
 
-      <p className={gaya.ket}>
+      <p className={gaya.penjelasan}>
         Kunci privatnya tidak pernah meninggalkan perangkat, dan tanda tangannya terikat
         pada alamat situs ini, jadi halaman palsu tidak bisa memintanya. Daftarkan lebih
         dari satu perangkat: kunci tunggal yang ikut hilang bersama ponselnya akan
         mengunci akun ini.
+      </p>
+
+      <p className={gaya.penjelasan}>
+        <strong>Tentang sidik jarinya.</strong> Yang membuka kunci itu sensor di perangkat
+        Anda, dan sidik jarinya tidak pernah sampai ke server ini. Perangkatnya memeriksa
+        sendiri lalu menandatangani; yang diterima server cuma tanda tangan dan satu
+        penanda bahwa pemiliknya sudah diperiksa. Itu bukan kekurangan melainkan justru
+        rancangannya: tidak ada data biometrik yang disimpan di sini, jadi tidak ada yang
+        bisa bocor dari sini, dan sidik jari yang bocor tidak bisa diganti seperti kata
+        sandi. Di perangkat tanpa sensor, yang diminta PIN perangkat itu, dan jaminannya
+        sama: ia tidak pernah dikirim ke mana pun.
       </p>
 
       {kabar ? (

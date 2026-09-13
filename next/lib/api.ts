@@ -27,6 +27,43 @@ export type Sesi = {
   peran: string;
 };
 
+/**
+ * Jawaban masuk punya dua bentuk, dan `tahap` yang membedakannya.
+ *
+ * "selesai" berarti sesinya terbit. "faktor2" berarti sandinya benar dan
+ * belum cukup: yang terbit tiket berumur lima menit, bukan sesi, dan `cara`
+ * menyebut faktor kedua apa saja yang bisa dipakai.
+ */
+export type JawabanMasuk = Sesi & {
+  tahap: "selesai" | "faktor2";
+  tiket: string;
+  cara: CaraFaktorKedua[];
+};
+
+export type CaraFaktorKedua = "totp" | "email" | "pemulihan";
+
+export type KeadaanKeamanan = {
+  email: string;
+  email_terverifikasi: boolean;
+  email_terverifikasi_pada: string | null;
+  totp_terpasang: boolean;
+  totp_aktif: boolean;
+  punya_sandi: boolean;
+  passkey: number;
+  pemulihan_sisa: number;
+  surat_siap: boolean;
+  kunci_kolom_siap: boolean;
+};
+
+export type Peristiwa = {
+  jenis: string;
+  berhasil: boolean;
+  keterangan: string | null;
+  alamat_ringkas: string | null;
+  peramban: string | null;
+  pada: string;
+};
+
 export function simpanAkses(nilai: string | null): void {
   AKSES = nilai;
 }
@@ -103,7 +140,7 @@ export async function ambil<T>(jalur: string, pilihan: RequestInit = {}): Promis
   return isi as T;
 }
 
-export async function masukSandi(email: string, sandi: string): Promise<Sesi> {
+export async function masukSandi(email: string, sandi: string): Promise<JawabanMasuk> {
   const jawaban = await fetch(`${DASAR}/api/v1/auth/login`, {
     method: "POST",
     credentials: "same-origin",
@@ -112,8 +149,81 @@ export async function masukSandi(email: string, sandi: string): Promise<Sesi> {
   });
   const isi = await jawaban.json().catch(() => null);
   if (!jawaban.ok) throw new GagalApi(pesanGalat(isi), jawaban.status);
+  const hasil = isi as JawabanMasuk;
+  // Token hanya disimpan kalau sesinya memang sudah terbit. Tiket faktor
+  // kedua TIDAK pernah masuk ke sini: ia bukan kunci, dan menaruhnya di
+  // tempat kunci adalah cara paling mudah membuatnya diperlakukan sebagai
+  // kunci oleh kode berikutnya.
+  if (hasil.tahap === "selesai") AKSES = hasil.akses;
+  return hasil;
+}
+
+export async function selesaikanFaktorKedua(
+  tiket: string,
+  cara: CaraFaktorKedua,
+  kode: string,
+): Promise<Sesi> {
+  const jawaban = await fetch(`${DASAR}/api/v1/auth/faktor-kedua`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tiket, cara, kode }),
+  });
+  const isi = await jawaban.json().catch(() => null);
+  if (!jawaban.ok) throw new GagalApi(pesanGalat(isi), jawaban.status);
   AKSES = (isi as Sesi).akses;
   return isi as Sesi;
+}
+
+export async function kirimUlangKode(tiket: string): Promise<{ terkirim: boolean; catatan: string }> {
+  const jawaban = await fetch(`${DASAR}/api/v1/auth/faktor-kedua/kirim-ulang`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tiket }),
+  });
+  const isi = await jawaban.json().catch(() => null);
+  if (!jawaban.ok) throw new GagalApi(pesanGalat(isi), jawaban.status);
+  return isi as { terkirim: boolean; catatan: string };
+}
+
+// ----------------------------------------------------------- keamanan ---
+
+export function keadaanKeamanan(): Promise<KeadaanKeamanan> {
+  return ambil<KeadaanKeamanan>("/api/v1/keamanan");
+}
+
+export function kirimVerifikasiEmail(): Promise<{ terkirim: boolean; catatan: string }> {
+  return ambil("/api/v1/keamanan/email/kirim", { method: "POST" });
+}
+
+export function konfirmasiEmail(token: string): Promise<{ terverifikasi: boolean }> {
+  return ambil("/api/v1/keamanan/email/konfirmasi", {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+}
+
+export function mulaiTotp(): Promise<{ rahasia: string; otpauth: string }> {
+  return ambil("/api/v1/keamanan/totp/mulai", { method: "POST" });
+}
+
+export function aktifkanTotp(kode: string): Promise<{ kode_pemulihan: string[]; catatan: string }> {
+  return ambil("/api/v1/keamanan/totp/aktifkan", {
+    method: "POST",
+    body: JSON.stringify({ kode }),
+  });
+}
+
+export function matikanTotp(kode: string): Promise<{ aktif: boolean }> {
+  return ambil("/api/v1/keamanan/totp/matikan", {
+    method: "POST",
+    body: JSON.stringify({ kode }),
+  });
+}
+
+export function peristiwaKeamanan(): Promise<{ peristiwa: Peristiwa[] }> {
+  return ambil("/api/v1/keamanan/peristiwa");
 }
 
 /** Dipanggil sekali saat halaman dibuka. Kalau cookie refresh masih hidup,

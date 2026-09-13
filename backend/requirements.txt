@@ -25,3 +25,11 @@ pyjwt==2.14.0
 # Dipakai supaya tidak ada satu baris pun kriptografi buatan sendiri
 # di jalur masuk, sesuai larangan di bab 15.8.
 webauthn==2.5.2
+# Kode QR untuk memasang aplikasi authenticator. Murni Python, tanpa Pillow:
+# yang dipakai cuma matriks hitam putihnya, dan SVG-nya digambar sendiri di
+# backend/layanan/totp.py.
+#
+# Ini yang menggantikan layanan "buat QR gratis" mana pun. Alamat otpauth
+# MEMUAT rahasia TOTP-nya, jadi mengirimnya ke pembuat QR pihak ketiga berarti
+# menyerahkan faktor kedua kepada orang yang tidak pernah diminta menjaganya.
+qrcode==8.2

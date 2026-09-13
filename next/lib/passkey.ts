@@ -105,8 +105,26 @@ export async function masuk(): Promise<Sesi> {
   return isi as Sesi;
 }
 
-export async function daftarkan(nama: string): Promise<void> {
-  const mulai = await panggil("/api/v1/auth/passkey/daftar/mulai", { method: "POST" });
+/**
+ * `jenis` menentukan authenticator mana yang diminta.
+ *
+ * "perangkat" berarti sensor yang menempel pada perangkatnya sendiri: sidik
+ * jari di ponsel, Touch ID, Windows Hello. Itu yang orang maksud dengan
+ * "masuk pakai sidik jari". "kunci" berarti kunci fisik yang dicolokkan.
+ *
+ * Yang perlu diluruskan: sidik jarinya tidak pernah sampai ke server ini, dan
+ * tidak akan pernah. Perangkatnya yang memeriksa, lalu menandatangani dengan
+ * kunci privat yang tidak pernah keluar dari sana. Yang diterima server cuma
+ * tanda tangan dan satu bendera bahwa pemiliknya sudah diperiksa. Itu justru
+ * lebih kuat daripada mengirim sidik jari: tidak ada biometrik yang disimpan
+ * di sini, jadi tidak ada yang bisa bocor dari sini, dan sidik jari yang bocor
+ * tidak bisa diganti seperti kata sandi.
+ */
+export async function daftarkan(nama: string, jenis: "perangkat" | "kunci" = "perangkat"): Promise<void> {
+  const mulai = await panggil(
+    `/api/v1/auth/passkey/daftar/mulai?jenis=${encodeURIComponent(jenis)}`,
+    { method: "POST" },
+  );
   const awal = await mulai.json().catch(() => null);
   if (!mulai.ok) throw new Error(pesanGalat(awal));
 

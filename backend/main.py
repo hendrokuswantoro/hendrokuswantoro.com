@@ -38,7 +38,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
 
-from backend.api.v1 import admin, auth, kesehatan, passkey, peta, proyek, tulisan
+from backend.api.v1 import admin, auth, keamanan, kesehatan, passkey, peta, proyek, tulisan
 from backend.core import basis_data
 from backend.core.catat import CatatPermintaan, pasang
 from backend.core.konfigurasi import pengaturan
@@ -97,7 +97,7 @@ def buat() -> FastAPI:
 
     app.include_router(kesehatan.rute)
     for bagian in (tulisan.rute, proyek.rute, peta.rute, auth.rute,
-                   passkey.rute, admin.rute):
+                   passkey.rute, keamanan.rute, admin.rute):
         app.include_router(bagian, prefix="/api/v1")
 
     # --- permukaan menulis ---------------------------------------------------

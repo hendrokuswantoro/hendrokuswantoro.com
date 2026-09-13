@@ -56,9 +56,21 @@ async def siap() -> dict:
 
 
 @rute.post("/daftar/mulai", summary="Mulai mendaftarkan perangkat ini")
-async def daftar_mulai(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
+async def daftar_mulai(
+    pengguna: Annotated[dict, Depends(butuh_admin)],
+    jenis: str = "perangkat",
+) -> dict:
+    """`jenis=perangkat` meminta sensor yang menempel pada perangkatnya, yaitu
+    sidik jari, wajah, atau Windows Hello. `jenis=kunci` meminta kunci fisik
+    yang dicolokkan. Keduanya sama sama WebAuthn dan sama sama tahan halaman
+    palsu; yang membedakan cuma di mana kunci privatnya tinggal."""
+    if jenis not in ("perangkat", "kunci"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="jenis harus perangkat atau kunci",
+        )
     _siap()
-    return await layanan.mulai_daftar(str(pengguna["id"]))
+    return await layanan.mulai_daftar(str(pengguna["id"]), jenis)
 
 
 @rute.post("/daftar/selesai", status_code=status.HTTP_201_CREATED,

@@ -29,6 +29,19 @@
   backdrop-filter: saturate(140%) blur(8px);
 }
 
+/* Lambang di header, dan satu jebakan yang sudah pernah memakan korban di
+   proyek lain: kelasnya dipasang pada pembungkusnya, dan aturan warnanya ada
+   pada svg di dalamnya. Dipasang langsung pada svg, yang tampak hanya kotak
+   hitam tanpa hurufnya. */
+.lambang {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--r-sm);
+  line-height: 0;
+}
+.lambang:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.lambang svg { display: block; }
+
 .judul {
   margin: 0;
   font-size: 1rem;
@@ -67,6 +80,14 @@
      kartunya melebar mengikuti tabel lalu menyembul keluar layar. */
   min-width: 0;
 }
+
+.masukKepala {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.masukKepala h1 { margin: 0; }
 
 .masuk {
   max-width: 400px;
@@ -150,7 +171,40 @@
 .pisah { display: flex; align-items: center; gap: 10px; margin: 16px 0; color: var(--ink-3); font-size: 0.78rem; }
 .pisah::before, .pisah::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
 
+/* Rata kiri kanan, dengan dua hal yang membuatnya tidak merusak bacaan.
+ *
+ * `hyphens: auto` wajib menyertainya. Tanpa pemenggalan, rata kiri kanan
+ * melebarkan spasi untuk menutup baris, dan pada kolom sempit hasilnya sungai
+ * putih yang menembus paragraf. Peramban hanya bisa memenggal kalau ia tahu
+ * bahasanya, dan itu datang dari atribut lang di <html>, yang sudah dipasang.
+ *
+ * `text-align-last: left` menahan baris terakhir supaya tidak ikut
+ * direntangkan; hanya sebagian peramban yang menerapkannya, dan yang tidak
+ * pun sudah membiarkan baris terakhir rata kiri.
+ *
+ * Tidak dipasang pada tabel, label, atau tombol. Rata kiri kanan hanya masuk
+ * akal untuk kalimat yang panjangnya beberapa baris.
+ */
+.ket,
+.penjelasan,
+.pratinjau :global(p),
+.pratinjau :global(li) {
+  text-align: justify;
+  text-align-last: left;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  overflow-wrap: break-word;
+}
+
 .ket { color: var(--ink-3); font-size: 0.85rem; margin: 0 0 14px; }
+
+.penjelasan {
+  color: var(--ink-3);
+  font-size: 0.85rem;
+  line-height: 1.7;
+  margin: 0 0 14px;
+  max-width: 78ch;
+}
 .aksi { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .tumpuk { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .tumpuk h2 { margin: 0; font-size: 1.05rem; color: var(--ink); }
@@ -167,3 +221,85 @@
 }
 .pratinjau :global(h2) { font-size: 1.05rem; margin: 14px 0 6px; }
 .pratinjau :global(p) { margin: 0 0 8px; }
+
+
+/* ------------------------------------------------------------ keamanan --- */
+
+.subjudul {
+  margin: 26px 0 8px;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+}
+
+.daftarKeadaan {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.daftarKeadaan li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  /* min-width 0 pada anak grid: tanpa itu isi yang panjang melebarkan
+     gridnya alih alih membungkus, dan kartunya menyembul keluar layar. */
+  min-width: 0;
+  font-size: 0.9rem;
+}
+.daftarKeadaan li > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+
+.gagal { background: #fdecee; color: #8f1c22; }
+
+/* Angka yang dibaca satu per satu, bukan sebagai kata. tabular-nums menahan
+   lebarnya supaya kotaknya tidak bergoyang saat diketik. */
+.kodeIsian {
+  font-family: ui-monospace, "Cascadia Code", Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.22em;
+  font-size: 1.05rem;
+}
+
+.qr {
+  display: inline-block;
+  padding: 12px;
+  margin: 4px 0 14px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  line-height: 0;
+}
+/* Lebarnya dibatasi kotaknya, bukan dipatok, supaya ia tetap muat di ponsel. */
+.qr svg { width: min(232px, 60vw); height: auto; display: block; }
+
+.pemulihan {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  padding: 14px;
+  margin-bottom: 14px;
+  background: var(--surface);
+}
+
+.kodeGrid {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+.kodeGrid code {
+  display: block;
+  padding: 8px 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font-size: 0.92rem;
+  letter-spacing: 0.06em;
+  text-align: center;
+  /* Kode ini disalin dengan tangan dari layar ke kertas. Boleh diblok. */
+  user-select: all;
+}

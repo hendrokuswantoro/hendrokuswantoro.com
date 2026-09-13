@@ -13,8 +13,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from pydantic import BaseModel, EmailStr, Field
 
 from backend.api.tergantung import alamat_teringkas, butuh_admin
+from backend.core import keamanan as inti
 from backend.core.konfigurasi import pengaturan
 from backend.layanan import autentikasi as layanan
+from backend.layanan import keamanan as lapis
 
 rute = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -27,10 +29,25 @@ class Kredensial(BaseModel):
 
 
 class JawabanMasuk(BaseModel):
-    akses: str
-    umur_detik: int
-    nama: str
-    peran: str
+    """Satu bentuk jawaban untuk dua keadaan, dan `tahap` yang membedakannya.
+
+    `tahap="selesai"` berarti sesinya terbit dan `akses` terisi.
+    `tahap="faktor2"` berarti sandinya benar dan belum cukup: `tiket` terisi,
+    `akses` kosong, dan `cara` menyebut faktor kedua apa yang bisa dipakai.
+
+    Kenapa tiket, bukan sesi yang ditandai "belum lengkap": sesi sudah berupa
+    kunci, dan apa pun yang lupa memeriksa tandanya akan menerimanya. Tiket
+    audiensnya berbeda, jadi pustaka JWT-nya sendiri yang menolaknya di setiap
+    pintu selain pintu faktor kedua, bukan satu baris if yang bisa terlupa.
+    """
+
+    tahap: str = "selesai"
+    akses: str = ""
+    umur_detik: int = 0
+    nama: str = ""
+    peran: str = ""
+    tiket: str = ""
+    cara: list[str] = []
 
 
 def pasang_cookie(jawaban: Response, hasil: layanan.Masuk) -> None:
@@ -59,22 +76,119 @@ def _wajib_siap() -> None:
 @rute.post("/login", response_model=JawabanMasuk, summary="Masuk sebagai admin")
 async def login(
     kredensial: Kredensial,
+    permintaan: Request,
     jawaban: Response,
     alamat: Annotated[str, Depends(alamat_teringkas)],
 ) -> JawabanMasuk:
     _wajib_siap()
     try:
-        hasil = await layanan.masuk(kredensial.email, kredensial.sandi, alamat)
+        pengguna = await layanan.periksa_sandi(kredensial.email, kredensial.sandi, alamat)
     except layanan.Ditolak as ditolak:
         # 429 kalau terkunci, 401 kalau salah. Keduanya tidak pernah
         # menyebut apakah emailnya terdaftar.
         kode = status.HTTP_429_TOO_MANY_REQUESTS if ditolak.terkunci else status.HTTP_401_UNAUTHORIZED
         raise HTTPException(status_code=kode, detail=str(ditolak)) from ditolak
 
+    peramban = permintaan.headers.get("user-agent", "")
+
+    # Sandi yang benar belum tentu cukup. Kalau ada faktor kedua yang berlaku,
+    # yang terbit tiket, bukan sesi.
+    cara = await lapis.faktor_kedua_yang_berlaku(pengguna)
+    if cara:
+        tiket, umur = inti.buat_tiket_faktor_kedua(str(pengguna["id"]), cara)
+        await lapis.catat_peristiwa(
+            str(pengguna["id"]), "sandi_benar", True, "menunggu faktor kedua", alamat, peramban
+        )
+        if cara == ["email"]:
+            # Kodenya dikirim sekarang juga: satu langkah lebih sedikit untuk
+            # pemiliknya, dan kode yang kedaluwarsa tetap bisa diminta ulang.
+            try:
+                await lapis.kirim_otp_masuk(pengguna, alamat)
+            except lapis.Ditolak:
+                pass
+        return JawabanMasuk(tahap="faktor2", tiket=tiket, umur_detik=umur, cara=cara)
+
+    hasil = await layanan.terbitkan(pengguna)
     pasang_cookie(jawaban, hasil)
+    await lapis.catat_peristiwa(str(pengguna["id"]), "masuk", True, "sandi", alamat, peramban)
     return JawabanMasuk(
         akses=hasil.akses, umur_detik=hasil.umur_detik, nama=hasil.nama, peran=hasil.peran
     )
+
+
+class FaktorKedua(BaseModel):
+    tiket: str
+    cara: str = Field(pattern="^(totp|email|pemulihan)$")
+    kode: str = Field(min_length=4, max_length=40)
+
+
+@rute.post("/faktor-kedua", response_model=JawabanMasuk, summary="Selesaikan faktor kedua")
+async def faktor_kedua(
+    isian: FaktorKedua,
+    permintaan: Request,
+    jawaban: Response,
+    alamat: Annotated[str, Depends(alamat_teringkas)],
+) -> JawabanMasuk:
+    _wajib_siap()
+    muatan = inti.baca_tiket_faktor_kedua(isian.tiket)
+    if muatan is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="tiket tidak berlaku atau sudah kedaluwarsa, ulangi dari awal",
+        )
+
+    pengguna_id = muatan["sub"]
+    if isian.cara not in muatan.get("cara", []):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="cara tidak tersedia")
+
+    if isian.cara == "totp":
+        lolos = await lapis.periksa_totp(pengguna_id, isian.kode, alamat)
+    elif isian.cara == "email":
+        lolos = await lapis.periksa_otp_masuk(pengguna_id, isian.kode, alamat)
+    else:
+        lolos = await lapis.periksa_pemulihan(pengguna_id, isian.kode, alamat)
+
+    if not lolos:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="kode salah")
+
+    pengguna = await lapis.pengguna(pengguna_id)
+    if not pengguna:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="kode salah")
+
+    hasil = await layanan.terbitkan(pengguna)
+    pasang_cookie(jawaban, hasil)
+    await lapis.catat_peristiwa(
+        pengguna_id, "masuk", True, isian.cara, alamat, permintaan.headers.get("user-agent", "")
+    )
+    return JawabanMasuk(
+        akses=hasil.akses, umur_detik=hasil.umur_detik, nama=hasil.nama, peran=hasil.peran
+    )
+
+
+class MintaKode(BaseModel):
+    tiket: str
+
+
+@rute.post("/faktor-kedua/kirim-ulang", summary="Kirim ulang kode ke email")
+async def kirim_ulang(
+    isian: MintaKode,
+    alamat: Annotated[str, Depends(alamat_teringkas)],
+) -> dict:
+    _wajib_siap()
+    muatan = inti.baca_tiket_faktor_kedua(isian.tiket)
+    if muatan is None or "email" not in muatan.get("cara", []):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="tiket tidak berlaku")
+
+    pengguna = await lapis.pengguna(muatan["sub"])
+    if not pengguna:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="tiket tidak berlaku")
+    try:
+        hasil = await lapis.kirim_otp_masuk(pengguna, alamat)
+    except lapis.Ditolak as ditolak:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(ditolak)
+        ) from ditolak
+    return {"terkirim": hasil.terkirim, "catatan": hasil.catatan}
 
 
 @rute.post("/refresh", response_model=JawabanMasuk, summary="Putar refresh token")

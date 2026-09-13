@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import gaya from "./admin.module.css";
+import { BrandMark } from "@/components/Icons";
 import { DaftarTulisan } from "@/components/admin/DaftarTulisan";
 import { MasukView } from "@/components/admin/MasukView";
+import { PanelKeamanan } from "@/components/admin/PanelKeamanan";
 import { PanelPasskey } from "@/components/admin/PanelPasskey";
 import { PenyuntingTulisan } from "@/components/admin/PenyuntingTulisan";
 import { keluar as keluarApi, sesiYangMasihHidup, type Sesi } from "@/lib/api";
@@ -72,6 +74,12 @@ export default function Admin() {
   return (
     <main className={gaya.bingkai}>
       <header className={gaya.kepala}>
+        {/* Lambang yang sama dengan yang dipakai situs publiknya, bukan
+            gambar lain yang mirip. Satu berkas, satu bentuk: kalau lambangnya
+            berubah, ia berubah di kedua tempat sekaligus. */}
+        <a className={gaya.lambang} href="/" aria-label="Kembali ke situs">
+          <BrandMark size={30} />
+        </a>
         <h1 className={gaya.judul}>hendrokuswantoro.com</h1>
         <span className={gaya.lencana}>admin</span>
         <div className={gaya.kanan}>
@@ -99,6 +107,7 @@ export default function Admin() {
               onSunting={(slug) => setSunting({ aktif: true, slug })}
             />
             <PanelPasskey />
+            <PanelKeamanan />
           </>
         )}
       </div>

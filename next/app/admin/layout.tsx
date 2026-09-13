@@ -15,6 +15,16 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false, nocache: true },
 };
 
+/**
+ * `lang="id"` dipasang di sini, dan itu bukan basa basi.
+ *
+ * Seluruh permukaan admin berbahasa Indonesia, sedangkan <html> situs ini
+ * bawaannya "en". Dua hal bergantung padanya: pembaca layar melafalkannya
+ * dengan benar, dan `hyphens: auto` hanya bisa memenggal kata kalau peramban
+ * tahu bahasanya. Tanpa itu, teks yang dirata kiri kanan akan merentangkan
+ * spasi untuk menutup baris, dan pada kolom sempit hasilnya sungai putih yang
+ * menembus paragraf.
+ */
 export default function LayoutAdmin({ children }: { children: React.ReactNode }) {
-  return children;
+  return <div lang="id">{children}</div>;
 }

@@ -39,6 +39,7 @@ import webauthn
 from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
 from webauthn.helpers.exceptions import InvalidAuthenticationResponse, InvalidRegistrationResponse
 from webauthn.helpers.structs import (
+    AuthenticatorAttachment,
     AuthenticatorSelectionCriteria,
     PublicKeyCredentialDescriptor,
     ResidentKeyRequirement,
@@ -84,7 +85,7 @@ async def _tantangan_baru(tujuan: str, pengguna_id: str | None = None) -> bytes:
 # ------------------------------------------------------------- mendaftar ---
 
 
-async def mulai_daftar(pengguna_id: str) -> dict:
+async def mulai_daftar(pengguna_id: str, jenis: str = "perangkat") -> dict:
     """Pilihan pendaftaran untuk perangkat yang sedang dipakai.
 
     Email dan nama dibaca dari basis data, bukan dari token. Token sengaja
@@ -116,7 +117,31 @@ async def mulai_daftar(pengguna_id: str) -> dict:
             # Discoverable: kuncinya menyimpan siapa pemiliknya, sehingga
             # masuk tidak perlu mengetik email lebih dulu.
             resident_key=ResidentKeyRequirement.REQUIRED,
+            # REQUIRED inilah yang berarti "sidik jari".
+            #
+            # WebAuthn tidak punya, dan tidak akan pernah punya, permintaan
+            # bernama "minta sidik jari": sidik jarinya tidak pernah
+            # meninggalkan perangkat dan tidak pernah sampai ke server ini.
+            # Yang diminta server adalah user verification, dan perangkatnya
+            # yang memilih cara membuktikan bahwa pemiliknya hadir: sidik jari
+            # di ponsel dan di laptop bersensor, wajah di perangkat yang
+            # punya, PIN kalau tidak ada keduanya. Yang sampai ke sini cuma
+            # satu bita bendera UV di dalam data yang ditandatangani.
+            #
+            # Itu justru lebih kuat daripada mengirim sidik jari ke server:
+            # tidak ada satu pun data biometrik yang disimpan di sini, jadi
+            # tidak ada yang bisa bocor dari sini. Sidik jari yang bocor tidak
+            # bisa diganti seperti kata sandi.
             user_verification=UserVerificationRequirement.REQUIRED,
+            # PLATFORM berarti sensor yang menempel pada perangkatnya sendiri,
+            # bukan kunci USB yang dicolokkan. Itu yang orang maksud dengan
+            # "masuk pakai sidik jari". Pemiliknya tetap boleh memilih kunci
+            # USB lewat jenis="kunci", sebab kunci fisik juga jalur yang baik
+            # dan memaksa salah satunya berarti menutup yang lain.
+            authenticator_attachment=(
+                AuthenticatorAttachment.PLATFORM if jenis == "perangkat"
+                else AuthenticatorAttachment.CROSS_PLATFORM
+            ),
         ),
         exclude_credentials=[
             PublicKeyCredentialDescriptor(id=bytes(k["kredensial_id"])) for k in sudah

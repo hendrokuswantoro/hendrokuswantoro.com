@@ -51,6 +51,24 @@ class Pengaturan(BaseSettings):
     webauthn_rp_nama: str = Field(default="Hendro Kuswantoro", alias="WEBAUTHN_RP_NAMA")
     webauthn_asal: list[str] = Field(default=[], alias="WEBAUTHN_ASAL")
 
+    # --- penyandian kolom, dipakai rahasia TOTP ---
+    #
+    # Dibaca lewat Pengaturan, bukan lewat os.environ langsung, dan itu bukan
+    # selera. Aplikasi web ini tidak pernah memuat .env ke dalam os.environ:
+    # yang membaca .env adalah pydantic-settings, untuk medan di kelas ini
+    # saja. Jadi nilai yang hanya ada di .env tidak akan pernah terlihat oleh
+    # os.environ.get, dan fitur yang membacanya begitu akan diam diam mengira
+    # kuncinya belum ada padahal ia tertulis di .env. Itu sudah terjadi.
+    kunci_kolom: str = Field(default="", alias="KUNCI_KOLOM")
+
+    # --- SMTP, dipakai verifikasi email dan kode masuk ---
+    smtp_host: str = Field(default="", alias="SMTP_HOST")
+    smtp_porta: int = Field(default=587, alias="SMTP_PORTA")
+    smtp_pengguna: str = Field(default="", alias="SMTP_PENGGUNA")
+    smtp_sandi: str = Field(default="", alias="SMTP_SANDI")
+    surat_dari: str = Field(default="", alias="SURAT_DARI")
+    surat_wajib: bool = Field(default=False, alias="SURAT_WAJIB")
+
     kolam_min: int = Field(default=1, alias="KOLAM_MIN")
     kolam_maks: int = Field(default=8, alias="KOLAM_MAKS")
 

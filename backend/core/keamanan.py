@@ -106,3 +106,52 @@ def baca_access_token(token: str) -> dict | None:
         )
     except jwt.PyJWTError:
         return None
+
+
+# ------------------------------------------------- tiket faktor kedua ---
+
+# Antara "sandinya benar" dan "sesinya terbit" ada satu keadaan yang harus
+# dibawa entah di mana: penggunanya sudah membuktikan faktor pertama dan belum
+# membuktikan yang kedua.
+#
+# Cara yang buruk dan biasa: menerbitkan sesi lalu menandainya "belum lengkap".
+# Sesi itu sudah berupa kunci; apa pun yang lupa memeriksa tandanya akan
+# menerimanya. Cara yang dipakai di sini: tiket terpisah, umurnya lima menit,
+# dan satu satunya pintu yang menerimanya adalah pintu faktor kedua.
+#
+# Tiketnya JWT yang sama algoritmanya, hanya audiensnya berbeda. Audiens yang
+# berbeda berarti `baca_access_token` menolaknya, dan `baca_tiket` menolak
+# access token: keduanya tidak bisa tertukar, dan itu diperiksa pustakanya
+# sendiri, bukan oleh satu baris if yang bisa terlupa.
+
+UNTUK_TIKET = "hk-faktor-kedua"
+TIKET_UMUR_MENIT = 5
+
+
+def buat_tiket_faktor_kedua(pengguna_id: str, cara: list[str]) -> tuple[str, int]:
+    atur = pengaturan()
+    sekarang = dt.datetime.now(dt.timezone.utc)
+    muatan = {
+        "sub": pengguna_id,
+        "cara": cara,
+        "iss": PENERBIT,
+        "aud": UNTUK_TIKET,
+        "iat": sekarang,
+        "exp": sekarang + dt.timedelta(minutes=TIKET_UMUR_MENIT),
+        "jti": str(uuid.uuid4()),
+    }
+    return jwt.encode(muatan, atur.jwt_rahasia, algorithm=ALGORITMA), TIKET_UMUR_MENIT * 60
+
+
+def baca_tiket_faktor_kedua(token: str) -> dict | None:
+    try:
+        return jwt.decode(
+            token,
+            pengaturan().jwt_rahasia,
+            algorithms=[ALGORITMA],
+            audience=UNTUK_TIKET,
+            issuer=PENERBIT,
+            options={"require": ["exp", "iat", "sub", "iss", "aud"]},
+        )
+    except jwt.PyJWTError:
+        return None

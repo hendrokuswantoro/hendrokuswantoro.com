@@ -2,11 +2,19 @@
 
 import { useEffect, useState } from "react";
 import gaya from "@/app/admin/admin.module.css";
-import { GagalApi, masukSandi, type Sesi } from "@/lib/api";
+import { BrandMark } from "@/components/Icons";
+import {
+  GagalApi,
+  kirimUlangKode,
+  masukSandi,
+  selesaikanFaktorKedua,
+  type CaraFaktorKedua,
+  type Sesi,
+} from "@/lib/api";
 import * as passkey from "@/lib/passkey";
 
 /**
- * Dua jalan masuk, dan urutannya disengaja.
+ * Tiga jalan masuk, dan urutannya disengaja.
  *
  * Passkey lebih dulu karena ia yang tahan halaman palsu: kunci privatnya tidak
  * pernah meninggalkan perangkat, dan tanda tangannya terikat pada alamat situs
@@ -14,16 +22,37 @@ import * as passkey from "@/lib/passkey";
  * hilang, dan akun yang satu satunya kunci ikut hilang bersama ponselnya
  * adalah akun yang terkunci selamanya.
  *
- * Tombol passkey hanya muncul kalau peramban mendukungnya DAN server sudah
- * dikonfigurasi. Tombol yang selalu ada lalu selalu gagal lebih buruk
- * daripada tombol yang tidak ada.
+ * Jalur sandi bisa berhenti di tengah. Kalau ada faktor kedua yang berlaku,
+ * yang kembali dari server bukan sesi melainkan tiket berumur lima menit, dan
+ * layar ini berganti jadi kotak kode. Passkey tidak lewat situ, dan itu benar:
+ * passkey sudah dua faktor pada dirinya sendiri, yaitu perangkatnya dan sidik
+ * jari atau PIN yang membukanya.
  */
+
+const NAMA_CARA: Record<CaraFaktorKedua, string> = {
+  totp: "Aplikasi authenticator",
+  email: "Kode yang dikirim ke email",
+  pemulihan: "Kode pemulihan",
+};
+
+const PETUNJUK: Record<CaraFaktorKedua, string> = {
+  totp: "Buka aplikasi authenticator Anda dan ketikkan enam angka yang sedang tampil.",
+  email: "Enam angka sudah dikirim ke alamat email Anda. Berlaku sepuluh menit.",
+  pemulihan: "Salah satu dari delapan kode yang Anda simpan saat menyalakan authenticator. Sekali pakai.",
+};
+
 export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
   const [email, setEmail] = useState("");
   const [sandi, setSandi] = useState("");
   const [galat, setGalat] = useState("");
+  const [kabar, setKabar] = useState("");
   const [sibuk, setSibuk] = useState(false);
   const [adaPasskey, setAdaPasskey] = useState(false);
+
+  /* Tahap kedua. Null berarti belum sampai ke sana. */
+  const [tiket, setTiket] = useState<{ nilai: string; cara: CaraFaktorKedua[] } | null>(null);
+  const [caraDipakai, setCaraDipakai] = useState<CaraFaktorKedua>("totp");
+  const [kode, setKode] = useState("");
 
   useEffect(() => {
     let batal = false;
@@ -35,12 +64,58 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
     };
   }, []);
 
+  function bersihkan() {
+    setGalat("");
+    setKabar("");
+  }
+
   async function denganSandi(event: React.FormEvent) {
     event.preventDefault();
-    setGalat("");
+    bersihkan();
     setSibuk(true);
     try {
-      sesudah(await masukSandi(email.trim(), sandi));
+      const hasil = await masukSandi(email.trim(), sandi);
+      if (hasil.tahap === "faktor2") {
+        setTiket({ nilai: hasil.tiket, cara: hasil.cara });
+        setCaraDipakai(hasil.cara[0]);
+        /* Sandinya dibuang dari memori begitu ia tidak dibutuhkan lagi. */
+        setSandi("");
+        return;
+      }
+      sesudah(hasil);
+    } catch (e) {
+      setGalat(e instanceof GagalApi ? e.message : "gagal menghubungi server");
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  async function denganKode(event: React.FormEvent) {
+    event.preventDefault();
+    if (!tiket) return;
+    bersihkan();
+    setSibuk(true);
+    try {
+      sesudah(await selesaikanFaktorKedua(tiket.nilai, caraDipakai, kode.trim()));
+    } catch (e) {
+      setKode("");
+      setGalat(e instanceof GagalApi ? e.message : "gagal menghubungi server");
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  async function kirimUlang() {
+    if (!tiket) return;
+    bersihkan();
+    setSibuk(true);
+    try {
+      const hasil = await kirimUlangKode(tiket.nilai);
+      /* Kalau SMTP belum dikonfigurasi, server mengatakannya terus terang dan
+         layar ini ikut mengatakannya. Membalas "kode sudah dikirim" untuk
+         surat yang tidak pernah berangkat adalah cara mengunci orang di luar
+         pintunya sendiri sambil meyakinkannya bahwa semuanya baik baik saja. */
+      setKabar(hasil.terkirim ? "Kode baru sudah dikirim." : hasil.catatan);
     } catch (e) {
       setGalat(e instanceof GagalApi ? e.message : "gagal menghubungi server");
     } finally {
@@ -49,7 +124,7 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
   }
 
   async function denganPasskey() {
-    setGalat("");
+    bersihkan();
     setSibuk(true);
     try {
       sesudah(await passkey.masuk());
@@ -62,17 +137,129 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
     }
   }
 
-  return (
-    <section className={`${gaya.kartu} ${gaya.masuk}`}>
-      <h1 className={gaya.judul} style={{ marginBottom: 18, fontSize: "1.2rem" }}>
-        Masuk
-      </h1>
+  const kepala = (
+    <div className={gaya.masukKepala}>
+      <BrandMark size={40} />
+      <div>
+        <h1 className={gaya.judul} style={{ fontSize: "1.2rem" }}>
+          {tiket ? "Satu langkah lagi" : "Masuk"}
+        </h1>
+        <p className={gaya.ket} style={{ margin: 0 }}>
+          hendrokuswantoro.com
+        </p>
+      </div>
+    </div>
+  );
 
+  const pesan = (
+    <>
       {galat ? (
         <p className={`${gaya.kabar} ${gaya.salah}`} role="alert">
           {galat}
         </p>
       ) : null}
+      {kabar ? (
+        <p className={`${gaya.kabar} ${gaya.baik}`} role="status">
+          {kabar}
+        </p>
+      ) : null}
+    </>
+  );
+
+  /* ------------------------------------------------------- tahap kedua */
+
+  if (tiket) {
+    return (
+      <section className={`${gaya.kartu} ${gaya.masuk}`}>
+        {kepala}
+        {pesan}
+
+        <p className={gaya.penjelasan}>
+          Kata sandi Anda benar. Karena akun ini memakai faktor kedua, satu kode lagi
+          dibutuhkan sebelum sesinya dibuka. Tiketnya berlaku lima menit.
+        </p>
+
+        {tiket.cara.length > 1 ? (
+          <div className={gaya.baris}>
+            <label htmlFor="cara">Cara</label>
+            <select
+              id="cara"
+              className={gaya.isian}
+              value={caraDipakai}
+              onChange={(e) => {
+                setCaraDipakai(e.target.value as CaraFaktorKedua);
+                setKode("");
+                bersihkan();
+              }}
+            >
+              {tiket.cara.map((c) => (
+                <option key={c} value={c}>
+                  {NAMA_CARA[c]}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+
+        <p className={gaya.penjelasan}>{PETUNJUK[caraDipakai]}</p>
+
+        <form onSubmit={denganKode}>
+          <div className={gaya.baris}>
+            <label htmlFor="kode">
+              {caraDipakai === "pemulihan" ? "Kode pemulihan" : "Kode enam angka"}
+            </label>
+            <input
+              id="kode"
+              className={`${gaya.isian} ${gaya.kodeIsian}`}
+              /* inputMode numeric, bukan type number: type number membawa
+                 tombol naik turun dan membuang angka nol di depan. */
+              inputMode={caraDipakai === "pemulihan" ? "text" : "numeric"}
+              autoComplete={caraDipakai === "pemulihan" ? "off" : "one-time-code"}
+              autoFocus
+              required
+              value={kode}
+              onChange={(e) => setKode(e.target.value)}
+              placeholder={caraDipakai === "pemulihan" ? "XXXXX-XXXXX" : "000000"}
+            />
+          </div>
+
+          <button
+            type="submit"
+            className={`${gaya.tombol} ${gaya.utama} ${gaya.lebar}`}
+            disabled={sibuk || kode.trim().length < 4}
+          >
+            {sibuk ? "Memeriksa..." : "Lanjutkan"}
+          </button>
+        </form>
+
+        <div className={gaya.aksi} style={{ marginTop: 14 }}>
+          {caraDipakai === "email" ? (
+            <button type="button" className={gaya.tombol} onClick={kirimUlang} disabled={sibuk}>
+              Kirim ulang kode
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className={gaya.tombol}
+            onClick={() => {
+              setTiket(null);
+              setKode("");
+              bersihkan();
+            }}
+          >
+            Kembali
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  /* ------------------------------------------------------ tahap pertama */
+
+  return (
+    <section className={`${gaya.kartu} ${gaya.masuk}`}>
+      {kepala}
+      {pesan}
 
       {adaPasskey ? (
         <>
@@ -82,8 +269,13 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
             onClick={denganPasskey}
             disabled={sibuk}
           >
-            Masuk dengan passkey
+            Masuk dengan sidik jari atau passkey
           </button>
+          <p className={gaya.penjelasan} style={{ marginTop: 10 }}>
+            Perangkat Anda yang meminta sidik jari, wajah, atau PIN. Tidak ada satu pun
+            data biometrik yang dikirim ke server ini, dan karena itu tidak ada yang bisa
+            bocor dari sini.
+          </p>
           <div className={gaya.pisah}>atau dengan sandi</div>
         </>
       ) : null}

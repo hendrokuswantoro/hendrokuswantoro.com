@@ -57,7 +57,14 @@ async def terbitkan(pengguna: dict) -> Masuk:
     )
 
 
-async def masuk(email: str, sandi: str, alamat_hash: str) -> Masuk:
+async def periksa_sandi(email: str, sandi: str, alamat_hash: str) -> dict:
+    """Memeriksa faktor pertama saja, lalu mengembalikan penggunanya.
+
+    Dipisah dari `masuk` pada 13 September 2026 supaya router bisa menyisipkan
+    faktor kedua di antaranya. Yang TIDAK berubah: seluruh perilaku
+    penolakannya, termasuk hash umpan yang tetap dihitung saat penggunanya
+    tidak ada, supaya lama jawabannya sama.
+    """
     atur = pengaturan()
 
     if await repo.jumlah_gagal(email, atur.masuk_jendela_menit) >= atur.masuk_gagal_maks:
@@ -79,7 +86,18 @@ async def masuk(email: str, sandi: str, alamat_hash: str) -> Masuk:
         await repo.simpan_hash(pengguna["id"], keamanan.hash_sandi(sandi))
 
     await repo.bersihkan_gagal(email)
-    return await terbitkan(pengguna)
+    return pengguna
+
+
+async def masuk(email: str, sandi: str, alamat_hash: str) -> Masuk:
+    """Sandi benar lalu langsung terbit sesi, tanpa faktor kedua.
+
+    Tetap ada karena dipakai jalur yang memang tidak punya faktor kedua, dan
+    karena uji yang sudah ada memanggilnya. Jalur masuk lewat HTTP TIDAK
+    memakainya lagi: router memanggil `periksa_sandi` lalu memutuskan sendiri
+    apakah masih ada langkah berikutnya.
+    """
+    return await terbitkan(await periksa_sandi(email, sandi, alamat_hash))
 
 
 async def perpanjang(refresh: str) -> Masuk:
