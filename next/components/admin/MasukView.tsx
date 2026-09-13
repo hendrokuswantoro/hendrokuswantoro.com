@@ -3,13 +3,16 @@
 import { useEffect, useState } from "react";
 import gaya from "@/app/admin/admin.module.css";
 import { BrandMark } from "@/components/Icons";
+import { KameraWajah } from "@/components/admin/KameraWajah";
 import {
   GagalApi,
   kirimUlangKode,
   masukSandi,
   selesaikanFaktorKedua,
+  tantanganWajah,
   type CaraFaktorKedua,
   type Sesi,
+  type TantanganWajah,
 } from "@/lib/api";
 import * as passkey from "@/lib/passkey";
 
@@ -33,12 +36,16 @@ const NAMA_CARA: Record<CaraFaktorKedua, string> = {
   totp: "Aplikasi authenticator",
   email: "Kode yang dikirim ke email",
   pemulihan: "Kode pemulihan",
+  wajah: "Verifikasi wajah",
 };
 
 const PETUNJUK: Record<CaraFaktorKedua, string> = {
   totp: "Buka aplikasi authenticator Anda dan ketikkan enam angka yang sedang tampil.",
   email: "Enam angka sudah dikirim ke alamat email Anda. Berlaku sepuluh menit.",
   pemulihan: "Salah satu dari delapan kode yang Anda simpan saat menyalakan authenticator. Sekali pakai.",
+  wajah:
+    "Kamera akan mengambil tiga bingkai mengikuti urutan gerakan yang baru diminta " +
+    "server. Fotonya tidak disimpan di mana pun.",
 };
 
 export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
@@ -53,6 +60,7 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
   const [tiket, setTiket] = useState<{ nilai: string; cara: CaraFaktorKedua[] } | null>(null);
   const [caraDipakai, setCaraDipakai] = useState<CaraFaktorKedua>("totp");
   const [kode, setKode] = useState("");
+  const [tantangan, setTantangan] = useState<TantanganWajah | null>(null);
 
   useEffect(() => {
     let batal = false;
@@ -118,6 +126,45 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
       setKabar(hasil.terkirim ? "Kode baru sudah dikirim." : hasil.catatan);
     } catch (e) {
       setGalat(e instanceof GagalApi ? e.message : "gagal menghubungi server");
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  async function mulaiWajah() {
+    if (!tiket) return;
+    bersihkan();
+    setSibuk(true);
+    try {
+      setTantangan(await tantanganWajah(tiket.nilai));
+    } catch (e) {
+      setGalat(e instanceof GagalApi ? e.message : "gagal menghubungi server");
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  async function kirimWajah(bingkai: string[]) {
+    if (!tiket || !tantangan) return;
+    bersihkan();
+    setSibuk(true);
+    try {
+      sesudah(
+        await selesaikanFaktorKedua(tiket.nilai, "wajah", "", {
+          tantangan: tantangan.tantangan,
+          bingkai,
+        }),
+      );
+    } catch (e) {
+      /* Tantangannya sekali pakai, jadi gagal berarti harus minta yang baru.
+         Dikosongkan di sini supaya layarnya tidak menawarkan tombol yang
+         sudah pasti ditolak. */
+      setTantangan(null);
+      setGalat(
+        e instanceof GagalApi
+          ? `${e.message}. Coba lagi dengan pencahayaan yang lebih baik.`
+          : "gagal menghubungi server",
+      );
     } finally {
       setSibuk(false);
     }
@@ -189,6 +236,7 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
               onChange={(e) => {
                 setCaraDipakai(e.target.value as CaraFaktorKedua);
                 setKode("");
+                setTantangan(null);
                 bersihkan();
               }}
             >
@@ -203,6 +251,43 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
 
         <p className={gaya.penjelasan}>{PETUNJUK[caraDipakai]}</p>
 
+        {caraDipakai === "wajah" ? (
+          <>
+            {tantangan ? (
+              <KameraWajah
+                gerakan={tantangan.gerakan}
+                sibuk={sibuk}
+                batal={() => setTantangan(null)}
+                selesai={(bingkai) => void kirimWajah(bingkai)}
+              />
+            ) : (
+              <div className={gaya.aksi}>
+                <button
+                  type="button"
+                  className={`${gaya.tombol} ${gaya.utama} ${gaya.lebar}`}
+                  onClick={() => void mulaiWajah()}
+                  disabled={sibuk}
+                >
+                  {sibuk ? "Sebentar..." : "Nyalakan kamera"}
+                </button>
+              </div>
+            )}
+            <div className={gaya.aksi} style={{ marginTop: 14 }}>
+              <button
+                type="button"
+                className={gaya.tombol}
+                onClick={() => {
+                  setTiket(null);
+                  setTantangan(null);
+                  bersihkan();
+                }}
+              >
+                Kembali
+              </button>
+            </div>
+          </>
+        ) : (
+        <>
         <form onSubmit={denganKode}>
           <div className={gaya.baris}>
             <label htmlFor="kode">
@@ -250,6 +335,8 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
             Kembali
           </button>
         </div>
+        </>
+        )}
       </section>
     );
   }

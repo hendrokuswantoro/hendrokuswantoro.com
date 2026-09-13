@@ -486,3 +486,163 @@ def test_tanpa_faktor_kedua_masuknya_tetap_seperti_dulu(klien):
 def test_sandi_salah_tetap_401(klien):
     j = klien.post("/api/v1/auth/login", json={"email": EMAIL, "sandi": "salah-panjang-sekali"})
     assert j.status_code == 401
+
+
+# ============================================================================
+# Wajah. Yang diuji di sini siklus tantangannya lewat HTTP, bukan ketepatan
+# pengenalan wajahnya; alasannya ditulis panjang di tests/test_wajah.py.
+#
+# Ciri wajah "terdaftar" dipasang langsung ke basis data oleh fixture, sebab
+# mendaftarkannya lewat HTTP menuntut foto wajah sungguhan, dan foto wajah
+# sungguhan tidak akan masuk repositori ini.
+# ============================================================================
+
+from backend.layanan import wajah as wajah_modul  # noqa: E402
+
+
+CIRI_PALSU_POLOS = None  # diisi saat pertama dipakai, lihat _ciri_palsu()
+
+
+def _ciri_palsu() -> str:
+    import numpy as np
+
+    return wajah_modul.ke_untai(np.ones((1, 128), dtype="float32") / 128 ** 0.5)
+
+
+@pytest.fixture
+def pasang_wajah(kunci_kolom):
+    """Memasang ciri wajah palsu langsung ke kolomnya, saat uji memintanya.
+
+    Berupa fungsi, bukan fixture yang langsung memasang, karena urutannya
+    penting: begitu wajah terdaftar, masuk dengan sandi berhenti di faktor
+    kedua, jadi uji yang butuh sesi admin harus masuk LEBIH DULU. Itu bukan
+    kerepotan uji melainkan justru perilaku yang benar, dan fixture yang
+    memasangnya duluan akan menyembunyikannya.
+    """
+    from backend.core import rahasia as rahasia_kolom
+
+    def pasang() -> None:
+        tersandi = rahasia_kolom.sandikan(_ciri_palsu())
+        with psycopg.connect(DSN) as s, s.cursor() as k:
+            k.execute(
+                "UPDATE users SET wajah_ciri = %s, wajah_didaftar_pada = now() WHERE id = %s",
+                (tersandi, _pengguna_id()),
+            )
+            s.commit()
+
+    yield pasang
+
+    with psycopg.connect(DSN) as s, s.cursor() as k:
+        k.execute("UPDATE users SET wajah_ciri = NULL, wajah_didaftar_pada = NULL")
+        k.execute("DELETE FROM tantangan_wajah")
+        s.commit()
+
+
+def test_wajah_menolak_tanpa_token(klien):
+    j = klien.post("/api/v1/keamanan/wajah/daftar", json={"bingkai": ["a", "b"]})
+    assert j.status_code == 401
+
+
+def test_keadaan_menyebut_wajah(klien):
+    isi = klien.get("/api/v1/keamanan", headers=_kepala(_masuk(klien))).json()
+    assert "wajah_terdaftar" in isi
+    assert "wajah_siap" in isi
+
+
+def test_mendaftar_dengan_gambar_tanpa_wajah_ditolak(klien, kunci_kolom):
+    if not wajah_modul.siap():
+        pytest.skip("model wajah belum diunduh. Jalankan: python tools/ambil_model.py")
+    import base64 as b64
+
+    import cv2
+    import numpy as np
+
+    acak = np.random.default_rng(5).integers(0, 255, (240, 320, 3), dtype=np.uint8)
+    ok, sandi = cv2.imencode(".jpg", acak)
+    assert ok
+    gambar = b64.b64encode(sandi.tobytes()).decode()
+
+    j = klien.post(
+        "/api/v1/keamanan/wajah/daftar",
+        json={"bingkai": [gambar, gambar]},
+        headers=_kepala(_masuk(klien)),
+    )
+    assert j.status_code == 400
+    assert "wajah" in j.text.lower()
+
+
+def test_wajah_jadi_faktor_kedua_begitu_terdaftar(klien, pasang_wajah):
+    if not wajah_modul.siap():
+        pytest.skip("model wajah belum diunduh. Jalankan: python tools/ambil_model.py")
+    pasang_wajah()
+    j = klien.post("/api/v1/auth/login", json={"email": EMAIL, "sandi": SANDI})
+    isi = j.json()
+    assert isi["tahap"] == "faktor2", isi
+    assert "wajah" in isi["cara"]
+
+
+def test_tantangan_wajah_sekali_pakai(klien, pasang_wajah):
+    if not wajah_modul.siap():
+        pytest.skip("model wajah belum diunduh. Jalankan: python tools/ambil_model.py")
+    pasang_wajah()
+    isi = klien.post("/api/v1/auth/login", json={"email": EMAIL, "sandi": SANDI}).json()
+    tiket = isi["tiket"]
+
+    minta = klien.post("/api/v1/auth/faktor-kedua/tantangan-wajah", json={"tiket": tiket})
+    assert minta.status_code == 200, minta.text
+    tantangan = minta.json()
+    assert tantangan["gerakan"][0] == "tengah"
+    assert len(tantangan["gerakan"]) == 3
+
+    # Bingkai apa pun: yang diuji bahwa tantangan yang sudah dipakai tidak bisa
+    # dipakai lagi, dan kegagalan bingkainya justru bagian dari itu.
+    umpan = {"tiket": tiket, "cara": "wajah", "tantangan": tantangan["tantangan"],
+             "bingkai": ["x", "y", "z"]}
+    pertama = klien.post("/api/v1/auth/faktor-kedua", json=umpan)
+    assert pertama.status_code == 401
+
+    with psycopg.connect(DSN) as s, s.cursor() as k:
+        k.execute("SELECT dipakai_pada FROM tantangan_wajah WHERE id = %s",
+                  (tantangan["tantangan"],))
+        assert k.fetchone()[0] is not None, (
+            "tantangan yang sudah dipakai masih hidup, jadi bingkainya bisa "
+            "dicoba berulang kali sampai ada yang lolos"
+        )
+
+
+def test_tantangan_wajah_menolak_tiket_yang_tidak_menyebut_wajah(klien, kunci_kolom):
+    """Tanpa wajah terdaftar, tiketnya tidak memuat cara wajah, dan meminta
+    tantangannya harus ditolak."""
+    isi = klien.post("/api/v1/auth/login", json={"email": EMAIL, "sandi": SANDI}).json()
+    tiket = isi.get("tiket", "")
+    j = klien.post("/api/v1/auth/faktor-kedua/tantangan-wajah", json={"tiket": tiket})
+    assert j.status_code == 401
+
+
+def test_menghapus_wajah_benar_benar_menghapus_barisnya(klien, pasang_wajah):
+    # Masuk dulu, baru wajahnya dipasang: sesudah terdaftar, sandi saja tidak
+    # lagi cukup untuk masuk, dan itu memang maksudnya.
+    akses = _masuk(klien)
+    pasang_wajah()
+    j = klien.post("/api/v1/keamanan/wajah/hapus", headers=_kepala(akses))
+    assert j.status_code == 200, j.text
+    with psycopg.connect(DSN) as s, s.cursor() as k:
+        k.execute("SELECT wajah_ciri, wajah_didaftar_pada FROM users WHERE id = %s",
+                  (_pengguna_id(),))
+        baris = k.fetchone()
+    assert baris[0] is None and baris[1] is None, (
+        "data biometrik yang dinonaktifkan tetap data biometrik yang tersimpan"
+    )
+
+
+def test_ciri_wajah_tersandi_di_basis_data(klien, pasang_wajah):
+    """Bukan sekadar bukan foto: 128 angka itu pun tidak boleh terbaca apa
+    adanya dari dump basis data."""
+    pasang_wajah()
+    with psycopg.connect(DSN) as s, s.cursor() as k:
+        k.execute("SELECT wajah_ciri FROM users WHERE id = %s", (_pengguna_id(),))
+        tersimpan = k.fetchone()[0]
+
+    polos = _ciri_palsu()
+    assert tersimpan != polos, "ciri wajah tersimpan apa adanya"
+    assert len(tersimpan) > len(polos), "tidak ada tanda penyandian sama sekali"

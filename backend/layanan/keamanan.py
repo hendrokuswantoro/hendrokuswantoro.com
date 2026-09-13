@@ -35,6 +35,7 @@ from dataclasses import dataclass
 from backend.core import keamanan as inti
 from backend.core import rahasia, surat
 from backend.layanan import totp as totp_modul
+from backend.layanan import wajah as wajah_modul
 from backend.repositori import keamanan as repo
 from backend.repositori import pengguna as repo_pengguna
 
@@ -275,7 +276,16 @@ async def faktor_kedua_yang_berlaku(pengguna: dict) -> list[str]:
         cara.append("totp")
         if baris["pemulihan_sisa"]:
             cara.append("pemulihan")
-    elif baris and baris["email_terverifikasi_pada"] and surat.siap():
+    # Wajah berdiri sendiri dan bisa dipakai bersama TOTP. Ia ditawarkan hanya
+    # kalau memang sudah didaftarkan DAN modelnya ada di mesin ini; menawarkan
+    # cara yang pasti gagal berarti mengunci pemiliknya di luar pintunya.
+    if baris and baris["wajah_didaftar_pada"] and wajah_modul.siap():
+        cara.append("wajah")
+
+    if cara:
+        return cara
+
+    if baris and baris["email_terverifikasi_pada"] and surat.siap():
         # OTP email hanya ditawarkan kalau alamatnya sudah dibuktikan DAN surat
         # memang bisa dikirim. Menawarkan kode yang tidak akan pernah sampai
         # berarti mengunci pemiliknya di luar pintunya sendiri.
@@ -315,3 +325,83 @@ async def keadaan_akun(pengguna_id: str) -> dict | None:
 
 async def jejak(pengguna_id: str, batas: int = 40) -> list[dict]:
     return await repo.peristiwa(pengguna_id, batas)
+
+
+# ------------------------------------------------------------------ wajah ---
+
+# Batas lapisan ini ditulis panjang di backend/layanan/wajah.py, dan diulang di
+# layar tempat ia dinyalakan. Ringkasnya: ia menaikkan ongkos masuk bagi orang
+# yang sudah tahu kata sandinya, dan ia TIDAK membuktikan kehadiran. Rekaman
+# video wajah pemiliknya akan lolos. Karena itu ia tambahan yang dinyalakan
+# sendiri, bukan bawaan, dan bukan pengganti passkey.
+
+UMUR_TANTANGAN_WAJAH_DETIK = 120
+
+
+async def daftarkan_wajah(pengguna: dict, bingkai: list[str], alamat: str | None) -> dict:
+    """Mendaftarkan wajah dari beberapa bingkai. Fotonya tidak disimpan."""
+    if not rahasia.siap():
+        raise BelumSiap(
+            "KUNCI_KOLOM belum diisi, jadi ciri wajah tidak bisa disimpan tersandi. "
+            "Data biometrik yang tersimpan apa adanya adalah data yang ikut bocor "
+            "bersama basis datanya."
+        )
+    try:
+        ciri = wajah_modul.ciri_dari_bingkai(bingkai)
+    except wajah_modul.Ditolak as ditolak:
+        await repo.catat(pengguna["id"], "wajah_daftar", False, str(ditolak)[:200], alamat)
+        raise Ditolak(str(ditolak)) from ditolak
+
+    await repo.simpan_wajah(pengguna["id"], rahasia.sandikan(wajah_modul.ke_untai(ciri)))
+    await repo.catat(pengguna["id"], "wajah_daftar", True, None, alamat)
+    return {"terdaftar": True, "bingkai": len(bingkai)}
+
+
+async def hapus_wajah(pengguna: dict, alamat: str | None) -> None:
+    await repo.hapus_wajah(pengguna["id"])
+    await repo.catat(pengguna["id"], "wajah_hapus", True, None, alamat)
+
+
+async def tantangan_wajah(pengguna_id: str) -> dict:
+    """Urutan gerakan yang diputuskan server, berlaku dua menit, sekali pakai."""
+    if not await repo.ciri_wajah(pengguna_id):
+        raise Ditolak("wajah belum didaftarkan")
+    gerakan = wajah_modul.gerakan_acak()
+    kadaluarsa = dt.datetime.now(dt.timezone.utc) + dt.timedelta(
+        seconds=UMUR_TANTANGAN_WAJAH_DETIK
+    )
+    tantangan_id = await repo.tantangan_wajah_baru(pengguna_id, gerakan, kadaluarsa)
+    return {
+        "tantangan": tantangan_id,
+        "gerakan": gerakan,
+        "umur_detik": UMUR_TANTANGAN_WAJAH_DETIK,
+    }
+
+
+async def periksa_wajah(
+    pengguna_id: str, tantangan_id: str, bingkai: list[str], alamat: str | None
+) -> bool:
+    diminta = await repo.pakai_tantangan_wajah(pengguna_id, tantangan_id)
+    if diminta is None:
+        await repo.catat(pengguna_id, "wajah_salah", False, "tantangan tidak berlaku", alamat)
+        return False
+
+    tersimpan = await repo.ciri_wajah(pengguna_id)
+    if not tersimpan:
+        return False
+
+    try:
+        hasil = wajah_modul.periksa(
+            bingkai, diminta, wajah_modul.dari_untai(rahasia.bukakan(tersimpan))
+        )
+    except wajah_modul.Ditolak as ditolak:
+        await repo.catat(pengguna_id, "wajah_salah", False, str(ditolak)[:200], alamat)
+        return False
+    except wajah_modul.BelumSiap as belum:
+        await repo.catat(pengguna_id, "wajah_salah", False, str(belum)[:200], alamat)
+        return False
+
+    await repo.catat(
+        pengguna_id, "wajah_cocok", True, f"kemiripan {hasil['terendah']}", alamat
+    )
+    return True

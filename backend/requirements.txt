@@ -33,3 +33,10 @@ webauthn==2.5.2
 # MEMUAT rahasia TOTP-nya, jadi mengirimnya ke pembuat QR pihak ketiga berarti
 # menyerahkan faktor kedua kepada orang yang tidak pernah diminta menjaganya.
 qrcode==8.2
+# Deteksi dan pengenalan wajah, dipakai verifikasi selfie yang opsional.
+# Headless: tanpa GTK dan tanpa jendela, sebab server tidak punya layar.
+#
+# Modelnya TIDAK ikut di sini, 37 MB, diunduh dengan tools/ambil_model.py dan
+# dicatat sidiknya. Tanpa modelnya, verifikasi wajah mati dan halaman
+# keamanannya mengatakan begitu; ia tidak pernah diam diam melewatkan orang.
+opencv-python-headless==4.11.0.86

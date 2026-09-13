@@ -40,7 +40,7 @@ export type JawabanMasuk = Sesi & {
   cara: CaraFaktorKedua[];
 };
 
-export type CaraFaktorKedua = "totp" | "email" | "pemulihan";
+export type CaraFaktorKedua = "totp" | "email" | "pemulihan" | "wajah";
 
 export type KeadaanKeamanan = {
   email: string;
@@ -51,8 +51,16 @@ export type KeadaanKeamanan = {
   punya_sandi: boolean;
   passkey: number;
   pemulihan_sisa: number;
+  wajah_terdaftar: boolean;
   surat_siap: boolean;
   kunci_kolom_siap: boolean;
+  wajah_siap: boolean;
+};
+
+export type TantanganWajah = {
+  tantangan: string;
+  gerakan: string[];
+  umur_detik: number;
 };
 
 export type Peristiwa = {
@@ -162,12 +170,13 @@ export async function selesaikanFaktorKedua(
   tiket: string,
   cara: CaraFaktorKedua,
   kode: string,
+  wajah?: { tantangan: string; bingkai: string[] },
 ): Promise<Sesi> {
   const jawaban = await fetch(`${DASAR}/api/v1/auth/faktor-kedua`, {
     method: "POST",
     credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ tiket, cara, kode }),
+    body: JSON.stringify({ tiket, cara, kode, ...(wajah ?? {}) }),
   });
   const isi = await jawaban.json().catch(() => null);
   if (!jawaban.ok) throw new GagalApi(pesanGalat(isi), jawaban.status);
@@ -220,6 +229,29 @@ export function matikanTotp(kode: string): Promise<{ aktif: boolean }> {
     method: "POST",
     body: JSON.stringify({ kode }),
   });
+}
+
+export async function tantanganWajah(tiket: string): Promise<TantanganWajah> {
+  const jawaban = await fetch(`${DASAR}/api/v1/auth/faktor-kedua/tantangan-wajah`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tiket }),
+  });
+  const isi = await jawaban.json().catch(() => null);
+  if (!jawaban.ok) throw new GagalApi(pesanGalat(isi), jawaban.status);
+  return isi as TantanganWajah;
+}
+
+export function daftarkanWajah(bingkai: string[]): Promise<{ terdaftar: boolean }> {
+  return ambil("/api/v1/keamanan/wajah/daftar", {
+    method: "POST",
+    body: JSON.stringify({ bingkai }),
+  });
+}
+
+export function hapusWajah(): Promise<{ terdaftar: boolean }> {
+  return ambil("/api/v1/keamanan/wajah/hapus", { method: "POST" });
 }
 
 export function peristiwaKeamanan(): Promise<{ peristiwa: Peristiwa[] }> {

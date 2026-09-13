@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import gaya from "@/app/admin/admin.module.css";
+import { KameraWajah } from "@/components/admin/KameraWajah";
 import {
   aktifkanTotp,
+  daftarkanWajah,
   GagalApi,
+  hapusWajah,
   keadaanKeamanan,
   kirimVerifikasiEmail,
   konfirmasiEmail,
@@ -44,6 +47,10 @@ const NAMA_PERISTIWA: Record<string, string> = {
   kode_pemulihan: "Kode pemulihan dipakai",
   verifikasi_email: "Verifikasi email",
   verifikasi_email_dikirim: "Tautan verifikasi dikirim",
+  wajah_daftar: "Wajah didaftarkan",
+  wajah_hapus: "Wajah dihapus",
+  wajah_cocok: "Wajah cocok",
+  wajah_salah: "Wajah tidak cocok",
 };
 
 function waktu(nilai: string): string {
@@ -70,6 +77,7 @@ export function PanelKeamanan() {
   const [kode, setKode] = useState("");
   const [pemulihan, setPemulihan] = useState<string[] | null>(null);
   const [kodeMatikan, setKodeMatikan] = useState("");
+  const [kameraHidup, setKameraHidup] = useState(false);
 
   const muat = useCallback(async () => {
     try {
@@ -175,6 +183,12 @@ export function PanelKeamanan() {
             {keadaan.pemulihan_sisa}
           </span>
           <span>Kode pemulihan yang belum terpakai</span>
+        </li>
+        <li>
+          <span className={`${gaya.tanda} ${keadaan.wajah_terdaftar ? gaya.terbit : ""}`}>
+            {keadaan.wajah_terdaftar ? "aktif" : "belum"}
+          </span>
+          <span>Verifikasi wajah saat masuk</span>
         </li>
       </ul>
 
@@ -353,6 +367,83 @@ export function PanelKeamanan() {
           >
             Pasang aplikasi authenticator
           </button>
+        </div>
+      )}
+
+      {/* --------------------------------------------------- wajah */}
+
+      <h3 className={gaya.subjudul}>Verifikasi wajah</h3>
+      <p className={gaya.penjelasan}>
+        Kalau dinyalakan, masuk dengan kata sandi akan meminta tiga bingkai dari kamera
+        mengikuti urutan gerakan yang baru diminta server saat itu juga. Fotonya{" "}
+        <strong>tidak disimpan</strong>: yang tersimpan 128 angka hasil penyandian wajah,
+        dan angka itu pun disandikan lagi dengan kunci yang terpisah dari basis datanya.
+      </p>
+      <p className={gaya.penjelasan}>
+        <strong>Yang ini tidak bisa dilakukannya, dan saya lebih baik mengatakannya.</strong>{" "}
+        Ia tidak membuktikan bahwa yang di depan kamera adalah orang hidup. Rekaman video
+        wajah Anda akan lolos, termasuk urutan gerakannya kalau rekamannya cukup panjang.
+        Deteksi kehidupan yang sungguhan menuntut model tersendiri, dan yang dipakai
+        penyedia identitas komersial pun masih bisa ditipu. Jadi ini menaikkan ongkos bagi
+        orang yang sudah tahu kata sandi Anda, bukan menutup pintunya. Yang menutup pintu
+        tetap passkey: kuncinya tidak pernah meninggalkan perangkat dan terikat pada
+        alamat situs ini, sedangkan wajah tidak terikat pada apa pun dan tidak bisa
+        diganti kalau bocor.
+      </p>
+
+      {!keadaan.wajah_siap ? (
+        <p className={`${gaya.kabar} ${gaya.salah}`}>
+          Model pengenalan wajah belum ada di server, 37 MB. Jalankan{" "}
+          <code>python tools/ambil_model.py</code>. Selama belum, verifikasi wajah tidak
+          ditawarkan sama sekali saat masuk, dan tidak pernah diam diam meloloskan
+          siapa pun.
+        </p>
+      ) : null}
+
+      {kameraHidup ? (
+        <KameraWajah
+          gerakan={["tengah", "kiri", "kanan"]}
+          sibuk={sibuk}
+          batal={() => setKameraHidup(false)}
+          selesai={(bingkai) => {
+            setKameraHidup(false);
+            void jalankan(async () => {
+              await daftarkanWajah(bingkai);
+              setKabar("Wajah Anda terdaftar. Fotonya tidak disimpan.");
+              await muat();
+            });
+          }}
+        />
+      ) : (
+        <div className={gaya.aksi}>
+          {keadaan.wajah_terdaftar ? (
+            <button
+              type="button"
+              className={`${gaya.tombol} ${gaya.bahaya}`}
+              disabled={sibuk}
+              onClick={() =>
+                jalankan(async () => {
+                  await hapusWajah();
+                  setKabar("Wajah dihapus dari server, bukan sekadar dimatikan.");
+                  await muat();
+                })
+              }
+            >
+              Hapus wajah yang terdaftar
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={gaya.tombol}
+              disabled={sibuk || !keadaan.wajah_siap || !keadaan.kunci_kolom_siap}
+              onClick={() => {
+                bersihkan();
+                setKameraHidup(true);
+              }}
+            >
+              Daftarkan wajah
+            </button>
+          )}
         </div>
       )}
 

@@ -12,9 +12,10 @@ yang belum selesai, dan alasan kenapa belum.
 | Clickjacking | `X-Frame-Options: DENY`, `frame-ancestors 'none'` | `test_terbit.py` |
 | MIME sniffing | `X-Content-Type-Options: nosniff` | `test_terbit.py` |
 | Referrer | `strict-origin-when-cross-origin` | `test_terbit.py` |
-| Izin peramban | geolocation, camera, microphone, payment semuanya ditutup | `_headers` |
+| Izin peramban | geolocation, microphone, payment ditutup. Kamera ditutup di seluruh situs kecuali `= /admin`, tempat verifikasi wajah memerlukannya | `_headers`, `test_infrastruktur.py` |
 | Rahasia | tidak ada satu pun di git, disisir tiap push | `ci.yml`, `test_peta.py`, `test_infrastruktur.py` |
-| Masuk | Passkey WebAuthn, atau Argon2id + JWT | `test_passkey.py`, `test_auth.py` |
+| Masuk | Passkey WebAuthn, atau Argon2id + JWT, plus faktor kedua | `test_passkey.py`, `test_auth.py` |
+| Faktor kedua | TOTP RFC 6238, kode email, kode pemulihan, verifikasi wajah. Batas masing masing di [keamanan-akun.md](keamanan-akun.md) | `test_keamanan_akun.py`, `test_keamanan_alur.py`, `test_wajah.py` |
 | Sesi | refresh berputar, dicabut di Postgres, hanya SHA-256-nya disimpan | `test_auth.py` |
 | Cadangan | AES-256-GCM, satu bit yang berubah gagal dibuka | `test_cadangan.py` |
 | Layanan di VPS | systemd yang dikeraskan, soket Unix bukan porta | `test_infrastruktur.py` |

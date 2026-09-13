@@ -534,3 +534,34 @@ def test_pytest_ini_memang_mengecualikan_peramban():
     membingungkan di CI."""
     ini = (AKAR / "pytest.ini").read_text(encoding="utf-8")
     assert 'not peramban' in ini
+
+
+def test_kamera_hanya_dibuka_di_halaman_admin():
+    """Permissions-Policy di blok server mematikan kamera untuk seluruh situs,
+    dan itu benar: halaman yang tidak bisa menyalakan kamera tidak bisa disuruh
+    menyalakannya oleh skrip yang diselundupkan ke dalamnya.
+
+    Verifikasi wajah butuh kamera, jadi pengecualiannya dibuat di satu alamat
+    saja. Uji ini menjaga dua sisinya sekaligus: yang umum tetap tertutup, dan
+    yang khusus memang terbuka.
+    """
+    assert 'camera=()' in _dari_nginx("Permissions-Policy"), (
+        "kamera terbuka untuk seluruh situs"
+    )
+
+    blok = re.search(r"location = /admin \{(.*?)\n    \}", NGINX, re.S)
+    assert blok, "blok location = /admin tidak ditemukan"
+    isi = blok.group(1)
+    assert "camera=(self)" in isi, "halaman admin tidak diizinkan memakai kamera"
+
+
+def test_blok_admin_tidak_kehilangan_header_lain():
+    """Satu add_header di dalam location menghapus seluruh add_header induknya.
+    Blok /admin sekarang memasang Permissions-Policy sendiri, jadi kelima
+    header lain wajib ikut diulang, atau halaman admin justru jadi satu
+    satunya halaman tanpa CSP dan tanpa nosniff."""
+    blok = re.search(r"location = /admin \{(.*?)\n    \}", NGINX, re.S)
+    isi = blok.group(1)
+    for arahan in ("X-Content-Type-Options", "X-Frame-Options", "Referrer-Policy",
+                   "Strict-Transport-Security", "Content-Security-Policy"):
+        assert arahan in isi, f"blok /admin kehilangan {arahan}"

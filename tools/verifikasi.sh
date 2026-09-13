@@ -99,6 +99,17 @@ langkah "Lint, asset versions match their contents"
 python tools/versi_aset.py --periksa >/dev/null
 lulus
 
+# Model pengenalan wajah 37 MB dan tidak ikut di git. Tanpa model, verifikasi
+# wajah tidak ditawarkan saat masuk, dan itu keadaan yang sah; yang tidak sah
+# adalah catatan yang mengatakan modelnya ada padahal berkasnya sudah berubah.
+langkah "Lint, the face model matches its record"
+if [ -f assets/model/sumber.json ]; then
+  python tools/ambil_model.py --periksa >/dev/null
+  lulus
+else
+  lewat "model wajah belum diunduh, python tools/ambil_model.py"
+fi
+
 # Alur kerjanya sendiri tidak pernah diperiksa sebelum dijalankan di GitHub,
 # dan satu "\n" harfiah di dalamnya membuat health check gagal tiap malam
 # sambil melaporkan situsnya mati.

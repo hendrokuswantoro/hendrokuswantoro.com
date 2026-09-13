@@ -97,6 +97,18 @@ jobs:
       - name: Asset versions match their contents
         run: python tools/versi_aset.py --periksa
 
+      # Migrasi bernomor, dan nomornya tidak boleh kembar. Dua berkas bernomor
+      # sama akan diterapkan menurut urutan abjadnya, bukan urutan yang
+      # dimaksud penulisnya, dan yang kedua bisa menimpa yang pertama.
+      - name: Migration numbers are unique
+        run: |
+          kembar=$(ls backend/db/migrations/ | cut -c1-4 | sort | uniq -d)
+          if [ -n "$kembar" ]; then
+            echo "nomor migrasi kembar: $kembar"
+            exit 1
+          fi
+          echo "ok, $(ls backend/db/migrations/ | wc -l) migrasi, nomornya unik"
+
       # Alur kerjanya sendiri tidak pernah diperiksa sebelum dijalankan.
       #
       # Yang dicari bukan hanya sintaks. kesehatan.yml pernah memuat daftar

@@ -39,6 +39,7 @@ async def keadaan(pengguna_id: str) -> dict[str, Any] | None:
                    (u.totp_rahasia IS NOT NULL) AS totp_terpasang,
                    u.totp_aktif_pada,
                    (u.sandi_hash IS NOT NULL) AS punya_sandi,
+                   u.wajah_didaftar_pada,
                    (SELECT count(*) FROM kredensial WHERE pengguna_id = u.id) AS passkey,
                    (SELECT count(*) FROM kode_pemulihan
                      WHERE pengguna_id = u.id AND dipakai_pada IS NULL) AS pemulihan_sisa
@@ -238,3 +239,76 @@ async def peristiwa(pengguna_id: str, batas: int = 40) -> list[dict[str, Any]]:
             (pengguna_id, batas),
         )
         return list(await k.fetchall())
+
+
+# ------------------------------------------------------------------ wajah ---
+
+
+async def simpan_wajah(pengguna_id: str, tersandi: str) -> None:
+    async with koneksi() as s, s.cursor() as k:
+        await k.execute(
+            "UPDATE users SET wajah_ciri = %s, wajah_didaftar_pada = now() WHERE id = %s",
+            (tersandi, pengguna_id),
+        )
+
+
+async def hapus_wajah(pengguna_id: str) -> None:
+    """Menghapus barisnya, bukan menandainya nonaktif.
+
+    Data biometrik yang "dinonaktifkan" tetap data biometrik yang tersimpan.
+    UU 27/2022 menggolongkannya sebagai data pribadi yang bersifat spesifik,
+    dan subjeknya berhak menghapusnya, bukan menyembunyikannya.
+    """
+    async with koneksi() as s, s.cursor() as k:
+        await k.execute(
+            "UPDATE users SET wajah_ciri = NULL, wajah_didaftar_pada = NULL WHERE id = %s",
+            (pengguna_id,),
+        )
+        await k.execute("DELETE FROM tantangan_wajah WHERE pengguna_id = %s", (pengguna_id,))
+
+
+async def ciri_wajah(pengguna_id: str) -> str | None:
+    async with koneksi() as s, s.cursor() as k:
+        await k.execute("SELECT wajah_ciri FROM users WHERE id = %s", (pengguna_id,))
+        baris = await k.fetchone()
+        return baris["wajah_ciri"] if baris else None
+
+
+async def tantangan_wajah_baru(
+    pengguna_id: str, gerakan: list[str], kadaluarsa: dt.datetime
+) -> str:
+    async with koneksi() as s, s.cursor() as k:
+        # Tantangan lama dimatikan lebih dulu, sama seperti kode sekali pakai:
+        # meminta tantangan baru harus berarti yang lama tidak berlaku lagi.
+        await k.execute(
+            "UPDATE tantangan_wajah SET dipakai_pada = now() "
+            "WHERE pengguna_id = %s AND dipakai_pada IS NULL",
+            (pengguna_id,),
+        )
+        await k.execute(
+            "INSERT INTO tantangan_wajah (pengguna_id, gerakan, kadaluarsa) "
+            "VALUES (%s, %s, %s) RETURNING id",
+            (pengguna_id, gerakan, kadaluarsa),
+        )
+        return str((await k.fetchone())["id"])
+
+
+async def pakai_tantangan_wajah(pengguna_id: str, tantangan_id: str) -> list[str] | None:
+    """Menandai tantangan terpakai dan mengembalikan urutan gerakannya.
+
+    Satu pernyataan, seperti kode sekali pakai dan tantangan passkey: SELECT
+    lalu UPDATE membuka jendela bagi dua permintaan yang tiba bersamaan untuk
+    sama sama melihatnya belum terpakai.
+    """
+    async with koneksi() as s, s.cursor() as k:
+        await k.execute(
+            """
+            UPDATE tantangan_wajah SET dipakai_pada = now()
+            WHERE id = %s AND pengguna_id = %s
+              AND dipakai_pada IS NULL AND kadaluarsa > now()
+            RETURNING gerakan
+            """,
+            (tantangan_id, pengguna_id),
+        )
+        baris = await k.fetchone()
+        return list(baris["gerakan"]) if baris else None

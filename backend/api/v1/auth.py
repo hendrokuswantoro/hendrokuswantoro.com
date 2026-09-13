@@ -117,9 +117,21 @@ async def login(
 
 
 class FaktorKedua(BaseModel):
+    """Satu bentuk untuk empat cara, dan yang tidak dipakai dibiarkan kosong.
+
+    `kode` untuk totp, email, dan pemulihan. `tantangan` dan `bingkai` untuk
+    wajah. Dipisah jadi dua model akan membuat routernya bercabang dua sejak
+    baris pertama tanpa alasan: yang berbeda cuma isian, bukan alurnya.
+    """
+
     tiket: str
-    cara: str = Field(pattern="^(totp|email|pemulihan)$")
-    kode: str = Field(min_length=4, max_length=40)
+    cara: str = Field(pattern="^(totp|email|pemulihan|wajah)$")
+    kode: str = Field(default="", max_length=40)
+    tantangan: str = Field(default="", max_length=64)
+    # Tiga bingkai base64. Batas panjangnya dijaga lagi di lapisan wajah,
+    # per bingkai, dan itu yang benar benar menahan: batas di sini menahan
+    # badan permintaan, batas di sana menahan gambar yang didekode.
+    bingkai: list[str] = Field(default_factory=list, max_length=5)
 
 
 @rute.post("/faktor-kedua", response_model=JawabanMasuk, summary="Selesaikan faktor kedua")
@@ -141,7 +153,18 @@ async def faktor_kedua(
     if isian.cara not in muatan.get("cara", []):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="cara tidak tersedia")
 
-    if isian.cara == "totp":
+    if isian.cara == "wajah":
+        if not isian.tantangan or not isian.bingkai:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="butuh tantangan dan bingkai",
+            )
+        lolos = await lapis.periksa_wajah(
+            pengguna_id, isian.tantangan, isian.bingkai, alamat
+        )
+    elif not isian.kode:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="kode kosong")
+    elif isian.cara == "totp":
         lolos = await lapis.periksa_totp(pengguna_id, isian.kode, alamat)
     elif isian.cara == "email":
         lolos = await lapis.periksa_otp_masuk(pengguna_id, isian.kode, alamat)
@@ -167,6 +190,28 @@ async def faktor_kedua(
 
 class MintaKode(BaseModel):
     tiket: str
+
+
+@rute.post("/faktor-kedua/tantangan-wajah", summary="Minta urutan gerakan untuk verifikasi wajah")
+async def tantangan_wajah(isian: MintaKode) -> dict:
+    """Urutan gerakannya diputuskan server dan berlaku dua menit.
+
+    Tanpa ini, "kirim tiga foto wajah Anda" bisa dijawab dengan tiga berkas
+    yang sudah disiapkan sejak lama. Dengan ini, ketiganya harus kebetulan
+    memuat urutan yang baru saja diminta. Perlu dikatakan terus terang bahwa
+    menyulitkan bukan menutup: rekaman video yang cukup panjang tetap memuat
+    semuanya.
+    """
+    _wajib_siap()
+    muatan = inti.baca_tiket_faktor_kedua(isian.tiket)
+    if muatan is None or "wajah" not in muatan.get("cara", []):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="tiket tidak berlaku")
+    try:
+        return await lapis.tantangan_wajah(muatan["sub"])
+    except lapis.Ditolak as ditolak:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(ditolak)
+        ) from ditolak
 
 
 @rute.post("/faktor-kedua/kirim-ulang", summary="Kirim ulang kode ke email")

@@ -201,12 +201,12 @@ pip install -r tests/requirements.txt
 python -m pytest
 ```
 
-**507 uji.** 459 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
+**599 uji.** 551 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
 dalam hitungan detik; 48 sisanya menjalankan Chromium sungguhan dan dipisah
 lewat tanda `peramban` supaya tidak memperlambat putaran biasa.
 
 ```bash
-python -m pytest                 # 459, cepat
+python -m pytest                 # 551, cepat
 python -m pytest -m peramban     # 48, Chromium
 sh tools/verifikasi.sh           # seluruhnya, berurutan
 pip-audit -r backend/requirements.txt --strict
@@ -262,6 +262,9 @@ benar benar sampai. Alamat yang diperiksa diambil dari variabel repositori
   gabungan kedua spesifikasi: basis data, API, keamanan, fase, dan biayanya
 - [docs/status.md](docs/status.md) - pemeriksaan baris demi baris terhadap
   spesifikasi: apa yang sudah, apa yang tidak berlaku, apa yang belum
+- [docs/keamanan-akun.md](docs/keamanan-akun.md) - lapisan jalan masuk
+  dashboard: sidik jari, TOTP, kode pemulihan, verifikasi wajah, dan
+  sejauh mana masing masing benar benar menahan
 - [docs/keamanan.md](docs/keamanan.md) - apa yang menahan apa, dan satu
   temuan yang belum selesai beserta alasannya
 - [docs/pemecahan-masalah.md](docs/pemecahan-masalah.md) - yang sudah pernah
@@ -293,7 +296,7 @@ tools/periksa_alur.py      pemeriksa berkas .github/workflows sebelum CI menjala
 assets/fonts/              delapan woff2 Poppins plus OFL.txt dan sumber.json
 assets/js/peta.js          peta karya, 31 lapisan di atas ubin vektor Mapbox
 assets/vendor/maplibre/    MapLibre GL JS, disimpan sendiri, bukan dari CDN
-tests/                     459 uji tanpa peramban, 48 dengan Chromium
+tests/                     551 uji tanpa peramban, 48 dengan Chromium
 docs/                      arsitektur, panduan uji, pemecahan masalah
 .github/workflows/ci.yml   lint, type check, test, security scan, build
 .github/workflows/kesehatan.yml  health check terhadap situs yang sudah terbit

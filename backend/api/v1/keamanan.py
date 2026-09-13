@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 
 from backend.api.tergantung import alamat_teringkas, butuh_admin
 from backend.core import rahasia, surat
+from backend.layanan import wajah as wajah_modul
 from backend.core.konfigurasi import pengaturan
 from backend.layanan import keamanan as lapis
 
@@ -50,8 +51,10 @@ async def keadaan(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
         # Dua keadaan lingkungan yang jujur disebut, bukan disembunyikan.
         # Tombol yang selalu ada lalu selalu gagal lebih buruk daripada
         # tombol yang menjelaskan kenapa ia belum bisa dipakai.
+        "wajah_terdaftar": baris["wajah_didaftar_pada"] is not None,
         "surat_siap": surat.siap(),
         "kunci_kolom_siap": rahasia.siap(),
+        "wajah_siap": wajah_modul.siap(),
     }
 
 
@@ -169,3 +172,52 @@ async def totp_matikan(
 @rute.get("/peristiwa", summary="Aktivitas keamanan terakhir")
 async def peristiwa(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
     return {"peristiwa": await lapis.jejak(pengguna["id"])}
+
+
+# ------------------------------------------------------------------ wajah ---
+
+
+class BingkaiWajah(BaseModel):
+    # Tiga bingkai base64, masing masing dibatasi lagi di lapisan wajah.
+    bingkai: list[str] = Field(min_length=2, max_length=5)
+
+
+@rute.post("/wajah/daftar", summary="Daftarkan wajah sebagai faktor kedua")
+async def wajah_daftar(
+    isian: BingkaiWajah,
+    pengguna: Annotated[dict, Depends(butuh_admin)],
+    alamat: Annotated[str, Depends(alamat_teringkas)],
+) -> dict:
+    """Fotonya TIDAK disimpan. Yang tersimpan 128 angka, dan itu pun tersandi.
+
+    Batas lapisan ini ditulis di backend/layanan/wajah.py dan diulang di layar
+    tempat ia dinyalakan: ia menaikkan ongkos masuk, ia tidak membuktikan
+    kehadiran, dan ia bukan pengganti passkey.
+    """
+    penuh = await lapis.pengguna(pengguna["id"])
+    if not penuh:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="tidak ada")
+    try:
+        return await lapis.daftarkan_wajah(penuh, isian.bingkai, alamat)
+    except lapis.BelumSiap as belum:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(belum)
+        ) from belum
+    except lapis.Ditolak as ditolak:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(ditolak)
+        ) from ditolak
+
+
+@rute.post("/wajah/hapus", summary="Hapus wajah yang terdaftar")
+async def wajah_hapus(
+    pengguna: Annotated[dict, Depends(butuh_admin)],
+    alamat: Annotated[str, Depends(alamat_teringkas)],
+) -> dict:
+    """Menghapus barisnya, bukan menandainya nonaktif.
+
+    Data biometrik yang dinonaktifkan tetap data biometrik yang tersimpan.
+    """
+    penuh = await lapis.pengguna(pengguna["id"])
+    await lapis.hapus_wajah(penuh, alamat)
+    return {"terdaftar": False}

@@ -18,6 +18,7 @@ dan berkas VPS masuk.
 | 3 | Warna Deep Cobalt Blue | Diganti atas permintaan Anda, hijau Gojek lalu hitam putih Uber. Abu abunya kini netral seperti Uber Base, latar `#f6f6f6` |
 | 4 | Menu home, about, project | Sudah, plus Blog atas permintaan Anda |
 | 5 | Copyright | Sudah |
+| 7 | Keamanan dashboard seperti Meta dan Google | Lambang, rata kiri kanan, verifikasi email, kode OTP, dan sidik jari lewat WebAuthn sudah dan sudah dijalankan. Verifikasi wajah terpasang dan **belum pernah dijalankan dengan kamera sungguhan**, lihat [keamanan-akun.md](keamanan-akun.md) |
 | 6 | Domain hendrokuswantoro.com | **Belum terdaftar.** Otoritas .com menjawab NXDOMAIN, bukan delegasi yang sedang menyebar. Situsnya hidup di workers.dev. Lihat bagian Domain di bawah |
 
 ## Bagian dua, tumpukan teknologi
@@ -69,7 +70,7 @@ bukan untuk brosur empat halaman. Syarat kapan keputusan ini gugur ada di
 | 5 Database | Sudah | PostgreSQL + PostGIS, migrasi bernomor, batasan diuji dengan cara dilanggar |
 | 6 Redis | Sudah | Pembatas laju. Sesi sengaja di Postgres, bukan di sini |
 | 7 Object storage | Tidak berlaku | Tidak ada unggahan |
-| 8 Authentication & IAM | Sudah | Passkey WebAuthn, Argon2id, JWT. 19 + 18 uji, sebagian besar menguji penolakan |
+| 8 Authentication & IAM | Sudah | Passkey WebAuthn dengan sensor perangkat, Argon2id, JWT, plus faktor kedua: TOTP RFC 6238, kode email, kode pemulihan, verifikasi wajah. Batas masing masing di [keamanan-akun.md](keamanan-akun.md) |
 | 9 Authorization | Sudah | RBAC, `butuh_admin`, 401 dan 403 dibedakan |
 | 10 Session & Token | Sudah | Refresh berputar, dicabut di Postgres, hanya SHA-256-nya yang disimpan |
 | 11 Security | Sudah | Header, CSP, HSTS, penyisiran rahasia. Penyisiran penuh 13 Sep 2026 menutup empat temuan, lihat [audit-keamanan.md](audit-keamanan.md) |
@@ -77,7 +78,7 @@ bukan untuk brosur empat halaman. Syarat kapan keputusan ini gugur ada di
 | 13 CDN & WAF | Sudah | Cloudflare |
 | 14 Infrastructure | Sudah, belum hidup | Compose, unit systemd yang dikeraskan, `pasang.sh` yang idempoten. Belum pernah menyentuh Ubuntu sungguhan |
 | 15 CI/CD | Sudah | Lint, type check, test, security scan, build tiap push |
-| 16 Testing | Sudah | 507 uji: berkas, gaya dan kontras, basis data, API, autentikasi, passkey, enkripsi cadangan, infrastruktur, peramban, performa |
+| 16 Testing | Sudah | 599 uji: berkas, gaya dan kontras, basis data, API, autentikasi, passkey, enkripsi cadangan, infrastruktur, peramban, performa |
 | 17 Monitoring | Sudah | Log JSON terstruktur, health check harian, peringatan lewat isu. Health check-nya sendiri pernah gagal tiap malam karena cacatnya sendiri, lihat bawah |
 | 18 Backup & DR | Sudah | AES-256-GCM, RPO 1 hari, RTO di bawah 15 menit, retensi 14 lokal dan 30 hari di penyedia, pemulihan diuji tiap push |
 | 19 DevOps & Automation | Sudah | Deploy, build, sertifikat, pemeriksaan semuanya otomatis |
@@ -182,6 +183,9 @@ blok `/assets/` yang memasang `add_header` tanpa mengulangnya.
 ` harfiah di daftar jalur, diganti here-doc |
 | Aset dikirim nginx tanpa header keamanan | keenamnya diulang di blok `/assets/` |
 | `verifikasi.sh` mengaku Node tidak terpasang padahal terpasang | mencari node di jalur Windows yang biasa, dua langkah tidak lagi dilewati |
+| Dashboard tanpa faktor kedua | TOTP, kode email, kode pemulihan, dan verifikasi wajah, semuanya lewat tiket berumur lima menit |
+| Alamat email tidak pernah dibuktikan | tautan sekali pakai, 24 jam, dan surat yang tidak terkirim tidak pernah mengaku terkirim |
+| Tidak ada jejak siapa pun masuk | peristiwa keamanan, termasuk yang gagal, tanpa menyimpan alamat IP apa adanya |
 
 ## Domain, dan satu klaim di dokumen ini yang ternyata salah
 

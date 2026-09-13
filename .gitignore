@@ -34,3 +34,6 @@ dist-*.zip
 # Local settings that carry a key
 assets/js/konfigurasi.js
 cadangan/
+
+# Model pengenalan wajah, 39 MB, diunduh dengan tools/ambil_model.py
+assets/model/
