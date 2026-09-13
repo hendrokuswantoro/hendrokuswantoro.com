@@ -22,12 +22,12 @@
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap">
+<link rel="preload" href="/assets/fonts/poppins-v24-400-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/poppins-v24-600-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/poppins-v24-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="alternate" type="application/rss+xml" title="hendrokuswantoro.com" href="/feed.xml">
-<link rel="stylesheet" href="/assets/css/style.css?v=106400">
-<script defer src="/assets/js/app.js?v=36"></script>
+<link rel="stylesheet" href="/assets/css/style.css?v=106500">
+<script defer src="/assets/js/app.js?v=37"></script>
 </head>
 <body>
 <a class="skip-link" href="#main" data-ind="Lompat ke isi">Skip to content</a>
@@ -99,7 +99,9 @@
 
         <article class="card reveal" id="karya-parking" data-category="app">
           <div class="card__cover">
-            <img src="/assets/img/work/parking.webp" width="800" height="450" loading="lazy" decoding="async"
+            <img src="/assets/img/work/parking.webp"
+                 srcset="/assets/img/work/parking-400.webp 400w, /assets/img/work/parking-600.webp 600w, /assets/img/work/parking.webp 800w"
+                 sizes="(min-width: 1440px) 327px, (min-width: 1280px) 23vw, (min-width: 960px) 31vw, (min-width: 660px) 47vw, 92vw" width="800" height="450" loading="lazy" decoding="async"
                  alt="Screenshot of the parking map app showing the zone and the fee for Jalan Malioboro" data-ind-alt="Tangkapan layar aplikasi peta parkir, menampilkan zona dan tarif di Jalan Malioboro">
             <span class="card__badge" data-ind="Aplikasi peta">Map app</span>
           </div>
@@ -113,7 +115,9 @@
 
         <article class="card reveal" id="karya-fire" data-category="satellite analysis">
           <div class="card__cover">
-            <img src="/assets/img/work/fire.webp" width="800" height="450" loading="lazy" decoding="async"
+            <img src="/assets/img/work/fire.webp"
+                 srcset="/assets/img/work/fire-400.webp 400w, /assets/img/work/fire-600.webp 600w, /assets/img/work/fire.webp 800w"
+                 sizes="(min-width: 1440px) 327px, (min-width: 1280px) 23vw, (min-width: 960px) 31vw, (min-width: 660px) 47vw, 92vw" width="800" height="450" loading="lazy" decoding="async"
                  alt="Six small maps of Kalimantan showing where fires ignited through the 2026 season" data-ind-alt="Enam peta kecil Kalimantan yang menunjukkan titik api sepanjang musim 2026">
             <span class="card__badge" data-ind="Data satelit">Satellite data</span>
           </div>
@@ -127,7 +131,9 @@
 
         <article class="card reveal" id="karya-fish" data-category="analysis">
           <div class="card__cover">
-            <img src="/assets/img/work/fish.webp" width="800" height="450" loading="lazy" decoding="async"
+            <img src="/assets/img/work/fish.webp"
+                 srcset="/assets/img/work/fish-400.webp 400w, /assets/img/work/fish-600.webp 600w, /assets/img/work/fish.webp 800w"
+                 sizes="(min-width: 1440px) 327px, (min-width: 1280px) 23vw, (min-width: 960px) 31vw, (min-width: 660px) 47vw, 92vw" width="800" height="450" loading="lazy" decoding="async"
                  alt="Poster with suitability maps and charts for fish landing sites in Natuna" data-ind-alt="Poster berisi peta kesesuaian dan grafik lokasi pendaratan ikan di Natuna">
             <span class="card__badge" data-ind="Analisis peta">Map analysis</span>
           </div>
@@ -141,7 +147,9 @@
 
         <article class="card reveal" id="karya-pickup" data-category="analysis">
           <div class="card__cover">
-            <img src="/assets/img/work/pickup.webp" width="800" height="450" loading="lazy" decoding="async"
+            <img src="/assets/img/work/pickup.webp"
+                 srcset="/assets/img/work/pickup-400.webp 400w, /assets/img/work/pickup-600.webp 600w, /assets/img/work/pickup.webp 800w"
+                 sizes="(min-width: 1440px) 327px, (min-width: 1280px) 23vw, (min-width: 960px) 31vw, (min-width: 660px) 47vw, 92vw" width="800" height="450" loading="lazy" decoding="async"
                  alt="Map of common pickup points from driver GPS pings in Jakarta" data-ind-alt="Peta titik jemput umum dari ping GPS pengemudi di Jakarta">
             <span class="card__badge" data-ind="Analisis peta">Map analysis</span>
           </div>
@@ -155,7 +163,9 @@
 
         <article class="card reveal" id="karya-reach" data-category="analysis design">
           <div class="card__cover">
-            <img src="/assets/img/work/reach.webp" width="800" height="450" loading="lazy" decoding="async"
+            <img src="/assets/img/work/reach.webp"
+                 srcset="/assets/img/work/reach-400.webp 400w, /assets/img/work/reach-600.webp 600w, /assets/img/work/reach.webp 800w"
+                 sizes="(min-width: 1440px) 327px, (min-width: 1280px) 23vw, (min-width: 960px) 31vw, (min-width: 660px) 47vw, 92vw" width="800" height="450" loading="lazy" decoding="async"
                  alt="Map sheet of service accessibility in Biak Numfor" data-ind-alt="Lembar peta aksesibilitas layanan di Biak Numfor">
             <span class="card__badge" data-ind="Jangkauan layanan">Service reach</span>
           </div>
@@ -169,7 +179,9 @@
 
         <article class="card reveal" id="karya-landcover" data-category="design satellite">
           <div class="card__cover">
-            <img src="/assets/img/work/landcover.webp" width="800" height="450" loading="lazy" decoding="async"
+            <img src="/assets/img/work/landcover.webp"
+                 srcset="/assets/img/work/landcover-400.webp 400w, /assets/img/work/landcover-600.webp 600w, /assets/img/work/landcover.webp 800w"
+                 sizes="(min-width: 1440px) 327px, (min-width: 1280px) 23vw, (min-width: 960px) 31vw, (min-width: 660px) 47vw, 92vw" width="800" height="450" loading="lazy" decoding="async"
                  alt="Land cover map sheet of the Yogyakarta urban area" data-ind-alt="Lembar peta tutupan lahan kawasan perkotaan Yogyakarta">
             <span class="card__badge" data-ind="Desain peta">Map design</span>
           </div>
@@ -183,7 +195,9 @@
 
         <article class="card reveal" id="karya-mimika" data-category="satellite design">
           <div class="card__cover">
-            <img src="/assets/img/work/mimika.webp" width="800" height="450" loading="lazy" decoding="async"
+            <img src="/assets/img/work/mimika.webp"
+                 srcset="/assets/img/work/mimika-400.webp 400w, /assets/img/work/mimika-600.webp 600w, /assets/img/work/mimika.webp 800w"
+                 sizes="(min-width: 1440px) 327px, (min-width: 1280px) 23vw, (min-width: 960px) 31vw, (min-width: 660px) 47vw, 92vw" width="800" height="450" loading="lazy" decoding="async"
                  alt="Map of mining excavations and forest cover loss in Mimika" data-ind-alt="Peta bukaan tambang dan kehilangan tutupan hutan di Mimika">
             <span class="card__badge" data-ind="Data satelit">Satellite data</span>
           </div>

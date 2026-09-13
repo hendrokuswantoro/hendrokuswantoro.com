@@ -1,0 +1,87 @@
+{
+  "keluarga": "Poppins",
+  "lisensi": "OFL-1.1, salinannya di assets/fonts/OFL.txt",
+  "perintah": "python tools/ambil_font.py",
+  "berkas": [
+    {
+      "nama": "poppins-v24-400-latin.woff2",
+      "tebal": 400,
+      "subset": "latin",
+      "versi": "v24",
+      "rentang": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "asal": "https://fonts.gstatic.com/s/poppins/v24/pxiEyp8kv8JHgFVrJJfecg.woff2",
+      "bita": 7884,
+      "sha256": "7d93459d86585bfcdbb7e0376056226adb25821ee54b96236fe2123e9560929f"
+    },
+    {
+      "nama": "poppins-v24-400-latin-ext.woff2",
+      "tebal": 400,
+      "subset": "latin-ext",
+      "versi": "v24",
+      "rentang": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "asal": "https://fonts.gstatic.com/s/poppins/v24/pxiEyp8kv8JHgFVrJJnecmNE.woff2",
+      "bita": 5644,
+      "sha256": "0b1fcab42c18b69bcfe9ce4799fcbff5af1621c53ffcfdc4723c6f5ec4ee3ffb"
+    },
+    {
+      "nama": "poppins-v24-500-latin.woff2",
+      "tebal": 500,
+      "subset": "latin",
+      "versi": "v24",
+      "rentang": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "asal": "https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLGT9Z1xlFQ.woff2",
+      "bita": 7748,
+      "sha256": "cd36de204aca2d5fa263a731f7c20009b5e3d754ba1f1e03c33e93a48f3e7446"
+    },
+    {
+      "nama": "poppins-v24-500-latin-ext.woff2",
+      "tebal": 500,
+      "subset": "latin-ext",
+      "versi": "v24",
+      "rentang": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "asal": "https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLGT9Z1JlFc-K.woff2",
+      "bita": 5484,
+      "sha256": "af5fda16a19169e029a132374616728e1bf326d90bef5a552395c5053e21cd0f"
+    },
+    {
+      "nama": "poppins-v24-600-latin.woff2",
+      "tebal": 600,
+      "subset": "latin",
+      "versi": "v24",
+      "rentang": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "asal": "https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLEj6Z1xlFQ.woff2",
+      "bita": 8000,
+      "sha256": "f4e80d9dfd374d02989b87a27b5ed4cb78fbb177c27f1478e9a8b0afb7513149"
+    },
+    {
+      "nama": "poppins-v24-600-latin-ext.woff2",
+      "tebal": 600,
+      "subset": "latin-ext",
+      "versi": "v24",
+      "rentang": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "asal": "https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLEj6Z1JlFc-K.woff2",
+      "bita": 5524,
+      "sha256": "bb1f2d582e7fba586ab70c91ef062d3becaf78b887654953863521b73665d171"
+    },
+    {
+      "nama": "poppins-v24-700-latin.woff2",
+      "tebal": 700,
+      "subset": "latin",
+      "versi": "v24",
+      "rentang": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD",
+      "asal": "https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLCz7Z1xlFQ.woff2",
+      "bita": 7816,
+      "sha256": "9338e65fc077355c7a87ae0d64cc101e23b9bf8ad78ae65f0f319c857311b526"
+    },
+    {
+      "nama": "poppins-v24-700-latin-ext.woff2",
+      "tebal": 700,
+      "subset": "latin-ext",
+      "versi": "v24",
+      "rentang": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF",
+      "asal": "https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLCz7Z1JlFc-K.woff2",
+      "bita": 5432,
+      "sha256": "ccfd87f69ef00d811da3d06488cec4e79ec99d289cfbcbe4be42031cecae775a"
+    }
+  ]
+}

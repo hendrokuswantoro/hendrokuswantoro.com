@@ -199,3 +199,114 @@ def test_kunci_penyimpanan_sama_di_kedua_versi():
     tata = (AKAR / "next" / "app" / "layout.tsx").read_text(encoding="utf-8")
     assert 'TEMA_KEY = "hk-tema"' in app
     assert '"hk-tema"' in tata
+
+
+# ------------------------------------------------------------------- font ---
+
+# Poppins dipindahkan ke dalam repositori ini pada 13 September 2026. Yang
+# dijaga di bawah bukan selera, melainkan tiga hal yang gampang hilang lagi
+# diam diam: tidak ada halaman yang kembali memanggil Google, berkas yang
+# dideklarasikan memang ada, dan preload-nya menunjuk alamat yang sama persis
+# dengan yang dipakai @font-face. Preload yang alamatnya selisih satu karakter
+# tetap diunduh, lalu diunduh kedua kalinya oleh CSS, dan hasilnya bukan lebih
+# cepat melainkan dua kali lebih berat.
+
+FONT = AKAR / "assets" / "fonts"
+TEBAL_PRELOAD = (400, 600, 700)
+
+
+def _nama_font_di_css() -> list[str]:
+    return re.findall(r'url\("/assets/fonts/([^"]+)"\)', GAYA)
+
+
+@pytest.mark.parametrize("berkas", HALAMAN)
+def test_tidak_ada_halaman_yang_memanggil_google(berkas):
+    teks = berkas.read_text(encoding="utf-8")
+    for asal in ("fonts.googleapis.com", "fonts.gstatic.com"):
+        assert asal not in teks, (
+            f"{nama(berkas)} masih memanggil {asal}. Fontnya ada di assets/fonts."
+        )
+
+
+def test_csp_menutup_asal_font_luar():
+    # Komentarnya memang menyebut kedua asal itu, untuk menjelaskan kenapa
+    # keduanya dicabut. Yang diperiksa arahannya, bukan penjelasannya.
+    arahan = "\n".join(
+        b for b in KEPALA.splitlines() if not b.lstrip().startswith("#")
+    )
+    assert "font-src 'self';" in arahan, "font-src harus mengunci font ke asal sendiri"
+    assert "fonts.googleapis.com" not in arahan, "CSP masih mengizinkan Google Fonts"
+    assert "fonts.gstatic.com" not in arahan
+
+
+def test_setiap_font_yang_dideklarasikan_ada_berkasnya():
+    berkas = _nama_font_di_css()
+    assert berkas, "style.css tidak mendeklarasikan satu pun @font-face"
+    for n in berkas:
+        assert (FONT / n).exists(), f"@font-face menunjuk {n} yang tidak ada"
+        assert (FONT / n).read_bytes()[:4] == b"wOF2", f"{n} bukan woff2"
+
+
+def test_catatan_font_cocok_dengan_berkasnya():
+    """tools/ambil_font.py --periksa menghitung sha256 tiap berkas dan
+    membandingkannya dengan assets/fonts/sumber.json. Luring: CI tidak ikut
+    bergantung pada Google untuk bisa lulus."""
+    hasil = subprocess.run(
+        [sys.executable, str(AKAR / "tools" / "ambil_font.py"), "--periksa"],
+        capture_output=True, text=True, cwd=AKAR,
+    )
+    assert hasil.returncode == 0, hasil.stdout + hasil.stderr
+
+
+def test_lisensi_font_ikut_dibawa():
+    """OFL 1.1 menuntut salinan lisensinya menyertai font yang disebarkan."""
+    ofl = (FONT / "OFL.txt").read_text(encoding="utf-8")
+    assert "SIL Open Font License" in ofl
+    assert "Poppins" in ofl
+
+
+@pytest.mark.parametrize("berkas", HALAMAN)
+def test_preload_font_menunjuk_alamat_yang_dipakai_css(berkas):
+    teks = berkas.read_text(encoding="utf-8")
+    dimuat = re.findall(r'<link rel="preload" href="(/assets/fonts/[^"]+)"[^>]*>', teks)
+    assert len(dimuat) == len(TEBAL_PRELOAD), (
+        f"{nama(berkas)} memuat awal {len(dimuat)} font, seharusnya {len(TEBAL_PRELOAD)}"
+    )
+
+    di_css = {f"/assets/fonts/{n}" for n in _nama_font_di_css()}
+    for alamat in dimuat:
+        assert alamat in di_css, (
+            f"{nama(berkas)} memuat awal {alamat}, alamat yang tidak dipakai @font-face. "
+            "Berkasnya akan diunduh dua kali."
+        )
+
+    for tebal in TEBAL_PRELOAD:
+        assert any(f"-{tebal}-latin.woff2" in a for a in dimuat), (
+            f"{nama(berkas)} tidak memuat awal tebal {tebal}"
+        )
+
+
+@pytest.mark.parametrize("berkas", HALAMAN)
+def test_preload_font_memakai_crossorigin(berkas):
+    """Tanpa crossorigin, permintaan preload dan permintaan CSS dianggap dua
+    hal berbeda oleh peramban, dan fontnya diunduh dua kali. Aturan ini
+    berlaku walau fontnya dari asal sendiri."""
+    teks = berkas.read_text(encoding="utf-8")
+    for tag in re.findall(r'<link rel="preload"[^>]*assets/fonts[^>]*>', teks):
+        assert 'as="font"' in tag, tag
+        assert 'type="font/woff2"' in tag, tag
+        assert "crossorigin" in tag, f"preload font tanpa crossorigin: {tag}"
+
+
+def test_hanya_subset_latin_yang_disimpan():
+    """Poppins juga membawa devanagari, sekitar 17 KB per tebal, dan situs ini
+    tidak memuat satu pun aksara itu."""
+    semua = sorted(p.name for p in FONT.glob("*.woff2"))
+    assert semua, "tidak ada berkas font"
+    for n in semua:
+        assert "devanagari" not in n, f"{n} subset yang tidak dipakai situs ini"
+
+    latin = sum(
+        p.stat().st_size for p in FONT.glob("*.woff2") if p.stem.endswith("-latin")
+    )
+    assert latin < 40 * 1024, f"subset latin berjumlah {latin / 1024:.1f} KB"

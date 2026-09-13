@@ -8,12 +8,18 @@ warna bergeser, dan yang kedua selalu tertinggal. Itu sudah terjadi: port
 Next.js masih memakai palet abu abu kebiruan yang lama berhari hari setelah
 versi HTML pindah ke abu abu netral Uber.
 
-Bedanya dengan berkas induk cuma satu hal, dan itu memang harus berbeda:
-`next/font` memuat Poppins sendiri dan mengekspornya sebagai variabel CSS
-`--font-poppins`, sehingga situs hasil ekspor tidak meminta apa pun ke Google
-saat dijalankan. Jadi tiap `font-family: "Poppins",` diganti
-`font-family: var(--font-poppins),`. Tidak ada perbedaan lain, dan
-`tests/test_gaya.py` yang memastikannya.
+Bedanya dengan berkas induk ada dua, dan keduanya memang harus berbeda:
+
+1. `next/font` memuat Poppins sendiri dan mengekspornya sebagai variabel CSS
+   `--font-poppins`, sehingga situs hasil ekspor tidak meminta apa pun ke
+   Google saat dijalankan. Jadi tiap `font-family: "Poppins",` diganti
+   `font-family: var(--font-poppins),`.
+2. Blok `@font-face` yang ditulis `tools/ambil_font.py` dibuang seluruhnya.
+   Berkasnya ada di `/assets/fonts/`, alamat yang tidak eksis di dalam hasil
+   ekspor Next, jadi membawanya ikut berarti delapan permintaan yang pasti
+   dijawab 404 sekaligus dua deklarasi Poppins yang saling bertengkar.
+
+Tidak ada perbedaan lain, dan `tests/test_gaya.py` yang memastikannya.
 """
 
 from __future__ import annotations
@@ -29,17 +35,35 @@ TUJUAN = AKAR / "next" / "app" / "globals.css"
 DARI = 'font-family: "Poppins",'
 JADI = "font-family: var(--font-poppins),"
 
+MULAI = "/* >>> font, dibangkitkan tools/ambil_font.py, jangan disunting */"
+SELESAI = "/* <<< font */"
+
 KEPALA = """/* DIBANGKITKAN, JANGAN DISUNTING.
    Sumbernya assets/css/style.css. Jalankan: python tools/gaya_next.py
-   Satu satunya perbedaan: Poppins datang dari next/font, bukan dari Google. */
+   Dua perbedaan: Poppins datang dari next/font, dan blok @font-face yang
+   menunjuk ke /assets/fonts dibuang karena alamat itu tidak ada di sini. */
 """
+
+
+def tanpa_font_face(teks: str) -> str:
+    """Membuang blok @font-face beserta penandanya. Kalau penandanya tidak ada,
+    berkas induknya belum pernah disentuh tools/ambil_font.py, dan itu bukan
+    keadaan yang boleh lolos diam diam."""
+    if MULAI not in teks:
+        sys.exit(
+            f"tidak menemukan penanda font di {SUMBER.name}. "
+            "Jalankan: python tools/ambil_font.py"
+        )
+    mulai = teks.index(MULAI)
+    akhir = teks.index(SELESAI) + len(SELESAI)
+    return (teks[:mulai] + teks[akhir:]).lstrip("\n")
 
 
 def bangkitkan() -> str:
     teks = SUMBER.read_text(encoding="utf-8")
     if DARI not in teks:
         sys.exit(f"tidak menemukan {DARI!r} di {SUMBER.name}; pola fontnya berubah?")
-    return KEPALA + teks.replace(DARI, JADI)
+    return KEPALA + tanpa_font_face(teks).replace(DARI, JADI)
 
 
 def main() -> int:

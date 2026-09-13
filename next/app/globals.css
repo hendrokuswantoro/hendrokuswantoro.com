@@ -1,6 +1,7 @@
 /* DIBANGKITKAN, JANGAN DISUNTING.
    Sumbernya assets/css/style.css. Jalankan: python tools/gaya_next.py
-   Satu satunya perbedaan: Poppins datang dari next/font, bukan dari Google. */
+   Dua perbedaan: Poppins datang dari next/font, dan blok @font-face yang
+   menunjuk ke /assets/fonts dibuang karena alamat itu tidak ada di sini. */
 /* ==========================================================================
    hendrokuswantoro.com - design system
    Palette follows the Uber app: black, white, grey, one blue accent.
