@@ -31,21 +31,47 @@
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://tiles.openfreemap.org https://api.mapbox.com https://server.arcgisonline.com https://s3.amazonaws.com; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self' blob: 'sha256-VUnTnFlu5ng6WnqmcjBDYVMXzjgyRSeLJtiwFpIU9Pw='; worker-src 'self' blob:; child-src blob:; connect-src 'self' https://tiles.openfreemap.org https://api.mapbox.com https://events.mapbox.com https://server.arcgisonline.com https://s3.amazonaws.com; object-src 'none'; upgrade-insecure-requests
 
-/assets/*
+# Kenapa ini daftar folder, bukan satu baris /assets/*.
+#
+# Percobaan pertama memakai /assets/* lalu menimpanya dengan aturan khusus
+# untuk konfigurasi.js. Itu TIDAK bekerja, dan kegagalannya sunyi: Cloudflare
+# MENGGABUNGKAN aturan yang cocok, tidak menggantinya, jadi berkas itu
+# disajikan dengan
+#
+#     Cache-Control: public, max-age=31536000, immutable, public, max-age=0, must-revalidate
+#
+# dan peramban membaca `immutable` yang datang lebih dulu. Ketahuan dengan
+# curl terhadap situs yang sudah terbit, bukan dengan membaca berkas ini.
+#
+# Jadi konfigurasi.js dikeluarkan dari cakupannya, bukan ditimpa. Kalau suatu
+# saat ada folder aset baru, tambahkan barisnya di sini; yang terlupa akan
+# kehilangan cache panjangnya, bukan menyajikan berkas basi selama setahun.
+# Arah gagalnya sengaja begitu.
+/assets/css/*
   Cache-Control: public, max-age=31536000, immutable
 
-# Satu pengecualian, dan alasannya penting.
+/assets/img/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/vendor/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/js/app.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/js/peta.js
+  Cache-Control: public, max-age=31536000, immutable
+
+# Sisanya, yaitu konfigurasi.js, TIDAK pernah disebut immutable.
 #
-# Janji `immutable` berarti peramban tidak akan pernah menanyakan berkas itu
-# lagi selama setahun, bahkan tidak dengan permintaan bersyarat. Janji itu
-# hanya boleh diberikan untuk alamat yang berganti setiap kali isinya berganti,
-# dan tools/versi_aset.py yang menjaminnya untuk seluruh aset lain.
-#
-# konfigurasi.js tidak bisa ikut. Isinya ditulis saat membangun dari variabel
-# MAPBOX_TOKEN, jadi sidiknya baru diketahui sesudah app.js yang menyebutnya
-# selesai ditulis. Berkasnya 298 bita. Satu permintaan bersyarat per kunjungan
-# jauh lebih murah daripada peta yang mati setahun di peramban seseorang
-# karena ia kebetulan berkunjung saat tokennya sedang kosong.
+# Isinya ditulis saat membangun dari variabel MAPBOX_TOKEN, jadi sidiknya baru
+# diketahui sesudah app.js yang menyebutnya selesai ditulis, dan alamatnya
+# tidak bisa ikut bercap isinya. Berkasnya 298 bita. Satu permintaan bersyarat
+# per kunjungan jauh lebih murah daripada peta yang mati setahun di peramban
+# seseorang karena ia kebetulan berkunjung saat tokennya sedang kosong.
 /assets/js/konfigurasi.js
   Cache-Control: public, max-age=0, must-revalidate
 

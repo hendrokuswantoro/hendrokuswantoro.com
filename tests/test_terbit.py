@@ -113,6 +113,22 @@ def test_konfigurasi_dikecualikan_dari_immutable():
     assert "must-revalidate" in aturan, aturan
     assert "immutable" not in aturan, aturan
 
+    # Dan tidak ada aturan LAIN yang ikut mencakupnya.
+    #
+    # Cloudflare MENGGABUNGKAN aturan yang cocok, tidak menggantinya. Aturan
+    # /assets/* yang menyebut immutable akan ikut menempel pada berkas ini,
+    # datang lebih dulu, dan dibaca peramban lebih dulu. Itu sudah terjadi:
+    # situs yang terbit menyajikannya dengan dua Cache-Control berturut turut,
+    # dan ketahuan lewat curl terhadap situsnya, bukan lewat membaca berkasnya.
+    baris_aturan = [
+        b.strip() for b in HEADERS.splitlines()
+        if b.startswith("/") and not b.strip().startswith("#")
+    ]
+    assert "/assets/*" not in baris_aturan, (
+        "/assets/* ikut mencakup konfigurasi.js, dan aturannya digabung, "
+        "bukan diganti. Sebut foldernya satu per satu."
+    )
+
     nginx = (AKAR / "infrastructure" / "nginx" / "hendrokuswantoro.conf").read_text(
         encoding="utf-8")
     assert "location = /assets/js/konfigurasi.js" in nginx, (
