@@ -58,17 +58,10 @@ ANGGARAN = {
     "/about":                 (150, 10),
     "/blog/":                 (150, 10),
     "/blog/kapan-peta-diam":  (150, 10),
-    # /project tetap longgar, dan itu bukan kemalasan.
-    #
-    # Jumlah permintaannya tidak tetap: peta memutuskan sendiri ubin mana yang
-    # dibutuhkan, dan angkanya bergerak antar putaran. Terukur 29, lalu 35,
-    # pada kode yang sama persis. Anggaran 34 sempat dipasang dan gagal pada
-    # putaran berikutnya, yaitu gagal karena ubin, bukan karena kodenya.
-    #
-    # Beratnya pun akan naik jauh begitu token Mapbox mengizinkan asal uji ini:
-    # sekarang tiap ubin dijawab 403, jadi 1927 KB yang terukur belum memuat
-    # satu pun ubin sungguhan.
-    "/project":              (3200, 48),
+    # /project besar dan itu jujur: MapLibre sendiri sekitar 1 MB. Angka di
+    # bawah menghitung berkas dari asal situs ini saja, jadi ubin peta tidak
+    # ikut, dan tidak bisa ikut menggagalkannya karena cuaca.
+    "/project":              (2200, 32),
 }
 
 HALAMAN = list(ANGGARAN)
@@ -91,10 +84,14 @@ def ukur(halaman, situs: str, jalur: str) -> dict:
     ukuran = halaman.evaluate("""() => {
         const e = performance.getEntriesByType('resource');
         const nav = performance.getEntriesByType('navigation')[0] || {};
-        const jumlah = e.reduce((n, x) => n + (x.transferSize || x.encodedBodySize || 0), 0);
+        const berat = x => x.transferSize || x.encodedBodySize || 0;
+        const jumlah = e.reduce((n, x) => n + berat(x), 0);
+        const sendiri = e.filter(x => x.name.startsWith(location.origin));
         return {
             bytes: jumlah + (nav.transferSize || 0),
+            bytesSendiri: sendiri.reduce((n, x) => n + berat(x), 0) + (nav.transferSize || 0),
             permintaan: e.length + 1,
+            permintaanSendiri: sendiri.length + 1,
             domSiap: Math.round(nav.domContentLoadedEventEnd || 0),
             muatSelesai: Math.round(nav.loadEventEnd || 0),
             terbesar: e.map(x => ({
@@ -112,21 +109,39 @@ def ukur(halaman, situs: str, jalur: str) -> dict:
 
 @pytest.mark.parametrize("jalur", HALAMAN)
 def test_anggaran_halaman(halaman, situs, jalur):
-    hasil = ukur(halaman, situs, jalur)
-    kb = round(hasil["bytes"] / 1024)
+    """Anggarannya dipasang pada berkas dari asal situs ini, bukan pada seluruh
+    permintaan, dan itu keputusan yang perlu dijelaskan.
 
-    print(f"\n  {jalur:28} {kb:5} KB  {hasil['permintaan']:3} permintaan  "
-          f"DOM {hasil['domSiap']} ms")
+    Ubin peta datang dari Mapbox atau, kalau tokennya kosong, dari OpenFreeMap.
+    Jumlahnya diputuskan peta sendiri berdasarkan apa yang kebetulan terlihat,
+    dan berubah antar putaran pada kode yang sama persis: /project terukur 29
+    permintaan di sini, 51 di CI yang tidak punya token sehingga ubinnya benar
+    benar dimuat. Anggaran yang menghitungnya akan gagal karena cuaca, bukan
+    karena ada yang menggemukkan situs ini.
+
+    Yang bisa digemukkan seseorang lewat commit adalah berkas dari asal sendiri:
+    pustaka baru, gambar yang lupa dikecilkan, CSS yang membengkak. Itu yang
+    dijaga. Jumlah seluruhnya tetap dicetak, supaya tetap terlihat, hanya tidak
+    dijadikan syarat lulus.
+    """
+    hasil = ukur(halaman, situs, jalur)
+    kb = round(hasil["bytesSendiri"] / 1024)
+    semua_kb = round(hasil["bytes"] / 1024)
+
+    print(f"\n  {jalur:28} {kb:5} KB  {hasil['permintaanSendiri']:3} permintaan"
+          f"   (seluruhnya {semua_kb} KB, {hasil['permintaan']} permintaan)"
+          f"  DOM {hasil['domSiap']} ms")
     for b in hasil["terbesar"]:
         print(f"      {b['kb']:5} KB  {b['nama']}")
 
     batas_kb, batas_permintaan = ANGGARAN[jalur]
     assert kb <= batas_kb, (
-        f"{jalur} membengkak jadi {kb} KB, anggaran {batas_kb} KB.\n"
+        f"{jalur} membengkak jadi {kb} KB dari asal sendiri, anggaran {batas_kb} KB.\n"
         f"terbesar: {json.dumps(hasil['terbesar'])}"
     )
-    assert hasil["permintaan"] <= batas_permintaan, (
-        f"{jalur} meminta {hasil['permintaan']} berkas, anggaran {batas_permintaan}"
+    assert hasil["permintaanSendiri"] <= batas_permintaan, (
+        f"{jalur} meminta {hasil['permintaanSendiri']} berkas dari asal sendiri, "
+        f"anggaran {batas_permintaan}"
     )
 
 

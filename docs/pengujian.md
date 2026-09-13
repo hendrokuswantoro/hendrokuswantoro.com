@@ -142,6 +142,22 @@ ditulis apa adanya dan diberi anggaran sendiri, bukan disembunyikan di balik
 satu anggaran besar untuk semua halaman, sebab anggaran seperti itu membuat
 halaman lain bisa membengkak tanpa ketahuan.
 
+**Yang dianggarkan berkas dari asal situs ini, bukan seluruh permintaan.**
+Ubin peta datang dari Mapbox atau, kalau tokennya kosong, dari OpenFreeMap.
+Jumlahnya diputuskan peta sendiri berdasarkan apa yang kebetulan terlihat, dan
+berubah antar putaran pada kode yang sama persis: `/project` terukur 29
+permintaan di mesin yang tokennya dibatasi per URL sehingga tiap ubin dijawab
+403, dan 51 di CI yang tidak punya token sehingga ubinnya benar benar dimuat.
+Anggaran yang menghitungnya akan gagal karena cuaca, bukan karena ada yang
+menggemukkan situs ini.
+
+Yang bisa digemukkan seseorang lewat sebuah commit adalah berkas dari asal
+sendiri: pustaka baru, gambar yang lupa dikecilkan, CSS yang membengkak. Itu
+yang dijaga. Jumlah seluruhnya tetap dicetak di sebelahnya, supaya tetap
+terlihat, hanya tidak dijadikan syarat lulus. Catatan kecil yang mengikutinya:
+bita ubin memang tidak pernah ikut terhitung sejak awal, sebab ia dari asal
+lain tanpa `Timing-Allow-Origin`, jadi yang berubah hanya jumlah permintaannya.
+
 Yang juga dijaga:
 
 - **Tidak ada satu pun permintaan ke pihak ketiga.** Dulu Google Fonts

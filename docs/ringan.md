@@ -164,6 +164,38 @@ hanya berat, dan keputusan semacam itu bukan keputusan yang boleh diambil
 diam diam lewat dokumen performa. Dicatat di sini sebagai pilihan yang
 tersedia, bukan sebagai rencana.
 
+## Angka yang benar benar dialami pembaca
+
+Tabel di atas diukur terhadap server uji lokal, yang tidak memadatkan apa pun.
+Diukur terhadap situs yang benar benar terbit, dengan brotli dari Cloudflare,
+beranda menjadi **92,3 KB** pada layar 626 px:
+
+| | KB |
+| --- | --- |
+| `parking.webp`, 800w untuk layar berkerapatan 1,5 | 33,4 |
+| empat berkas font Poppins | 31,9 |
+| `style.css` | 13,5 |
+| `app.js` | 7,5 |
+| dokumen HTML | 6,0 |
+
+Delapan permintaan, nol asal luar. Dua gambar lainnya dimuat malas dan belum
+diminta pada saat pengukuran.
+
+Perhatikan font tidak ikut mengecil: woff2 sudah terkompresi, dan brotli tidak
+bisa menambah apa apa di atasnya. Itu juga sebabnya `gzip_types` di nginx tidak
+menyebut font, dan memang tidak boleh.
+
+## Anggaran diukur pada asal sendiri, bukan pada seluruh permintaan
+
+Ubin peta datang dari luar dan jumlahnya diputuskan peta sendiri. `/project`
+terukur 29 permintaan di mesin yang tokennya dibatasi per URL sehingga tiap
+ubin dijawab 403, dan 51 di CI yang tidak punya token sehingga ubin OpenFreeMap
+benar benar dimuat. Anggaran yang menghitung keduanya akan gagal karena cuaca.
+
+Jadi yang dijadikan syarat lulus hanya berkas dari asal situs ini, yaitu satu
+satunya yang bisa digemukkan oleh sebuah commit. Jumlah seluruhnya tetap
+dicetak di sebelahnya.
+
 ## Yang paling berpengaruh dan belum dilakukan siapa pun di sini
 
 Satu angka yang tidak bisa diperbaiki dari dalam repositori ini: situs ini

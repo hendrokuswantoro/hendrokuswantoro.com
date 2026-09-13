@@ -376,8 +376,20 @@ jobs:
       # sini pernah tidak bisa ditelusuri sama sekali dari luar.
       - name: Browser tests
         run: |
+          # set +e wajib, dan ketiadaannya membuat dua langkah di bawahnya
+          # tidak pernah berjalan.
+          #
+          # GitHub menjalankan `shell: bash` sebagai `bash -eo pipefail`.
+          # Jadi begitu pytest gagal, pipeline-nya gagal, dan -e membuat
+          # skripnya berhenti persis di baris itu. Blok ringkasan run dan
+          # anotasi kegagalan di bawah tidak pernah dieksekusi, sehingga
+          # satu satunya yang terlihat dari luar adalah kode keluarnya.
+          # Itulah kenapa ringkasan yang dipasang untuk menolong justru
+          # tidak pernah muncul tepat pada saat ia dibutuhkan.
+          set +e
           python -m pytest tests/test_peramban.py -q -m peramban --tb=short | tee hasil-peramban.txt
           kode=${PIPESTATUS[0]}
+          set -e
           {
             echo "### Uji peramban"
             echo
@@ -401,8 +413,20 @@ jobs:
 
       - name: Performance budgets
         run: |
+          # set +e wajib, dan ketiadaannya membuat dua langkah di bawahnya
+          # tidak pernah berjalan.
+          #
+          # GitHub menjalankan `shell: bash` sebagai `bash -eo pipefail`.
+          # Jadi begitu pytest gagal, pipeline-nya gagal, dan -e membuat
+          # skripnya berhenti persis di baris itu. Blok ringkasan run dan
+          # anotasi kegagalan di bawah tidak pernah dieksekusi, sehingga
+          # satu satunya yang terlihat dari luar adalah kode keluarnya.
+          # Itulah kenapa ringkasan yang dipasang untuk menolong justru
+          # tidak pernah muncul tepat pada saat ia dibutuhkan.
+          set +e
           python -m pytest tests/test_performa.py -q -s -m peramban --tb=short | tee hasil-performa.txt
           kode=${PIPESTATUS[0]}
+          set -e
           {
             echo "### Anggaran performa"
             echo
