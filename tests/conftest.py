@@ -150,7 +150,26 @@ def halaman(peramban):
 
 
 def buka(halaman: Page, situs: str, jalur: str) -> None:
-    halaman.goto(f"{situs}{jalur}", wait_until="networkidle")
+    """Membuka halaman lalu menunggu sampai app.js selesai menyiapkannya.
+
+    Dulu yang ditunggu "networkidle", dan itu salah untuk satu halaman:
+    /project memuat peta, peta terus meminta ubin selama masih terlihat, dan
+    jaringan yang tidak pernah diam selama 500 ms tidak pernah memenuhi
+    syarat itu. Hasilnya Page.goto berjalan sampai batas 30 detik lalu gagal,
+    dengan pesan yang hanya menyebut timeout dan tidak menyebut peta sama
+    sekali. Di mesin ini ia lolos justru karena tokennya dibatasi per URL:
+    tiap ubin dijawab 403 dalam sekejap, jaringannya diam, dan ujinya hijau
+    karena petanya rusak. Di CI, OpenFreeMap menjawab sungguhan, ubinnya
+    mengalir, dan ujinya gagal.
+
+    Sekarang yang ditunggu `data-siap`, dipasang app.js di akhir boot(). Itu
+    pernyataan dari kode yang menyiapkan halamannya, bukan tebakan dari
+    perilaku jaringan. Uji yang butuh petanya benar benar siap memanggil
+    `peta_siap()` sendiri, dan itu memang urusan uji peta, bukan urusan
+    pembuka halaman.
+    """
+    halaman.goto(f"{situs}{jalur}", wait_until="load")
+    halaman.wait_for_selector("html[data-siap]", state="attached", timeout=15000)
 
 
 # --------------------------------------------------------------- sandi uji ---

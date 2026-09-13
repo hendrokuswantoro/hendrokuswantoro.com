@@ -31,6 +31,25 @@ lewat() {
   printf '   skipped, %s\n' "$1"
 }
 
+# Node memang terpasang, hanya tidak ada di PATH milik Git Bash.
+#
+# Akibatnya dua langkah melaporkan "node is not installed on this machine",
+# dan laporan itu tidak benar. Yang dilewati bukan hanya `node --check`,
+# melainkan seluruh Type Check dan Build port Next.js, jadi selama ini satu
+# satunya yang pernah membangunnya adalah CI. Berkas ini berhak melewatkan
+# langkah yang memang tidak bisa dijalankan; ia tidak berhak mengatakan
+# sesuatu tidak terpasang padahal terpasang.
+if ! command -v node >/dev/null 2>&1; then
+  for DIR in "/c/Program Files/nodejs" "/c/Program Files (x86)/nodejs"; do
+    if [ -x "$DIR/node.exe" ]; then
+      PATH="$DIR:$PATH"
+      export PATH
+      printf 'verifikasi.sh: node ditemukan di %s\n' "$DIR"
+      break
+    fi
+  done
+fi
+
 langkah "Lint, shell scripts parse"
 for berkas in tools/*.sh infrastructure/*.sh; do
   sh -n "$berkas"
@@ -69,6 +88,21 @@ lulus
 langkah "Lint, the Next.js stylesheet is not behind"
 python tools/gaya_next.py --periksa >/dev/null
 lulus
+
+langkah "Lint, the vendored font matches its record"
+python tools/ambil_font.py --periksa >/dev/null
+lulus
+
+# Alur kerjanya sendiri tidak pernah diperiksa sebelum dijalankan di GitHub,
+# dan satu "\n" harfiah di dalamnya membuat health check gagal tiap malam
+# sambil melaporkan situsnya mati.
+langkah "Lint, the GitHub workflows parse"
+if python -c "import yaml" 2>/dev/null; then
+  python tools/periksa_alur.py >/dev/null
+  lulus
+else
+  lewat "pyyaml belum terpasang, pip install pyyaml"
+fi
 
 langkah "Reverse proxy, the nginx config is valid"
 if command -v docker >/dev/null 2>&1; then

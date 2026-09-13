@@ -588,6 +588,17 @@
     initProgress();
     initToc();
     initYear();
+
+    /* A readiness flag, and the reason it exists.
+       The browser tests used to wait for "networkidle" before touching the
+       page. On every page but one that is the same thing as waiting for this
+       line. On /project it is not: the map keeps asking for tiles for as long
+       as it is on screen, so the network never falls idle for the 500 ms
+       Playwright wants, and the wait ran to its timeout instead. It passed
+       locally only because the Mapbox token is restricted by URL and every
+       tile came back 403 in under a second. A page that is declared ready by
+       the code that finishes setting it up cannot go wrong that way. */
+    doc.documentElement.setAttribute("data-siap", "1");
   }
 
   if (doc.readyState === "loading") {
