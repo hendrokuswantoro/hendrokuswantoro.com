@@ -8,17 +8,17 @@ perkiraan, dan uji itu akan gagal kalau angkanya memburuk.
 
 | Halaman | Berat | Permintaan | Asal luar |
 | --- | --- | --- | --- |
-| `/` | 158 KB | 10 | tidak ada |
-| `/about` | 113 KB | 7 | tidak ada |
-| `/blog/` | 110 KB | 7 | tidak ada |
-| `/blog/kapan-peta-diam` | 112 KB | 7 | tidak ada |
-| `/project` | 1927 KB | 29 | ubin peta Mapbox |
+| `/` | 159 KB | 10 | tidak ada |
+| `/about` | 114 KB | 7 | tidak ada |
+| `/blog/` | 111 KB | 7 | tidak ada |
+| `/blog/kapan-peta-diam` | 113 KB | 7 | tidak ada |
+| `/project` | 1926 KB | 21 dari asal sendiri, 29 seluruhnya | ubin peta Mapbox |
 
 Rincian beranda, semuanya dari asal sendiri:
 
 | | KB |
 | --- | --- |
-| `style.css` | 47,8 |
+| `style.css` | 48,5 |
 | `app.js` | 21,7 |
 | dokumen HTML | 20,5 |
 | tiga gambar karya, 400w | 40,0 |
@@ -133,7 +133,7 @@ saat halaman pertama digambar. Tidak dikerjakan.
 
 ### Meminifikasi CSS dan JavaScript
 
-`style.css` 48,6 KB mentah menjadi 12,3 KB sesudah gzip; `app.js` 21,7 KB
+`style.css` 48,5 KB mentah menjadi 12,4 KB sesudah gzip; `app.js` 21,7 KB
 menjadi 6,6 KB. Minifikasi memotong sekitar 30 persen sebelum kompresi dan
 jauh lebih sedikit sesudahnya, sebab gzip sudah memakan spasi dan nama yang
 berulang. Cloudflare mengompresi dengan brotli, yang lebih rapat lagi.
@@ -174,7 +174,7 @@ beranda menjadi **92,3 KB** pada layar 626 px:
 | --- | --- |
 | `parking.webp`, 800w untuk layar berkerapatan 1,5 | 33,4 |
 | empat berkas font Poppins | 31,9 |
-| `style.css` | 13,5 |
+| `style.css` | 12,9 |
 | `app.js` | 7,5 |
 | dokumen HTML | 6,0 |
 

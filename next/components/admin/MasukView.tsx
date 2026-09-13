@@ -40,12 +40,10 @@ const NAMA_CARA: Record<CaraFaktorKedua, string> = {
 };
 
 const PETUNJUK: Record<CaraFaktorKedua, string> = {
-  totp: "Buka aplikasi authenticator Anda dan ketikkan enam angka yang sedang tampil.",
-  email: "Enam angka sudah dikirim ke alamat email Anda. Berlaku sepuluh menit.",
-  pemulihan: "Salah satu dari delapan kode yang Anda simpan saat menyalakan authenticator. Sekali pakai.",
-  wajah:
-    "Kamera akan mengambil tiga bingkai mengikuti urutan gerakan yang baru diminta " +
-    "server. Fotonya tidak disimpan di mana pun.",
+  totp: "Buka aplikasi authenticator, lalu ketik enam angka yang tampil.",
+  email: "Enam angka sudah dikirim ke email Anda. Berlaku sepuluh menit.",
+  pemulihan: "Pakai salah satu kode yang Anda simpan dulu. Sekali pakai.",
+  wajah: "Kamera minta tiga foto. Ikuti gerakan yang diminta. Fotonya tidak disimpan.",
 };
 
 export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
@@ -162,7 +160,7 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
       setTantangan(null);
       setGalat(
         e instanceof GagalApi
-          ? `${e.message}. Coba lagi dengan pencahayaan yang lebih baik.`
+          ? `${e.message}. Coba lagi di tempat yang lebih terang.`
           : "gagal menghubungi server",
       );
     } finally {
@@ -222,8 +220,7 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
         {pesan}
 
         <p className={gaya.penjelasan}>
-          Kata sandi Anda benar. Karena akun ini memakai faktor kedua, satu kode lagi
-          dibutuhkan sebelum sesinya dibuka. Tiketnya berlaku lima menit.
+          Sandi Anda benar. Tinggal satu langkah lagi, dan waktunya lima menit.
         </p>
 
         {tiket.cara.length > 1 ? (
@@ -313,7 +310,7 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
             className={`${gaya.tombol} ${gaya.utama} ${gaya.lebar}`}
             disabled={sibuk || kode.trim().length < 4}
           >
-            {sibuk ? "Memeriksa..." : "Lanjutkan"}
+            {sibuk ? "Sebentar..." : "Lanjutkan"}
           </button>
         </form>
 
@@ -356,12 +353,11 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
             onClick={denganPasskey}
             disabled={sibuk}
           >
-            Masuk dengan sidik jari atau passkey
+            Masuk pakai sidik jari
           </button>
           <p className={gaya.penjelasan} style={{ marginTop: 10 }}>
-            Perangkat Anda yang meminta sidik jari, wajah, atau PIN. Tidak ada satu pun
-            data biometrik yang dikirim ke server ini, dan karena itu tidak ada yang bisa
-            bocor dari sini.
+            Perangkat Anda yang meminta sidik jari, wajah, atau PIN. Sidik jari Anda tidak
+            dikirim ke mana pun.
           </p>
           <div className={gaya.pisah}>atau dengan sandi</div>
         </>

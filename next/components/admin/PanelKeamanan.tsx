@@ -104,7 +104,7 @@ export function PanelKeamanan() {
     window.history.replaceState(null, "", alamat.toString());
     konfirmasiEmail(token)
       .then(() => {
-        setKabar("Alamat email Anda sudah terbukti.");
+        setKabar("Email Anda sudah terbukti.");
         void muat();
       })
       .catch((e) => setGalat(e instanceof GagalApi ? e.message : "tautan tidak berlaku"));
@@ -130,7 +130,7 @@ export function PanelKeamanan() {
   if (!keadaan) {
     return (
       <section className={gaya.kartu}>
-        <p className={gaya.ket}>Memuat keadaan keamanan...</p>
+        <p className={gaya.ket}>Sebentar...</p>
       </section>
     );
   }
@@ -164,48 +164,46 @@ export function PanelKeamanan() {
           <span className={`${gaya.tanda} ${keadaan.email_terverifikasi ? gaya.terbit : ""}`}>
             {keadaan.email_terverifikasi ? "terbukti" : "belum"}
           </span>
-          <span>Alamat email {keadaan.email}</span>
+          <span>Email {keadaan.email}</span>
         </li>
         <li>
           <span className={`${gaya.tanda} ${keadaan.totp_aktif ? gaya.terbit : ""}`}>
             {keadaan.totp_aktif ? "aktif" : "belum"}
           </span>
-          <span>Aplikasi authenticator, faktor kedua saat masuk</span>
+          <span>Aplikasi authenticator</span>
         </li>
         <li>
           <span className={`${gaya.tanda} ${keadaan.passkey > 0 ? gaya.terbit : ""}`}>
             {keadaan.passkey}
           </span>
-          <span>Sidik jari dan passkey terdaftar</span>
+          <span>Sidik jari dan passkey</span>
         </li>
         <li>
           <span className={`${gaya.tanda} ${keadaan.pemulihan_sisa > 0 ? gaya.terbit : ""}`}>
             {keadaan.pemulihan_sisa}
           </span>
-          <span>Kode pemulihan yang belum terpakai</span>
+          <span>Kode pemulihan yang tersisa</span>
         </li>
         <li>
           <span className={`${gaya.tanda} ${keadaan.wajah_terdaftar ? gaya.terbit : ""}`}>
             {keadaan.wajah_terdaftar ? "aktif" : "belum"}
           </span>
-          <span>Verifikasi wajah saat masuk</span>
+          <span>Verifikasi wajah</span>
         </li>
       </ul>
 
       {/* ------------------------------------------- verifikasi email */}
 
-      <h3 className={gaya.subjudul}>Alamat email</h3>
+      <h3 className={gaya.subjudul}>Email</h3>
       <p className={gaya.penjelasan}>
-        Alamat yang belum dibuktikan adalah alamat yang jalur pemulihannya menuju entah ke
-        mana. Selama belum terbukti, kode masuk lewat email tidak ditawarkan sama sekali,
-        sebab menawarkan kode yang tidak akan pernah sampai berarti mengunci Anda di luar
-        pintu Anda sendiri.
+        Buktikan alamat email Anda. Ini yang dipakai kalau suatu saat Anda perlu masuk
+        kembali. Selama belum terbukti, kode masuk lewat email belum bisa dipakai.
       </p>
       {!keadaan.surat_siap ? (
         <p className={`${gaya.kabar} ${gaya.salah}`}>
-          SMTP belum dikonfigurasi. Suratnya akan ditulis ke <code>cadangan/surat/</code> dan
-          tidak berangkat ke mana pun. Isi SMTP_HOST, SMTP_PENGGUNA, SMTP_SANDI, dan
-          SURAT_DARI di <code>.env</code>.
+          Email belum bisa dikirim. Suratnya disimpan di <code>cadangan/surat/</code>, tidak
+          sampai ke mana pun. Isi SMTP_HOST, SMTP_PENGGUNA, SMTP_SANDI, dan SURAT_DARI di{" "}
+          <code>.env</code>.
         </p>
       ) : null}
       <div className={gaya.aksi}>
@@ -216,11 +214,11 @@ export function PanelKeamanan() {
           onClick={() =>
             jalankan(async () => {
               const hasil = await kirimVerifikasiEmail();
-              setKabar(hasil.terkirim ? "Tautan verifikasi sudah dikirim." : hasil.catatan);
+              setKabar(hasil.terkirim ? "Tautan sudah dikirim ke email Anda." : hasil.catatan);
             })
           }
         >
-          {keadaan.email_terverifikasi ? "Kirim ulang tautan" : "Kirim tautan verifikasi"}
+          {keadaan.email_terverifikasi ? "Kirim ulang tautan" : "Kirim tautan"}
         </button>
       </div>
 
@@ -228,30 +226,25 @@ export function PanelKeamanan() {
 
       <h3 className={gaya.subjudul}>Aplikasi authenticator</h3>
       <p className={gaya.penjelasan}>
-        Kode enam angka yang berganti tiap tiga puluh detik, dihitung perangkat Anda
-        sendiri tanpa jaringan. Lebih kuat daripada kode lewat email: tidak ada surat yang
-        bisa dibaca orang lain, dan tidak ada nomor yang bisa dipindahkan diam diam.
-        Aplikasi apa pun yang mendukung TOTP bisa dipakai, misalnya Aegis, Google
+        Kode enam angka yang berganti tiap 30 detik. Dihitung di ponsel Anda, tanpa
+        internet, jadi tidak ada surat yang bisa dibaca orang lain. Pakai Aegis, Google
         Authenticator, atau 1Password.
       </p>
 
       {!keadaan.kunci_kolom_siap ? (
         <p className={`${gaya.kabar} ${gaya.salah}`}>
-          KUNCI_KOLOM belum diisi, jadi rahasia authenticator tidak bisa disimpan tersandi,
-          dan menyimpannya apa adanya berarti faktor kedua yang ikut bocor bersama yang
-          pertama. Buat kuncinya dengan{" "}
-          <code>python backend/db/enkripsi.py kunci</code>, lalu tulis di <code>.env</code>{" "}
-          sebagai KUNCI_KOLOM.
+          Belum bisa dipasang. Isi KUNCI_KOLOM di <code>.env</code> dulu, buat kuncinya
+          dengan <code>python backend/db/enkripsi.py kunci</code>. Tanpa itu rahasia
+          authenticator akan tersimpan polos, dan itu tidak saya lakukan.
         </p>
       ) : null}
 
       {pemulihan ? (
         <div className={gaya.pemulihan}>
           <p className={gaya.penjelasan}>
-            <strong>Simpan delapan kode ini sekarang.</strong> Ini satu satunya kali kode
-            ini bisa dilihat: yang tersimpan di server cuma sidiknya, jadi tidak ada siapa
-            pun yang bisa menunjukkannya lagi. Simpan di tempat yang bukan ponsel yang sama
-            dengan aplikasi authenticator Anda.
+            <strong>Simpan delapan kode ini sekarang.</strong> Kode ini cuma muncul sekali
+            dan tidak bisa dilihat lagi. Kalau ponsel Anda hilang, ini jalan masuk Anda.
+            Simpan bukan di ponsel yang sama.
           </p>
           <ul className={gaya.kodeGrid}>
             {pemulihan.map((k) => (
@@ -267,9 +260,8 @@ export function PanelKeamanan() {
       ) : keadaan.totp_aktif ? (
         <>
           <p className={gaya.penjelasan}>
-            Authenticator sedang aktif. Mematikannya menuntut satu kode yang benar, sama
-            seperti menyalakannya: tanpa itu, siapa pun yang sempat memegang sesi yang sudah
-            masuk bisa mencabut faktor kedua tanpa pernah memilikinya.
+            Sedang aktif. Masukkan kode dari aplikasi untuk mematikannya. Kode pemulihan
+            Anda ikut terhapus.
           </p>
           <div className={gaya.baris}>
             <label htmlFor="kode-matikan">Kode dari aplikasi</label>
@@ -292,7 +284,7 @@ export function PanelKeamanan() {
                 jalankan(async () => {
                   await matikanTotp(kodeMatikan.trim());
                   setKodeMatikan("");
-                  setKabar("Authenticator dimatikan, dan kode pemulihannya ikut dihapus.");
+                  setKabar("Authenticator dimatikan. Kode pemulihan ikut terhapus.");
                   await muat();
                 })
               }
@@ -304,9 +296,8 @@ export function PanelKeamanan() {
       ) : pasang ? (
         <>
           <p className={gaya.penjelasan}>
-            Pindai kode di bawah dengan aplikasi authenticator Anda, lalu ketikkan enam
-            angka yang muncul. Kodenya digambar di server ini, bukan diminta ke pembuat QR
-            mana pun: alamat di dalamnya memuat rahasianya.
+            Pindai kode ini dengan aplikasi authenticator Anda, lalu ketik enam angka yang
+            muncul.
           </p>
           <div
             className={gaya.qr}
@@ -316,7 +307,7 @@ export function PanelKeamanan() {
             dangerouslySetInnerHTML={{ __html: pasang.qr }}
           />
           <p className={gaya.penjelasan}>
-            Tidak bisa memindai? Ketikkan kunci ini di aplikasi Anda: <code>{pasang.rahasia}</code>
+            Tidak bisa memindai? Ketik kunci ini: <code>{pasang.rahasia}</code>
           </p>
           <div className={gaya.baris}>
             <label htmlFor="kode-totp">Enam angka dari aplikasi</label>
@@ -365,7 +356,7 @@ export function PanelKeamanan() {
               })
             }
           >
-            Pasang aplikasi authenticator
+            Pasang authenticator
           </button>
         </div>
       )}
@@ -374,29 +365,20 @@ export function PanelKeamanan() {
 
       <h3 className={gaya.subjudul}>Verifikasi wajah</h3>
       <p className={gaya.penjelasan}>
-        Kalau dinyalakan, masuk dengan kata sandi akan meminta tiga bingkai dari kamera
-        mengikuti urutan gerakan yang baru diminta server saat itu juga. Fotonya{" "}
-        <strong>tidak disimpan</strong>: yang tersimpan 128 angka hasil penyandian wajah,
-        dan angka itu pun disandikan lagi dengan kunci yang terpisah dari basis datanya.
+        Saat masuk, kamera minta tiga foto mengikuti gerakan yang diminta. Fotonya{" "}
+        <strong>tidak disimpan</strong>. Yang disimpan cuma 128 angka, dan angka itu pun
+        dikunci.
       </p>
       <p className={gaya.penjelasan}>
-        <strong>Yang ini tidak bisa dilakukannya, dan saya lebih baik mengatakannya.</strong>{" "}
-        Ia tidak membuktikan bahwa yang di depan kamera adalah orang hidup. Rekaman video
-        wajah Anda akan lolos, termasuk urutan gerakannya kalau rekamannya cukup panjang.
-        Deteksi kehidupan yang sungguhan menuntut model tersendiri, dan yang dipakai
-        penyedia identitas komersial pun masih bisa ditipu. Jadi ini menaikkan ongkos bagi
-        orang yang sudah tahu kata sandi Anda, bukan menutup pintunya. Yang menutup pintu
-        tetap passkey: kuncinya tidak pernah meninggalkan perangkat dan terikat pada
-        alamat situs ini, sedangkan wajah tidak terikat pada apa pun dan tidak bisa
-        diganti kalau bocor.
+        <strong>Perlu Anda tahu:</strong> ini bisa ditembus rekaman video wajah Anda.
+        Gunanya mempersulit orang yang sudah tahu sandi Anda, bukan menutup pintu. Yang
+        paling aman tetap sidik jari.
       </p>
 
       {!keadaan.wajah_siap ? (
         <p className={`${gaya.kabar} ${gaya.salah}`}>
-          Model pengenalan wajah belum ada di server, 37 MB. Jalankan{" "}
-          <code>python tools/ambil_model.py</code>. Selama belum, verifikasi wajah tidak
-          ditawarkan sama sekali saat masuk, dan tidak pernah diam diam meloloskan
-          siapa pun.
+          Belum bisa dipakai. Jalankan <code>python tools/ambil_model.py</code> di server,
+          37 MB, sekali saja. Selama belum, verifikasi wajah tidak ditawarkan saat masuk.
         </p>
       ) : null}
 
@@ -424,12 +406,12 @@ export function PanelKeamanan() {
               onClick={() =>
                 jalankan(async () => {
                   await hapusWajah();
-                  setKabar("Wajah dihapus dari server, bukan sekadar dimatikan.");
+                  setKabar("Wajah dihapus dari server.");
                   await muat();
                 })
               }
             >
-              Hapus wajah yang terdaftar
+              Hapus wajah
             </button>
           ) : (
             <button
@@ -451,10 +433,8 @@ export function PanelKeamanan() {
 
       <h3 className={gaya.subjudul}>Aktivitas terakhir</h3>
       <p className={gaya.penjelasan}>
-        Yang gagal ikut tercatat, dan itu bagian yang berguna: masuk yang berhasil hanya
-        memberi tahu Anda apa yang sudah Anda lakukan sendiri. Alamat IP tidak disimpan apa
-        adanya, hanya ringkasannya, jadi daftar ini tidak bisa berubah jadi catatan tempat
-        Anda berada.
+        Yang gagal ikut dicatat. Kalau ada orang lain mencoba masuk, Anda lihat di sini.
+        Alamat IP tidak disimpan, hanya ringkasannya.
       </p>
       {jejak.length === 0 ? (
         <p className={gaya.ket}>Belum ada catatan.</p>

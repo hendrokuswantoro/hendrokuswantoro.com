@@ -310,3 +310,70 @@ def test_hanya_subset_latin_yang_disimpan():
         p.stat().st_size for p in FONT.glob("*.woff2") if p.stem.endswith("-latin")
     )
     assert latin < 40 * 1024, f"subset latin berjumlah {latin / 1024:.1f} KB"
+
+
+# ------------------------------------------------------- skala huruf ---
+
+# Situs dan dashboard sempat punya skalanya masing masing, dan hasilnya tidak
+# sekadar berbeda melainkan berbeda ke dua arah sekaligus: teks isi di
+# dashboard 13,6 px sedangkan di situs 15 px, judul kartu 16,8 px sedangkan di
+# situs 18 px, tetapi tombolnya justru 16 px sedangkan di situs 15 px. Dua
+# permukaan yang dibuat orang yang sama terasa seperti dua aplikasi.
+#
+# Sekarang angkanya satu sumber, di :root. Uji di bawah menjaga supaya tidak
+# ada yang kembali mengetik angka sendiri di salah satunya.
+
+ADMIN_CSS = (AKAR / "next" / "app" / "admin" / "admin.module.css").read_text(encoding="utf-8")
+# Komentar dibuang sebelum diperiksa, sama seperti GAYA_TANPA_KOMENTAR di atas.
+# Komentar di sini justru MENJELASKAN urutan font-size dan `font: inherit`,
+# jadi uji yang membacanya sebagai kode akan menghukum penjelasannya. Itu
+# sudah terjadi sekali di berkas ini.
+ADMIN_KODE = re.sub(r"/\*.*?\*/", "", ADMIN_CSS, flags=re.DOTALL)
+
+SKALA = ("--fs-xs", "--fs-sm", "--fs-md", "--fs-lg", "--fs-xl")
+
+
+@pytest.mark.parametrize("nama", SKALA)
+def test_skala_huruf_ada_di_root(nama):
+    warna = token("terang")  # hanya untuk memastikan blok :root memang terbaca
+    assert warna
+    akar = GAYA.split("\n:root {", 1)[1].split("\n}", 1)[0]
+    assert f"{nama}:" in akar, f"{nama} tidak ada di :root"
+
+
+def test_dashboard_tidak_mengetik_ukuran_huruf_sendiri():
+    """Setiap ukuran huruf di dashboard datang dari skala bersama.
+
+    Angka yang diketik langsung akan hanyut dari situsnya, dan hanyutnya tidak
+    terlihat sampai seseorang membuka keduanya berdampingan.
+    """
+    harfiah = re.findall(r"font-size:\s*([0-9.]+(?:rem|px|em))", ADMIN_KODE)
+    assert not harfiah, f"ukuran huruf yang diketik langsung: {sorted(set(harfiah))}"
+
+
+def test_dashboard_memakai_skalanya():
+    dipakai = {n for n in SKALA if f"var({n})" in ADMIN_KODE}
+    assert len(dipakai) >= 4, f"dashboard cuma memakai {dipakai}"
+
+
+def test_situs_juga_memakai_skala_yang_sama():
+    """Token yang cuma dipakai dashboard bukan skala bersama, melainkan skala
+    dashboard yang kebetulan tinggal di berkas situs."""
+    for nama in ("--fs-xs", "--fs-sm", "--fs-md"):
+        assert GAYA.count(f"var({nama})") >= 3, f"{nama} hampir tidak dipakai situs"
+
+
+def test_font_size_tidak_tertimpa_pemendekan_font():
+    """`font: inherit` adalah pemendekan yang MENYETEL ULANG font-size.
+
+    Menulis font-size di ATASNYA berarti nilainya hilang tanpa jejak. Itu sudah
+    terjadi di sini: tombol dashboard kembali 16 px sementara tombol di situs
+    15 px, dan yang terlihat cuma tombolnya sedikit lebih besar tanpa satu pun
+    galat.
+    """
+    for blok in re.findall(r"\{[^{}]*font:\s*inherit[^{}]*\}", ADMIN_KODE):
+        if "font-size" not in blok:
+            continue
+        assert blok.index("font: inherit") < blok.index("font-size"), (
+            f"font-size ditulis sebelum `font: inherit`, jadi ia diabaikan:\n{blok}"
+        )

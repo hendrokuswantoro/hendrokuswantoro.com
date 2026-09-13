@@ -13,6 +13,17 @@ step dan tanpa dependensi. Empat menu: Home, About, Project, Blog.
   ke luar asal situs ini, dan huruf pertama tidak lagi menunggu dua jabat
   tangan TLS ke dua alamat lain. Lihat [docs/ringan.md](docs/ringan.md).
 - Bahasanya sengaja sederhana. Kalimat pendek, tanpa tanda strip dan titik dua.
+  Itu berlaku di dashboard admin juga, sejak 13 September 2026: sebelumnya
+  halaman keamanannya menjelaskan alasan di balik tiap lapisan dalam paragraf
+  panjang, dan yang membacanya jadi membaca dokumen, bukan memakai aplikasi.
+  Alasannya sekarang tinggal di `docs/`, layarnya cukup menyebut apa yang
+  terjadi dan apa yang perlu Anda tahu.
+- **Satu skala huruf untuk keduanya.** `--fs-xs` sampai `--fs-xl` di `:root`,
+  dipakai situs dan dashboard. Sebelumnya masing masing punya skalanya sendiri
+  dan melesetnya ke dua arah sekaligus: teks isi di dashboard 13,6 px sedangkan
+  di situs 15 px, tetapi tombolnya justru 16 px sedangkan di situs 15 px.
+  Dijaga `tests/test_gaya.py`, yang menolak ukuran huruf yang diketik langsung
+  di CSS dashboard.
 - Dwibahasa Inggris dan Indonesia lewat tombol EN/ID.
 - **Tidak ada bagian kontak.** Ini disengaja.
 - Halaman Proyek memuat peta karya, MapLibre di atas ubin vektor Mapbox
@@ -201,12 +212,12 @@ pip install -r tests/requirements.txt
 python -m pytest
 ```
 
-**599 uji.** 551 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
+**628 uji.** 580 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
 dalam hitungan detik; 48 sisanya menjalankan Chromium sungguhan dan dipisah
 lewat tanda `peramban` supaya tidak memperlambat putaran biasa.
 
 ```bash
-python -m pytest                 # 551, cepat
+python -m pytest                 # 580, cepat
 python -m pytest -m peramban     # 48, Chromium
 sh tools/verifikasi.sh           # seluruhnya, berurutan
 pip-audit -r backend/requirements.txt --strict
@@ -296,7 +307,7 @@ tools/periksa_alur.py      pemeriksa berkas .github/workflows sebelum CI menjala
 assets/fonts/              delapan woff2 Poppins plus OFL.txt dan sumber.json
 assets/js/peta.js          peta karya, 31 lapisan di atas ubin vektor Mapbox
 assets/vendor/maplibre/    MapLibre GL JS, disimpan sendiri, bukan dari CDN
-tests/                     551 uji tanpa peramban, 48 dengan Chromium
+tests/                     580 uji tanpa peramban, 48 dengan Chromium
 docs/                      arsitektur, panduan uji, pemecahan masalah
 .github/workflows/ci.yml   lint, type check, test, security scan, build
 .github/workflows/kesehatan.yml  health check terhadap situs yang sudah terbit

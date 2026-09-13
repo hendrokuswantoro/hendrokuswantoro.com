@@ -35,12 +35,12 @@ export function PanelPasskey() {
 
   async function daftarkan(jenis: "perangkat" | "kunci") {
     const bawaan = jenis === "perangkat" ? "Laptop kerja" : "Kunci USB";
-    const nama = window.prompt("Nama untuk kunci ini", bawaan);
+    const nama = window.prompt("Beri nama perangkat ini", bawaan);
     if (nama === null) return;
     setKabar(null);
     try {
       await passkey.daftarkan(nama, jenis);
-      setKabar({ teks: "perangkat terdaftar", baik: true });
+      setKabar({ teks: "Perangkat terdaftar.", baik: true });
       await muat();
     } catch (e) {
       if (passkey.dibatalkan(e)) return;
@@ -60,7 +60,7 @@ export function PanelPasskey() {
   async function cabut(kunci: passkey.Kunci) {
     if (
       !window.confirm(
-        `Cabut passkey "${kunci.nama}"? Perangkat itu tidak bisa dipakai masuk lagi.`,
+        `Cabut "${kunci.nama}"? Perangkat itu tidak bisa dipakai masuk lagi.`,
       )
     ) {
       return;
@@ -86,7 +86,7 @@ export function PanelPasskey() {
             className={`${gaya.tombol} ${gaya.utama}`}
             onClick={() => void daftarkan("perangkat")}
           >
-            Daftarkan sidik jari perangkat ini
+            Daftarkan sidik jari
           </button>
           <button type="button" className={gaya.tombol} onClick={() => void daftarkan("kunci")}>
             Daftarkan kunci USB
@@ -95,21 +95,18 @@ export function PanelPasskey() {
       </div>
 
       <p className={gaya.penjelasan}>
-        Kunci privatnya tidak pernah meninggalkan perangkat, dan tanda tangannya terikat
-        pada alamat situs ini, jadi halaman palsu tidak bisa memintanya. Daftarkan lebih
-        dari satu perangkat: kunci tunggal yang ikut hilang bersama ponselnya akan
-        mengunci akun ini.
+        Cara masuk paling aman di sini. Kuncinya tersimpan di perangkat Anda dan terikat
+        pada alamat situs ini, jadi halaman palsu tidak bisa memintanya.
       </p>
 
       <p className={gaya.penjelasan}>
-        <strong>Tentang sidik jarinya.</strong> Yang membuka kunci itu sensor di perangkat
-        Anda, dan sidik jarinya tidak pernah sampai ke server ini. Perangkatnya memeriksa
-        sendiri lalu menandatangani; yang diterima server cuma tanda tangan dan satu
-        penanda bahwa pemiliknya sudah diperiksa. Itu bukan kekurangan melainkan justru
-        rancangannya: tidak ada data biometrik yang disimpan di sini, jadi tidak ada yang
-        bisa bocor dari sini, dan sidik jari yang bocor tidak bisa diganti seperti kata
-        sandi. Di perangkat tanpa sensor, yang diminta PIN perangkat itu, dan jaminannya
-        sama: ia tidak pernah dikirim ke mana pun.
+        Sidik jari Anda tidak dikirim ke mana pun. Perangkat Anda yang memeriksanya. Di
+        perangkat tanpa sensor, yang diminta PIN perangkat itu.
+      </p>
+
+      <p className={gaya.penjelasan}>
+        Daftarkan lebih dari satu perangkat. Kalau cuma satu dan perangkatnya hilang, Anda
+        terkunci di luar.
       </p>
 
       {kabar ? (
@@ -122,7 +119,7 @@ export function PanelPasskey() {
         <p className={gaya.ket}>Memuat...</p>
       ) : daftar.length === 0 ? (
         <p className={gaya.ket}>
-          Belum ada passkey. Selama belum ada, sandi adalah satu satunya jalan masuk.
+          Belum ada. Sekarang masuk masih pakai sandi.
         </p>
       ) : (
         <div className={gaya.tabelBungkus}>

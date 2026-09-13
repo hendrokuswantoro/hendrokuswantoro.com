@@ -27,8 +27,8 @@ import gaya from "@/app/admin/admin.module.css";
 
 const JUDUL: Record<string, string> = {
   tengah: "Hadap lurus ke kamera",
-  kiri: "Tolehkan kepala ke kiri",
-  kanan: "Tolehkan kepala ke kanan",
+  kiri: "Toleh ke kiri",
+  kanan: "Toleh ke kanan",
 };
 
 export function KameraWajah({
@@ -59,7 +59,7 @@ export function KameraWajah({
 
     async function nyalakan() {
       if (!navigator.mediaDevices?.getUserMedia) {
-        setGalat("peramban ini tidak memberi akses kamera");
+        setGalat("Peramban ini tidak bisa memakai kamera.");
         return;
       }
       try {
@@ -81,10 +81,10 @@ export function KameraWajah({
         const nama = (e as { name?: string })?.name;
         setGalat(
           nama === "NotAllowedError"
-            ? "izin kamera ditolak. Berikan izinnya di peramban, lalu coba lagi."
+            ? "Kamera belum diizinkan. Izinkan di peramban Anda, lalu coba lagi."
             : nama === "NotFoundError"
-              ? "tidak ada kamera di perangkat ini"
-              : "kamera tidak bisa dinyalakan",
+              ? "Tidak ada kamera di perangkat ini."
+              : "Kamera tidak bisa dinyalakan.",
         );
       }
     }
@@ -137,7 +137,7 @@ export function KameraWajah({
           <div className={gaya.kameraArah}>
             <span>{JUDUL[sekarang] ?? sekarang}</span>
             <small>
-              bingkai {diambil.length + 1} dari {gerakan.length}
+              foto {diambil.length + 1} dari {gerakan.length}
             </small>
           </div>
         ) : null}
@@ -150,7 +150,7 @@ export function KameraWajah({
           onClick={ambil}
           disabled={!hidup || sibuk || !sekarang}
         >
-          {sibuk ? "Memeriksa..." : "Ambil bingkai"}
+          {sibuk ? "Sebentar..." : "Ambil foto"}
         </button>
         <button
           type="button"
