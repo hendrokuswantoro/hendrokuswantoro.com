@@ -3,3 +3,8 @@
 pytest==9.1.1
 httpx==0.28.1
 playwright==1.49.1
+
+# Dipakai tools/periksa_alur.py untuk memparse .github/workflows. Ia ada di
+# sini, bukan di requirements jalan, sebab ia hanya dipakai pemeriksa. CI
+# memasangnya sendiri di langkah Lint, yang tidak memasang berkas ini.
+PyYAML==6.0.3

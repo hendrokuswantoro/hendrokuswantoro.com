@@ -87,6 +87,23 @@ jobs:
       - name: The nginx config is valid
         run: sh infrastructure/periksa_nginx.sh
 
+      # Delapan berkas woff2 plus sha256-nya, diperiksa luring.
+      - name: The vendored font matches its record
+        run: python tools/ambil_font.py --periksa
+
+      # Alur kerjanya sendiri tidak pernah diperiksa sebelum dijalankan.
+      #
+      # Yang dicari bukan hanya sintaks. kesehatan.yml pernah memuat daftar
+      # jalur yang dipisah dengan "\n" harfiah, bukan baris baru, sehingga
+      # shell membacanya sebagai kata bernilai "n" dan pemeriksaannya meminta
+      # alamat yang memang tidak ada. Sintaksnya sah sempurna, jadi bash -n
+      # meloloskannya, dan akibatnya health check gagal tiap malam sambil
+      # membuka isu yang menyatakan situsnya mati. Situsnya sehat.
+      - name: The workflows themselves parse
+        run: |
+          pip install PyYAML==6.0.3
+          python tools/periksa_alur.py
+
   typecheck:
     name: Type Check
     runs-on: ubuntu-latest

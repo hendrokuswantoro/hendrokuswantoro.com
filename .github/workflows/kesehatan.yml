@@ -38,11 +38,23 @@ jobs:
           echo "situs=$situs" >> "$GITHUB_OUTPUT"
           echo "checking $situs"
 
+      # Daftar jalurnya ditulis satu per baris lewat here-doc, bukan dirangkai
+      # di dalam `for`.
+      #
+      # Sebelumnya baris itu memuat rangkaian "\n" harfiah, bukan baris baru
+      # sungguhan. Shell memperlakukan setiap "\n" sebagai kata tersendiri
+      # yang nilainya "n", jadi yang diminta termasuk "$situs/n", dijawab 404,
+      # dan langkah ini gagal setiap malam sejak dipasang. Situsnya sendiri
+      # selalu sehat. Yang sakit pemeriksanya, dan karena ia membuka isu
+      # otomatis tiap kali gagal, ia juga mengarang laporan bahwa situsnya
+      # mati. Pemeriksaan yang berbohong lebih buruk daripada tidak ada
+      # pemeriksaan.
       - name: Every page answers
         run: |
           situs="${{ steps.alamat.outputs.situs }}"
           gagal=0
-          for jalur in / /about /project /blog/ \n                       /blog/kapan-peta-diam \n                       /blog/titik-panas-bukan-kebakaran \n                       /blog/sumber-di-pojok-peta \n                       /robots.txt /sitemap.xml /feed.xml; do
+          while IFS= read -r jalur; do
+            [ -n "$jalur" ] || continue
             kode=$(curl -s -o /dev/null -w '%{http_code}' "$situs$jalur")
             if [ "$kode" != "200" ]; then
               echo "FAIL $jalur -> $kode"
@@ -50,8 +62,53 @@ jobs:
             else
               echo "ok   $jalur"
             fi
-          done
+          done <<'JALUR'
+          /
+          /about
+          /project
+          /blog/
+          /blog/kapan-peta-diam
+          /blog/titik-panas-bukan-kebakaran
+          /blog/sumber-di-pojok-peta
+          /robots.txt
+          /sitemap.xml
+          /feed.xml
+          JALUR
           exit $gagal
+
+      # Alamat kanonik wajib eksis, dan selama ini tidak ada yang memeriksanya.
+      #
+      # Tiap halaman memuat <link rel="canonical"> ke www.hendrokuswantoro.com,
+      # begitu juga sitemap.xml, feed.xml, og:url, dan JSON-LD. Pada 13
+      # September 2026 nama itu belum terdaftar sama sekali: otoritas .com
+      # menjawab NXDOMAIN, bukan sekadar tanpa A record. Artinya setiap alamat
+      # yang situs ini sebut tentang dirinya sendiri menunjuk ke tempat yang
+      # tidak ada. Mesin pencari mengindeks yang kanonik, jadi selama itu
+      # dibiarkan, situsnya boleh sehat sempurna dan tetap tidak bisa
+      # ditemukan, dan tiap tautan di umpan RSS-nya mati.
+      #
+      # Dua jalan keluarnya, dan keduanya disebut di pesan gagalnya: daftarkan
+      # namanya lalu arahkan ke Cloudflare, atau ganti CNAME beserta seluruh
+      # alamat kanonik ke nama yang benar benar dipakai.
+      - name: The canonical address exists
+        run: |
+          situs="${{ steps.alamat.outputs.situs }}"
+          curl -sS "$situs/" -o beranda.html
+          kanonik=$(sed -n 's/.*<link rel="canonical" href="https\?:\/\/\([^"\/]*\).*/\1/p' beranda.html | head -1)
+          if [ -z "$kanonik" ]; then
+            echo "FAIL, beranda tidak memuat rel=canonical sama sekali"
+            exit 1
+          fi
+          echo "canonical host: $kanonik"
+          if getent hosts "$kanonik" > /dev/null; then
+            echo "ok, $kanonik resolves"
+            exit 0
+          fi
+          echo "FAIL, $kanonik tidak ada di DNS."
+          echo "Seluruh alamat kanonik, sitemap, dan umpan RSS menunjuk ke sana."
+          echo "Daftarkan namanya lalu arahkan ke Cloudflare, ATAU ganti CNAME"
+          echo "dan setiap rel=canonical ke nama yang benar benar dipakai."
+          exit 1
 
       - name: The old .html addresses still lead somewhere
         run: |

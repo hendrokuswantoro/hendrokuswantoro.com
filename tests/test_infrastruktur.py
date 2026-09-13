@@ -381,3 +381,128 @@ def test_pengirim_diam_kalau_tujuannya_belum_diisi(tmp_path):
     )
     assert hasil.returncode == 0
     assert "belum diisi" in hasil.stderr
+
+
+# ------------------------------------------------------- alur kerja sendiri ---
+
+# Alur kerja GitHub Actions tidak pernah diperiksa sebelum dijalankan di sana,
+# dan satu kekeliruan di dalamnya membuat pemeriksaan kesehatan gagal tiap
+# malam selama berhari hari sambil membuka isu otomatis yang menyatakan
+# situsnya mati. Situsnya sehat sepanjang waktu itu.
+#
+# Rangkaian uji di bawah ikut menguji pemeriksanya sendiri: ia diberi kembali
+# baris yang dulu lolos, dan kalau pemeriksanya meloloskannya lagi, ujinya
+# gagal. Pemeriksa yang tidak pernah dibuktikan bisa menangkap apa pun adalah
+# pemeriksa yang belum tentu menangkap apa pun.
+
+import sys  # noqa: E402
+
+sys.path.insert(0, str(AKAR / "tools"))
+
+
+def test_seluruh_alur_kerja_lolos_pemeriksanya():
+    pytest.importorskip("yaml", reason="pyyaml belum terpasang")
+    hasil = subprocess.run(
+        [sys.executable, str(AKAR / "tools" / "periksa_alur.py")],
+        capture_output=True, text=True, cwd=AKAR,
+    )
+    assert hasil.returncode == 0, hasil.stdout + hasil.stderr
+
+
+def test_pemeriksa_menangkap_baris_yang_dulu_lolos():
+    """Baris aslinya, apa adanya, dari kesehatan.yml sebelum diperbaiki."""
+    pytest.importorskip("yaml", reason="pyyaml belum terpasang")
+    from periksa_alur import periksa_garis_miring
+
+    # Rangkaian mentah: di sini \n wajib dua karakter, bukan baris baru.
+    # Kalau ia sampai jadi baris baru, ujinya akan lolos tanpa menguji apa pun.
+    asli = (
+        r"for jalur in / /about /project /blog/ \n                       "
+        r"/blog/kapan-peta-diam \n                       /robots.txt; do"
+    )
+    assert "\\" in asli, "ujinya sendiri kehilangan garis miringnya"
+    assert periksa_garis_miring("uji", asli), (
+        "pemeriksanya meloloskan baris yang justru jadi alasan ia dibuat"
+    )
+
+
+def test_pemeriksa_tidak_menghukum_printf():
+    pytest.importorskip("yaml", reason="pyyaml belum terpasang")
+    from periksa_alur import periksa_garis_miring
+
+    wajar = r"""printf '%s\n' "$KUNCI" > ~/.ssh/deploy"""
+    assert "\\" in wajar
+    assert not periksa_garis_miring("uji", wajar), (
+        "printf memang tempat garis miring n berarti baris baru"
+    )
+
+
+def test_pemeriksa_tidak_menghukum_komentar():
+    """Komentar yang menjelaskan kekeliruan itu wajib boleh menyebutnya."""
+    pytest.importorskip("yaml", reason="pyyaml belum terpasang")
+    from periksa_alur import periksa_garis_miring
+
+    catatan = r'# dulu baris ini memuat "\n" harfiah, dan itu sebabnya gagal'
+    assert "\\" in catatan
+    assert not periksa_garis_miring("uji", catatan)
+
+
+def test_tidak_ada_lagi_garis_miring_n_di_kesehatan():
+    """Langsung ke berkasnya, bukan lewat pemeriksanya: kalau suatu saat
+    pemeriksanya rusak, uji ini masih berdiri."""
+    teks = (AKAR / ".github" / "workflows" / "kesehatan.yml").read_text(encoding="utf-8")
+    baris_daftar = [
+        b for b in teks.splitlines()
+        if "for jalur in" in b or ("while" in b and "jalur" in b)
+    ]
+    assert baris_daftar, "daftar jalur yang diperiksa hilang sama sekali"
+    for b in baris_daftar:
+        assert "\\" not in b, f"garis miring kembali ke daftar jalur: {b.strip()}"
+
+
+def test_alamat_kanonik_ikut_diperiksa_kesehatan():
+    """Alamat yang situs ini sebut tentang dirinya sendiri wajib eksis. Pada
+    13 September 2026 www.hendrokuswantoro.com belum terdaftar sama sekali,
+    sementara seluruh rel=canonical, sitemap, dan umpan RSS menunjuk ke sana,
+    dan tidak ada satu pun pemeriksaan yang menyadarinya."""
+    teks = (AKAR / ".github" / "workflows" / "kesehatan.yml").read_text(encoding="utf-8")
+    assert "canonical" in teks, "tidak ada langkah yang memeriksa alamat kanonik"
+    assert "getent hosts" in teks or "nslookup" in teks or "dig " in teks, (
+        "langkah kanoniknya tidak pernah benar benar menanyakan DNS"
+    )
+
+
+def test_blok_assets_tidak_kehilangan_header_keamanan():
+    """Satu add_header di dalam location menghapus seluruh add_header induknya.
+
+    Blok /assets/ memasang Cache-Control, jadi sampai 13 September 2026 setiap
+    berkas JavaScript, SVG, dan font di situs ini dikirim nginx tanpa nosniff,
+    tanpa HSTS, dan tanpa CSP, sementara Cloudflare mengirim semuanya karena
+    _headers menumpuk aturan alih alih menggantinya. Dua penyaji dengan aturan
+    berbeda, dan yang diuji hanya salah satunya.
+    """
+    blok = re.search(
+        r"location /assets/ \{(.*?)\n    \}", NGINX, re.S
+    )
+    assert blok, "blok location /assets/ tidak ditemukan"
+    isi = blok.group(1)
+
+    for arahan in (
+        "X-Content-Type-Options",
+        "X-Frame-Options",
+        "Referrer-Policy",
+        "Permissions-Policy",
+        "Strict-Transport-Security",
+        "Content-Security-Policy",
+    ):
+        assert arahan in isi, (
+            f"blok /assets/ memasang add_header tetapi tidak mengulang {arahan}, "
+            "jadi berkasnya dikirim tanpa header itu"
+        )
+
+
+def test_csp_di_blok_assets_sama_dengan_yang_di_server():
+    """Dua CSP yang berbeda di satu berkas adalah satu yang sudah tertinggal."""
+    semua = re.findall(r'add_header Content-Security-Policy "([^"]+)"', NGINX)
+    assert len(semua) >= 2, "CSP hanya tertulis sekali, blok /assets/ belum punya"
+    assert len(set(semua)) == 1, "CSP di nginx tidak seragam antar blok"
