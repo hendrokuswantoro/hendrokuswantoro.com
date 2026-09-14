@@ -564,6 +564,15 @@ export function WorkMap() {
         if (on) {
           instance.setTerrain({ source: "dem", exaggeration: 1.3 });
           if (instance.getSource("jalan") && !instance.getLayer("gedung3d")) {
+            /* Disisipkan SEBELUM "panah-searah", bukan ditambahkan di ujung.
+               addLayer tanpa beforeId menaruh lapisannya paling atas, di atas
+               seluruh lapisan nama, jadi gedung 3D menutupi nama jalan dan
+               nama tempat. Lihat applyRelief di assets/js/peta.js.
+
+               Tangga warnanya mengikuti tinggi yang sebenarnya ada: diukur
+               dari 17.956 bangunan yang termuat di Yogyakarta, median 3 m,
+               persentil 99 14 m. Tangga lama membentang sampai 140 m, jadi
+               hampir semua bangunan keluar dengan warna yang sama. */
             instance.addLayer({
               id: "gedung3d",
               type: "fill-extrusion",
@@ -572,13 +581,13 @@ export function WorkMap() {
               minzoom: 13.5,
               filter: ["all", ["==", ["get", "extrude"], "true"], ["!=", ["get", "underground"], "true"]],
               paint: {
-                "fill-extrusion-color": ["interpolate", ["linear"], ["get", "height"], 0, "#e3e7ec", 20, "#d7dce3", 60, "#c9d0d9", 140, "#b9c2cd"],
+                "fill-extrusion-color": ["interpolate", ["linear"], ["get", "height"], 0, "#e9edf2", 3, "#dbe1e9", 6, "#cdd5e0", 14, "#b9c3d1", 40, "#a5b0c0"],
                 "fill-extrusion-height": ["coalesce", ["get", "height"], 6],
                 "fill-extrusion-base": ["coalesce", ["get", "min_height"], 0],
                 "fill-extrusion-opacity": 0.92,
                 "fill-extrusion-vertical-gradient": true,
               },
-            });
+            }, instance.getLayer("panah-searah") ? "panah-searah" : undefined);
           }
           if (instance.getLayer("gedung")) instance.setLayoutProperty("gedung", "visibility", "none");
         } else {

@@ -272,6 +272,60 @@ def test_nama_jalan_muncul_di_zoom_kota(halaman, situs):
     assert jumlah > 0, "tidak ada nama jalan tergambar di zoom kota"
 
 
+def test_gedung_3d_duduk_di_bawah_semua_nama(halaman, situs):
+    """Gedung 3D tidak boleh menutupi nama.
+
+    map.addLayer tanpa beforeId menaruh lapisannya paling atas, dan di situ ia
+    berada di atas seluruh lapisan nama. Di tampilan miring akibatnya nama
+    jalan dan nama tempat terpotong badan gedung dan terbaca seperti saling
+    tumpang tindih. Terlihat pada 14 September 2026 di Malioboro: "Grand Inna
+    Malioboro" separuh hilang di balik satu gedung.
+    """
+    buka(halaman, situs, "/project")
+    peta_siap(halaman)
+    halaman.evaluate("() => window.HK_PETA_STATE.setThree(true)")
+    tunggu(halaman, "() => !!window.HK_PETA_MAP.getLayer('gedung3d')", 20000,
+           "lapisan gedung 3D tidak pernah dipasang")
+    halaman.wait_for_timeout(800)
+
+    urut = halaman.evaluate("() => window.HK_PETA_MAP.getStyle().layers.map(l => l.id)")
+    tiga_d = urut.index("gedung3d")
+    nama = [i for i, id_ in enumerate(urut) if id_.startswith("nama-")]
+    assert nama, "tidak ada satu pun lapisan nama"
+    assert tiga_d < min(nama), (
+        f"gedung3d ada di urutan {tiga_d}, di atas lapisan nama pertama "
+        f"({urut[min(nama)]} di urutan {min(nama)}), jadi ia menutupi namanya"
+    )
+    assert tiga_d < urut.index("panah-searah"), "gedung3d di atas panah searah"
+
+
+def test_warna_gedung_mengikuti_tinggi_yang_benar_benar_ada(halaman, situs):
+    """Tangga warnanya harus membentang di rentang tinggi yang nyata di sini.
+
+    Diukur dari 17.956 bangunan yang termuat di Yogyakarta: median 3 m,
+    persentil 90 6,2 m, persentil 99 14 m. Tangga yang membentang sampai 140 m
+    membuat sembilan puluh sembilan persen bangunan jatuh di sepersepuluh
+    pertamanya, dan semuanya keluar dengan warna yang nyaris sama. Itu yang
+    membuat kota ini tampak seperti hamparan rata.
+    """
+    buka(halaman, situs, "/project")
+    peta_siap(halaman)
+    halaman.evaluate("() => window.HK_PETA_STATE.setThree(true)")
+    tunggu(halaman, "() => !!window.HK_PETA_MAP.getLayer('gedung3d')", 20000)
+
+    tangga = halaman.evaluate(
+        "() => window.HK_PETA_MAP.getPaintProperty('gedung3d', 'fill-extrusion-color')")
+    henti = [n for n in tangga if isinstance(n, (int, float))]
+    assert henti, f"tangga warnanya bukan interpolasi: {tangga}"
+    assert max(henti) <= 60, (
+        f"tangga warnanya membentang sampai {max(henti)} m, jauh di atas "
+        f"bangunan yang benar benar ada di sini"
+    )
+    assert any(n <= 3 for n in henti), (
+        "tidak ada henti warna di 3 m ke bawah, padahal itu tinggi median di sini"
+    )
+
+
 # --------------------------------------------- peta dan kartu yang bertaut ---
 #
 # Ketiganya hanya bisa dibuktikan di peramban. Membaca berkas membuktikan
@@ -504,12 +558,16 @@ def test_tidak_ada_lagi_baris_petunjuk_di_bawah_peta(halaman, situs):
 
 
 @pytest.mark.parametrize("jalur", ["/", "/project"])
-def test_pengantar_peta_memakai_lebar_halaman(halaman, situs, jalur):
-    """Kalimat pertama duduk di bawah judulnya, kalimat kedua di sampingnya.
+def test_pengantar_peta_dua_kalimat_sebaris_dan_rapat(halaman, situs, jalur):
+    """Kalimat pertama duduk di bawah judulnya, kalimat kedua di sampingnya,
+    dan jarak keduanya seukuran spasi, bukan seukuran kolom.
 
-    Sebagai satu kolom selebar 68ch, blok ini meninggalkan separuh halaman
-    kosong di sebelahnya, dan kosongnya makin lebar justru setelah kalimatnya
-    dipendekkan.
+    Uji ini sempat menuntut sebaliknya: bahwa tidak ada ruang kosong tersisa di
+    kanan blok. Itu permintaan yang lebih lama, dan pemilik proyek sudah
+    menggantinya: dua kolom selebar setengah halaman membuat kalimat kedua
+    menunggu di garis tengah, dan di antara keduanya menganga jarak yang tidak
+    ada gunanya. Yang dijaga sekarang jarak antar kalimatnya, bukan ruang di
+    ujung kanannya.
     """
     buka(halaman, situs, jalur)
     letak = halaman.evaluate("""() => {
@@ -522,15 +580,16 @@ def test_pengantar_peta_memakai_lebar_halaman(halaman, situs, jalur):
         jumlah: p.length,
         dibawahJudul: Math.round(a.top) >= Math.round(h.bottom) - 2,
         sebaris: Math.abs(a.top - b.top) < 3,
-        disamping: b.left > a.right,
-        sisa: Math.round(blok.getBoundingClientRect().right - b.right),
+        jarak: Math.round(b.left - a.right),
       };
     }""")
     assert letak["jumlah"] == 2, f"{jalur}: pengantarnya bukan dua kalimat"
     assert letak["dibawahJudul"], f"{jalur}: kalimat pertama tidak di bawah judulnya"
     assert letak["sebaris"], f"{jalur}: kalimat kedua tidak sebaris dengan yang pertama"
-    assert letak["disamping"], f"{jalur}: kalimat kedua tidak di sampingnya"
-    assert letak["sisa"] < 140, f"{jalur}: masih ada {letak['sisa']} piksel kosong di kanannya"
+    assert 0 < letak["jarak"] < 28, (
+        f"{jalur}: jarak antar kalimatnya {letak['jarak']} piksel, "
+        f"seukuran kolom bukan seukuran spasi"
+    )
 
 
 def test_pengantar_peta_bertumpuk_lagi_di_ponsel(peramban, situs):

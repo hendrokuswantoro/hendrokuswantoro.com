@@ -530,7 +530,17 @@
 
           /* Mapbox Streets carries a height on every building, so the
              extrusion is real rather than a flat guess. The 2D footprints
-             step aside to stop the two fighting over the same pixels. */
+             step aside to stop the two fighting over the same pixels.
+
+             Disisipkan SEBELUM "panah-searah", bukan ditambahkan di ujung.
+             addLayer tanpa beforeId menaruh lapisannya paling atas, di atas
+             seluruh lapisan nama, jadi gedung 3D menutupi nama jalan, nama
+             POI, dan nama tempat. Di tampilan miring akibatnya nama nama itu
+             terpotong badan gedung dan terbaca seperti saling tumpang tindih.
+             Terlihat pada 14 September 2026 di Malioboro: "Grand Inna
+             Malioboro" separuh hilang di balik satu gedung. Tempatnya
+             sekarang persis tempat "gedung" yang datar, yaitu tepat sebelum
+             lapisan simbol pertama. */
           if (map.getSource("jalan") && !map.getLayer("gedung3d")) {
             map.addLayer({
               id: "gedung3d",
@@ -542,14 +552,22 @@
                 ["==", ["get", "extrude"], "true"],
                 ["!=", ["get", "underground"], "true"]],
               paint: {
+                /* Tangga warnanya mengikuti tinggi yang sebenarnya ada di
+                   sini, bukan tinggi kota lain. Diukur dari 17.956 bangunan
+                   yang termuat di Yogyakarta: median 3 m, persentil 90 6,2 m,
+                   persentil 99 14 m, tertinggi 75 m. Tangga lama membentang
+                   0 sampai 140, jadi sembilan puluh sembilan persen bangunan
+                   jatuh di sepersepuluh pertamanya dan semuanya keluar
+                   dengan warna yang nyaris sama. Itu sebabnya kota ini
+                   tampak seperti hamparan rata, bukan seperti bangunan. */
                 "fill-extrusion-color": ["interpolate", ["linear"], ["get", "height"],
-                  0, "#e3e7ec", 20, "#d7dce3", 60, "#c9d0d9", 140, "#b9c2cd"],
+                  0, "#e9edf2", 3, "#dbe1e9", 6, "#cdd5e0", 14, "#b9c3d1", 40, "#a5b0c0"],
                 "fill-extrusion-height": ["coalesce", ["get", "height"], 6],
                 "fill-extrusion-base": ["coalesce", ["get", "min_height"], 0],
                 "fill-extrusion-opacity": 0.92,
                 "fill-extrusion-vertical-gradient": true
               }
-            });
+            }, map.getLayer("panah-searah") ? "panah-searah" : undefined);
           }
           if (map.getLayer("gedung")) map.setLayoutProperty("gedung", "visibility", "none");
         } else {
