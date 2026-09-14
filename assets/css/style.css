@@ -788,13 +788,16 @@ ul { margin: 0; padding: 0; list-style: none; }
   .peta__intro {
     max-width: none;
     display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     column-gap: 56px;
     align-items: baseline;
   }
-  .peta__intro .eyebrow { grid-column: 1; grid-row: 1; }
-  .peta__intro h2 { grid-column: 1; grid-row: 2; margin-bottom: 0; }
-  .peta__intro p { grid-column: 2; grid-row: 2; max-width: 46ch; }
+  .peta__intro .eyebrow { grid-column: 1 / -1; grid-row: 1; }
+  .peta__intro h2 { grid-column: 1 / -1; grid-row: 2; }
+  /* Kalimat pertama di bawah judulnya, kalimat kedua di sampingnya, bukan
+     di bawahnya lagi. Keduanya berbagi baris yang sama. */
+  .peta__intro p { grid-column: 1; grid-row: 3; max-width: 46ch; }
+  .peta__intro p + p { grid-column: 2; grid-row: 3; }
 }
 @media (min-width: 720px) { .peta__frame { min-height: clamp(360px, 56vh, 620px); } }
 .peta__frame {
@@ -816,10 +819,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 .peta__frame.is-ready::after { opacity: 0; }
 @keyframes memuat { to { background-position: -150% 0; } }
 .peta__ket { margin: 12px 0 0; font-size: var(--fs-sm); color: var(--ink-3); }
-/* Petunjuk cara memakai peta, dibuat peta.js. Duduk di bawah peta, tidak
-   menutupi apa pun, dan tidak menunggu pembaca salah dulu untuk muncul. */
-.peta__cara { margin: 12px 0 0; font-size: var(--fs-sm); color: var(--ink-3); }
-
 .peta__pin {
   width: 18px; height: 18px; padding: 0; border-radius: 50%; cursor: pointer;
   background: var(--brand-btn); border: 3px solid #fff;

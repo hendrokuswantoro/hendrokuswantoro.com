@@ -464,18 +464,7 @@
        berubah tanpa suara, jadi penyaringan dan pemusatan diumumkan sendiri. */
     filterOn: { en: "%k. %n of %t works shown.", ind: "%k. %n dari %t karya ditampilkan." },
     filterOff: { en: "Filter off. All %t works shown.", ind: "Saringan mati. Semua %t karya ditampilkan." },
-    focus: { en: "%w, centred on the map.", ind: "%w, dipusatkan di peta." },
-    /* Petunjuk yang duduk diam di bawah peta, bukan yang berkelebat di
-       atasnya. Bunyinya berbeda menurut perangkatnya sebab caranya memang
-       berbeda, dan petunjuk yang salah lebih buruk daripada tidak ada. */
-    caraTetikus: {
-      en: "Drag to move the map. Zoom with the + and − buttons, or hold %k while scrolling.",
-      ind: "Seret untuk menggeser peta. Perbesar dengan tombol + dan −, atau tahan %k sambil menggulir."
-    },
-    caraSentuh: {
-      en: "One finger scrolls the page. Two fingers move and zoom the map.",
-      ind: "Satu jari menggulir halaman. Dua jari menggeser dan memperbesar peta."
-    }
+    focus: { en: "%w, centred on the map.", ind: "%w, dipusatkan di peta." }
   };
 
   /* Layar sentuh tanpa kursor. Dipakai memutuskan siapa yang butuh
@@ -483,14 +472,6 @@
   function sentuh() {
     return Boolean(window.matchMedia
       && window.matchMedia("(hover: none) and (pointer: coarse)").matches);
-  }
-
-  /* Cmd di Mac, Ctrl di tempat lain. Dibaca dari platform, bukan ditebak dari
-     lebar layar, dan hanya dipakai untuk menulis petunjuknya. */
-  function tombolZoom() {
-    var tanda = (navigator.userAgentData && navigator.userAgentData.platform)
-      || navigator.platform || "";
-    return /mac/i.test(tanda) ? "⌘" : "Ctrl";
   }
 
   function reducedMotion() {
@@ -665,10 +646,6 @@
     try { window.localStorage.setItem(PANEL_KEY, collapsed ? "tutup" : "buka"); } catch (e) { /* private mode */ }
   }
 
-  /* buildPanel tidak melihat baris petunjuk, dan tidak perlu. Satu kait
-     supaya ia ikut berganti bahasa bersama yang lain. */
-  var ubahCara = function () {};
-
   function buildPanel(map, markers, bounds, state) {
     var box = document.createElement("div");
     box.className = "peta__legenda";
@@ -819,7 +796,6 @@
     document.addEventListener("hk:lang", function () {
       label();
       count();
-      ubahCara();
       if (TOKEN) retitleLabels(map);
       markers.forEach(function (entry) {
         entry.marker.getElement().title = say(entry.item);
@@ -941,21 +917,6 @@
          menyaring jenis yang sama dua kali, tetap terbaca sebagai perubahan */
       kabar.textContent = "";
       window.setTimeout(function () { kabar.textContent = teks; }, 60);
-    }
-
-    /* Petunjuk cara memakai peta. Diam di bawah peta, tidak menutupi apa pun,
-       dan tidak menunggu pembaca salah dulu untuk muncul. Inilah pengganti
-       tulisan "Use Ctrl + scroll to zoom the map" yang dulu berkelebat di
-       atas peta tiap kali kursor kebetulan lewat. */
-    var cara = document.createElement("p");
-    cara.className = "peta__cara";
-
-    ubahCara = function () { tulisCara(); };
-
-    function tulisCara() {
-      cara.textContent = sentuh()
-        ? say(TEXT.caraSentuh)
-        : say(TEXT.caraTetikus).replace("%k", tombolZoom());
     }
 
     function cari(id) {
@@ -1098,8 +1059,6 @@
     var section = container.parentNode.parentNode;
     section.insertBefore(panel.node, section.querySelector(".peta__ket"));
     section.insertBefore(kabar, section.querySelector(".peta__ket"));
-    tulisCara();
-    section.insertBefore(cara, section.querySelector(".peta__ket"));
 
     /* Only a map that never starts counts as a failure. A single tile that
        404s, or a style layer the renderer skips, must not replace a working
@@ -1181,17 +1140,28 @@
        Sekarang yang didengarkan pointerdown pada wadahnya, di fase capture,
        jadi tiap tombol kendali, tiap penanda, dan tiap sentuhan terhitung
        satu jalan yang sama. */
-    function tanganDiPeta(event) {
-      state.stopTour();
+    function tanganDiPeta() {
+      /* Yang dikerjakan di sini cuma satu: menghentikan Jelajah.
 
-      /* Menghentikan animasi yang sedang berjalan hanya kalau pembacanya
-         memang sedang mengambil alih kamera: menyeret, menggulir, atau
-         menekan tombol kendali. Klik pada penanda justru MEMULAI terbang,
-         dan map.stop() di situ akan membatalkan gerakan yang baru saja
-         dimintanya sendiri. */
-      var sasaran = event && event.target;
-      var kendali = sasaran && sasaran.closest && sasaran.closest(".maplibregl-ctrl-group");
-      if (kendali || event.type === "wheel" || event.type === "dragstart") map.stop();
+         Dulu ia juga memanggil map.stop() pada dragstart, pada wheel, dan
+         pada klik tombol kendali, dengan maksud menghentikan penerbangan yang
+         sedang berjalan. Itu MEMATAHKAN seretannya sendiri.
+
+         Camera.stop() di MapLibre tidak hanya membatalkan animasi. Ia
+         memanggil handlers.stop(), yang menyetel ulang seluruh penanganan
+         gerak, termasuk DragPan yang baru saja dimulai peristiwa dragstart
+         itu juga. Akibatnya tiap seretan disetel ulang di awal dan peta cuma
+         bergeser sedikit, lalu berhenti.
+
+         Terukur pada 14 September 2026, di zoom 15,2: menyeret 320 piksel
+         menggeser peta 0,000149 derajat bujur, sekitar 16 meter. Seharusnya
+         sekitar 1.500 meter. Seratus kali lebih berat daripada mestinya, dan
+         itu persis keluhan "susah digeser ke kiri dan ke kanan".
+
+         map.stop() memang tidak diperlukan. Penanganan gerak MapLibre sudah
+         mengambil alih animasi yang sedang berjalan dengan sendirinya, dan
+         tombol + dan - memanggil easeTo yang menggantikan animasi itu juga. */
+      state.stopTour();
     }
 
     /* Roda tetikus: menggulir saja menggulir halaman, menggulir sambil menahan

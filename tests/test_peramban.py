@@ -446,38 +446,91 @@ def test_ctrl_sambil_menggulir_memperbesar_peta(halaman, situs):
     )
 
 
-def test_cara_memakai_peta_tertulis_dan_dwibahasa(halaman, situs):
-    """Tanpa tulisan gestur, Ctrl sambil menggulir tidak akan ditemukan siapa
-    pun sendiri. Penggantinya satu baris yang diam di bawah peta."""
+def test_menyeret_menggeser_peta_sejauh_yang_diseret(halaman, situs):
+    """Keluhannya: "susah digeser ke kiri dan ke kanan, masih sangat berat".
+
+    Sebabnya bukan penggambaran melainkan kode kita sendiri. tanganDiPeta
+    memanggil map.stop() pada dragstart, dan Camera.stop() di MapLibre tidak
+    hanya membatalkan animasi: ia memanggil handlers.stop(), yang menyetel
+    ulang DragPan yang baru saja dimulai peristiwa dragstart itu juga.
+
+    Terukur pada 14 September 2026, zoom 15,2: menyeret 320 piksel menggeser
+    peta 0,000149 derajat bujur, yaitu 2,5 persen dari 0,005978 yang
+    semestinya. Uji ini menahannya tetap utuh, dan ia menghitung sendiri
+    berapa yang semestinya, bukan memakai angka yang diketik tangan.
+    """
+    import math
+
     buka(halaman, situs, "/project")
     peta_siap(halaman)
 
-    cara = halaman.locator(".peta__cara")
-    inggris = cara.inner_text()
-    assert "Ctrl" in inggris or "⌘" in inggris, f"petunjuknya tidak menyebut tombolnya: {inggris!r}"
-    assert "Drag" in inggris
+    halaman.evaluate("() => window.HK_PETA_MAP.jumpTo({center: [110.3656, -7.7925], zoom: 15.2})")
+    halaman.wait_for_timeout(600)
 
-    halaman.locator('.lang__btn[data-lang="id"]').click()
-    halaman.wait_for_timeout(400)
-    indonesia = cara.inner_text()
-    assert indonesia != inggris, "petunjuknya tidak ikut berganti bahasa"
-    assert "Seret" in indonesia
+    kanvas = halaman.locator(".peta__kanvas").bounding_box()
+    x = kanvas["x"] + kanvas["width"] * 0.72
+    y = kanvas["y"] + kanvas["height"] * 0.78
+    sebelum = halaman.evaluate("() => window.HK_PETA_MAP.getCenter()")
+
+    piksel = 320
+    halaman.mouse.move(x, y)
+    halaman.mouse.down()
+    for i in range(1, 41):
+        halaman.mouse.move(x - piksel * i / 40, y)
+        halaman.wait_for_timeout(16)
+    halaman.mouse.up()
+    halaman.wait_for_timeout(600)
+
+    sesudah = halaman.evaluate("() => window.HK_PETA_MAP.getCenter()")
+    pindah = sesudah["lng"] - sebelum["lng"]
+
+    lat = math.radians(sebelum["lat"])
+    zoom = halaman.evaluate("() => window.HK_PETA_MAP.getZoom()")
+    meter = 40075016.686 * math.cos(lat) / (512 * 2 ** zoom) * piksel
+    semestinya = meter / (111320 * math.cos(lat))
+
+    assert pindah > semestinya * 0.7, (
+        f"menyeret {piksel} piksel cuma menggeser {pindah:.6f} derajat, "
+        f"{pindah / semestinya * 100:.1f} persen dari {semestinya:.6f} yang semestinya"
+    )
 
 
-def test_pengantar_peta_memakai_lebar_halaman(halaman, situs):
-    """Sebagai satu kolom selebar 68ch, blok ini meninggalkan separuh halaman
-    kosong di sebelahnya, dan kosongnya makin lebar justru setelah kalimatnya
-    dipendekkan. Di layar lebar judul dan kalimatnya sekarang sebaris."""
+def test_tidak_ada_lagi_baris_petunjuk_di_bawah_peta(halaman, situs):
+    """Dihapus atas permintaan pemilik proyek. Keterangan di bawah peta cuma
+    satu baris, yaitu yang menyebut titik penanda dan sumber ubinnya."""
     buka(halaman, situs, "/project")
+    peta_siap(halaman)
+    assert halaman.locator(".peta__cara").count() == 0
+
+
+@pytest.mark.parametrize("jalur", ["/", "/project"])
+def test_pengantar_peta_memakai_lebar_halaman(halaman, situs, jalur):
+    """Kalimat pertama duduk di bawah judulnya, kalimat kedua di sampingnya.
+
+    Sebagai satu kolom selebar 68ch, blok ini meninggalkan separuh halaman
+    kosong di sebelahnya, dan kosongnya makin lebar justru setelah kalimatnya
+    dipendekkan.
+    """
+    buka(halaman, situs, jalur)
     letak = halaman.evaluate("""() => {
-      const b = document.querySelector('.peta__intro').getBoundingClientRect();
-      const h = document.querySelector('.peta__intro h2').getBoundingClientRect();
-      const p = document.querySelector('.peta__intro p').getBoundingClientRect();
-      return { sisa: Math.round(b.right - p.right), sebaris: h.bottom > p.top,
-               lebar: Math.round(b.width) };
+      const blok = document.querySelector('.peta__intro');
+      const h = blok.querySelector('h2').getBoundingClientRect();
+      const p = blok.querySelectorAll('p');
+      const a = p[0].getBoundingClientRect();
+      const b = p[1].getBoundingClientRect();
+      return {
+        jumlah: p.length,
+        dibawahJudul: Math.round(a.top) >= Math.round(h.bottom) - 2,
+        sebaris: Math.abs(a.top - b.top) < 3,
+        disamping: b.left > a.right,
+        sisa: Math.round(blok.getBoundingClientRect().right - b.right),
+      };
     }""")
-    assert letak["sebaris"], "judul dan kalimatnya masih bertumpuk di layar lebar"
-    assert letak["sisa"] < 120, f"masih ada {letak['sisa']} piksel kosong di kanannya"
+    assert letak["jumlah"] == 2, f"{jalur}: pengantarnya bukan dua kalimat"
+    assert letak["dibawahJudul"], f"{jalur}: kalimat pertama tidak di bawah judulnya"
+    assert letak["sebaris"], f"{jalur}: kalimat kedua tidak sebaris dengan yang pertama"
+    assert letak["disamping"], f"{jalur}: kalimat kedua tidak di sampingnya"
+    assert letak["sisa"] < 140, f"{jalur}: masih ada {letak['sisa']} piksel kosong di kanannya"
 
 
 def test_pengantar_peta_bertumpuk_lagi_di_ponsel(peramban, situs):
@@ -488,9 +541,8 @@ def test_pengantar_peta_bertumpuk_lagi_di_ponsel(peramban, situs):
         hal.goto(f"{situs}/project", wait_until="load")
         hal.wait_for_selector("html[data-siap]", state="attached", timeout=15000)
         bertumpuk = hal.evaluate("""() => {
-          const h = document.querySelector('.peta__intro h2').getBoundingClientRect();
-          const p = document.querySelector('.peta__intro p').getBoundingClientRect();
-          return p.top >= h.bottom - 1;
+          const p = document.querySelectorAll('.peta__intro p');
+          return p[1].getBoundingClientRect().top >= p[0].getBoundingClientRect().bottom - 1;
         }""")
         assert bertumpuk, "di ponsel keduanya dipaksa sebaris"
     finally:

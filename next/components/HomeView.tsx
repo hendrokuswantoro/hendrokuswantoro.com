@@ -107,6 +107,7 @@ export function HomeView() {
             <span className="eyebrow">{say(HOME.mapEyebrow)}</span>
             <h2>{say(HOME.mapTitle)}</h2>
             <p>{say(HOME.mapBody)}</p>
+            <p>{say(HOME.mapBodySamping)}</p>
           </div>
           <p>
             <Link className="btn btn--primary" href="/project/">

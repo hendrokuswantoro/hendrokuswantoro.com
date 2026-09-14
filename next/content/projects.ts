@@ -178,9 +178,15 @@ export const PROJECT_PAGE = {
   readCaseStudy: { en: "Read the case study", id: "Baca studi kasusnya" } as Copy,
   mapEyebrow: { en: "The work map", id: "Peta karya" } as Copy,
   mapTitle: { en: "Seven works, one map", id: "Tujuh karya, satu peta" } as Copy,
+  /* Dua kalimat, dua elemen. Yang pertama duduk di bawah judulnya, yang kedua
+     di sampingnya. Lihat .peta__intro di style.css. */
   mapIntro: {
-    en: "Every project below is on this map. Click a point to see the work.",
-    id: "Tiap proyek di bawah ada di peta ini. Klik satu titik untuk melihat karyanya.",
+    en: "Every project below is on this map.",
+    id: "Tiap proyek di bawah ada di peta ini.",
+  } as Copy,
+  mapIntroSamping: {
+    en: "Click a point to see the work.",
+    id: "Klik satu titik untuk melihat karyanya.",
   } as Copy,
   /* Dibacakan pembaca layar, tidak pernah tampil di layar. */
   filterOn: {

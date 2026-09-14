@@ -37,8 +37,12 @@ export const HOME = {
   mapEyebrow: { en: "The work map", id: "Peta karya" } as Copy,
   mapTitle: { en: "See the work on a map", id: "Lihat karyanya di peta" } as Copy,
   mapBody: {
-    en: "The Project page opens a map with all seven works on it. Click a point to see the work.",
-    id: "Halaman Proyek membuka peta berisi tujuh karya. Klik satu titik untuk melihat karyanya.",
+    en: "The Project page opens a map with all seven works on it.",
+    id: "Halaman Proyek membuka peta berisi tujuh karya.",
+  } as Copy,
+  mapBodySamping: {
+    en: "Click a point to see the work.",
+    id: "Klik satu titik untuk melihat karyanya.",
   } as Copy,
   mapOpen: { en: "Open the map", id: "Buka petanya" } as Copy,
 

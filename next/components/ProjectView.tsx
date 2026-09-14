@@ -36,6 +36,7 @@ export function ProjectView() {
             <span className="eyebrow">{say(PROJECT_PAGE.mapEyebrow)}</span>
             <h2>{say(PROJECT_PAGE.mapTitle)}</h2>
             <p>{say(PROJECT_PAGE.mapIntro)}</p>
+            <p>{say(PROJECT_PAGE.mapIntroSamping)}</p>
           </div>
 
           <WorkMap />

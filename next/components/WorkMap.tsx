@@ -788,7 +788,14 @@ export function WorkMap() {
       window.setTimeout(siap, 4000);
       instance.on("move", recount);
       instance.on("zoom", recount);
-      /* the tour is a suggestion, not a ride: any hand on the map stops it */
+      /* Jelajah itu tawaran, bukan tumpangan: begitu ada tangan di peta, ia
+         berhenti. Yang dikerjakan cuma itu, dan TIDAK memanggil map.stop().
+
+         Camera.stop() di MapLibre tidak hanya membatalkan animasi, ia juga
+         memanggil handlers.stop(), yang menyetel ulang DragPan yang baru saja
+         dimulai peristiwa dragstart itu juga. Di port statis itu membuat
+         seretan 320 piksel cuma menggeser peta 2,5 persen dari semestinya.
+         Lihat tanganDiPeta di assets/js/peta.js. */
       (["dragstart", "wheel", "touchstart"] as const).forEach((kind) => instance.on(kind, stopTour));
 
       /* alamat yang berganti tanpa memuat ulang halaman: tautan "Lihat di
