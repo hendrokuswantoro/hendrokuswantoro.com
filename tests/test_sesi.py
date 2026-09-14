@@ -86,7 +86,10 @@ def bersihkan():
             "WHERE dibuat_pada >= %s AND dicabut_pada IS NULL",
             (sejak,),
         )
-        k.execute("DELETE FROM gagal_masuk")
+        # Dibatasi waktu, sama seperti baris di atasnya. Menghapus seluruh
+        # isinya akan membuka kunci akun yang memang sedang terkunci karena
+        # percobaan masuk yang gagal, di mesin siapa pun yang menjalankan ini.
+        k.execute("DELETE FROM gagal_masuk WHERE pada >= %s", (sejak,))
         s.commit()
 
 

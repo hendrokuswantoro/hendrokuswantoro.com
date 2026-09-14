@@ -367,6 +367,25 @@ jobs:
           COOKIE_AMAN: "false"
         run: python -m pytest tests/test_admin.py -q
 
+      # Langkah langkah di atas menyebut berkasnya satu per satu, dan itu
+      # menyisakan lubang yang tidak terlihat dari mana pun: berkas uji yang
+      # tidak disebut di sini TIDAK PERNAH DIJALANKAN CI SAMA SEKALI.
+      #
+      # Pekerjaan "Test" tidak menutupinya. Di sana tidak ada basis data dan
+      # tidak ada paket backend, jadi test_sesi.py, test_keamanan_akun.py,
+      # test_keamanan_alur.py, test_cadangan.py, dan bagian server
+      # test_passkey_alamat.py semuanya runtuh jadi satu baris "dilewati".
+      # Terhitung pada 14 September 2026: 168 uji ada di repositori tetapi
+      # tidak dijalankan di mana pun.
+      #
+      # Langkah ini menjalankan seluruhnya, di tempat yang punya basis data
+      # dan paket backend. Ongkosnya 25 detik.
+      - name: The whole suite, with a database behind it
+        env:
+          JWT_SECRET: rahasia-uji-yang-panjangnya-lebih-dari-tiga-puluh-dua
+          COOKIE_AMAN: "false"
+        run: python -m pytest tests -q
+
   peramban:
     name: Browser and Performance
     runs-on: ubuntu-latest

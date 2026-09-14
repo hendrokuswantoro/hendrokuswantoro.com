@@ -45,8 +45,35 @@ PANEL_TSX = (AKAR / "next" / "components" / "admin" / "PanelPasskey.tsx").read_t
 CONTOH_ENV = (AKAR / ".env.example").read_text(encoding="utf-8")
 
 
+# Bagian server mengimpor backend/core/konfigurasi.py, dan itu menarik pydantic
+# beserta pydantic-settings. Keduanya ada di backend/requirements.txt, bukan di
+# tests/requirements.txt.
+#
+# Pada 14 September 2026 empat belas uji di bawah GAGAL di CI, bukan dilewati,
+# sebab pekerjaan "Test" hanya memasang yang kedua. Di mesin pengembangan
+# semuanya hijau: pydantic sudah terpasang di sana, jadi cacatnya tidak
+# terlihat sampai CI menjalankannya.
+#
+# Penjaganya ditaruh di empat uji itu saja, bukan di seluruh modul. Sebelas uji
+# lain di berkas ini cuma membaca HTML dan TSX, dan melewatinya berarti
+# kehilangan penjagaan yang sebenarnya masih bisa berjalan tanpa backend.
+try:  # noqa: SIM105
+    import pydantic  # noqa: F401
+    import pydantic_settings  # noqa: F401
+
+    ADA_BACKEND = True
+except ModuleNotFoundError:  # pragma: no cover
+    ADA_BACKEND = False
+
+butuh_backend = pytest.mark.skipif(
+    not ADA_BACKEND,
+    reason="backend belum terpasang. Jalankan: pip install -r backend/requirements.txt",
+)
+
+
 # ----------------------------------------------------------------- server ---
 
+@butuh_backend
 @pytest.mark.parametrize(
     "host, ip",
     [
@@ -86,10 +113,12 @@ def _atur(**ubah):
     return Pengaturan(**dasar)
 
 
+@butuh_backend
 def test_siap_dengan_nama_domain():
     assert _atur().passkey_siap is True
 
 
+@butuh_backend
 @pytest.mark.parametrize("rp", ["127.0.0.1", "192.168.1.4", "::1"])
 def test_tidak_siap_kalau_rp_id_alamat_ip(rp):
     """Ini bukan sikap rewel. Konfigurasi semacam ini tidak pernah bisa
@@ -98,6 +127,7 @@ def test_tidak_siap_kalau_rp_id_alamat_ip(rp):
     assert _atur(WEBAUTHN_RP_ID=rp).passkey_siap is False
 
 
+@butuh_backend
 def test_tetap_tidak_siap_tanpa_rahasia_jwt():
     """Yang lama tidak boleh ikut longgar gara gara yang baru ditambahkan."""
     assert _atur(JWT_SECRET="").passkey_siap is False
