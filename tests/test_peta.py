@@ -287,3 +287,34 @@ def test_kedua_port_tidak_lagi_menggantung_pada_load():
         for peristiwa in ('"load"', '"styledata"', '"idle"'):
             assert peristiwa in sumber, f"{nama}: tidak lagi mendengar {peristiwa}"
         assert "setTimeout(siap, 4000)" in sumber, f"{nama}: jaring pengamannya hilang"
+
+
+def test_server_uji_memakai_nama_domain_bukan_alamat_ip():
+    """Mapbox menolak alamat IP di pembatasan URL token.
+
+    Kalimatnya tersurat di console.mapbox.com: "IP addresses are not supported
+    in URL restrictions. Use a domain name instead." Selama server uji
+    menjawab di 127.0.0.1, asalnya tidak akan pernah bisa didaftarkan, dan
+    empat uji peta akan dilewati selamanya di tiap mesin dan di CI.
+
+    Uji ini yang menahan alamatnya tetap berupa nama.
+    """
+    konf = (AKAR / "tests" / "conftest.py").read_text(encoding="utf-8")
+    inang = re.search(r'INANG_UJI = "([^"]+)"', konf)
+    assert inang, "INANG_UJI hilang dari conftest"
+    nama = inang.group(1)
+    assert not re.fullmatch(r"[0-9.]+|\[?[0-9a-f:]+\]?", nama), (
+        f"server uji menjawab di {nama}, dan Mapbox menolak alamat IP"
+    )
+    assert f'yield f"http://{{INANG_UJI}}:{{porta}}"' in konf, (
+        "fixture situs tidak lagi memakai INANG_UJI"
+    )
+
+
+def test_server_uji_mengikat_kedua_tumpukan():
+    """localhost menunjuk ke dua alamat, dan urutannya berbeda antara Windows
+    dan Linux. Server yang cuma mengikat satu membuat tiap permintaan menunggu
+    tenggang sambungan lebih dulu: terukur 2050 ms lawan 16 ms."""
+    konf = (AKAR / "tests" / "conftest.py").read_text(encoding="utf-8")
+    assert 'socket.AF_INET, "127.0.0.1"' in konf
+    assert 'socket.AF_INET6, "::1"' in konf

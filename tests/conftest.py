@@ -84,22 +84,79 @@ class Penyaji(http.server.SimpleHTTPRequestHandler):
 # Alasannya bukan kerapian melainkan Mapbox. Token petanya dibatasi per URL,
 # dan pembatasan itu mencocokkan asal, bukan jalur. Porta yang berganti tiap
 # kali uji dijalankan berarti asal yang tidak pernah bisa didaftarkan, dan
-# ubinnya dijawab 403 selamanya. Dengan porta tetap, satu baris
-# "http://127.0.0.1:8099" di console.mapbox.com cukup untuk seluruh mesin
-# pengembangan.
+# ubinnya dijawab 403 selamanya.
 PORTA_UJI = 8099
+
+# Dan alamatnya "localhost", BUKAN "127.0.0.1".
+#
+# Pada 14 September 2026 console.mapbox.com menolak alamat IP dengan kalimat
+# tersurat: "IP addresses are not supported in URL restrictions. Use a domain
+# name instead." Jadi selama server uji ini menjawab di 127.0.0.1, asalnya
+# tidak akan pernah bisa didaftarkan, dan empat uji peta akan dilewati
+# selamanya di tiap mesin dan di CI. Yang pindah server ujinya, bukan
+# pemiliknya yang harus memaksa Mapbox.
+#
+# "localhost" adalah nama domain, dan itu sudah cukup bagi Mapbox maupun bagi
+# WebAuthn, yang menuntut hal yang sama untuk alasan yang berbeda.
+INANG_UJI = "localhost"
 
 
 def _porta() -> int:
-    with socket.socket() as s:
-        try:
-            s.bind(("127.0.0.1", PORTA_UJI))
-            return PORTA_UJI
-        except OSError:
-            pass
+    """Porta yang bebas di KEDUA tumpukan, bukan cuma di IPv4.
+
+    localhost menunjuk ke dua alamat, dan server ini mengikat keduanya. Porta
+    yang bebas di 127.0.0.1 tetapi terpakai di ::1 akan membuat separuh
+    permintaan gagal, dan gagalnya bergantung pada urutan resolusi nama, yang
+    berbeda antara Windows dan Linux.
+    """
+    def bebas(porta: int) -> bool:
+        for keluarga, alamat in ((socket.AF_INET, "127.0.0.1"), (socket.AF_INET6, "::1")):
+            try:
+                with socket.socket(keluarga) as s:
+                    s.bind((alamat, porta))
+            except OSError:
+                return False
+        return True
+
+    if bebas(PORTA_UJI):
+        return PORTA_UJI
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]
+
+
+def _server(keluarga: int, alamat: str, porta: int):
+    """Satu server pada satu tumpukan. Dipanggil dua kali.
+
+    Windows menjawab localhost dengan ::1 lebih dulu, Linux dengan 127.0.0.1.
+    Server yang cuma mengikat satu di antaranya membuat tiap permintaan
+    menunggu tenggang sambungan sebelum mencoba yang lain; terukur 2050 ms
+    lawan 16 ms pada mesin ini. Mengikat "::" akan menyelesaikannya sekaligus,
+    tetapi itu membuka server uji ke seluruh jaringan lokal. Dua soket
+    loopback lebih murah daripada itu.
+    """
+    class Loopback(http.server.ThreadingHTTPServer):
+        address_family = keluarga
+        daemon_threads = True
+        allow_reuse_address = True
+
+        def handle_error(self, request, client_address):
+            """Sambungan yang diputus peramban bukan galat.
+
+            Peramban membatalkan permintaan yang tidak jadi dipakai, misalnya
+            ubin peta yang keburu keluar layar, dan bawaan http.server
+            mencetak jejak tumpukan penuh untuk tiap satunya. Jejak itu
+            muncul di tengah keluaran pytest dan terbaca seperti ujinya yang
+            rusak. Galat lain tetap dicetak.
+            """
+            import sys
+            if isinstance(sys.exc_info()[1], (ConnectionError, TimeoutError)):
+                return
+            super().handle_error(request, client_address)
+
+    server = Loopback((alamat, porta), lambda *a, **k: Penyaji(*a, directory=str(AKAR), **k))
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return server
 
 
 @pytest.fixture(scope="session")
@@ -108,16 +165,19 @@ def situs():
     Penyaji.csp = _csp()
     porta = _porta()
 
-    server = http.server.ThreadingHTTPServer(
-        ("127.0.0.1", porta),
-        lambda *a, **k: Penyaji(*a, directory=str(AKAR), **k),
-    )
-    utas = threading.Thread(target=server.serve_forever, daemon=True)
-    utas.start()
+    server = [_server(socket.AF_INET, "127.0.0.1", porta)]
     try:
-        yield f"http://127.0.0.1:{porta}"
+        server.append(_server(socket.AF_INET6, "::1", porta))
+    except OSError:
+        # mesin tanpa IPv6. Di sana localhost menunjuk ke 127.0.0.1 saja,
+        # dan server pertama sudah cukup.
+        pass
+
+    try:
+        yield f"http://{INANG_UJI}:{porta}"
     finally:
-        server.shutdown()
+        for satu in server:
+            satu.shutdown()
 
 
 @pytest.fixture(scope="session")

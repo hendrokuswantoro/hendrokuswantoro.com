@@ -158,6 +158,11 @@ def butuh_ubin(halaman: Page) -> None:
     ini, dan menggagalkan uji karenanya akan menunjuk ke arah yang salah.
     Dilewati, dengan alasan yang menyebut persis apa yang harus dikerjakan,
     dan pytest.ini memakai -rs supaya alasan itu selalu tercetak.
+
+    Asalnya "localhost", bukan "127.0.0.1", dan itu bukan pilihan gaya.
+    console.mapbox.com menolak alamat IP dengan kalimat tersurat: "IP
+    addresses are not supported in URL restrictions. Use a domain name
+    instead." Lihat INANG_UJI di tests/conftest.py.
     """
     # Tanpa token, peta jatuh ke OpenFreeMap. Gayanya jauh lebih sedikit
     # lapisannya dan tidak membawa nama jalan maupun tinggi bangunan, jadi
@@ -179,8 +184,12 @@ def butuh_ubin(halaman: Page) -> None:
     pytest.skip(
         f"Mapbox menolak ubinnya dengan 403 untuk asal {asal}.\n"
         f"    Tokennya sah, hanya asal ini belum ada di daftar URL-nya.\n"
-        f"    Buka console.mapbox.com, pilih tokennya, tambahkan {asal}\n"
-        f"    pada URL restrictions, lalu jalankan ulang.\n"
+        f"    Buka console.mapbox.com, pilih tokennya, tambahkan\n"
+        f"        {asal}\n"
+        f"    pada URL restrictions, lalu Save changes.\n"
+        f"    Salin persis seperti itu: tanpa garis miring di belakang, tanpa\n"
+        f"    jalur, dan tanpa tanda bintang. Mapbox juga menolak alamat IP,\n"
+        f"    jadi jangan ditukar dengan 127.0.0.1.\n"
         f"    Selama belum, uji peta tidak menjaga apa apa."
     )
 

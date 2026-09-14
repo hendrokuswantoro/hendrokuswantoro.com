@@ -262,9 +262,17 @@ memberi situs ini dua tuan.
 4. Model pengenalan wajah 37 MB, tidak ikut git, diambil dengan
    `python tools/ambil_model.py`. **Verifikasi wajah belum pernah dijalankan
    dengan kamera sungguhan.**
-5. `http://127.0.0.1:8099` belum ada di pembatasan URL token Mapbox, jadi peta
-   tidak tergambar saat dikembangkan secara lokal. Pembatasan URL Mapbox
-   **tidak boleh memakai `*` di bagian jalur.**
+5. `http://localhost:8099` belum ada di pembatasan URL token Mapbox, jadi peta
+   tidak tergambar saat dikembangkan secara lokal dan empat uji peta dilewati.
+   Buka console.mapbox.com, Tokens, pilih token `pk.`, URL restrictions,
+   tambahkan baris itu persis, lalu Save changes.
+
+   **Mapbox menolak alamat IP.** Kalimatnya tersurat di layar: "IP addresses
+   are not supported in URL restrictions. Use a domain name instead." Jadi
+   `http://127.0.0.1:8099` akan ditolak, dan itu sebabnya server uji di
+   `tests/conftest.py` menjawab di `localhost`, bukan di `127.0.0.1`. Lihat
+   `INANG_UJI` di sana. Pembatasan URL Mapbox juga **tidak boleh memakai `*`
+   di bagian jalur.**
 
 ## Catatan lingkungan
 
