@@ -212,13 +212,13 @@ pip install -r tests/requirements.txt
 python -m pytest
 ```
 
-**628 uji.** 580 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
+**706 uji.** 649 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
 dalam hitungan detik; 48 sisanya menjalankan Chromium sungguhan dan dipisah
 lewat tanda `peramban` supaya tidak memperlambat putaran biasa.
 
 ```bash
-python -m pytest                 # 580, cepat
-python -m pytest -m peramban     # 48, Chromium
+python -m pytest                 # 649, cepat
+python -m pytest -m peramban     # 57, Chromium
 sh tools/verifikasi.sh           # seluruhnya, berurutan
 pip-audit -r backend/requirements.txt --strict
 ```
@@ -307,7 +307,7 @@ tools/periksa_alur.py      pemeriksa berkas .github/workflows sebelum CI menjala
 assets/fonts/              delapan woff2 Poppins plus OFL.txt dan sumber.json
 assets/js/peta.js          peta karya, 31 lapisan di atas ubin vektor Mapbox
 assets/vendor/maplibre/    MapLibre GL JS, disimpan sendiri, bukan dari CDN
-tests/                     580 uji tanpa peramban, 48 dengan Chromium
+tests/                     649 uji tanpa peramban, 57 dengan Chromium
 docs/                      arsitektur, panduan uji, pemecahan masalah
 .github/workflows/ci.yml   lint, type check, test, security scan, build
 .github/workflows/kesehatan.yml  health check terhadap situs yang sudah terbit
@@ -520,8 +520,8 @@ adalah klaim tentang diri Anda, jadi mohon diperiksa:
 
 | Folder | Isi | Status |
 | --- | --- | --- |
-| akar repositori | HTML, CSS, JavaScript biasa | sudah teruji, siap terbit |
-| `next/` | Next.js 15 + TypeScript, static export | ditulis lengkap, **belum pernah dibangun** karena Node.js belum terpasang |
+| akar repositori | HTML, CSS, JavaScript biasa | sudah teruji, ini yang terbit |
+| `next/` | Next.js 15 + TypeScript, static export | sudah dibangun dan lolos `tsc`, **tidak diterbitkan** |
 
 Keduanya menghasilkan situs yang sama. Yang berbeda hanya cara membangunnya,
 dan bentuk alamatnya: versi akar memakai `/about.html`, versi Next memakai

@@ -18,8 +18,8 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 580, tanpa peramban, hitungan detik
-python -m pytest -m peramban     # 48, Chromium sungguhan
+python -m pytest                 # 649, tanpa peramban, hitungan detik
+python -m pytest -m peramban     # 57, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
 # backend dan dashboard admin
@@ -59,7 +59,7 @@ backend/repositori/       satu satunya yang tahu SQL
 backend/db/migrations/    0001 sampai 0005, nomornya wajib unik
 next/                     port Next.js, situs dan dashboard admin
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    628 uji
+tests/                    706 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -219,6 +219,24 @@ vektor Mapbox.
 Pustaka MapLibre dimuat sendiri begitu bagian petanya mendekati layar lewat
 `IntersectionObserver`. Tidak ada tombol yang harus ditekan.
 
+**Jangan menggantungkan penataan peta pada peristiwa `load`.** Diukur pada 14
+September 2026: dengan ubin Mapbox yang dijawab 403 karena alamatnya belum ada
+di pembatasan token, `load` dan `idle` **tidak menyala satu kali pun** dalam
+tujuh detik, padahal petanya tergambar dan `map.loaded()` menjawab `true`.
+`styledata` menyala dua kali, dan pada saat itu `map.isStyleLoaded()` masih
+`false`, lalu berubah jadi `true` belakangan tanpa satu pun peristiwa yang
+mengabarkannya. Akibatnya relief tidak pernah dipasang, `.peta__frame` tidak
+pernah ditandai `is-ready`, dan ringkasan legenda tinggal kosong sampai ada
+yang menggeser petanya. Sebab yang sama mengenai pembaca dengan sambungan
+lambat, bukan hanya mesin ini. Karena itu `siap()` di kedua port dipicu oleh
+yang pertama tiba di antara `load`, `styledata`, dan `idle`, ditambah jaring
+pengaman berwaktu, dan isinya tidak menuntut satu ubin pun.
+
+Alamat `#peta-<id>` membuka peta tepat di satu karya, dan tiap terbang
+menuliskannya kembali dengan `replaceState`. Tautan "Lihat di peta" di tiap
+kartu memakai alamat yang sama, jadi yang tersalin dari bilah alamat selalu
+yang sedang dilihat. `tests/test_peta.py` menahan kedua port tetap memilikinya.
+
 Uji perubahan CSP dengan menyajikan situs **beserta tajuknya**, bukan dengan
 `python -m http.server` saja: galat CSP tidak muncul tanpa tajuk aslinya.
 
@@ -252,9 +270,22 @@ memberi situs ini dua tuan.
 
 Node v24 terpasang, tetapi tidak selalu ada di PATH milik Git Bash.
 `tools/verifikasi.sh` mencarinya sendiri di `/c/Program Files/nodejs`. Port
-Next.js sudah pernah dibangun, `next/out/` ada. **`docs/arsitektur.md` dan
-tabel di README masih mengatakan port itu belum pernah dibangun, dan itu
-sudah tidak benar lagi.**
+Next.js sudah pernah dibangun, `next/out/` ada, tetapi tidak diterbitkan.
+
+Docker Desktop terpasang di `%LOCALAPPDATA%\Programs\DockerDesktop`, bukan di
+`C:\Program Files`. Menjalankan aplikasinya saja tidak cukup: pada 14
+September 2026 mesin WSL `docker-desktop` tetap berhenti dan `docker info`
+menjawab `npipe:////./pipe/dockerDesktopLinuxEngine` tidak ada, sehingga
+basis datanya tidak bisa dinyalakan tanpa orang membuka jendelanya. Uji yang
+memerlukan basis data akan dilewati, dan `tests/test_api.py` justru **galat**
+alih alih dilewati dengan rapi.
 
 Nilai lingkungan yang diawali `/` akan diubah MSYS menjadi jalur Windows saat
 lewat Git Bash. Ini sudah pernah merusak satu kunci enkripsi secara diam diam.
+
+**Perintah yang meminta ketikan rahasia tidak bekerja di Git Bash.** MinTTY
+bukan konsol Windows, jadi `getpass` tidak pernah menerima satu huruf pun dan
+prompt-nya tampak menggantung. Ini mengenai `backend/db/buat_admin.py`.
+Jalankan lewat `winpty python ...`, atau dari PowerShell, atau pakai
+`--stdin`. Jangan pernah memindahkannya ke argumen baris perintah: argumen
+terlihat di daftar proses dan tersimpan di riwayat shell.

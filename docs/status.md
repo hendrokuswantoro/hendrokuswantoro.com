@@ -78,7 +78,7 @@ bukan untuk brosur empat halaman. Syarat kapan keputusan ini gugur ada di
 | 13 CDN & WAF | Sudah | Cloudflare |
 | 14 Infrastructure | Sudah, belum hidup | Compose, unit systemd yang dikeraskan, `pasang.sh` yang idempoten. Belum pernah menyentuh Ubuntu sungguhan |
 | 15 CI/CD | Sudah | Lint, type check, test, security scan, build tiap push |
-| 16 Testing | Sudah | 628 uji: berkas, gaya dan kontras, basis data, API, autentikasi, passkey, enkripsi cadangan, infrastruktur, peramban, performa |
+| 16 Testing | Sudah | 706 uji: berkas, gaya dan kontras, basis data, API, autentikasi, passkey, enkripsi cadangan, infrastruktur, peramban, performa |
 | 17 Monitoring | Sudah | Log JSON terstruktur, health check harian, peringatan lewat isu. Health check-nya sendiri pernah gagal tiap malam karena cacatnya sendiri, lihat bawah |
 | 18 Backup & DR | Sudah | AES-256-GCM, RPO 1 hari, RTO di bawah 15 menit, retensi 14 lokal dan 30 hari di penyedia, pemulihan diuji tiap push |
 | 19 DevOps & Automation | Sudah | Deploy, build, sertifikat, pemeriksaan semuanya otomatis |
