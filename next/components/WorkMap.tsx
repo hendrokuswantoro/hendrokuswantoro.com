@@ -451,6 +451,13 @@ function tulisHash(id: string | null) {
   }
 }
 
+/* Layar sentuh tanpa kursor. Dipakai memutuskan siapa yang butuh
+   cooperativeGestures, bukan untuk menebak lebar layar. */
+function sentuh(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+}
+
 function popupHtml(project: Project, lang: Lang): string {
   const kind = kindOf(project.categories);
   return (
@@ -701,7 +708,21 @@ export function WorkMap() {
         maxZoom: 17,
         maxPitch: 75,
         attributionControl: false,
-        cooperativeGestures: true,
+        /* Kenapa tulisan "Use Ctrl + scroll to zoom the map" tidak ada lagi.
+
+           Tulisan itu datang dari cooperativeGestures, dan ia muncul tiap kali
+           pembaca menggulir halaman sambil kursornya kebetulan lewat di atas
+           peta. Tetapi tulisan itu ada sebabnya: tanpa dia, roda tetikus di
+           atas peta memperbesar peta, bukan menggulir halaman, dan pembaca
+           terjebak di tengah halaman. Jadi yang dihapus bukan tulisannya,
+           melainkan sebabnya. Di tetikus, roda menggulir halaman, dan peta
+           diperbesar lewat tombol + dan -, klik dua kali, atau papan ketik.
+
+           Di layar sentuh keduanya tetap hidup: tanpa cooperativeGestures,
+           satu jari di atas peta menggeser peta dan halamannya berhenti bisa
+           digulir sama sekali. */
+        cooperativeGestures: sentuh(),
+        scrollZoom: sentuh(),
       });
 
       instance.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), "top-right");

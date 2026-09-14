@@ -104,3 +104,54 @@ def test_tidak_ada_proyek_yatim():
         f"hanya di halaman: {sorted(di_halaman - di_isi)}\n"
         f"hanya di isi    : {sorted(di_isi - di_halaman)}"
     )
+
+
+# ------------------------------------------------ studi kasus di dua port ---
+
+# Halaman studi kasus lahir hanya di port statis, dan port Next tidak punya
+# jejaknya sama sekali selama dua sesi. Ketiadaan itu tidak menimbulkan galat
+# apa pun: tidak ada yang merah, tidak ada tautan yang putus, halamannya
+# sekadar tidak ada di sana. Uji di bawah yang membuatnya berbunyi.
+
+STUDI_HTML = (AKAR / "parkir-jogja.html").read_text(encoding="utf-8")
+STUDI_TS = (AKAR / "next" / "content" / "parkir-jogja.ts").read_text(encoding="utf-8")
+
+
+def test_studi_kasus_punya_rute_di_port_next():
+    rute = AKAR / "next" / "app" / "(situs)" / "parkir-jogja" / "page.tsx"
+    assert rute.exists(), "port Next tidak punya halaman studi kasusnya"
+    assert "ParkirJogjaView" in rute.read_text(encoding="utf-8")
+
+
+def test_studi_kasus_masuk_sitemap_kedua_port():
+    assert "/parkir-jogja" in (AKAR / "sitemap.xml").read_text(encoding="utf-8")
+    peta_next = (AKAR / "next" / "app" / "sitemap.ts").read_text(encoding="utf-8")
+    assert "/parkir-jogja/" in peta_next, "port Next tidak mendaftarkannya di sitemap"
+
+
+@pytest.mark.parametrize(
+    "ind,en",
+    re.findall(r'<h2 data-ind="([^"]*)">(.*?)</h2>', STUDI_HTML, re.S),
+)
+def test_tiap_bagian_studi_kasus_ada_di_kedua_port(ind, en):
+    """Satu bagian yang hanya ada di satu port adalah cara paling sunyi
+    keduanya berpisah: halamannya tetap terbuka, isinya saja yang beda."""
+    assert rapikan(en) in STUDI_TS, f"port Next tidak punya bagian {rapikan(en)!r}"
+    assert html.unescape(ind) in STUDI_TS, f"terjemahan {html.unescape(ind)!r} hilang"
+
+
+def test_angka_studi_kasus_sama_di_kedua_port():
+    """Angkanya dibaca dari dokumen proyek parkirnya sendiri. Satu port yang
+    menyebut angka lain berarti salah satunya mengarang."""
+    angka = re.findall(r'<span class="stat__num"[^>]*>([^<]+)</span>', STUDI_HTML)
+    assert angka == ["495", "14,272", "594", "0"], f"angka di halaman berubah: {angka}"
+    for satu in angka:
+        assert f'en: "{satu}"' in STUDI_TS, f"{satu} tidak ada di port Next"
+    # 14.272 dengan titik, bentuk Indonesianya
+    assert 'id: "14.272"' in STUDI_TS
+
+
+def test_kartu_parkir_menautkan_studi_kasus_di_kedua_port():
+    assert 'href="/parkir-jogja"' in HTML, "kartu di halaman statis kehilangan tautannya"
+    isi = (AKAR / "next" / "content" / "projects.ts").read_text(encoding="utf-8")
+    assert 'studiKasus: "/parkir-jogja/"' in isi, "kartu di port Next kehilangan tautannya"

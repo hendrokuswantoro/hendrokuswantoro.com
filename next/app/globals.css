@@ -235,7 +235,8 @@ h1 { font-size: clamp(2rem, 1.3rem + 3vw, 3.25rem); letter-spacing: -.035em; }
 h2 { font-size: clamp(1.5rem, 1.15rem + 1.5vw, 2.25rem); letter-spacing: -.03em; }
 h3 { font-size: 1.175rem; }
 p { margin: 0 0 1rem; }
-.hero__lede, .section-head p, .card__body p, .post p, .article p, .peta__ajakan p, .panel p, .footer__desc {
+.hero__lede, .section-head p, .card__body p, .post p, .article p, .peta__ajakan p,
+.peta__intro p, .panel p, .footer__desc {
   text-align: justify; text-justify: inter-word; hyphens: auto;
 }
 ul { margin: 0; padding: 0; list-style: none; }
@@ -444,8 +445,11 @@ ul { margin: 0; padding: 0; list-style: none; }
 .stats { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 760px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .stat { min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-md); padding: 22px; box-shadow: var(--sh-1); }
-.stat__num { font-family: var(--font-poppins), sans-serif; font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem); font-weight: 700; color: var(--brand-ink); line-height: 1.1; letter-spacing: -.03em; }
-.stat__label { font-size: .875rem; color: var(--ink-3); margin-top: 4px; }
+/* Keduanya block. Sebagai span sebaris, angka dan keterangannya menyambung
+   jadi satu kalimat, "495street segments stored for Zone I and II", dan
+   margin-top pada keterangannya tidak berlaku sama sekali. */
+.stat__num { display: block; font-family: var(--font-poppins), sans-serif; font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem); font-weight: 700; color: var(--brand-ink); line-height: 1.1; letter-spacing: -.03em; }
+.stat__label { display: block; font-size: .875rem; color: var(--ink-3); margin-top: 4px; }
 
 /* ---------- gradient panel ---------- */
 .panel {

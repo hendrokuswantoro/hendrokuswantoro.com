@@ -13,6 +13,9 @@ export type Project = {
   body: Copy;
   tags: string[];
   meta: Copy;
+  /* Jalur studi kasusnya, kalau ada. Hanya satu proyek yang punya sekarang,
+     dan kartu proyek lain tidak menampilkan tautan apa pun. */
+  studiKasus?: string;
   featured: boolean;
 };
 
@@ -42,6 +45,7 @@ export const PROJECTS: Project[] = [
       en: "I built the database, the API and the map screen",
       id: "Saya bikin basis data, API, dan tampilan petanya",
     },
+    studiKasus: "/parkir-jogja/",
     featured: true,
   },
   {
@@ -171,11 +175,12 @@ export const PROJECT_PAGE = {
   } as Copy,
   seeProject: { en: "See the project", id: "Lihat proyek" } as Copy,
   showOnMap: { en: "Show on map", id: "Lihat di peta" } as Copy,
+  readCaseStudy: { en: "Read the case study", id: "Baca studi kasusnya" } as Copy,
   mapEyebrow: { en: "The work map", id: "Peta karya" } as Copy,
   mapTitle: { en: "Seven works, one map", id: "Tujuh karya, satu peta" } as Copy,
   mapIntro: {
-    en: "Every project on this page sits somewhere real. The map draws itself from vector tiles, 31 layers, and only downloads once you scroll this far.",
-    id: "Tiap proyek di halaman ini duduk di tempat yang sungguhan. Petanya menggambar sendiri dari ubin vektor, 31 lapisan, dan baru diunduh ketika Anda menggulir sampai ke sini.",
+    en: "Every project below is on this map. Click a point to see the work.",
+    id: "Tiap proyek di bawah ada di peta ini. Klik satu titik untuk melihat karyanya.",
   } as Copy,
   /* Dibacakan pembaca layar, tidak pernah tampil di layar. */
   filterOn: {

@@ -372,6 +372,73 @@ def test_wilayah_kabar_tidak_pernah_tampil_di_layar(halaman, situs):
     )
 
 
+def test_roda_tetikus_menggulir_halaman_bukan_memperbesar_peta(halaman, situs):
+    """Keluhannya: tulisan "Use Ctrl + scroll to zoom the map" muncul tiap kali
+    kursor kebetulan lewat di atas peta.
+
+    Tulisan itu datang dari cooperativeGestures, dan ia ada sebabnya. Tanpa
+    dia, roda tetikus di atas peta memperbesar peta dan pembaca terjebak di
+    tengah halaman. Jadi yang dihapus sebabnya, bukan tulisannya: di tetikus
+    roda menggulir halaman, titik.
+
+    Uji ini menjaga keduanya sekaligus. Tulisannya hilang, DAN halamannya tetap
+    bisa digulir dari atas peta.
+    """
+    buka(halaman, situs, "/project")
+    peta_siap(halaman)
+    halaman.wait_for_timeout(500)
+
+    kanvas = halaman.locator(".peta__kanvas").bounding_box()
+    sebelum_y = halaman.evaluate("() => Math.round(scrollY)")
+    sebelum_z = halaman.evaluate("() => window.HK_PETA_MAP.getZoom()")
+
+    halaman.mouse.move(kanvas["x"] + kanvas["width"] / 2, kanvas["y"] + kanvas["height"] / 2)
+    halaman.mouse.wheel(0, 400)
+    halaman.wait_for_timeout(1000)
+
+    assert halaman.locator(".maplibregl-cooperative-gesture-screen").count() == 0, (
+        "tulisan gesturnya kembali"
+    )
+    assert halaman.evaluate("() => Math.round(scrollY)") > sebelum_y, (
+        "halamannya tidak bergulir, jadi pembaca terjebak di atas peta"
+    )
+    assert abs(halaman.evaluate("() => window.HK_PETA_MAP.getZoom()") - sebelum_z) < 0.01, (
+        "rodanya masih memperbesar peta"
+    )
+
+
+def test_tombol_perbesar_tetap_bekerja(halaman, situs):
+    """Roda tetikus dimatikan, jadi tombolnya yang jadi satu satunya jalan
+    memperbesar dengan tetikus. Kalau ia ikut mati, peta ini tidak bisa
+    diperbesar sama sekali."""
+    buka(halaman, situs, "/project")
+    peta_siap(halaman)
+    sebelum = halaman.evaluate("() => window.HK_PETA_MAP.getZoom()")
+    halaman.locator(".maplibregl-ctrl-zoom-in").first.click()
+    halaman.wait_for_timeout(900)
+    assert halaman.evaluate("() => window.HK_PETA_MAP.getZoom()") > sebelum + 0.5
+
+
+def test_angka_studi_kasus_berdiri_di_atas_keterangannya(halaman, situs):
+    """Sebagai span sebaris, angka dan keterangannya menyambung jadi satu
+    kalimat: "495street segments stored for Zone I and II". Cacat ini sempat
+    terbit, dan hanya terlihat kalau halamannya benar benar digambar."""
+    buka(halaman, situs, "/parkir-jogja")
+    kotak = halaman.evaluate("""() => {
+      const kartu = document.querySelector('.stat');
+      const n = kartu.querySelector('.stat__num').getBoundingClientRect();
+      const l = kartu.querySelector('.stat__label').getBoundingClientRect();
+      return { bawahAngka: Math.round(n.bottom), atasLabel: Math.round(l.top),
+               kiriAngka: Math.round(n.left), kiriLabel: Math.round(l.left) };
+    }""")
+    assert kotak["atasLabel"] >= kotak["bawahAngka"] - 1, (
+        f"keterangannya masih sebaris dengan angkanya: {kotak}"
+    )
+    assert kotak["kiriLabel"] == kotak["kiriAngka"], (
+        f"keduanya tidak rata kiri: {kotak}"
+    )
+
+
 # ------------------------------------------------------------------ tema ---
 #
 # Warna latar hanya bisa dibuktikan di peramban. Membaca CSS membuktikan

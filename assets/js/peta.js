@@ -467,6 +467,13 @@
     focus: { en: "%w, centred on the map.", ind: "%w, dipusatkan di peta." }
   };
 
+  /* Layar sentuh tanpa kursor. Dipakai memutuskan siapa yang butuh
+     cooperativeGestures, bukan untuk menebak lebar layar. */
+  function sentuh() {
+    return Boolean(window.matchMedia
+      && window.matchMedia("(hover: none) and (pointer: coarse)").matches);
+  }
+
   function reducedMotion() {
     return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   }
@@ -831,8 +838,31 @@
       maxZoom: 17,
       maxPitch: 75,
       attributionControl: false,
-      cooperativeGestures: true
+      /* Hanya di perangkat sentuh. Lihat catatan di bawah. */
+      cooperativeGestures: sentuh(),
+      /* Roda tetikus TIDAK memperbesar peta. Lihat catatan di bawah. */
+      scrollZoom: sentuh()
     });
+
+    /* Kenapa tulisan "Use Ctrl + scroll to zoom the map" tidak ada lagi.
+       Tulisan itu datang dari cooperativeGestures, dan ia muncul tiap kali
+       pembaca menggulir halaman sambil kursornya kebetulan lewat di atas
+       peta. Halaman ini panjang, petanya lebar, jadi lewat di atasnya itu
+       hal biasa, bukan niat memperbesar.
+
+       Yang perlu diingat: tulisan itu ada SEBABNYA. Tanpa dia, roda tetikus
+       di atas peta memperbesar peta, bukan menggulir halaman, dan pembaca
+       terjebak di tengah halaman sambil petanya makin dekat. Menghapus
+       tulisannya saja berarti mengembalikan jebakan itu.
+
+       Jadi yang dihapus bukan tulisannya, melainkan sebabnya. Di tetikus,
+       roda sekarang menggulir halaman, titik. Memperbesar peta lewat tombol
+       + dan -, klik dua kali, atau papan ketik.
+
+       Di layar sentuh ceritanya lain, dan di sana cooperativeGestures tetap
+       hidup: tanpa dia, satu jari yang menyentuh peta menggeser peta dan
+       halamannya berhenti bisa digulir sama sekali. Itu jebakan yang jauh
+       lebih parah daripada satu baris tulisan. */
 
     /* Putaran adalah kejutan paling sering di peta web, dan ini yang bikin
        petanya terasa "berputar putar ketika di-zoom".

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import type { Project } from "@/content/projects";
 import { PROJECT_PAGE } from "@/content/projects";
 import { useLang } from "./LanguageProvider";
@@ -48,6 +50,9 @@ export function ProjectCard({
              "#": yang tersalin dari bilah alamat sesudah ini membuka peta di
              titik yang sama. */
           <p className="card__aksi">
+            {project.studiKasus ? (
+              <Link href={project.studiKasus}>{say(PROJECT_PAGE.readCaseStudy)}</Link>
+            ) : null}
             <a
               className="card__peta"
               href={`#peta-${project.id}`}

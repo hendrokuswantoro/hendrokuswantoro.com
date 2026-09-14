@@ -32,6 +32,16 @@ export const HOME = {
   workTitle: { en: "Three recent ones", id: "Tiga yang terbaru" } as Copy,
   seeAll: { en: "See all projects", id: "Lihat semua proyek" } as Copy,
 
+  /* Cuplikan peta di beranda. Kalimatnya sengaja pendek dan menyuruh satu
+     hal saja, sama seperti pengantar di halaman Proyek. */
+  mapEyebrow: { en: "The work map", id: "Peta karya" } as Copy,
+  mapTitle: { en: "See the work on a map", id: "Lihat karyanya di peta" } as Copy,
+  mapBody: {
+    en: "The Project page opens a map with all seven works on it. Click a point to see the work.",
+    id: "Halaman Proyek membuka peta berisi tujuh karya. Klik satu titik untuk melihat karyanya.",
+  } as Copy,
+  mapOpen: { en: "Open the map", id: "Buka petanya" } as Copy,
+
   howEyebrow: { en: "How I work", id: "Cara kerja saya" } as Copy,
   howTitle: { en: "Just three steps", id: "Tiga langkah saja" } as Copy,
   steps: [
