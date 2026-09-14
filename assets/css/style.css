@@ -147,13 +147,18 @@
   --fs-sm: .8125rem;   /* 13px, keterangan kecil, meta kartu, label isian */
   --fs-md: .9375rem;   /* 15px, teks isi, tombol, isian, sel tabel */
   --fs-lg: 1.125rem;   /* 18px, judul kartu */
-  --fs-xl: 1.375rem;   /* 22px, nama merek */
+  --fs-xl: 1.5rem;     /* 24px, nama merek */
 
   --sh-1: 0 1px 2px rgba(0, 0, 0, .05), 0 4px 14px rgba(0, 0, 0, .05);
   --sh-2: 0 2px 6px rgba(0, 0, 0, .06), 0 14px 34px rgba(0, 0, 0, .10);
   --sh-brand: 0 6px 16px rgba(0, 0, 0, .22);
 
-  --header-h: 72px;
+  /* Naik dari 72px bersama nama merek yang naik dari 22px ke 24px. Tingginya
+     bukan angka yang berdiri sendiri: lambang 40px ditambah ruang 18px di
+     atas dan di bawahnya. Seluruh sauh gulir, panel lengket, dan sisa tinggi
+     peta bersandar pada nilai ini, jadi mengubahnya di sini sudah cukup dan
+     tidak ada satu pun angka tinggi header yang ditulis di tempat lain. */
+  --header-h: 76px;
   --tabbar-h: 66px;
   --maxw: 1440px;
   --maxw-wide: 1760px;
@@ -360,10 +365,29 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .header.is-stuck { border-bottom-color: var(--line); box-shadow: 0 4px 20px rgba(11, 18, 32, .05); }
 .header .wrap { display: flex; align-items: center; gap: 16px; }
-.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 700; letter-spacing: -.02em; }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 700; letter-spacing: -.02em; min-width: 0; }
 .brand:hover { text-decoration: none; }
 .brand__mark { width: 40px; height: 40px; border-radius: 12px; flex: none; box-shadow: var(--sh-brand); }
-.brand__name { font-family: "Poppins", system-ui, sans-serif; font-size: 1.375rem; font-weight: 700; letter-spacing: -.03em; white-space: nowrap; }
+/* Ukurannya datang dari --fs-xl, yang sejak awal diberi keterangan "nama
+   merek" tetapi tidak pernah benar benar dipakai di sini: angkanya diketik
+   ulang tepat di bawah token yang seharusnya menjadi sumbernya. Itu bentuk
+   hanyut yang paling halus, sebab keduanya kebetulan bernilai sama sehingga
+   tidak ada yang terlihat salah sampai salah satunya diubah.
+
+   white-space: nowrap membuat lebar terkecil .brand adalah seluruh nama, dan
+   flex item tidak pernah menyusut di bawah lebar terkecilnya kecuali
+   min-width disetel 0. Tanpa min-width di sini dan di .brand, header
+   mendorong halaman melebar di layar sempit, tanpa satu pun galat di mana
+   pun. Yang membuat namanya muat pada 320px adalah clamp di
+   @media (max-width: 520px); overflow dan text-overflow di sini hanya jaring
+   pengaman untuk layar yang lebih sempit daripada itu, dan pada layar
+   selebar itu namanya memang lebih baik terpotong daripada menyeret seluruh
+   halaman ke samping. */
+.brand__name {
+  font-family: "Poppins", system-ui, sans-serif; font-size: var(--fs-xl); font-weight: 700;
+  letter-spacing: -.03em; white-space: nowrap;
+  min-width: 0; overflow: hidden; text-overflow: ellipsis;
+}
 .brand__name span { color: var(--accent); }
 .nav { margin-left: auto; }
 .nav__list { display: flex; align-items: center; gap: 4px; }
@@ -374,7 +398,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .nav__link:hover { background: var(--surface-2); color: var(--ink); text-decoration: none; }
 .nav__link[aria-current="page"] { background: var(--ink); color: var(--card); }
-.header__actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.header__actions { display: flex; align-items: center; gap: 10px; margin-left: auto; flex: none; }
 .nav + .header__actions { margin-left: 0; }
 .lang { display: inline-flex; padding: 3px; gap: 2px; background: var(--surface-2); border-radius: var(--r-pill); }
 .lang__btn {
@@ -469,6 +493,10 @@ ul { margin: 0; padding: 0; list-style: none; }
 .card__body h2 { margin: 0; }
 .card__body p { margin: 0; color: var(--ink-2); font-size: var(--fs-md); }
 .card__meta { margin-top: auto; padding-top: 6px; color: var(--ink-3); font-size: var(--fs-sm); }
+/* Jalan pulang dari kartu ke peta, kebalikan dari tautan di dalam popup
+   penanda yang membawa pembaca dari peta ke kartu. */
+.card__aksi { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; font-size: var(--fs-sm); }
+.card__aksi a { font-weight: 600; }
 .tags { display: flex; flex-wrap: wrap; gap: 7px; }
 .tag {
   font-size: var(--fs-xs); font-weight: 600; color: var(--brand-strong);
@@ -542,6 +570,13 @@ ul { margin: 0; padding: 0; list-style: none; }
 .tabbar__link:hover { text-decoration: none; }
 .tabbar__link svg { width: 22px; height: 22px; }
 .tabbar__link[aria-current="page"] { color: var(--ink); }
+/* Aturan ini dulu duduk sendirian di ekor berkas, SESUDAH blok 520px di
+   bawah. Keduanya cocok pada layar 320px, kekhususannya sama, jadi yang
+   ditulis terakhir yang menang: --gutter jadi 24px justru di layar yang
+   paling butuh 16px. Urutan penulisan di sinilah yang menegakkan maksudnya,
+   bukan lebar media query-nya. Jangan pindahkan ke bawah blok 520px. */
+@media (max-width: 1024px) { :root { --gutter: 24px; } }
+
 @media (max-width: 719px) {
   .tabbar { display: flex; }
   body { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
@@ -550,19 +585,38 @@ ul { margin: 0; padding: 0; list-style: none; }
 @media (max-width: 420px) { .header__actions .btn { display: none; } }
 
 /* the wordmark is large on purpose, but it cannot push the header wider
-   than the phone it is read on */
+   than the phone it is read on
+
+   Ukurannya mengikuti lebar layar, bukan melompat di titik putus. Sebabnya
+   bukan selera: ruang yang tersisa untuk nama adalah fungsi lurus dari lebar
+   layar (lebar layar dikurangi pinggir, lambang, jarak, tombol bahasa, dan
+   tombol tema), jadi ukuran yang muat juga lurus. Satu angka tetap per pita
+   selalu meleset di salah satu ujung pita itu. 2,5vw + 5px melewati 13px
+   pada 320px dan 18px pada 520px; 18px adalah ukuran yang dipakai pita ini
+   sebelumnya, jadi ujung atasnya tidak berubah.
+
+   Tombol bahasa ikut dipadatkan di sini, bukan hanya di bawah 380px. Pada
+   layar 390px sisa ruangnya kurang 0,45px sebelum ini, dan kurang sedikit
+   tetap berarti namanya terpotong. */
 @media (max-width: 520px) {
   :root { --gutter: 16px; --header-h: 64px; }
-  .brand__name { font-size: 1.125rem; }
+  .brand__name { font-size: clamp(0.8125rem, 2.5vw + 5px, 1.125rem); }
   .brand__mark { width: 34px; height: 34px; border-radius: 10px; }
   .header .wrap { gap: 10px; }
+  .lang__btn { padding: 6px 10px; font-size: var(--fs-xs); }
 }
 
+/* Ukuran nama tetap dipegang clamp di blok 520px di atas; yang dikerjakan
+   di sini adalah memperkecil segala sesuatu di sekelilingnya, supaya garis
+   yang sama tetap muat sampai 320px. Pada 320px yang tersedia 288px dan
+   isinya 283px, jadi sisanya tipis: jangan menambah apa pun ke header di
+   bawah titik putus ini tanpa menghitung ulang. */
 @media (max-width: 380px) {
-  .brand__name { font-size: 1rem; }
   .brand__mark { width: 32px; height: 32px; }
-  .header .wrap { gap: 8px; }
-  .lang__btn { padding: 6px 10px; font-size: var(--fs-xs); }
+  .brand { gap: 8px; }
+  .header .wrap { gap: 6px; }
+  .header__actions { gap: 8px; }
+  .lang__btn { padding: 6px 8px; }
 }
 
 /* ---------- utilities ---------- */
@@ -704,7 +758,23 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 
 /* ---------- work map ---------- */
+/* Peta karya.
+
+   Ia diberi kepala dan tinggi yang sepadan, sebab sebelumnya ia cuma persegi
+   panjang tanpa nama di atas daftar kartu. Pembaca yang tidak diberi tahu apa
+   yang sedang ia lihat akan menggulir melewatinya, dan yang terlewat justru
+   satu satunya hal di situs ini yang tidak dimiliki portofolio lain.
+
+   Tingginya memakai min-height, bukan mengganti aspect-ratio, supaya rasio
+   yang sudah diuji di sepuluh ukuran layar tidak ikut berubah. */
 .peta { position: relative; margin-bottom: 32px; }
+/* Namanya BUKAN .peta__kepala, dan itu bukan selera. Kelas itu sudah dipakai
+   peta.js untuk kepala legendanya sendiri, jadi memakainya lagi di sini
+   membuat aturan ini ikut kena ke dalam legenda. */
+.peta__intro { max-width: 68ch; margin-bottom: 20px; }
+.peta__intro h2 { font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.25rem); margin-bottom: .3em; }
+.peta__intro p { color: var(--ink-3); font-size: 1.0625rem; margin: 0; }
+@media (min-width: 720px) { .peta__frame { min-height: clamp(360px, 56vh, 620px); } }
 .peta__frame {
   position: relative; overflow: hidden; border-radius: var(--r-lg);
   border: 1px solid var(--line); box-shadow: var(--sh-1);
@@ -1035,7 +1105,6 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 }
 
 /* jumping to a card from the map popup used to hide it under the sticky
-   header, so every anchor target keeps the header height clear */
-[id^="karya-"], #main { scroll-margin-top: calc(var(--header-h) + 16px); }
-
-@media (max-width: 1024px) { :root { --gutter: 24px; } }
+   header, so every anchor target keeps the header height clear. .peta is the
+   other direction, the one the card links take. */
+[id^="karya-"], #main, .peta { scroll-margin-top: calc(var(--header-h) + 16px); }

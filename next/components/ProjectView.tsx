@@ -32,6 +32,12 @@ export function ProjectView() {
 
       <section className="section">
         <div className="wrap">
+          <div className="peta__intro">
+            <span className="eyebrow">{say(PROJECT_PAGE.mapEyebrow)}</span>
+            <h2>{say(PROJECT_PAGE.mapTitle)}</h2>
+            <p>{say(PROJECT_PAGE.mapIntro)}</p>
+          </div>
+
           <WorkMap />
 
           <div className="filters" role="group" aria-label={say(PROJECT_PAGE.filterAria)}>

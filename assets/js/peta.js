@@ -418,6 +418,34 @@
       en: "Mining and Forest Loss, Mimika", ind: "Tambang dan Hutan Hilang, Mimika" }
   ];
 
+  /* Satu tampilan peta bisa dibagikan.
+     Alamat #peta-<id> membuka petanya tepat di karya itu, dan tiap kali peta
+     terbang ke satu titik alamatnya ditulis ulang, jadi yang tersalin dari
+     bilah alamat selalu yang sedang dilihat. Ditulis dengan replaceState,
+     bukan dengan location.hash, supaya menggeser peta tidak menumpuk riwayat
+     dan tombol kembali tetap membawa pembaca keluar dari halaman ini. */
+  var AWALAN_HASH = "#peta-";
+
+  function idDariHash() {
+    var hash = window.location.hash || "";
+    if (hash.indexOf(AWALAN_HASH) !== 0) return null;
+    var id = hash.slice(AWALAN_HASH.length);
+    for (var i = 0; i < WORK.length; i++) {
+      if (WORK[i].id === id) return id;
+    }
+    return null;
+  }
+
+  function tulisHash(id) {
+    if (!window.history || !window.history.replaceState) return;
+    if (id && window.location.hash === AWALAN_HASH + id) return;
+    if (!id && !window.location.hash) return;
+    var alamat = id ? AWALAN_HASH + id : window.location.pathname + window.location.search;
+    try {
+      window.history.replaceState(null, "", alamat);
+    } catch (e) { /* alamat file://, tidak ada riwayat untuk ditulisi */ }
+  }
+
   var TEXT = {
     view: { en: "View", ind: "Tampilan" },
     tour: { en: "Tour", ind: "Jelajah" },
@@ -431,7 +459,12 @@
     inView: { en: "in view", ind: "terlihat" },
     of: { en: "of", ind: "dari" },
     none: { en: "Nothing in view", ind: "Tidak ada yang terlihat" },
-    more: { en: "and %n more", ind: "dan %n lainnya" }
+    more: { en: "and %n more", ind: "dan %n lainnya" },
+    /* Dibacakan pembaca layar, tidak pernah tampil di layar. Angka di legenda
+       berubah tanpa suara, jadi penyaringan dan pemusatan diumumkan sendiri. */
+    filterOn: { en: "%k. %n of %t works shown.", ind: "%k. %n dari %t karya ditampilkan." },
+    filterOff: { en: "Filter off. All %t works shown.", ind: "Saringan mati. Semua %t karya ditampilkan." },
+    focus: { en: "%w, centred on the map.", ind: "%w, dipusatkan di peta." }
   };
 
   function reducedMotion() {
@@ -839,6 +872,29 @@
 
     var current = { three: false, filter: null, tour: 0, tourAt: 0 };
     var panel;
+    var sudahDipusatkan = false;
+
+    /* Angka di legenda berubah di layar tanpa bunyi apa pun. Wilayah ini
+       yang mengucapkannya. Ia duduk di luar .peta__legenda dengan sengaja:
+       panel yang dilipat menyembunyikan .peta__grup dengan display:none, dan
+       aria-live di dalam elemen yang tersembunyi tidak pernah dibacakan. */
+    var kabar = document.createElement("p");
+    kabar.className = "peta__kabar visually-hidden";
+    kabar.setAttribute("aria-live", "polite");
+
+    function umumkan(teks) {
+      /* dikosongkan lebih dulu supaya pesan yang sama persis, misalnya
+         menyaring jenis yang sama dua kali, tetap terbaca sebagai perubahan */
+      kabar.textContent = "";
+      window.setTimeout(function () { kabar.textContent = teks; }, 60);
+    }
+
+    function cari(id) {
+      for (var i = 0; i < markers.length; i++) {
+        if (markers[i].item.id === id) return markers[i];
+      }
+      return null;
+    }
 
     function dressStyle() {
       if (!TOKEN) tuneBasemap(map);
@@ -859,6 +915,7 @@
       /* a click on the marker has already opened its popup, only the tour
          needs to open one itself */
       if (openPopup && !entry.popup.isOpen()) entry.marker.togglePopup();
+      tulisHash(entry.item.id);
     }
 
     var state = {
@@ -895,6 +952,32 @@
           duration: ms(700)
         });
         panel.count();
+        var tampil = markers.filter(function (entry) {
+          return !entry.marker.getElement().classList.contains("is-off");
+        }).length;
+        umumkan(current.filter
+          ? say(TEXT.filterOn)
+              .replace("%k", say(KIND[current.filter]))
+              .replace("%n", tampil)
+              .replace("%t", markers.length)
+          : say(TEXT.filterOff).replace("%t", markers.length));
+      },
+      /* Dipanggil dari luar: tautan "Lihat di peta" di tiap kartu, dan
+         alamat #peta-<id> yang dibuka langsung atau dibagikan. */
+      buka: function (id) {
+        var entry = cari(id);
+        if (!entry) return false;
+        /* Sesudah ini kamera punya tujuan sendiri, dan siap() tidak boleh
+           menariknya kembali ke tampilan awal. Bisa terjadi: penataan awal
+           dipicu peristiwa, dan tautan di kartu bisa ditekan lebih dulu. */
+        sudahDipusatkan = true;
+        state.stopTour();
+        /* karya yang sedang tersaring keluar harus dikembalikan dulu, kalau
+           tidak petanya terbang ke penanda yang tidak tergambar */
+        if (current.filter && entry.item.kind !== current.filter) state.filter(current.filter);
+        flyToWork(entry, true);
+        umumkan(say(TEXT.focus).replace("%w", say(entry.item)));
+        return true;
       },
       /* one work at a time, close in, until someone touches the map */
       toggleTour: function () {
@@ -935,6 +1018,7 @@
         });
         map.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: ms(750) });
         panel.count();
+        tulisHash(null);
       },
       reset: function () {
         state.home();
@@ -944,22 +1028,73 @@
     panel = buildPanel(map, markers, bounds, state);
     var section = container.parentNode.parentNode;
     section.insertBefore(panel.node, section.querySelector(".peta__ket"));
-
-    map.on("load", function () {
-      dressStyle();
-      map.resize();
-      map.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: 0 });
-      map.once("idle", panel.count);
-      container.parentNode.classList.add("is-ready");
-    });
+    section.insertBefore(kabar, section.querySelector(".peta__ket"));
 
     /* Only a map that never starts counts as a failure. A single tile that
        404s, or a style layer the renderer skips, must not replace a working
        map with an error message. */
     var booted = false;
-    var section = container.parentNode.parentNode;
 
-    map.on("load", function () { booted = true; });
+    /* Seluruh penataan sesudah peta berdiri, dan ia TIDAK menumpang pada
+       peristiwa "load" saja.
+
+       "load" tidak selalu datang. Diukur di mesin ini, dengan glyph dan ubin
+       Mapbox yang dijawab 403 karena alamat pengembangan belum ada di
+       pembatasan token, "load" tidak menyala satu kali pun dalam tujuh detik,
+       padahal petanya tergambar dan map.loaded() menjawab true. Akibatnya
+       relief tidak pernah dipasang, .peta__frame tidak pernah ditandai siap,
+       ringkasan legenda tinggal kosong sampai ada yang menggeser petanya, dan
+       peta dianggap tidak pernah berdiri oleh penangan galat di bawah. Sebab
+       yang sama mengenai pembaca dengan sambungan lambat, bukan hanya mesin
+       ini.
+
+       Diukur juga: pada saat "styledata" tiba, map.isStyleLoaded() masih
+       menjawab false, dan ia berubah jadi true belakangan tanpa satu pun
+       peristiwa yang mengabarkannya. Jadi "gaya sudah lengkap" tidak bisa
+       dipakai sebagai syarat.
+
+       Yang dipakai: yang pertama tiba di antara "load", "styledata", dan
+       "idle", ditambah satu jaring pengaman berwaktu, dan isinya dijalankan
+       sekali saja. Tidak ada di dalamnya yang menuntut satu ubin pun. Menata
+       kamera, menghitung penanda, dan memasang relief semuanya bekerja di atas
+       gaya yang baru terbaca, dan applyRelief sudah mencoba ulang sendiri
+       kalau lapisannya belum ada. */
+    var sudahSiap = false;
+
+    function siap() {
+      if (sudahSiap) return;
+      sudahSiap = true;
+      dressStyle();
+      map.resize();
+      if (!sudahDipusatkan) map.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: 0 });
+      container.parentNode.classList.add("is-ready");
+
+      /* fitBounds di atas berdurasi nol, jadi tidak ada gerakan yang bisa
+         dibatalkan oleh terbang yang menyusul satu bingkai kemudian */
+      window.requestAnimationFrame(function () {
+        panel.count();
+        var id = idDariHash();
+        if (id) state.buka(id);
+      });
+    }
+
+    map.on("load", siap);
+    map.on("styledata", siap);
+    map.on("idle", siap);
+    window.setTimeout(siap, 4000);
+
+    /* Petanya dianggap berdiri begitu gayanya terbaca, bukan begitu "load"
+       datang. "load" menuntut seluruh sumbernya selesai, dan satu sumber yang
+       ditolak membuatnya tidak pernah datang, yang berarti peta yang tergambar
+       dengan baik akan diberi tulisan gagal. */
+    map.on("styledata", function () { booted = true; });
+
+    /* alamat yang berganti tanpa memuat ulang halaman: tautan "Lihat di peta"
+       di kartu, dan tombol maju mundur peramban */
+    window.addEventListener("hashchange", function () {
+      var id = idDariHash();
+      if (id) state.buka(id);
+    });
 
     /* Jelajah itu tawaran, bukan tumpangan: begitu ada tangan di peta, ia
        berhenti.

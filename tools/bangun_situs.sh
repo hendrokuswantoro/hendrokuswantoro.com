@@ -27,7 +27,7 @@ sh tools/konfigurasi.sh
 rm -rf dist
 mkdir -p dist
 
-for berkas in index.html about.html project.html 404.html \
+for berkas in index.html about.html project.html parkir-jogja.html 404.html \
               robots.txt sitemap.xml feed.xml site.webmanifest \
               _headers CNAME; do
   cp "$berkas" dist/

@@ -431,7 +431,7 @@
         /* optional, the map falls back to key free sources when it is absent */
         loadOnce("js", "/assets/js/konfigurasi.js").catch(function () { return null; })
       ])
-        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=10556b44e2"); })
+        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=414c4817a9"); })
         .then(function () {
           wrap.classList.add("is-live");
           window.HK_PETA_MAP = window.HK_PETA.build(canvas);
@@ -440,6 +440,62 @@
           wrap.classList.add("is-failed");
         });
     }
+
+    /* Tautan "Lihat di peta" di tiap kartu. Arahnya kebalikan dari tautan
+       di dalam popup penanda, yang membawa pembaca dari peta ke kartu.
+
+       Yang dikerjakan tiga hal berurutan: menyalakan peta kalau ia belum
+       dimuat, menggulir ke petanya, lalu menyuruh petanya memusatkan karya
+       itu. Alamatnya ikut berubah, ditulis peta.js, jadi yang tersalin dari
+       bilah alamat sesudah ini membuka peta di titik yang sama.
+
+       Yang TIDAK dipakai: menyetel window.location.hash. Alamat #peta-<id>
+       tidak menunjuk elemen mana pun, dan peramban menjawab fragmen yang
+       tidak ditemukan dengan menggulir ke awal dokumen. Gulirannya beradu
+       dengan gulir halus yang baru saja diminta, dan petanya berhenti 196
+       piksel dari tempat yang dimaksud. Terukur, dan itu sebabnya alamatnya
+       ditulis dengan replaceState. */
+    each(doc.querySelectorAll("[data-peta-buka]"), function (tautan) {
+      tautan.addEventListener("click", function (event) {
+        var id = tautan.getAttribute("data-peta-buka");
+        if (!id) return;
+        event.preventDefault();
+        start();
+
+        /* wrap adalah .peta, dan .peta punya scroll-margin-top setinggi
+           header, jadi petanya tidak berhenti di balik header yang lengket */
+        function gulirKePeta() {
+          var halus = !(window.matchMedia
+            && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+          wrap.scrollIntoView({ behavior: halus ? "smooth" : "auto", block: "start" });
+        }
+
+        if (window.HK_PETA_STATE) {
+          /* petanya sudah berdiri, jadi ia disuruh langsung. Alamatnya
+             ditulis peta.js sendiri begitu kameranya berangkat. */
+          window.HK_PETA_STATE.buka(id);
+          /* Gulirnya menyusul satu bingkai kemudian, dan urutannya penting.
+             Popup MapLibre memindahkan fokus ke dalam dirinya begitu terbuka,
+             focusAfterOpen, dan pemindahan fokus itu ikut menggulir halaman.
+             Kalau gulir kita berangkat lebih dulu, ia diadu dengan gulir itu
+             dan kalah: terukur berhenti di 197 piksel, 196 piksel dari tempat
+             yang dimaksud. Satu bingkai kemudian ia menang, dan fokusnya
+             tetap di dalam popup, tempat yang benar bagi pembaca papan
+             ketik. */
+          window.requestAnimationFrame(gulirKePeta);
+        } else {
+          /* petanya baru dimuat, jadi belum ada popup yang berebut gulir.
+             Alamatnya ditulis sekarang, dan peta.js membacanya sendiri
+             begitu selesai. */
+          gulirKePeta();
+          if (window.history && window.history.replaceState) {
+            try {
+              window.history.replaceState(null, "", "#peta-" + id);
+            } catch (galat) { /* alamat file:// */ }
+          }
+        }
+      });
+    });
 
     /* the library is heavier than the rest of the site, so it waits until the
        section is about to be looked at, then loads without being asked */

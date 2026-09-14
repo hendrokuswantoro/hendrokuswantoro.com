@@ -26,8 +26,8 @@
 <link rel="preload" href="/assets/fonts/poppins-v24-600-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/poppins-v24-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="alternate" type="application/rss+xml" title="hendrokuswantoro.com" href="/feed.xml">
-<link rel="stylesheet" href="/assets/css/style.css?v=f3548c7862">
-<script defer src="/assets/js/app.js?v=10771a2bb8"></script>
+<link rel="stylesheet" href="/assets/css/style.css?v=431c82ce09">
+<script defer src="/assets/js/app.js?v=a90969306a"></script>
 </head>
 <body>
 <a class="skip-link" href="#main" data-ind="Lompat ke isi">Skip to content</a>
@@ -80,6 +80,14 @@
   <section class="section">
     <div class="wrap">
 
+      <div class="peta__intro">
+        <span class="eyebrow" data-ind="Peta karya">The work map</span>
+        <h2 data-ind="Tujuh karya, satu peta">Seven works, one map</h2>
+        <p data-ind="Tiap proyek di halaman ini duduk di tempat yang sungguhan. Petanya menggambar sendiri dari ubin vektor, 31 lapisan, dan baru diunduh ketika Anda menggulir sampai ke sini.">
+          Every project on this page sits somewhere real. The map draws itself from vector tiles, 31 layers, and only downloads once you scroll this far.
+        </p>
+      </div>
+
       <section class="peta" data-peta>
         <div class="peta__frame" data-gagal="The map could not load. The list of work below still works." data-ind-gagal="Petanya gagal dimuat. Daftar karya di bawah tetap bisa dibuka.">
           <div class="peta__kanvas" data-peta-kanvas></div>
@@ -110,6 +118,7 @@
             <p data-ind="Pilih titik di peta. Zona dan tarifnya muncul. Di luar kota aplikasinya tidak menampilkan apa apa, sebab aturannya tidak berlaku di sana.">Pick a point on the map. The zone and the fee show up. Outside the city the app shows nothing, because the rule does not apply there.</p>
             <ul class="tags"><li class="tag">FastAPI</li><li class="tag">PostGIS</li><li class="tag">MapLibre</li><li class="tag">Docker</li></ul>
             <p class="card__meta" data-ind="Saya bikin basis data, API, dan tampilan petanya">I built the database, the API and the map screen</p>
+            <p class="card__aksi"><a href="/parkir-jogja" data-ind="Baca studi kasusnya">Read the case study</a><a class="card__peta" href="#peta-parking" data-peta-buka="parking" data-ind="Lihat di peta">Show on map</a></p>
           </div>
         </article>
 
@@ -126,6 +135,7 @@
             <p data-ind="Titik api dari satelit digabung jadi satu kejadian. Petanya menunjukkan api mulai di mana, pindah ke mana, dan lahan mana yang terbakar lagi tiap tahun.">Fire dots from satellites, grouped into one event. The map shows where the fire started, where it moved, and which land burns again every year.</p>
             <ul class="tags"><li class="tag">Python</li><li class="tag">GeoPandas</li><li class="tag">Matplotlib</li></ul>
             <p class="card__meta" data-ind="Hasilnya kumpulan gambar, terang dan gelap">The result is a set of figures, light and dark</p>
+            <p class="card__aksi"><a class="card__peta" href="#peta-fire" data-peta-buka="fire" data-ind="Lihat di peta">Show on map</a></p>
           </div>
         </article>
 
@@ -142,6 +152,7 @@
             <p data-ind="Tiap lokasi diberi nilai. Yang dihitung kedalaman laut, tempat teduh dari ombak, jalan masuk, dan jumlah warga di dekatnya.">Each spot gets a score. The map weighs sea depth, shelter from waves, the road in, and how many people live nearby.</p>
             <ul class="tags"><li class="tag">QGIS</li><li class="tag">GDAL</li><li class="tag">Rasterio</li></ul>
             <p class="card__meta" data-ind="Hasilnya peta nilai lokasi dan satu lembar peta">The result is a score map and one map sheet</p>
+            <p class="card__aksi"><a class="card__peta" href="#peta-fish" data-peta-buka="fish" data-ind="Lihat di peta">Show on map</a></p>
           </div>
         </article>
 
@@ -158,6 +169,7 @@
             <p data-ind="Tiga ribu ping pengemudi di sekitar tiga gedung di Jakarta dikelompokkan jadi titik tempat orang benar benar menunggu. Tiap kelompok diberi satu simpul di median geometrisnya.">Three thousand driver pings around three buildings in Jakarta, grouped into the spots where people actually wait. Each group gets one node at its geometric median.</p>
             <ul class="tags"><li class="tag">Python</li><li class="tag">DBSCAN</li><li class="tag">QGIS</li></ul>
             <p class="card__meta" data-ind="Hasilnya satu lembar peta dengan tiga perbesaran">The result is one map sheet with three close ups</p>
+            <p class="card__aksi"><a class="card__peta" href="#peta-pickup" data-peta-buka="pickup" data-ind="Lihat di peta">Show on map</a></p>
           </div>
         </article>
 
@@ -174,6 +186,7 @@
             <p data-ind="Seberapa jauh warga menempuh jalan untuk sampai ke layanan. Lalu dua calon lokasi pelabuhan ikan, Fandoi dan Bosnik, dilihat lebih dekat.">How far people travel on the road to reach a service. Then a closer look at two spots for a fishing port, Fandoi and Bosnik.</p>
             <ul class="tags"><li class="tag">QGIS</li><li class="tag">Network analysis</li><li class="tag">Layout</li></ul>
             <p class="card__meta" data-ind="Hasilnya tiga lembar peta">The result is three map sheets</p>
+            <p class="card__aksi"><a class="card__peta" href="#peta-reach" data-peta-buka="reach" data-ind="Lihat di peta">Show on map</a></p>
           </div>
         </article>
 
@@ -190,6 +203,7 @@
             <p data-ind="Citra satelit dipilah jadi kelas tutupan lahan, lalu ditata jadi lembar peta siap cetak.">Satellite images sorted into land cover classes, then laid out as a map sheet ready to print.</p>
             <ul class="tags"><li class="tag">QGIS</li><li class="tag">Raster</li><li class="tag">Layout</li></ul>
             <p class="card__meta" data-ind="Hasilnya lembar peta PDF dan PNG">The result is a map sheet in PDF and PNG</p>
+            <p class="card__aksi"><a class="card__peta" href="#peta-landcover" data-peta-buka="landcover" data-ind="Lihat di peta">Show on map</a></p>
           </div>
         </article>
 
@@ -206,6 +220,7 @@
             <p data-ind="Bukaan tambang dipetakan tahun demi tahun, bersama hutan yang hilang di sekitarnya. Satu lembar peta, dengan perbesaran di bukaan terbesar.">Open pit mining areas mapped year by year, next to the forest lost around them. One sheet, with close ups of the biggest pits.</p>
             <ul class="tags"><li class="tag">QGIS</li><li class="tag">Raster</li><li class="tag">Print layout</li></ul>
             <p class="card__meta" data-ind="Hasilnya satu lembar peta cetak ukuran besar">The result is one large print sheet</p>
+            <p class="card__aksi"><a class="card__peta" href="#peta-mimika" data-peta-buka="mimika" data-ind="Lihat di peta">Show on map</a></p>
           </div>
         </article>
 
@@ -233,7 +248,7 @@
   <div class="wrap">
     <div class="footer__bottom">
       <p>&copy; <span data-year>2026</span> <span data-ind="Hendro Kuswantoro. Hak cipta dilindungi.">Hendro Kuswantoro. All rights reserved.</span></p>
-      <p class="footer__kini">Yogyakarta <span class="jam" data-jam aria-label="Local time in Yogyakarta" data-ind-label="Waktu setempat di Yogyakarta">--:--</span> WIB &middot; 7&deg;47&prime;S 110&deg;22&prime;E</p>
+      <p class="footer__kini">Yogyakarta <span class="jam" data-jam aria-label="Local time in Yogyakarta" data-ind-label="Waktu setempat di Yogyakarta">--:--</span> WIB</p>
     </div>
   </div>
 </footer>

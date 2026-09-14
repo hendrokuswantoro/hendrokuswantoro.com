@@ -29,7 +29,7 @@ ISI = AKAR / "content"
 TEMPLATE = AKAR / "content" / "template"
 SITUS = "https://www.hendrokuswantoro.com"
 # tanggal halaman yang isinya tidak datang dari content/
-TANGGAL_SITUS = "2026-09-11"
+TANGGAL_SITUS = "2026-09-14"
 
 
 def versi_aset() -> tuple[str, str]:
@@ -163,6 +163,7 @@ TETAP = [
     ("/", "monthly", "1.0"),
     ("/about", "monthly", "0.8"),
     ("/project", "monthly", "0.8"),
+    ("/parkir-jogja", "monthly", "0.8"),
     ("/blog/", "weekly", "0.9"),
 ]
 

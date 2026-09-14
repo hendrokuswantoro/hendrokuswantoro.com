@@ -183,3 +183,107 @@ def test_csp_menahan_muatan_sanitizer():
         "script-src accepted unsafe-inline, which un-mitigates the MapLibre "
         "sanitizer bypass. See docs/keamanan.md."
     )
+
+
+# ------------------------------------------------- peta dan kartu bertaut ---
+
+# Sampai hari ini tautannya satu arah. Popup penanda membawa pembaca ke
+# kartunya, tetapi dari kartu tidak ada jalan kembali ke peta, dan satu
+# tampilan peta tidak bisa dibagikan sama sekali. Uji di bawah menjaga
+# keduanya tetap terpasang.
+
+HALAMAN = (AKAR / "project.html").read_text(encoding="utf-8")
+
+KARYA = re.findall(r'\{ id: "([a-z0-9-]+)", kind: "', PETA)
+
+
+def test_karya_terbaca_dari_peta():
+    assert len(KARYA) == 7, f"terbaca {len(KARYA)} karya di peta.js, bukan 7"
+
+
+def test_tiap_kartu_punya_jalan_kembali_ke_peta():
+    ditaut = re.findall(r'data-peta-buka="([a-z0-9-]+)"', HALAMAN)
+    assert sorted(ditaut) == sorted(KARYA), (
+        "kartu dan penanda tidak lagi sepadan.\n"
+        f"  hanya di kartu   : {sorted(set(ditaut) - set(KARYA))}\n"
+        f"  hanya di peta.js : {sorted(set(KARYA) - set(ditaut))}"
+    )
+
+
+def test_tautan_ke_peta_ikut_berganti_bahasa():
+    for baris in re.findall(r"<a[^>]*data-peta-buka=[^>]*>", HALAMAN):
+        assert "data-ind=" in baris, f"tautan ini tidak punya bahasa Indonesianya: {baris}"
+
+
+def test_tautan_ke_peta_juga_alamat_yang_bisa_disalin():
+    """href-nya bukan "#". Yang ditekan pembaca dan yang tersalin dari bilah
+    alamat harus alamat yang sama, kalau tidak tautannya tidak bisa dibagikan."""
+    for slug in KARYA:
+        pola = r'<a[^>]*href="#peta-%s"[^>]*data-peta-buka="%s"' % (slug, slug)
+        assert re.search(pola, HALAMAN), f"{slug}: href dan data-peta-buka tidak sepadan"
+
+
+def test_peta_membaca_alamat_yang_dibagikan():
+    assert 'var AWALAN_HASH = "#peta-";' in PETA, "awalan alamatnya hilang"
+    assert "function idDariHash()" in PETA
+    assert 'addEventListener("hashchange"' in PETA, (
+        "tanpa hashchange, tautan di kartu hanya mengubah alamat dan petanya diam"
+    )
+    assert "replaceState" in PETA, (
+        "alamatnya tidak pernah ditulis balik, jadi tampilan peta tidak bisa disalin"
+    )
+
+
+def test_terbang_menuliskan_alamatnya():
+    """flyToWork dipakai penanda maupun Jelajah. Kalau ia berhenti menulis
+    alamat, yang tersalin dari bilah alamat bukan lagi yang sedang dilihat."""
+    blok = re.search(r"function flyToWork\(entry, openPopup\) \{(.*?)\n    \}", PETA, re.S)
+    assert blok, "flyToWork hilang"
+    assert "tulisHash(entry.item.id)" in blok.group(1)
+
+
+def test_saringan_legenda_diumumkan():
+    """Angka di legenda berubah di layar tanpa bunyi. Tanpa wilayah aria-live
+    ini, pembaca layar yang menyaring menurut jenis tidak mendengar apa apa."""
+    assert 'kabar.setAttribute("aria-live", "polite")' in PETA
+    assert "TEXT.filterOn" in PETA and "TEXT.filterOff" in PETA
+    for kunci in ("filterOn", "filterOff", "focus"):
+        assert re.search(r"\n    %s: \{ en: \"[^\"]+\", ind: \"[^\"]+\" \}" % kunci, PETA), (
+            f"{kunci} tidak dwibahasa"
+        )
+
+
+def test_wilayah_kabar_di_luar_panel_yang_bisa_dilipat():
+    """.peta__legenda.is-collapsed menyembunyikan .peta__grup dengan
+    display:none, dan aria-live di dalam elemen tersembunyi tidak pernah
+    dibacakan. Karena itu wilayah kabar duduk di dalam bagian petanya."""
+    gaya = (AKAR / "assets" / "css" / "style.css").read_text(encoding="utf-8")
+    assert ".peta__legenda.is-collapsed .peta__grup { display: none; }" in gaya
+    assert "section.insertBefore(kabar" in PETA, (
+        "wilayah kabar tidak lagi disisipkan ke bagian petanya"
+    )
+
+
+def test_kedua_port_sama_sama_membaca_alamat():
+    """Port Next punya salinan petanya sendiri. Fitur yang hanya dipasang di
+    satu port adalah cara paling sunyi kedua salinan ini berpisah."""
+    for nama, sumber in (("peta.js", PETA), ("WorkMap.tsx", PORT)):
+        assert '"#peta-"' in sumber, f"{nama}: awalan alamatnya hilang"
+        assert "idDariHash" in sumber, f"{nama}: tidak membaca alamat"
+        assert "replaceState" in sumber, f"{nama}: tidak menulis alamat"
+        assert '"hashchange"' in sumber, f"{nama}: tidak mendengar pergantian alamat"
+        assert 'aria-live", "polite"' in sumber or 'aria-live="polite"' in sumber, (
+            f"{nama}: wilayah kabar pembaca layar hilang"
+        )
+        assert "peta__kabar" in sumber, f"{nama}: wilayah kabar hilang"
+
+
+def test_kedua_port_tidak_lagi_menggantung_pada_load():
+    """"load" tidak datang kalau satu sumber ubinnya ditolak, dan petanya
+    tetap tergambar. Menggantungkan penataan padanya berarti relief tidak
+    terpasang dan legenda tinggal kosong, tanpa satu galat pun."""
+    for nama, sumber in (("peta.js", PETA), ("WorkMap.tsx", PORT)):
+        assert "sudahSiap" in sumber, f"{nama}: penjaga sekali jalan hilang"
+        for peristiwa in ('"load"', '"styledata"', '"idle"'):
+            assert peristiwa in sumber, f"{nama}: tidak lagi mendengar {peristiwa}"
+        assert "setTimeout(siap, 4000)" in sumber, f"{nama}: jaring pengamannya hilang"

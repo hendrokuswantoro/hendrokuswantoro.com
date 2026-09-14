@@ -425,6 +425,32 @@ function kindOf(categories: Category[]): Category {
   return (KINDS.find((entry) => categories.includes(entry.key))?.key ?? "analysis") as Category;
 }
 
+/* Satu tampilan peta bisa dibagikan. Sama persis dengan assets/js/peta.js:
+   alamat #peta-<id> membuka petanya tepat di karya itu, dan tiap terbang
+   menuliskannya kembali dengan replaceState, bukan dengan location.hash,
+   supaya menggeser peta tidak menumpuk riwayat. */
+const AWALAN_HASH = "#peta-";
+
+function idDariHash(): string | null {
+  if (typeof window === "undefined") return null;
+  const hash = window.location.hash || "";
+  if (!hash.startsWith(AWALAN_HASH)) return null;
+  const id = hash.slice(AWALAN_HASH.length);
+  return PROJECTS.some((project) => project.id === id) ? id : null;
+}
+
+function tulisHash(id: string | null) {
+  if (typeof window === "undefined" || !window.history?.replaceState) return;
+  if (id && window.location.hash === AWALAN_HASH + id) return;
+  if (!id && !window.location.hash) return;
+  const alamat = id ? AWALAN_HASH + id : window.location.pathname + window.location.search;
+  try {
+    window.history.replaceState(null, "", alamat);
+  } catch {
+    /* alamat file://, tidak ada riwayat untuk ditulisi */
+  }
+}
+
 function popupHtml(project: Project, lang: Lang): string {
   const kind = kindOf(project.categories);
   return (
@@ -444,6 +470,7 @@ export function WorkMap() {
   const entries = useRef<Entry[]>([]);
   const tour = useRef<number>(0);
   const tourAt = useRef<number>(0);
+  const dipusatkan = useRef(false);
 
   const [ready, setReady] = useState(false);
   const [three, setThree] = useState(false);
@@ -452,6 +479,18 @@ export function WorkMap() {
   const [counts, setCounts] = useState<Record<Category, number>>({ app: 0, analysis: 0, satellite: 0, design: 0 });
   const [seen, setSeen] = useState<string[]>([]);
   const [folded, setFolded] = useState(false);
+  /* Angka di legenda berubah di layar tanpa bunyi apa pun. Wilayah aria-live
+     ini yang mengucapkannya, dan ia duduk di luar panel yang bisa dilipat:
+     .peta__legenda.is-collapsed menyembunyikan .peta__grup dengan
+     display:none, dan aria-live di dalam elemen tersembunyi tidak dibacakan. */
+  const [kabar, setKabar] = useState("");
+
+  function umumkan(teks: string) {
+    /* dikosongkan lebih dulu supaya pesan yang sama persis tetap terbaca
+       sebagai perubahan */
+    setKabar("");
+    window.setTimeout(() => setKabar(teks), 60);
+  }
 
   function reduced(): boolean {
     return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -492,6 +531,24 @@ export function WorkMap() {
       duration: ms(2600),
     });
     if (openPopup && !entry.popup.isOpen()) entry.marker.togglePopup();
+    tulisHash(entry.project.id);
+  }
+
+  /* Dipanggil dari luar: tautan "Lihat di peta" di tiap kartu, dan alamat
+     #peta-<id> yang dibuka langsung atau dibagikan. */
+  function buka(id: string): boolean {
+    const entry = entries.current.find((item) => item.project.id === id);
+    if (!entry) return false;
+    /* Sesudah ini kamera punya tujuan sendiri, dan siap() tidak boleh
+       menariknya kembali ke tampilan awal. */
+    dipusatkan.current = true;
+    stopTour();
+    /* karya yang sedang tersaring keluar harus dikembalikan dulu, kalau tidak
+       petanya terbang ke penanda yang tidak tergambar */
+    if (active && entry.kind !== active) filter(active);
+    flyTo(entry, true);
+    umumkan(say(PROJECT_PAGE.mapFocus).replace("%w", entry.project.title[lang]));
+    return true;
   }
 
   function applyRelief(instance: MapLibreMap, on: boolean) {
@@ -572,6 +629,7 @@ export function WorkMap() {
       PROJECTS.forEach((project) => bounds.extend([project.point.lng, project.point.lat]));
       instance.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: ms(750) });
     });
+    tulisHash(null);
   }
 
   function filter(kind: Category) {
@@ -590,6 +648,17 @@ export function WorkMap() {
       });
       instance.fitBounds(visible, { padding: 56, maxZoom: next ? 7 : 6, duration: ms(700) });
       recount();
+      const tampil = entries.current.filter(
+        (entry) => !entry.marker.getElement().classList.contains("is-off"),
+      ).length;
+      umumkan(
+        next
+          ? say(PROJECT_PAGE.filterOn)
+              .replace("%k", say(KINDS.find((item) => item.key === next)!.label))
+              .replace("%n", String(tampil))
+              .replace("%t", String(entries.current.length))
+          : say(PROJECT_PAGE.filterOff).replace("%t", String(entries.current.length)),
+      );
     });
   }
 
@@ -663,19 +732,57 @@ export function WorkMap() {
         return entry;
       });
 
-      instance.on("load", () => {
+      /* Penataan sesudah peta berdiri, dan ia TIDAK menumpang pada "load"
+         saja. Diukur di port statis, yang kodenya sama: dengan ubin Mapbox
+         yang dijawab 403, "load" dan "idle" tidak menyala satu kali pun dalam
+         tujuh detik, padahal petanya tergambar dan loaded() menjawab true.
+         Akibatnya relief tidak terpasang, ringkasan legenda tinggal kosong,
+         dan alamat yang dibagikan tidak pernah dibuka. Sebab yang sama
+         mengenai pembaca dengan sambungan lambat.
+         Jadi yang dipakai yang pertama tiba di antara ketiga peristiwa itu,
+         ditambah satu jaring pengaman berwaktu. Isinya dijalankan sekali, dan
+         tidak ada di dalamnya yang menuntut satu ubin pun. */
+      let sudahSiap = false;
+      const siap = () => {
+        if (sudahSiap || cancelled) return;
+        sudahSiap = true;
         applyRelief(instance, three);
         instance.resize();
-        instance.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: 0 });
-        instance.once("idle", recount);
+        if (!dipusatkan.current) {
+          instance.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: 0 });
+        }
         setReady(true);
-      });
+        /* fitBounds di atas berdurasi nol, jadi tidak ada gerakan yang bisa
+           dibatalkan oleh terbang yang menyusul satu bingkai kemudian */
+        window.requestAnimationFrame(() => {
+          recount();
+          const id = idDariHash();
+          if (id) buka(id);
+        });
+      };
+
+      instance.on("load", siap);
+      instance.on("styledata", siap);
+      instance.on("idle", siap);
+      window.setTimeout(siap, 4000);
       instance.on("move", recount);
       instance.on("zoom", recount);
       /* the tour is a suggestion, not a ride: any hand on the map stops it */
       (["dragstart", "wheel", "touchstart"] as const).forEach((kind) => instance.on(kind, stopTour));
 
+      /* alamat yang berganti tanpa memuat ulang halaman: tautan "Lihat di
+         peta" di kartu, dan tombol maju mundur peramban */
+      window.addEventListener("hashchange", dengarAlamat);
+
       map.current = instance;
+      /* dipakai tautan di kartu ketika alamatnya sudah benar, jadi hashchange
+         tidak akan menyala lagi. Sama dengan port statis. */
+      (window as unknown as { HK_PETA_STATE?: { buka: (id: string) => boolean } }).HK_PETA_STATE = { buka };
+    }
+
+    function dengarAlamat() {
+      const id = idDariHash();
+      if (id) buka(id);
     }
 
     const node = section.current;
@@ -696,6 +803,7 @@ export function WorkMap() {
       return () => {
         cancelled = true;
         io.disconnect();
+        window.removeEventListener("hashchange", dengarAlamat);
         stopTour();
         map.current?.remove();
         map.current = null;
@@ -704,6 +812,7 @@ export function WorkMap() {
 
     return () => {
       cancelled = true;
+      window.removeEventListener("hashchange", dengarAlamat);
       stopTour();
       map.current?.remove();
       map.current = null;
@@ -782,6 +891,10 @@ export function WorkMap() {
           </button>
         </div>
       </div>
+
+      <p className="peta__kabar visually-hidden" aria-live="polite">
+        {kabar}
+      </p>
 
       <p className="peta__ket">{say(PROJECT_PAGE.mapNote)}</p>
     </section>

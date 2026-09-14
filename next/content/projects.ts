@@ -170,4 +170,21 @@ export const PROJECT_PAGE = {
     id: "Titik penanda, bukan batas wilayah kajian. Ubin peta dari Mapbox dan OpenStreetMap.",
   } as Copy,
   seeProject: { en: "See the project", id: "Lihat proyek" } as Copy,
+  showOnMap: { en: "Show on map", id: "Lihat di peta" } as Copy,
+  mapEyebrow: { en: "The work map", id: "Peta karya" } as Copy,
+  mapTitle: { en: "Seven works, one map", id: "Tujuh karya, satu peta" } as Copy,
+  mapIntro: {
+    en: "Every project on this page sits somewhere real. The map draws itself from vector tiles, 31 layers, and only downloads once you scroll this far.",
+    id: "Tiap proyek di halaman ini duduk di tempat yang sungguhan. Petanya menggambar sendiri dari ubin vektor, 31 lapisan, dan baru diunduh ketika Anda menggulir sampai ke sini.",
+  } as Copy,
+  /* Dibacakan pembaca layar, tidak pernah tampil di layar. */
+  filterOn: {
+    en: "%k. %n of %t works shown.",
+    id: "%k. %n dari %t karya ditampilkan.",
+  } as Copy,
+  filterOff: {
+    en: "Filter off. All %t works shown.",
+    id: "Saringan mati. Semua %t karya ditampilkan.",
+  } as Copy,
+  mapFocus: { en: "%w, centred on the map.", id: "%w, dipusatkan di peta." } as Copy,
 };

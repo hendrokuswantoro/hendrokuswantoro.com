@@ -263,6 +263,115 @@ def test_nama_jalan_muncul_di_zoom_kota(halaman, situs):
     assert jumlah > 0, "tidak ada nama jalan tergambar di zoom kota"
 
 
+# --------------------------------------------- peta dan kartu yang bertaut ---
+#
+# Ketiganya hanya bisa dibuktikan di peramban. Membaca berkas membuktikan
+# tautannya ada; hanya peramban yang membuktikan kameranya benar benar pindah,
+# alamatnya benar benar berganti, dan pengumumannya benar benar ditulis.
+
+
+def di_titik(halaman: Page, lng: float, lat: float, jarak: float = 0.4) -> None:
+    pusat = halaman.evaluate("() => window.HK_PETA_MAP.getCenter()")
+    assert abs(pusat["lng"] - lng) < jarak and abs(pusat["lat"] - lat) < jarak, (
+        f"peta berhenti di {pusat['lng']:.3f}, {pusat['lat']:.3f}, bukan di {lng}, {lat}"
+    )
+
+
+def test_alamat_peta_membuka_karya_yang_disebutnya(halaman, situs):
+    """Satu tampilan peta bisa dikirim ke orang lain. Sebelum ini tidak bisa:
+    yang tersalin cuma alamat halamannya, dan penerimanya harus mencari
+    sendiri titik mana yang dimaksud."""
+    buka(halaman, situs, "/project#peta-fish")
+    peta_siap(halaman)
+    tunggu(halaman, "() => window.HK_PETA_MAP.getZoom() > 15", 25000,
+           "peta tidak pernah terbang ke karya yang disebut alamatnya")
+    di_titik(halaman, 108.22, 3.70)
+
+
+def test_alamat_yang_bukan_karya_dibiarkan(halaman, situs):
+    """#peta-entah bukan alasan untuk memindahkan kamera ke mana pun."""
+    buka(halaman, situs, "/project#peta-entah")
+    peta_siap(halaman)
+    halaman.wait_for_timeout(3000)
+    assert halaman.evaluate("() => window.HK_PETA_MAP.getZoom()") < 8
+
+
+def test_tautan_di_kartu_membawa_pembaca_ke_peta(halaman, situs):
+    """Arah sebaliknya dari tautan di dalam popup penanda. Sebelum ini
+    tautannya satu arah: peta ke kartu ada, kartu ke peta tidak."""
+    buka(halaman, situs, "/project")
+    peta_siap(halaman)
+
+    halaman.locator('[data-peta-buka="mimika"]').click()
+    tunggu(halaman, "() => window.HK_PETA_MAP.getZoom() > 15", 25000,
+           "menekan tautan di kartu tidak memindahkan peta")
+    di_titik(halaman, 137.00, -4.35)
+
+    assert halaman.evaluate("() => location.hash") == "#peta-mimika", (
+        "alamatnya tidak ikut berganti, jadi tampilan ini tidak bisa disalin"
+    )
+    """Petanya berhenti persis di bawah header yang lengket, tidak di
+       baliknya dan tidak jauh di bawahnya.
+
+       Pernah meleset 196 piksel. Sebabnya popup MapLibre memindahkan fokus ke
+       dalam dirinya begitu terbuka, dan pemindahan fokus itu menggulir
+       halaman, mengalahkan gulir halus yang diminta tautannya."""
+    letak = halaman.evaluate("""() => ({
+      peta: Math.round(document.querySelector('.peta').getBoundingClientRect().top),
+      header: Math.round(document.querySelector('header').getBoundingClientRect().bottom)
+    })""")
+    assert letak["peta"] >= letak["header"], (
+        f"petanya berhenti di balik header: atas {letak['peta']}, header {letak['header']}"
+    )
+    assert letak["peta"] - letak["header"] < 40, (
+        f"petanya berhenti {letak['peta'] - letak['header']} piksel di bawah header"
+    )
+
+
+def test_terbang_menuliskan_alamat_tanpa_menumpuk_riwayat(halaman, situs):
+    """replaceState, bukan location.hash. Kalau tiap penanda menambah satu
+    langkah riwayat, tombol kembali berhenti membawa pembaca keluar dari
+    halaman ini dan mulai menyusuri titik titik yang tadi dilihatnya."""
+    buka(halaman, situs, "/project")
+    peta_siap(halaman)
+    panjang = halaman.evaluate("() => history.length")
+
+    halaman.evaluate("() => window.HK_PETA_STATE.buka('fire')")
+    tunggu(halaman, "() => location.hash === '#peta-fire'", 20000,
+           "alamatnya tidak pernah ditulis")
+    assert halaman.evaluate("() => history.length") == panjang
+
+
+def test_menyaring_legenda_terdengar_pembaca_layar(halaman, situs):
+    """Angka di legenda berubah di layar tanpa bunyi apa pun. Wilayah
+    aria-live ini yang mengucapkannya."""
+    buka(halaman, situs, "/project")
+    peta_siap(halaman)
+
+    kabar = halaman.locator(".peta__kabar")
+    assert kabar.get_attribute("aria-live") == "polite"
+
+    baris = halaman.locator('.peta__baris[data-kind="satellite"]')
+    nama = baris.locator(".peta__nama").inner_text()
+    baris.click()
+
+    tunggu(halaman,
+           "() => (document.querySelector('.peta__kabar').textContent || '').trim().length > 0",
+           8000, "menyaring legenda tidak mengumumkan apa apa")
+    teks = halaman.evaluate("() => document.querySelector('.peta__kabar').textContent")
+    assert nama in teks, f"pengumumannya tidak menyebut jenis yang disaring: {teks!r}"
+    assert "2" in teks and "7" in teks, f"pengumumannya tidak menyebut hitungannya: {teks!r}"
+
+
+def test_wilayah_kabar_tidak_pernah_tampil_di_layar(halaman, situs):
+    buka(halaman, situs, "/project")
+    peta_siap(halaman)
+    kotak = halaman.locator(".peta__kabar").bounding_box()
+    assert kotak["width"] <= 1 and kotak["height"] <= 1, (
+        f"wilayah kabar mengambil tempat di layar: {kotak}"
+    )
+
+
 # ------------------------------------------------------------------ tema ---
 #
 # Warna latar hanya bisa dibuktikan di peramban. Membaca CSS membuktikan

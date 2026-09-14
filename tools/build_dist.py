@@ -18,6 +18,7 @@ FILES = [
     "index.html",
     "about.html",
     "project.html",
+    "parkir-jogja.html",
     "404.html",
     "robots.txt",
     "sitemap.xml",

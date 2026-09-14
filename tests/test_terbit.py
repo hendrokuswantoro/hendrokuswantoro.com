@@ -229,3 +229,39 @@ def test_wrangler_menunjuk_dist():
     assert 'name = "hendrokuswantoro-com"' in WRANGLER, "the worker name no longer matches"
     assert 'directory = "./dist"' in WRANGLER
     assert 'not_found_handling = "404-page"' in WRANGLER
+
+
+# --------------------------------------------------- halaman benar benar terbit ---
+
+PEMBANGUN = {
+    "tools/bangun_situs.sh": (AKAR / "tools" / "bangun_situs.sh").read_text(encoding="utf-8"),
+    "tools/build_dist.py": (AKAR / "tools" / "build_dist.py").read_text(encoding="utf-8"),
+}
+
+
+@pytest.mark.parametrize(
+    "berkas",
+    [p for p in HALAMAN if p.parent == AKAR],
+    ids=nama,
+)
+def test_setiap_halaman_ikut_dibangun(berkas):
+    """Halaman yang ada di repositori tetapi tidak ada di pembangun tidak akan
+    pernah terbit, dan tidak ada yang berwarna merah karenanya.
+
+    Kedua pembangun `dist/` memakai daftar izin, bukan daftar tolak, dan itu
+    pilihan yang benar: README, tools/, dan port Next.js memang tidak boleh
+    ikut ke depan pengunjung. Harganya, tiap halaman baru wajib didaftarkan,
+    dan lupa mendaftarkannya tidak menimbulkan galat apa pun.
+
+    Itu hampir terjadi pada 14 September 2026: halaman studi kasus ditulis,
+    diuji, masuk sitemap, lalu `dist/ holds 63 files` tetap seperti sebelumnya.
+    Satu satunya yang menyelamatkannya adalah angka itu dibaca orang.
+
+    Halaman di dalam blog/ tidak ikut diperiksa di sini sebab foldernya
+    disalin utuh, bukan disebut satu per satu.
+    """
+    for nama_pembangun, isi in PEMBANGUN.items():
+        assert berkas.name in isi, (
+            f"{berkas.name} tidak disebut {nama_pembangun}, "
+            f"jadi ia tidak akan ikut terbit"
+        )
