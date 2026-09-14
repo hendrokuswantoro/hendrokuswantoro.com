@@ -44,6 +44,28 @@ EMAIL = "kuswantoro.hendro01@gmail.com"
 SANDI = "sandi-uji-lokal-panjang"
 
 
+def _sejak() -> object:
+    """Jam basis data saat rangkaian ini dimuat.
+
+    Diambil dari basis datanya, bukan dari Python, sebab keduanya bisa
+    berselisih beberapa detik dan selisih itu persis yang menentukan satu
+    baris ikut terhapus atau tertinggal.
+    """
+    if not DSN:
+        return None
+    try:
+        import psycopg as _p
+
+        with _p.connect(DSN, connect_timeout=3) as s, s.cursor() as k:
+            k.execute("SELECT now()")
+            return k.fetchone()[0]
+    except Exception:
+        return None
+
+
+SEJAK = _sejak()
+
+
 def _bisa_terhubung() -> bool:
     if not DSN:
         return False
@@ -85,8 +107,17 @@ def bersihkan_keamanan():
     def bersih() -> None:
         with psycopg.connect(DSN) as s, s.cursor() as k:
             k.execute("DELETE FROM kode_sekali")
-            k.execute("DELETE FROM kode_pemulihan")
-            k.execute("DELETE FROM peristiwa_keamanan")
+            # Dua tabel ini memuat hal yang tidak boleh ikut terhapus di basis
+            # data pengembangan: kode pemulihan yang mungkin sudah dicatat
+            # pemiliknya di tempat aman, dan jejak keamanan yang justru ada
+            # supaya bisa dibaca belakangan. Jadi yang dihapus hanya yang lahir
+            # sesudah rangkaian ini dimulai. Lihat SEJAK di bawah.
+            if SEJAK is None:
+                k.execute("DELETE FROM kode_pemulihan")
+                k.execute("DELETE FROM peristiwa_keamanan")
+            else:
+                k.execute("DELETE FROM kode_pemulihan WHERE dibuat_pada >= %s", (SEJAK,))
+                k.execute("DELETE FROM peristiwa_keamanan WHERE pada >= %s", (SEJAK,))
             k.execute("DELETE FROM gagal_masuk")
             k.execute(
                 "UPDATE users SET totp_rahasia = NULL, totp_aktif_pada = NULL, "

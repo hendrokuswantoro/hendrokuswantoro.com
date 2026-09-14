@@ -78,11 +78,46 @@ def bisa_terhubung() -> bool:
 pytestmark = pytest.mark.skipif(not bisa_terhubung(), reason="tidak ada basis data")
 
 
+def _sejak() -> object:
+    """Jam basis data saat rangkaian ini dimuat, dipakai membatasi pembersihan.
+
+    Diambil dari basis datanya, bukan dari Python, sebab keduanya bisa
+    berselisih beberapa detik dan selisih itu persis yang menentukan satu
+    baris ikut terhapus atau tertinggal.
+    """
+    try:
+        with psycopg.connect(DSN, connect_timeout=3) as s, s.cursor() as k:
+            k.execute("SELECT now()")
+            return k.fetchone()[0]
+    except Exception:
+        return None
+
+
+SEJAK = _sejak()
+
+
 @pytest.fixture(autouse=True)
 def bersihkan():
+    """Membersihkan yang dibuat uji ini, bukan mengosongkan tabelnya.
+
+    Sebelumnya baris pertamanya `DELETE FROM kredensial`, tanpa WHERE. Di
+    basis data pengembangan tabel itu berisi passkey SUNGGUHAN milik
+    pemiliknya, jadi sekali rangkaian uji dijalankan, setiap perangkat yang
+    pernah didaftarkan lenyap. Tidak ada galat, tidak ada peringatan; yang
+    terjadi cuma tombol sidik jari yang tiba tiba tidak mengenali siapa pun
+    lagi. Itu benar benar terjadi pada 14 September 2026.
+
+    Sekarang yang dihapus hanya baris yang lahir sesudah rangkaian ini
+    dimulai. `tantangan` dan `gagal_masuk` tetap dikosongkan seluruhnya, dan
+    itu memang aman: keduanya berumur pendek dan tidak memuat apa pun yang
+    perlu dipegang.
+    """
     yield
     with psycopg.connect(DSN) as s, s.cursor() as k:
-        k.execute("DELETE FROM kredensial")
+        if SEJAK is None:
+            k.execute("DELETE FROM kredensial")
+        else:
+            k.execute("DELETE FROM kredensial WHERE dibuat_pada >= %s", (SEJAK,))
         k.execute("DELETE FROM tantangan")
         k.execute("DELETE FROM gagal_masuk")
         s.commit()
@@ -316,10 +351,20 @@ def test_daftar_dan_cabut(klien, masuk, perangkat):
 
     daftar = klien.get("/api/v1/auth/passkey", headers=masuk)
     assert daftar.status_code == 200
-    assert [k["nama"] for k in daftar.json()["daftar"]] == ["Laptop uji"]
+    # Yang diperiksa kunci YANG DIBUAT UJI INI, bukan seluruh isi tabelnya.
+    #
+    # Versi sebelumnya menuntut daftarnya berisi tepat satu nama, dan itu
+    # hanya benar selama pembersih uji mengosongkan tabel `kredensial`
+    # seluruhnya. Pembersih itu ternyata ikut menghapus passkey SUNGGUHAN
+    # milik pemilik situs ini, jadi ia dipersempit, dan uji ini ikut berubah
+    # bersamanya. Uji yang benar hanya karena data orang lain dihapus bukan
+    # uji yang benar.
+    nama = [k["nama"] for k in daftar.json()["daftar"]]
+    assert "Laptop uji" in nama, f"kunci yang baru didaftarkan tidak ada di daftar: {nama}"
 
     assert klien.delete(f"/api/v1/auth/passkey/{hasil['id']}", headers=masuk).status_code == 204
-    assert klien.get("/api/v1/auth/passkey", headers=masuk).json()["daftar"] == []
+    sesudah = [k["nama"] for k in klien.get("/api/v1/auth/passkey", headers=masuk).json()["daftar"]]
+    assert "Laptop uji" not in sesudah, f"kunci yang dicabut masih terdaftar: {sesudah}"
 
     assert masuk_dengan(klien, perangkat).status_code == 401, "kunci yang dicabut masih bisa masuk"
 
@@ -346,7 +391,16 @@ def test_perangkat_yang_sama_tidak_ditawarkan_dua_kali(klien, masuk, perangkat):
     import json
 
     pilihan = json.loads(mulai.json()["pilihan"])
-    assert len(pilihan.get("excludeCredentials") or []) == 1
+    # Setiap kunci yang sudah terdaftar wajib ikut dikecualikan, termasuk
+    # kunci sungguhan milik pemiliknya yang kebetulan ada di basis data
+    # pengembangan. Jadi yang dibandingkan jumlah kunci yang benar benar ada,
+    # bukan angka satu yang hanya benar di tabel yang kosong.
+    terdaftar = klien.get("/api/v1/auth/passkey", headers=masuk).json()["daftar"]
+    assert len(pilihan.get("excludeCredentials") or []) == len(terdaftar), (
+        f"{len(terdaftar)} kunci terdaftar tetapi "
+        f"{len(pilihan.get('excludeCredentials') or [])} yang dikecualikan"
+    )
+    assert terdaftar, "tidak ada kunci terdaftar, jadi ujinya tidak menjaga apa apa"
 
 
 def test_nama_kosong_diberi_nama_bawaan(klien, masuk, perangkat):

@@ -9,6 +9,9 @@ export function PanelPasskey() {
   const [daftar, setDaftar] = useState<passkey.Kunci[] | null>(null);
   const [kabar, setKabar] = useState<{ teks: string; baik: boolean } | null>(null);
   const [bisa, setBisa] = useState(false);
+  /* Alasan alamat ini tidak bisa dipakai, kalau ada. Mendaftarkan perangkat
+     tersandung hal yang sama dengan masuk: alamat IP bukan nama domain. */
+  const [halangan, setHalangan] = useState<passkey.Kendala | null>(null);
 
   const muat = useCallback(async () => {
     try {
@@ -21,6 +24,7 @@ export function PanelPasskey() {
 
   useEffect(() => {
     let batal = false;
+    setHalangan(passkey.kendala());
     passkey.siap().then((ya) => {
       if (batal) return;
       setBisa(ya);
@@ -35,6 +39,12 @@ export function PanelPasskey() {
 
   async function daftarkan(jenis: "perangkat" | "kunci") {
     const bawaan = jenis === "perangkat" ? "Laptop kerja" : "Kunci USB";
+    const h = passkey.kendala();
+    if (h) {
+      setHalangan(h);
+      setKabar({ teks: h.saran ? `${h.pesan} Buka ${h.saran}` : h.pesan, baik: false });
+      return;
+    }
     const nama = window.prompt("Beri nama perangkat ini", bawaan);
     if (nama === null) return;
     setKabar(null);
@@ -85,14 +95,32 @@ export function PanelPasskey() {
             type="button"
             className={`${gaya.tombol} ${gaya.utama}`}
             onClick={() => void daftarkan("perangkat")}
+            disabled={halangan !== null}
           >
             Daftarkan sidik jari
           </button>
-          <button type="button" className={gaya.tombol} onClick={() => void daftarkan("kunci")}>
+          <button
+            type="button"
+            className={gaya.tombol}
+            onClick={() => void daftarkan("kunci")}
+            disabled={halangan !== null}
+          >
             Daftarkan kunci USB
           </button>
         </div>
       </div>
+
+      {halangan ? (
+        <p className={gaya.penjelasan}>
+          {halangan.pesan}{" "}
+          {halangan.saran ? (
+            <>
+              Buka <a href={halangan.saran}>{halangan.saran}</a>. Mesinnya sama, cuma
+              namanya yang berbeda.
+            </>
+          ) : null}
+        </p>
+      ) : null}
 
       <p className={gaya.penjelasan}>
         Cara masuk paling aman di sini. Kuncinya tersimpan di perangkat Anda dan terikat

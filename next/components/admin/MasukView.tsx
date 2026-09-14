@@ -53,6 +53,14 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
   const [kabar, setKabar] = useState("");
   const [sibuk, setSibuk] = useState(false);
   const [adaPasskey, setAdaPasskey] = useState(false);
+  /* Sandi terlihat atau tidak. Bawaannya tidak, dan ia dikembalikan ke tidak
+     begitu sesinya terbuka: sandi yang tadi ditampilkan tidak boleh tinggal
+     terbaca di layar yang mungkin ditinggalkan pemiliknya. */
+  const [sandiTerlihat, setSandiTerlihat] = useState(false);
+  /* Kenapa sidik jari tidak bisa dipakai di alamat ini, kalau memang tidak
+     bisa. Diisi di useEffect, bukan saat render, sebab ia membaca
+     window.location dan server tidak punya itu. */
+  const [halangan, setHalangan] = useState<passkey.Kendala | null>(null);
 
   /* Tahap kedua. Null berarti belum sampai ke sana. */
   const [tiket, setTiket] = useState<{ nilai: string; cara: CaraFaktorKedua[] } | null>(null);
@@ -62,6 +70,7 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
 
   useEffect(() => {
     let batal = false;
+    setHalangan(passkey.kendala());
     passkey.siap().then((ya) => {
       if (!batal) setAdaPasskey(ya);
     });
@@ -84,10 +93,14 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
       if (hasil.tahap === "faktor2") {
         setTiket({ nilai: hasil.tiket, cara: hasil.cara });
         setCaraDipakai(hasil.cara[0]);
-        /* Sandinya dibuang dari memori begitu ia tidak dibutuhkan lagi. */
+        /* Sandinya dibuang dari memori begitu ia tidak dibutuhkan lagi, dan
+           saklarnya dikembalikan ke tersembunyi bersamanya. */
         setSandi("");
+        setSandiTerlihat(false);
         return;
       }
+      setSandi("");
+      setSandiTerlihat(false);
       sesudah(hasil);
     } catch (e) {
       setGalat(e instanceof GagalApi ? e.message : "gagal menghubungi server");
@@ -170,13 +183,34 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
 
   async function denganPasskey() {
     bersihkan();
+
+    /* Diperiksa lagi di sini, bukan hanya saat tombolnya digambar. Alamat
+       halaman bisa berganti tanpa komponennya dipasang ulang. */
+    const h = passkey.kendala();
+    if (h) {
+      setHalangan(h);
+      setGalat(h.saran ? `${h.pesan} Buka ${h.saran}` : h.pesan);
+      return;
+    }
+
     setSibuk(true);
     try {
       sesudah(await passkey.masuk());
     } catch (e) {
-      if (!passkey.dibatalkan(e)) {
-        setGalat(e instanceof Error ? e.message : "passkey gagal");
+      if (passkey.dibatalkan(e)) return;
+      /* SecurityError datang dari peramban, bukan dari server, dan bunyinya
+         "This is an invalid domain." Kalimat itu benar tetapi tidak memberi
+         tahu siapa pun apa yang harus dikerjakan. */
+      if ((e as { name?: string })?.name === "SecurityError") {
+        const lagi = passkey.kendala();
+        setGalat(
+          lagi?.saran
+            ? `${lagi.pesan} Buka ${lagi.saran}`
+            : "Alamat halaman ini tidak bisa dipakai untuk sidik jari.",
+        );
+        return;
       }
+      setGalat(e instanceof Error ? e.message : "passkey gagal");
     } finally {
       setSibuk(false);
     }
@@ -351,14 +385,26 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
             type="button"
             className={`${gaya.tombol} ${gaya.utama} ${gaya.lebar}`}
             onClick={denganPasskey}
-            disabled={sibuk}
+            disabled={sibuk || halangan !== null}
           >
             Masuk pakai sidik jari
           </button>
-          <p className={gaya.penjelasan} style={{ marginTop: 10 }}>
-            Perangkat Anda yang meminta sidik jari, wajah, atau PIN. Sidik jari Anda tidak
-            dikirim ke mana pun.
-          </p>
+          {halangan ? (
+            <p className={gaya.penjelasan} style={{ marginTop: 10 }}>
+              {halangan.pesan}{" "}
+              {halangan.saran ? (
+                <>
+                  Buka <a href={halangan.saran}>{halangan.saran}</a>. Mesinnya sama, cuma
+                  namanya yang berbeda.
+                </>
+              ) : null}
+            </p>
+          ) : (
+            <p className={gaya.penjelasan} style={{ marginTop: 10 }}>
+              Perangkat Anda yang meminta sidik jari, wajah, atau PIN. Sidik jari Anda tidak
+              dikirim ke mana pun.
+            </p>
+          )}
           <div className={gaya.pisah}>atau dengan sandi</div>
         </>
       ) : null}
@@ -379,16 +425,35 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
 
         <div className={gaya.baris}>
           <label htmlFor="sandi">Sandi</label>
-          <input
-            id="sandi"
-            className={gaya.isian}
-            type="password"
-            autoComplete="current-password"
-            required
-            minLength={8}
-            value={sandi}
-            onChange={(e) => setSandi(e.target.value)}
-          />
+          {/* Tombolnya di DALAM bidang isian, dan isiannya diberi ruang kanan
+              supaya sandi yang panjang tidak pernah tersembunyi di baliknya. */}
+          <div className={gaya.sandiBidang}>
+            <input
+              id="sandi"
+              className={gaya.isian}
+              type={sandiTerlihat ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              minLength={8}
+              value={sandi}
+              onChange={(e) => setSandi(e.target.value)}
+            />
+            <button
+              type="button"
+              className={gaya.lihat}
+              aria-controls="sandi"
+              aria-pressed={sandiTerlihat}
+              aria-label={sandiTerlihat ? "Sembunyikan sandi" : "Tampilkan sandi"}
+              title={sandiTerlihat ? "Sembunyikan sandi" : "Tampilkan sandi"}
+              onClick={() => setSandiTerlihat((t) => !t)}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M1.8 12S5.4 5.5 12 5.5 22.2 12 22.2 12 18.6 18.5 12 18.5 1.8 12 1.8 12z" />
+                <circle cx="12" cy="12" r="3.2" />
+                <path className={gaya.coret} d="M4 20 20 4" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <button

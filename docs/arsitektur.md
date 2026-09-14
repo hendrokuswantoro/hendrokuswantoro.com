@@ -41,17 +41,24 @@ dilarang bab 1 dokumen standar.
 | | Statis | Next.js |
 | --- | --- | --- |
 | Letak | akar repositori | `next/` |
-| Yang terbit | ya, ini yang hidup | belum pernah dibangun |
+| Yang terbit | ya, ini yang hidup | tidak, meski sudah bisa dibangun |
 | Perlu Node | tidak | ya |
 | Peta | `assets/js/peta.js` | `next/components/WorkMap.tsx` |
 
 Versi statis yang terbit. Versi Next.js ada karena diminta di spesifikasi dan
-disimpan tetap sejalan, tetapi tidak pernah dibangun sekali pun: mesin tempat
-situs ini ditulis tidak punya Node. Karena itu `tests/test_peta.py` memaksa
-kedua port memuat lapisan peta yang sama persis dengan urutan sama, dan
-pekerjaan `Type Check` di CI menjalankan `tsc --noEmit` di runner GitHub yang
-punya Node. Itu satu satunya hal yang sejauh ini menjaga port kedua tidak
-diam diam rusak.
+disimpan tetap sejalan.
+
+Sampai 13 September 2026 port itu **tidak pernah dibangun sekali pun**, sebab
+mesin tempat situs ini ditulis tidak punya Node, dan kalimat itu berdiri di
+sini berhari hari sesudah berhenti benar. Sekarang Node 24 terpasang,
+`npm run build` sudah dijalankan di mesin ini, dan `next/out/` ada. Yang
+belum berubah cuma satu: keluarannya tetap tidak diterbitkan.
+
+Yang menjaga port kedua tidak diam diam rusak ada tiga: `tests/test_peta.py`
+memaksa keduanya memuat lapisan peta yang sama persis dengan urutan sama,
+`tools/gaya_next.py` membangkitkan CSS-nya dari `assets/css/style.css`
+sehingga sistem desainnya tidak bisa bercabang, dan pekerjaan `Type Check` di
+CI menjalankan `tsc --noEmit` beserta `npm run build`.
 
 ## Rahasia
 

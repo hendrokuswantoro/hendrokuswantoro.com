@@ -43,6 +43,59 @@ export function dibatalkan(galat: unknown): boolean {
   return nama === "NotAllowedError" || nama === "AbortError";
 }
 
+export type Kendala = { sebab: "alamat-ip" | "tanpa-https"; pesan: string; saran: string };
+
+/**
+ * Kenapa sidik jari tidak bisa dipakai di alamat ini, kalau memang tidak bisa.
+ *
+ * WebAuthn menuntut rp_id berupa NAMA DOMAIN. Alamat IP bukan nama domain,
+ * dan itu bukan soal konfigurasi yang kurang: peramban menolaknya sebelum
+ * satu pun permintaan dikirim, dengan `SecurityError: This is an invalid
+ * domain.` Sudah diperiksa di Chromium dari halaman http://127.0.0.1:8099,
+ * dan rp_id "127.0.0.1" pun ditolak sama persis. Jadi tidak ada nilai rp_id
+ * mana pun yang membuat 127.0.0.1 bekerja.
+ *
+ * "localhost" adalah nama, bukan alamat, dan ia diizinkan. Keduanya menunjuk
+ * mesin yang sama, dan justru itu yang membuat cacat ini mahal: alamatnya
+ * terlihat setara, tombolnya terlihat hidup, lalu gagal dengan kalimat
+ * berbahasa Inggris yang tidak menyebutkan apa yang harus dilakukan.
+ *
+ * Mengembalikan null berarti tidak ada yang menghalangi.
+ */
+export function kendala(): Kendala | null {
+  if (typeof window === "undefined") return null;
+
+  const host = window.location.hostname;
+  const ipv4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
+  const ipv6 = host.includes(":") || (host.startsWith("[") && host.endsWith("]"));
+
+  if (ipv4 || ipv6) {
+    return {
+      sebab: "alamat-ip",
+      pesan: `Sidik jari tidak bisa dipakai lewat alamat ${host}.`,
+      saran: alamatLocalhost(),
+    };
+  }
+
+  // http di luar localhost bukan konteks aman, dan WebAuthn mati di sana.
+  if (!window.isSecureContext) {
+    return {
+      sebab: "tanpa-https",
+      pesan: "Sidik jari butuh https.",
+      saran: "",
+    };
+  }
+
+  return null;
+}
+
+/** Alamat yang sama persis, hanya namanya diganti jadi localhost. */
+function alamatLocalhost(): string {
+  if (typeof window === "undefined") return "";
+  const l = window.location;
+  return `${l.protocol}//localhost${l.port ? `:${l.port}` : ""}${l.pathname}`;
+}
+
 export type Kunci = {
   id: string;
   nama: string;

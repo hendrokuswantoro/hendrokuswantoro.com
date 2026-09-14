@@ -122,3 +122,36 @@ async def keluar(refresh: str) -> None:
 
 async def keluar_semua(pengguna_id: str) -> int:
     return await repo.cabut_semua(pengguna_id)
+
+
+async def sesi_saya(pengguna_id: str, refresh: str | None) -> list[dict]:
+    """Sesi yang masih hidup, dengan penanda mana yang sedang dipakai.
+
+    Sidik tokennya TIDAK ikut keluar dari sini. Ia dipakai sekali untuk
+    membandingkan lalu dibuang, sebab sidik yang sampai ke peramban adalah
+    sidik yang bisa dibaca siapa pun yang membuka halamannya.
+    """
+    sekarang = keamanan.ringkas(refresh) if refresh else None
+    hasil = []
+    for baris in await repo.daftar_sesi(pengguna_id):
+        hasil.append(
+            {
+                "id": str(baris["id"]),
+                "dibuat_pada": baris["dibuat_pada"],
+                "kadaluarsa": baris["kadaluarsa"],
+                "perangkat_ini": baris["token_hash"] == sekarang,
+            }
+        )
+    return hasil
+
+
+async def keluar_dari_yang_lain(pengguna_id: str, refresh: str | None) -> int:
+    """Mengeluarkan perangkat lain dan menyisakan yang sedang dipakai.
+
+    Tanpa cookie refresh yang sah, tidak ada yang bisa disisakan, jadi yang
+    benar adalah mengeluarkan semuanya. Menyisakan sesi yang tidak bisa
+    dibuktikan miliknya berarti menyisakan justru sesi yang dicurigai.
+    """
+    if not refresh:
+        return await repo.cabut_semua(pengguna_id)
+    return await repo.cabut_lain(pengguna_id, keamanan.ringkas(refresh))

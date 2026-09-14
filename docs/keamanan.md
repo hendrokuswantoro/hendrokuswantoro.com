@@ -90,12 +90,31 @@ celah berikutnya yang belum diketahui. Dijaga `tests/test_terbit.py`.
 `FALLBACK_STYLE` juga tetap hanya hidup tanpa token, dan jangan dijadikan
 bawaan: gaya jarak jauh membawa atribusi pihak ketiga.
 
+### postcss di `next/`, GHSA-qx2v-qp2m-jg93 dan tiga lainnya, HIGH — **selesai 14 September 2026**
+
+Empat advisory pada `postcss` di bawah 8.5.23, satu di antaranya high: XSS
+lewat `</style>` yang tidak dilolos, dan tiga soal `sourceMappingURL` yang
+bisa membaca berkas `.map` sembarangan. Semuanya masuk lewat `next@15.5.25`
+yang membawa `postcss@8.4.31`.
+
+`npm audit fix --force` menawarkan `next@16.3.5`, sebuah lompatan versi
+mayor. Itu tidak dikerjakan. Yang dikerjakan `overrides` di
+`next/package.json`:
+
+```json
+"overrides": { "postcss": "^8.5.28" }
+```
+
+8.5.28 masih satu mayor dengan 8.4.31, jadi ongkosnya jauh lebih kecil
+daripada risiko menaikkan kerangka kerjanya. Sesudah itu `npm audit`
+menjawab **nol**, dan port-nya tetap lolos `tsc --noEmit` serta `npm run
+build`, ketiganya dijalankan, bukan diperkirakan.
+
+Karena temuannya nol, langkah audit npm di CI **sekarang memblokir** pada
+tingkat high. Sebelumnya ia mencetak laporan lalu selalu lolos, dengan alasan
+port itu belum diterbitkan. Alasan itu masih benar, tetapi pemeriksaan yang
+sudah gratis tidak ada gunanya dibiarkan tidak menjaga apa apa.
+
 ## Temuan yang belum selesai
 
-### Next.js di `next/`
-
-Port Next.js membawa kerentanannya sendiri dan jumlahnya banyak. Port itu
-**tidak pernah dibangun dan tidak pernah terbit**; tidak ada satu paket npm
-pun yang sampai ke pengunjung. `npm audit` di CI karena itu mencetak
-laporannya tetapi tidak menggagalkan pipeline. Begitu port itu benar benar
-diterbitkan, aturan ini wajib dibalik.
+Tidak ada.

@@ -353,3 +353,57 @@
 }
 .kameraArah span { font-size: var(--fs-md); font-weight: 600; }
 .kameraArah small { font-size: var(--fs-xs); opacity: .8; }
+
+/* ---------- saklar lihat sandi ----------
+   Bidangnya relatif, tombolnya absolut di dalamnya, dan isiannya diberi
+   padding kanan seluas tombol supaya sandi yang panjang tidak pernah
+   tergulung ke bawah tombolnya. Ukuran sentuhnya 34px, di atas ambang nyaman
+   untuk jari, dan itu sebabnya tombolnya tidak dibuat sekecil ikonnya. */
+.sandiBidang {
+  position: relative;
+}
+
+.sandiBidang .isian {
+  padding-right: 44px;
+}
+
+.lihat {
+  position: absolute;
+  top: 50%;
+  right: 5px;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.lihat:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+.lihat svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+/* Coretnya muncul saat sandi SEDANG terlihat, sebab saat itu menekannya
+   berarti menyembunyikan. Ikon menyatakan akibat tekanan, bukan keadaan. */
+.coret {
+  opacity: 0;
+}
+
+.lihat[aria-pressed="true"] .coret {
+  opacity: 1;
+}

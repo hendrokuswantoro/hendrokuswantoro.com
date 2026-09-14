@@ -7,12 +7,27 @@ yang di mesin pengembangan diisi .env dan di produksi diisi penyedia.
 from __future__ import annotations
 
 import functools
+import ipaddress
 import pathlib
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent.parent
+
+
+def _alamat_ip(host: str) -> bool:
+    """Apakah host ini alamat IP, bukan nama domain.
+
+    Dipakai memutuskan apakah jalur passkey bisa hidup sama sekali. Kurung
+    siku IPv6 dibuang lebih dulu, sebab bentuk yang ditulis orang di URL
+    adalah [::1], sedangkan yang dikenali pustakanya ::1.
+    """
+    try:
+        ipaddress.ip_address(host.strip("[]"))
+    except ValueError:
+        return False
+    return True
 
 
 class Pengaturan(BaseSettings):
@@ -80,8 +95,20 @@ class Pengaturan(BaseSettings):
     def passkey_siap(self) -> bool:
         """Tanpa rp_id dan daftar asal, jalur passkey menjawab 503, bukan
         menebak keduanya dari permintaan. Nilai bawaan untuk keduanya adalah
-        cara paling langsung membuat verifikasi asal berhenti berarti."""
-        return self.auth_siap and bool(self.webauthn_rp_id) and bool(self.webauthn_asal)
+        cara paling langsung membuat verifikasi asal berhenti berarti.
+
+        rp_id berupa alamat IP juga dihitung belum siap, dan itu bukan sikap
+        rewel. WebAuthn menuntut rp_id berupa nama domain; peramban menolak
+        alamat IP sebelum satu pun permintaan dikirim, dengan SecurityError
+        berbunyi "This is an invalid domain". Sudah diperiksa di Chromium,
+        termasuk rp_id "127.0.0.1" dari halaman 127.0.0.1, dan ditolak sama
+        persis. Jadi konfigurasi semacam itu tidak pernah bisa bekerja, dan
+        menjawab siap=true untuknya berarti menyuruh halaman admin memasang
+        tombol yang mustahil berhasil.
+        """
+        if not (self.auth_siap and self.webauthn_rp_id and self.webauthn_asal):
+            return False
+        return not _alamat_ip(self.webauthn_rp_id)
 
     @property
     def auth_siap(self) -> bool:

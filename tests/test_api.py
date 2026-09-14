@@ -66,6 +66,22 @@ ADA_DB = bisa_terhubung()
 
 @pytest.fixture(scope="module")
 def klien():
+    """Klien uji, dan ia menyerah lebih dulu kalau basis datanya tidak ada.
+
+    Tanpa baris skip di bawah, uji yang lupa memakai @butuh_db tidak dilewati
+    melainkan GALAT, dan galatnya berbunyi `PoolTimeout: pool initialization
+    incomplete after 10 sec` sesudah menunggu sepuluh detik. Kalimat itu
+    menuduh kolam koneksinya, padahal yang tidak ada cuma basis datanya.
+
+    Itu sudah terjadi pada `test_openapi_tertutup_kecuali_diminta`: satu uji
+    yang lupa ditandai membuat seluruh rangkaian terlihat merah di setiap
+    mesin yang Docker-nya sedang tidak hidup. Penjaganya ditaruh di fixture,
+    bukan ditambahkan sebagai tanda pada satu uji itu saja, sebab yang tidak
+    bisa dibuat tanpa basis data memang fixture ini.
+    """
+    if not ADA_DB:
+        pytest.skip("tidak ada basis data. cd infrastructure && docker compose up -d")
+
     _loop_untuk_psycopg()
     from backend.main import aplikasi
 

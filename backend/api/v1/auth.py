@@ -270,6 +270,31 @@ async def logout_semua(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
     return {"sesi_dicabut": jumlah}
 
 
+@rute.get("/sesi", summary="Perangkat yang sedang masuk")
+async def sesi(
+    permintaan: Request, pengguna: Annotated[dict, Depends(butuh_admin)]
+) -> dict:
+    """Daftar sesi yang masih hidup.
+
+    Tidak memuat nama perangkat maupun alamat IP, sebab keduanya memang tidak
+    pernah disimpan. Yang dijawabnya pertanyaan yang justru paling berguna:
+    ada berapa sesi yang hidup, dan apakah jumlahnya lebih banyak daripada
+    perangkat yang Anda ingat.
+    """
+    daftar = await layanan.sesi_saya(pengguna["id"], permintaan.cookies.get(NAMA_COOKIE))
+    return {"sesi": daftar, "jumlah": len(daftar)}
+
+
+@rute.post("/sesi/cabut-lain", summary="Keluarkan perangkat lain, sisakan yang ini")
+async def cabut_lain(
+    permintaan: Request, pengguna: Annotated[dict, Depends(butuh_admin)]
+) -> dict:
+    jumlah = await layanan.keluar_dari_yang_lain(
+        pengguna["id"], permintaan.cookies.get(NAMA_COOKIE)
+    )
+    return {"sesi_dicabut": jumlah}
+
+
 @rute.get("/saya", summary="Siapa yang sedang masuk")
 async def saya(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
     return pengguna

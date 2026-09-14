@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import pathlib
+import socket
 import sys
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent
@@ -58,7 +59,60 @@ def main() -> int:
         loop="none",          # pakai loop yang sudah dibuat di atas
         access_log=False,     # kami mencatat sendiri, terstruktur, di core/catat.py
     )
-    return 0 if asyncio.run(uvicorn.Server(atur).serve()) is None else 1
+
+    soket = _soket_loopback(pilihan.host, pilihan.port)
+    return 0 if asyncio.run(uvicorn.Server(atur).serve(sockets=soket)) is None else 1
+
+
+def _soket_loopback(inang: str, porta: int) -> list[socket.socket] | None:
+    """Mendengarkan di KEDUA loopback, IPv4 dan IPv6, bukan salah satu.
+
+    Kenapa ini ada, dan ongkosnya sudah dibayar sekali.
+
+    Di Windows, `localhost` menunjuk `::1` lebih dulu, baru `127.0.0.1`.
+    Server yang hanya mengikat 127.0.0.1 tetap bisa dibuka lewat localhost,
+    tetapi tiap permintaan menunggu percobaan IPv6 gagal dulu. Terukur di
+    mesin ini:
+
+        http://127.0.0.1:PORT/health      16 ms
+        http://localhost:PORT/health    2050 ms
+
+    Dua detik, pada setiap permintaan, termasuk yang tidak menyentuh basis
+    data sama sekali. Dan ini bukan soal kenyamanan: WebAuthn MENUNTUT nama
+    domain, jadi halaman admin hanya bisa dibuka lewat `localhost`, tepat di
+    jalur yang lambat itu. Sebuah dashboard yang memuat tujuh permintaan
+    berarti empat belas detik menunggu, dan itu yang membuat alur masuk
+    passkey tampak menggantung tanpa sebab.
+
+    Mengikat `::1` saja menukar masalahnya, bukan menyelesaikannya: yang
+    membuka 127.0.0.1 lalu yang menunggu dua detik. Jadi keduanya dibuka.
+
+    Hanya berlaku untuk alamat loopback. Host lain diserahkan apa adanya ke
+    uvicorn, sebab mengikat lebih banyak daripada yang diminta pada alamat
+    yang menghadap jaringan adalah keputusan keamanan, bukan penyetelan
+    kecepatan.
+    """
+    if inang not in ("127.0.0.1", "localhost", "::1", "[::1]"):
+        return None
+
+    dibuka: list[socket.socket] = []
+    for keluarga, alamat in ((socket.AF_INET, ("127.0.0.1", porta)),
+                             (socket.AF_INET6, ("::1", porta))):
+        try:
+            s = socket.socket(keluarga, socket.SOCK_STREAM)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            s.bind(alamat)
+            s.listen(128)
+            s.set_inheritable(True)
+            dibuka.append(s)
+        except OSError:
+            # Satu tumpukan yang tidak tersedia bukan alasan gagal jalan.
+            pass
+
+    if not dibuka:
+        return None
+    print(f"jalan.py: mendengarkan {len(dibuka)} loopback di porta {porta}")
+    return dibuka
 
 
 if __name__ == "__main__":

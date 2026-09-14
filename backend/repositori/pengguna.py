@@ -63,6 +63,49 @@ async def cabut(token_hash: str) -> None:
         )
 
 
+async def daftar_sesi(pengguna_id: str) -> list[dict[str, Any]]:
+    """Sesi yang masih hidup, terbaru lebih dulu.
+
+    Yang dikembalikan sengaja sedikit: kapan dibuat, kapan kedaluwarsa, dan
+    sidik token yang dipendekkan supaya antarmuka bisa menandai mana sesi
+    perangkat yang sedang dipakai. Tidak ada nama perangkat dan tidak ada
+    alamat IP, sebab keduanya memang tidak pernah disimpan. Menambahkannya
+    sekarang berarti mulai mencatat tempat pemiliknya berada, dan itu
+    keputusan tersendiri yang bukan milik sebuah panel.
+
+    Dengan begitu panelnya tetap menjawab pertanyaan yang penting: ada berapa
+    sesi yang hidup, dan apakah jumlahnya lebih banyak daripada perangkat yang
+    Anda ingat.
+    """
+    async with koneksi() as s, s.cursor() as k:
+        await k.execute(
+            """
+            SELECT id, token_hash, dibuat_pada, kadaluarsa
+            FROM sesi
+            WHERE pengguna_id = %s AND dicabut_pada IS NULL AND kadaluarsa > now()
+            ORDER BY dibuat_pada DESC
+            """,
+            (pengguna_id,),
+        )
+        return await k.fetchall()
+
+
+async def cabut_lain(pengguna_id: str, token_hash: str) -> int:
+    """Keluar dari perangkat lain, menyisakan yang sedang dipakai.
+
+    Dipisahkan dari `cabut_semua` dengan sengaja. Tombol yang mengeluarkan
+    pemiliknya sendiri bersama penyusupnya akan ragu ragu ditekan, padahal
+    justru saat curiga itulah ia harus ditekan cepat.
+    """
+    async with koneksi() as s, s.cursor() as k:
+        await k.execute(
+            "UPDATE sesi SET dicabut_pada = now() "
+            "WHERE pengguna_id = %s AND dicabut_pada IS NULL AND token_hash <> %s",
+            (pengguna_id, token_hash),
+        )
+        return k.rowcount
+
+
 async def cabut_semua(pengguna_id: str) -> int:
     """Keluar dari semua perangkat. Bab 15.10."""
     async with koneksi() as s, s.cursor() as k:

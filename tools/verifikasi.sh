@@ -122,11 +122,22 @@ else
 fi
 
 langkah "Reverse proxy, the nginx config is valid"
-if command -v docker >/dev/null 2>&1; then
+# `command -v docker` cuma membuktikan PERINTAHNYA ada, bukan bahwa mesinnya
+# menjawab. Di mesin ini keduanya berbeda: docker.exe terpasang, sedangkan
+# daemon-nya mati, sehingga langkah ini GAGAL padahal seharusnya DILEWATI.
+# Pesan lewatnya pun sudah berbunyi "docker is not running", jadi maksudnya
+# memang begitu sejak awal; yang salah cuma cara memeriksanya.
+#
+# Bedanya penting. Berkas ini boleh melewatkan langkah yang tidak bisa
+# dijalankan, tetapi kegagalan yang sebabnya di luar kode akan mengajari
+# siapa pun yang menjalankannya untuk mengabaikan warna merah.
+if ! command -v docker >/dev/null 2>&1; then
+  lewat "docker is not installed, CI checks this instead"
+elif ! docker info >/dev/null 2>&1; then
+  lewat "docker daemon is not answering, CI checks this instead"
+else
   sh infrastructure/periksa_nginx.sh >/dev/null
   lulus
-else
-  lewat "docker is not running, CI checks this instead"
 fi
 
 langkah "Lint, blog pages match their content"
@@ -139,11 +150,17 @@ lulus
 
 langkah "E2E Test, Chromium"
 # dijalankan terpisah: lihat alasannya di pytest.ini
-if python -c "import playwright" 2>/dev/null; then
+#
+# Yang ditanyakan perambannya bisa dinyalakan, bukan paketnya terpasang.
+# Dengan pertanyaan yang lama, 44 dari 48 uji dilewati diam diam sementara
+# langkah ini tetap melaporkan ok. Lihat tools/peramban_siap.py.
+if ! python -c "import playwright" 2>/dev/null; then
+  lewat "playwright belum terpasang"
+elif ! python tools/peramban_siap.py; then
+  lewat "chromium belum diunduh, jalankan: python -m playwright install chromium"
+else
   python -m pytest -m peramban
   lulus
-else
-  lewat "playwright belum terpasang"
 fi
 
 langkah "Security Check, no credential in the repository"
@@ -155,13 +172,19 @@ if git grep -nIE "$POLA" -- . ':!tests/test_peta.py' ':!tools/verifikasi.sh' ':!
 fi
 lulus
 
+# DSN yang tertulis di .env tidak sama dengan basis data yang menjawab.
+# Sebelumnya langkah ini cuma menanyakan yang pertama, lalu gagal dengan
+# "gagal: docker exec" setiap kali Docker Desktop sedang mati. Lihat
+# tools/basis_data_hidup.py.
 langkah "Backup, an encrypted backup can be restored"
-if [ -n "${DSN:-}" ] || grep -q '^DSN=.' .env 2>/dev/null; then
+if [ -z "${DSN:-}" ] && ! grep -q '^DSN=.' .env 2>/dev/null; then
+  lewat "no database configured on this machine"
+elif ! python tools/basis_data_hidup.py; then
+  lewat "the database is configured but nothing answers on its port"
+else
   python backend/db/cadangan.py buat >/dev/null
   python backend/db/cadangan.py uji-pulih >/dev/null
   lulus
-else
-  lewat "no database configured on this machine"
 fi
 
 langkah "Security Check, the token file is ignored"
