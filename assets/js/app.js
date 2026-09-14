@@ -431,7 +431,7 @@
         /* optional, the map falls back to key free sources when it is absent */
         loadOnce("js", "/assets/js/konfigurasi.js").catch(function () { return null; })
       ])
-        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=23549371f8"); })
+        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=9dd75af1fd"); })
         .then(function () {
           wrap.classList.add("is-live");
           window.HK_PETA_MAP = window.HK_PETA.build(canvas);

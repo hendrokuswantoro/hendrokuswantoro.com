@@ -711,9 +711,27 @@ ul { margin: 0; padding: 0; list-style: none; }
 /* Namanya BUKAN .peta__kepala, dan itu bukan selera. Kelas itu sudah dipakai
    peta.js untuk kepala legendanya sendiri, jadi memakainya lagi di sini
    membuat aturan ini ikut kena ke dalam legenda. */
-.peta__intro { max-width: 68ch; margin-bottom: 20px; }
+.peta__intro { max-width: 68ch; margin-bottom: 24px; }
 .peta__intro h2 { font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.25rem); margin-bottom: .3em; }
 .peta__intro p { color: var(--ink-3); font-size: 1.0625rem; margin: 0; }
+
+/* Di layar lebar judulnya duduk di kiri dan kalimatnya di kanan, sebaris.
+   Sebagai satu kolom selebar 68ch, blok ini meninggalkan separuh halaman
+   kosong di sebelahnya, dan kosongnya makin lebar justru setelah kalimatnya
+   dipendekkan. Batasnya tetap ada, cuma pindah ke tiap kolom, sebab baris
+   selebar seratus karakter susah diikuti mata. */
+@media (min-width: 980px) {
+  .peta__intro {
+    max-width: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    column-gap: 56px;
+    align-items: baseline;
+  }
+  .peta__intro .eyebrow { grid-column: 1; grid-row: 1; }
+  .peta__intro h2 { grid-column: 1; grid-row: 2; margin-bottom: 0; }
+  .peta__intro p { grid-column: 2; grid-row: 2; max-width: 46ch; }
+}
 @media (min-width: 720px) { .peta__frame { min-height: clamp(360px, 56vh, 620px); } }
 .peta__frame {
   position: relative; overflow: hidden; border-radius: var(--r-lg);
@@ -734,6 +752,9 @@ ul { margin: 0; padding: 0; list-style: none; }
 .peta__frame.is-ready::after { opacity: 0; }
 @keyframes memuat { to { background-position: -150% 0; } }
 .peta__ket { margin: 12px 0 0; font-size: var(--fs-sm); color: var(--ink-3); }
+/* Petunjuk cara memakai peta, dibuat peta.js. Duduk di bawah peta, tidak
+   menutupi apa pun, dan tidak menunggu pembaca salah dulu untuk muncul. */
+.peta__cara { margin: 12px 0 0; font-size: var(--fs-sm); color: var(--ink-3); }
 
 .peta__pin {
   width: 18px; height: 18px; padding: 0; border-radius: 50%; cursor: pointer;

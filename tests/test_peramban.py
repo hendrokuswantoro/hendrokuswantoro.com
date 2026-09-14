@@ -407,6 +407,87 @@ def test_roda_tetikus_menggulir_halaman_bukan_memperbesar_peta(halaman, situs):
     )
 
 
+def test_ctrl_sambil_menggulir_memperbesar_peta(halaman, situs):
+    """Sisi lain dari uji di atas.
+
+    Mematikan roda sepenuhnya membuat peta terasa kaku: satu satunya jalan
+    memperbesar tinggal menekan tombol. Jadi rodanya tidak dimatikan, hanya
+    diberi syarat, persis seperti yang dikerjakan cooperativeGestures,
+    dikurangi tulisan yang berkelebat di atas peta.
+    """
+    buka(halaman, situs, "/project")
+    peta_siap(halaman)
+    halaman.wait_for_timeout(500)
+
+    kanvas = halaman.locator(".peta__kanvas").bounding_box()
+    halaman.mouse.move(kanvas["x"] + kanvas["width"] / 2, kanvas["y"] + kanvas["height"] / 2)
+    sebelum_y = halaman.evaluate("() => Math.round(scrollY)")
+    sebelum_z = halaman.evaluate("() => window.HK_PETA_MAP.getZoom()")
+
+    halaman.keyboard.down("Control")
+    halaman.mouse.wheel(0, -350)
+    halaman.keyboard.up("Control")
+    halaman.wait_for_timeout(1000)
+
+    assert halaman.evaluate("() => window.HK_PETA_MAP.getZoom()") > sebelum_z + 0.1, (
+        "Ctrl sambil menggulir tidak memperbesar peta, jadi rodanya mati sama sekali"
+    )
+    assert halaman.evaluate("() => Math.round(scrollY)") == sebelum_y, (
+        "halamannya ikut bergulir sewaktu peta diperbesar"
+    )
+
+
+def test_cara_memakai_peta_tertulis_dan_dwibahasa(halaman, situs):
+    """Tanpa tulisan gestur, Ctrl sambil menggulir tidak akan ditemukan siapa
+    pun sendiri. Penggantinya satu baris yang diam di bawah peta."""
+    buka(halaman, situs, "/project")
+    peta_siap(halaman)
+
+    cara = halaman.locator(".peta__cara")
+    inggris = cara.inner_text()
+    assert "Ctrl" in inggris or "⌘" in inggris, f"petunjuknya tidak menyebut tombolnya: {inggris!r}"
+    assert "Drag" in inggris
+
+    halaman.locator('.lang__btn[data-lang="id"]').click()
+    halaman.wait_for_timeout(400)
+    indonesia = cara.inner_text()
+    assert indonesia != inggris, "petunjuknya tidak ikut berganti bahasa"
+    assert "Seret" in indonesia
+
+
+def test_pengantar_peta_memakai_lebar_halaman(halaman, situs):
+    """Sebagai satu kolom selebar 68ch, blok ini meninggalkan separuh halaman
+    kosong di sebelahnya, dan kosongnya makin lebar justru setelah kalimatnya
+    dipendekkan. Di layar lebar judul dan kalimatnya sekarang sebaris."""
+    buka(halaman, situs, "/project")
+    letak = halaman.evaluate("""() => {
+      const b = document.querySelector('.peta__intro').getBoundingClientRect();
+      const h = document.querySelector('.peta__intro h2').getBoundingClientRect();
+      const p = document.querySelector('.peta__intro p').getBoundingClientRect();
+      return { sisa: Math.round(b.right - p.right), sebaris: h.bottom > p.top,
+               lebar: Math.round(b.width) };
+    }""")
+    assert letak["sebaris"], "judul dan kalimatnya masih bertumpuk di layar lebar"
+    assert letak["sisa"] < 120, f"masih ada {letak['sisa']} piksel kosong di kanannya"
+
+
+def test_pengantar_peta_bertumpuk_lagi_di_ponsel(peramban, situs):
+    """Dua kolom hanya masuk akal kalau halamannya lebar."""
+    konteks = peramban.new_context(viewport={"width": 390, "height": 844})
+    hal = konteks.new_page()
+    try:
+        hal.goto(f"{situs}/project", wait_until="load")
+        hal.wait_for_selector("html[data-siap]", state="attached", timeout=15000)
+        bertumpuk = hal.evaluate("""() => {
+          const h = document.querySelector('.peta__intro h2').getBoundingClientRect();
+          const p = document.querySelector('.peta__intro p').getBoundingClientRect();
+          return p.top >= h.bottom - 1;
+        }""")
+        assert bertumpuk, "di ponsel keduanya dipaksa sebaris"
+    finally:
+        konteks.close()
+
+
 def test_tombol_perbesar_tetap_bekerja(halaman, situs):
     """Roda tetikus dimatikan, jadi tombolnya yang jadi satu satunya jalan
     memperbesar dengan tetikus. Kalau ia ikut mati, peta ini tidak bisa

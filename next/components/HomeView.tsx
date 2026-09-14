@@ -103,7 +103,7 @@ export function HomeView() {
 
       <section className="section">
         <div className="wrap">
-          <div className="section-head">
+          <div className="peta__intro">
             <span className="eyebrow">{say(HOME.mapEyebrow)}</span>
             <h2>{say(HOME.mapTitle)}</h2>
             <p>{say(HOME.mapBody)}</p>
