@@ -283,6 +283,10 @@ def test_gedung_3d_duduk_di_bawah_semua_nama(halaman, situs):
     """
     buka(halaman, situs, "/project")
     peta_siap(halaman)
+    # Tanpa token, petanya jatuh ke OpenFreeMap. Gaya itu tidak punya sumber
+    # "jalan", jadi lapisan gedung3d memang tidak pernah dipasang, dan yang
+    # benar adalah melewati, bukan menuntut lapisan yang memang tidak ada.
+    butuh_ubin(halaman)
     halaman.evaluate("() => window.HK_PETA_STATE.setThree(true)")
     tunggu(halaman, "() => !!window.HK_PETA_MAP.getLayer('gedung3d')", 20000,
            "lapisan gedung 3D tidak pernah dipasang")
@@ -310,6 +314,7 @@ def test_warna_gedung_mengikuti_tinggi_yang_benar_benar_ada(halaman, situs):
     """
     buka(halaman, situs, "/project")
     peta_siap(halaman)
+    butuh_ubin(halaman)
     halaman.evaluate("() => window.HK_PETA_STATE.setThree(true)")
     tunggu(halaman, "() => !!window.HK_PETA_MAP.getLayer('gedung3d')", 20000)
 
