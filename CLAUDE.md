@@ -237,6 +237,30 @@ menuliskannya kembali dengan `replaceState`. Tautan "Lihat di peta" di tiap
 kartu memakai alamat yang sama, jadi yang tersalin dari bilah alamat selalu
 yang sedang dilihat. `tests/test_peta.py` menahan kedua port tetap memilikinya.
 
+**`map.addLayer` tanpa `beforeId` menaruh lapisannya PALING ATAS**, di atas
+seluruh lapisan nama. Itu yang terjadi pada `gedung3d` sampai 14 September
+2026: gedung 3D menimpa nama jalan dan nama tempat, dan di tampilan miring
+akibatnya nama nama itu terpotong badan gedung dan terbaca seperti saling
+tumpang tindih. Tempatnya yang benar tepat sebelum lapisan simbol pertama,
+yaitu `panah-searah`.
+
+**`map.stop()` bukan sekadar membatalkan animasi.** Ia memanggil
+`handlers.stop()`, yang menyetel ulang seluruh penanganan gerak termasuk
+DragPan. Memanggilnya pada `dragstart` mematahkan seretan yang baru saja
+dimulai peristiwa itu juga: terukur, menyeret 320 piksel cuma menggeser peta
+2,5 persen dari semestinya. Jangan panggil `map.stop()` dari pendengar
+peristiwa gerak; MapLibre sudah mengambil alih animasi dengan sendirinya.
+
+**Tangga warna bangunan mengikuti tinggi yang benar benar ada di sini.**
+Diukur dari 17.956 bangunan Mapbox yang termuat di Yogyakarta: median 3 m,
+persentil 90 6,2 m, persentil 99 14 m, tertinggi 75 m. Tangga yang membentang
+sampai 140 m membuat sembilan puluh sembilan persen bangunan keluar dengan
+warna yang nyaris sama, dan kotanya tampak seperti hamparan rata.
+
+**Roda tetikus tidak memperbesar peta kecuali Ctrl atau Cmd ditahan.**
+Menggulir saja menggulir halaman. `cooperativeGestures` hanya dipasang di layar
+sentuh, tempat satu jari memang harus tetap menggulir halaman.
+
 Uji perubahan CSP dengan menyajikan situs **beserta tajuknya**, bukan dengan
 `python -m http.server` saja: galat CSP tidak muncul tanpa tajuk aslinya.
 
