@@ -10,6 +10,16 @@
 
 name: CI
 
+# Pemicunya sempat dimatikan pada 14 September 2026 supaya perhatian bisa
+# penuh ke arsitektur situsnya, dan dihidupkan kembali pada hari yang sama
+# atas permintaan pemilik proyek. Isinya tidak pernah ikut dimatikan.
+#
+# Selama pemicunya mati, tidak ada satu pun yang menahan push yang rusak
+# sampai ke Cloudflare. Sekarang ada lagi. Meski begitu, yang di bawah ini
+# tetap dijalankan sebelum push, sebab ia menjalankan uji peramban dan
+# membangun dist/ dalam satu jalan yang sama:
+#
+#     sh tools/verifikasi.sh
 on:
   push:
     branches: [main]
@@ -198,14 +208,28 @@ jobs:
       # assets/vendor/ where npm cannot see it. It carries an unfixed
       # critical advisory, and the reason it is still here is written down
       # in docs/keamanan.md rather than hidden behind a green check.
-      - name: Dependency audit, reported not enforced
+      # 14 September 2026: sekarang MEMBLOKIR pada tingkat high, dan itu
+      # perubahan sikap yang perlu dijelaskan.
+      #
+      # Sebelumnya langkah ini mencetak laporan lalu selalu lolos, sebab
+      # satu satunya temuan yang tersisa datang dari next/ yang belum
+      # diterbitkan. Temuan itu, empat advisory postcss termasuk satu high,
+      # sudah ditutup dengan `overrides` di package.json, bukan dengan
+      # menaikkan Next ke versi mayor berikutnya seperti saran `npm audit
+      # fix --force`. postcss 8.5.28 masih satu mayor dengan 8.4.31, jadi
+      # ongkosnya jauh lebih kecil daripada risiko Next 16.
+      #
+      # Sesudah itu `npm audit` menjawab nol. Selama ia nol, membiarkannya
+      # "|| true" berarti membuang pemeriksaan yang sudah gratis. Kalau suatu
+      # saat ada temuan yang memang tidak bisa ditambal, tulis alasannya di
+      # docs/audit-keamanan.md lalu kecualikan dengan tersurat, sama seperti
+      # aturan pada paket Python di bawah, bukan dengan mengembalikan
+      # "|| true" yang menutup semuanya sekaligus.
+      - name: Dependency audit, enforced
         working-directory: next
         run: |
           npm install --package-lock-only --no-audit --no-fund
-          npm audit || true
-          echo
-          echo "Advisories above belong to next/, which is not deployed."
-          echo "See docs/keamanan.md for the one that is."
+          npm audit --audit-level=high
 
       # Ini MEMBLOKIR, tidak seperti npm audit di atas. Bedanya nyata:
       # paket Python di bawah ini benar benar berjalan di server yang

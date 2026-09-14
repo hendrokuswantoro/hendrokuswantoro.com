@@ -11,6 +11,20 @@
 
 name: Health Check
 
+# Dihidupkan kembali bersama CI, 14 September 2026.
+#
+# Yang perlu diketahui sebelum melihat hasilnya: langkah terakhirnya, "The
+# canonical address exists", akan GAGAL tiap malam selama hendrokuswantoro.com
+# belum terdaftar, dan kegagalan itu membuka satu isu berlabel "kesehatan".
+# Isunya satu saja, tidak menumpuk: kejadian berikutnya cuma menambah komentar
+# di isu yang sama, dan isunya ditutup sendiri begitu pemeriksaannya lolos.
+#
+# Jadi lampu merahnya benar, bukan salah. Yang dilaporkannya bukan situs yang
+# mati, melainkan nama yang belum ada. Situsnya sendiri sehat di alamat
+# .workers.dev, dan sembilan pemeriksaan sebelum langkah itu membuktikannya
+# tiap malam. Kalau laporannya ingin hijau lebih dulu daripada namanya
+# didaftarkan, setel variabel repositori SITUS ke alamat .workers.dev dan
+# ganti rel=canonical seluruh halaman ke nama yang sama.
 on:
   schedule:
     - cron: '17 1 * * *'

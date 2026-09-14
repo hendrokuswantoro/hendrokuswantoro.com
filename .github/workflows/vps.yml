@@ -25,6 +25,13 @@
 
 name: Deploy VPS
 
+# Dihidupkan kembali bersama CI, 14 September 2026. Pemicunya menunggu CI
+# selesai.
+#
+# Ini TIDAK berarti ada yang dikirim ke mana pun. Penjaga sebenarnya bukan
+# pemicu ini, melainkan variabel repositori VPS_AKTIF: selama isinya bukan
+# "1", seluruh pekerjaan di bawah dilewati dan tidak ada satu pun sambungan
+# SSH yang dibuka. Selama VPS-nya belum ada, biarkan VPS_AKTIF kosong.
 on:
   workflow_dispatch:
   workflow_run:
