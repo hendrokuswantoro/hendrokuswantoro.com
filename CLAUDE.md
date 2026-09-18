@@ -18,8 +18,8 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 649, tanpa peramban, hitungan detik
-python -m pytest -m peramban     # 57, Chromium sungguhan
+python -m pytest                 # 768, tanpa peramban, hitungan detik
+python -m pytest -m peramban     # 71, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
 # backend dan dashboard admin
@@ -56,10 +56,11 @@ content/template/         template ber-{{slot}}
 backend/api/v1/           router, HTTP saja
 backend/layanan/          aturan bisnis, tidak tahu SQL
 backend/repositori/       satu satunya yang tahu SQL
-backend/db/migrations/    0001 sampai 0005, nomornya wajib unik
+backend/db/migrations/    0001 sampai 0006, nomornya wajib unik
+unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    706 uji
+tests/                    839 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -123,6 +124,17 @@ keamanan di tiap `location` yang menambah satu header.
   `backend/core/surat.py` sengaja hanya mencatat `type(galat).__name__`,
   tidak pernah `str(galat)`, supaya kode verifikasi tidak ikut tercetak.
 - Jangan mengarang protokol kriptografi sendiri.
+
+**Berkas yang diunggah tidak pernah dipercaya namanya.** Jenis foto dan video
+ditentukan dari bita pertama berkasnya di `backend/layanan/berkas.py`, bukan
+dari `filename` dan bukan dari `Content-Type`. Keduanya datang dari pengirim.
+Nama di cakram dibuat sendiri: enam belas heksa acak, ditambah ukuran
+gambarnya, ditambah akhiran yang ditentukan dari isinya. Nama kiriman hanya
+dicatat untuk dilihat orang dan tidak pernah dipakai membentuk jalur.
+
+Ukurannya dibaca dari kepala berkasnya dengan pengurai kecil, bukan dengan
+pustaka gambar. Membuka gambar dengan pustaka berarti mengurai seluruh isinya
+di jalur yang menerima berkas dari luar.
 
 **Lapisan backend ditegakkan oleh uji, bukan oleh niat baik.**
 
@@ -260,6 +272,40 @@ warna yang nyaris sama, dan kotanya tampak seperti hamparan rata.
 **Roda tetikus tidak memperbesar peta kecuali Ctrl atau Cmd ditahan.**
 Menggulir saja menggulir halaman. `cooperativeGestures` hanya dipasang di layar
 sentuh, tempat satu jari memang harus tetap menggulir halaman.
+
+**Hanya ada satu pengurai markah, dan ia di server.** `tools/markah.py`
+dipakai pembangkit situs statis, validator skema API, dan sejak 18 September
+2026 juga pratinjau di kedua dashboard lewat `POST /api/v1/admin/pratinjau`.
+Sampai hari itu tiap dashboard punya pengurai kecilnya sendiri di peramban.
+Itu aman, dan tetap salah: dua pengurai untuk satu bahasa markah akan
+berpisah, dan yang berpisah membuat layar pratinjau berbohong. Jangan
+menambahkan pengurai ketiga; `tests/test_penyunting.py` menolaknya.
+
+Yang memanggil `badan()` dari dalam permintaan HTTP **wajib** menangkap
+`SystemExit`. `badan()` alat baris perintah, dan `SystemExit` bukan turunan
+`Exception`: kalau ia naik, yang berhenti bukan permintaannya melainkan
+pekerjanya.
+
+**Gambar dan video hanya boleh menunjuk berkas yang diunggah ke sini**, yaitu
+`/unggahan/` atau `/assets/img/`. Ditegakkan di pengurai, bukan di
+antarmukanya. Gambar dari server orang lain mengirimkan alamat IP tiap pembaca
+ke sana tanpa pernah diminta, dan CSP situs ini memang sudah menolaknya, jadi
+yang terbit kotak kosong.
+
+Ukuran gambar dititipkan di nama berkasnya, misalnya
+`9f3c1a7b2d4e5f60-1600x900.webp`, supaya pembangkit halaman tahu lebar dan
+tingginya tanpa membuka berkasnya dan tanpa bertanya ke basis data. Tanpa itu,
+tulisan di bawah gambar melompat saat gambarnya tiba.
+
+**`subprocess.PIPE` yang tidak pernah dikuras akan menggantung prosesnya.**
+Terukur 18 September 2026 di `tests/conftest.py`: server uji dijalankan dengan
+`stdout=PIPE`, backend mencatat tiap permintaan satu baris JSON, dan pipanya
+hanya dibaca kalau prosesnya mati lebih awal. Begitu penyangga pipa penuh,
+tulisan berikutnya memblokir, dan yang memblokir adalah servernya sendiri: ia
+berhenti menjawab tanpa mati, tanpa galat, dan tanpa satu baris pun di mana
+pun. Inilah yang selama ini tercatat di `test_dasbor_peramban.py` sebagai
+sebab yang belum ketemu. Sekarang pipanya dikuras utas latar ke `deque`
+berbatas.
 
 Uji perubahan CSP dengan menyajikan situs **beserta tajuknya**, bukan dengan
 `python -m http.server` saja: galat CSP tidak muncul tanpa tajuk aslinya.

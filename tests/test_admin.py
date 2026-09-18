@@ -122,6 +122,10 @@ def bersihkan():
     ("post", "/api/v1/admin/blog"),
     ("patch", f"/api/v1/admin/blog/{SLUG}"),
     ("delete", f"/api/v1/admin/blog/{SLUG}"),
+    ("post", "/api/v1/admin/pratinjau"),
+    ("get", "/api/v1/admin/berkas"),
+    ("post", "/api/v1/admin/berkas"),
+    ("delete", "/api/v1/admin/berkas/contoh.webp"),
 ])
 def test_semua_jalur_admin_tertutup_tanpa_token(klien, metode, jalur):
     """Bab 15.9. Satu rute yang lupa dijaga sudah cukup untuk membuka semuanya."""
@@ -199,10 +203,25 @@ def test_dua_bahasa_tidak_sebangun_ditolak(klien, kepala):
 
 
 def test_markah_tidak_didukung_ditolak(klien, kepala):
+    # Dulu yang dipakai di sini "- daftar". Daftar didukung sejak 18
+    # September 2026, jadi contohnya diganti dengan yang memang masih
+    # ditolak, bukan ujinya yang dihapus.
     j = klien.post("/api/v1/admin/blog", headers=kepala,
-                   json=contoh(isi_en="- daftar", isi_id="- daftar"))
+                   json=contoh(isi_en="| a | b |", isi_id="| a | b |"))
     assert j.status_code == 422
     assert "baris 1" in j.text
+
+
+def test_gambar_dari_server_orang_lain_ditolak(klien, kepala):
+    """Gambar yang menunjuk ke luar mengirimkan alamat IP tiap pembaca ke
+    sana tanpa pernah memintanya, dan CSP situs ini memang sudah menolaknya,
+    jadi yang terbit kotak kosong. Ditolak di sini berarti penulisnya tahu
+    sebelum menekan Simpan."""
+    jahat = "![peta](https://contoh.example/a.png)"
+    j = klien.post("/api/v1/admin/blog", headers=kepala,
+                   json=contoh(isi_en=jahat, isi_id=jahat))
+    assert j.status_code == 422
+    assert "diunggah ke situs ini" in j.text
 
 
 def test_slug_berspasi_ditolak(klien, kepala):

@@ -62,18 +62,68 @@ def test_jumlah_blok_dua_bahasa_sama():
 
 
 @pytest.mark.parametrize("mentah,alasan", [
-    ("- satu\n- dua", "daftar"),
     ("# Judul", "judul"),
     ("```py\nkode\n```", "kode"),
     ("| a | b |", "tabel"),
-    ("![gambar](/a.png)", "gambar"),
     ("<div>mentah</div>", "HTML"),
+    # Gambar didukung sejak 18 September 2026, alamatnya yang dibatasi.
+    # Gambar dari server orang lain mengirimkan alamat IP tiap pembaca ke
+    # sana tanpa pernah memintanya, dan CSP situs ini memang sudah
+    # menolaknya, jadi yang terbit kotak kosong.
+    ("![gambar](https://contoh.example/a.png)", "diunggah ke situs ini"),
+    ("![gambar](/unggahan/a.pdf)", "berakhiran"),
+    ("![gambar](/unggahan/../rahasia.png)", "'..'"),
+    ("!video[a](/unggahan/a.mkv)", "berakhiran"),
+    ("![tanpa kurung tutup](/unggahan/a.webp", "tidak dikenali"),
 ])
 def test_markah_menolak_yang_tidak_didukung(mentah, alasan):
     """Menolak dengan nomor baris lebih baik daripada diam diam salah."""
     with pytest.raises(markah.MarkahSalah) as galat:
         markah.blok(mentah)
     assert "baris" in str(galat.value)
+    assert alasan in str(galat.value), str(galat.value)
+
+
+@pytest.mark.parametrize("mentah,jenis,butir", [
+    ("- satu\n- dua", "ul", 2),
+    ("* satu\n* dua\n* tiga", "ul", 3),
+    ("1. satu\n2. dua", "ol", 2),
+])
+def test_markah_menerima_daftar(mentah, jenis, butir):
+    """Daftar butir dan daftar bernomor, seperti tombolnya di pengolah kata."""
+    hasil = markah.blok(mentah)
+    assert len(hasil) == 1
+    assert hasil[0].jenis == jenis
+    assert len(hasil[0].butir) == butir
+
+
+def test_markah_menerima_gambar_dan_video_yang_diunggah_ke_sini():
+    hasil = markah.blok(
+        "![Sebuah jalan](/unggahan/9f3c1a7b-1600x900.webp)\n\n"
+        "!video[Menyusuri jalan](/unggahan/9f3c1a7b.mp4)"
+    )
+    assert [b.jenis for b in hasil] == ["gambar", "video"]
+    assert hasil[0].alamat == "/unggahan/9f3c1a7b-1600x900.webp"
+    assert hasil[0].teks == "Sebuah jalan"
+    assert hasil[1].alamat == "/unggahan/9f3c1a7b.mp4"
+
+
+def test_ukuran_gambar_dibaca_dari_nama_berkasnya():
+    """Ukurannya dititipkan di nama berkas oleh yang mengunggahnya.
+
+    Tanpa ukuran, peramban baru tahu tinggi gambarnya sesudah mengunduhnya,
+    dan tulisan di bawahnya melompat tepat saat ada yang sedang membacanya.
+    """
+    assert markah.ukuran("/unggahan/9f3c1a7b-1600x900.webp") == (1600, 900)
+    assert markah.ukuran("/unggahan/9f3c1a7b.mp4") is None
+
+
+def test_daftar_ditutup_paragraf_berikutnya():
+    """Baris biasa sesudah butir menutup daftarnya, persis seperti yang
+    terlihat di layar. Butir yang dilanjutkan ke baris berikutnya tanpa tanda
+    belum didukung, dan ketidakdukungan itu terlihat, bukan diam."""
+    hasil = markah.blok("Satu.\n- a\n- b\nDua.")
+    assert [b.jenis for b in hasil] == ["p", "ul", "p"]
 
 
 def test_markah_sebaris():

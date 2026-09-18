@@ -930,6 +930,81 @@ def test_jam_yogyakarta_berjalan_dan_benar(halaman, situs):
                - (benar.hour * 60 + benar.minute)) <= 1, f"{tampil} vs {jam_benar}"
 
 
+def test_kaki_halaman_menyebut_tanggal_hari_ini_bukan_nama_kota(halaman, situs):
+    """Kata "Yogyakarta" dibuang dari kaki halaman atas permintaan pemilik
+    proyek, dan yang menggantikannya tanggal hari ini.
+
+    Yang menyebut tempatnya sekarang "WIB" di sebelah jamnya dan aria-label
+    pada jam itu, jadi barisnya tetap tidak pernah mengaku sebagai jam
+    perangkat pembaca.
+    """
+    import datetime as dt
+
+    buka(halaman, situs, "/about")
+
+    if halaman.locator("[data-tanggal]").count() == 0:
+        pytest.skip("Intl di peramban ini tanpa zona waktu, jadi barisnya sengaja dibuang")
+
+    baris = halaman.locator(".footer__kini").first
+    baris.wait_for(state="visible")
+
+    teks = baris.inner_text()
+    assert "Yogyakarta" not in teks, teks
+    assert "WIB" in teks, teks
+
+    hari_ini = dt.datetime.now(dt.timezone(dt.timedelta(hours=7)))
+    tanggal = halaman.locator("[data-tanggal]").first.inner_text()
+    assert str(hari_ini.day) in tanggal, f"{tanggal!r} tidak menyebut tanggal {hari_ini.day}"
+    assert str(hari_ini.year) in tanggal, f"{tanggal!r} tidak menyebut tahun {hari_ini.year}"
+
+    # Jam Yogyakarta tetap disebut kepada pembaca layar, sebab tanpa itu
+    # angkanya bisa dikira jam perangkatnya sendiri.
+    label = halaman.locator("[data-jam]").first.get_attribute("aria-label") or ""
+    assert "Yogyakarta" in label, label
+
+
+def test_nama_hari_di_kaki_halaman_ikut_ganti_bahasa(halaman, situs):
+    """Tanggalnya dibuat JavaScript, jadi ia tidak ikut lewat data-ind. Kalau
+    tidak ada yang menuliskannya ulang, halaman berbahasa Indonesia berakhir
+    dengan nama hari Inggris di kakinya."""
+    buka(halaman, situs, "/about")
+
+    if halaman.locator("[data-tanggal]").count() == 0:
+        pytest.skip("Intl di peramban ini tanpa zona waktu, jadi barisnya sengaja dibuang")
+
+    halaman.locator(".footer__kini").first.wait_for(state="visible")
+    inggris = halaman.locator("[data-tanggal]").first.inner_text()
+
+    halaman.locator('.lang__btn[data-lang="id"]').first.click()
+    halaman.wait_for_function(
+        "teks => document.querySelector('[data-tanggal]').textContent !== teks",
+        arg=inggris,
+        timeout=3000,
+    )
+    indonesia = halaman.locator("[data-tanggal]").first.inner_text()
+    assert indonesia != inggris, f"tetap {inggris!r} sesudah pindah bahasa"
+
+
+def test_baris_tanggal_tidak_tampil_sebelum_ada_angkanya(halaman, situs):
+    """Tanpa JavaScript tidak ada tanggal dan tidak ada jam sama sekali.
+
+    Baris strip yang berpura pura jam lebih buruk daripada baris yang tidak
+    muncul, dan itu aturan yang sama dengan yang dipakai panel kosong di
+    dashboard: nol adalah bacaan, ketiadaan data bukan.
+    """
+    bersih = halaman.context.browser.new_context(java_script_enabled=False)
+    try:
+        tab = bersih.new_page()
+        tab.goto(f"{situs}/about", wait_until="domcontentloaded")
+        baris = tab.locator(".footer__kini")
+        assert baris.count() == 1, "markupnya hilang, bukan sekadar disembunyikan"
+        assert baris.first.is_hidden(), "baris kosong tetap tampil tanpa JavaScript"
+        # Hak ciptanya tetap terbaca, sebab itu bukan angka yang berjalan.
+        assert "Hendro Kuswantoro" in tab.locator(".footer__bottom").inner_text()
+    finally:
+        bersih.close()
+
+
 def test_kartu_punya_kilau_yang_mengikuti_kursor(halaman, situs):
     buka(halaman, situs, "/project")
 

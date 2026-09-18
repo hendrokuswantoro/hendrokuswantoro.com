@@ -47,7 +47,21 @@ SQL. Proyek Parkir Jogja memakai pola yang sama.
 | `projects` | tujuh karya, dengan `geom` titik |
 | `spatial_layers` | lapisan spasial umum, belum dipakai |
 | `settings` | pasangan kunci nilai |
+| `berkas` | catatan foto dan video yang diunggah. **Berkasnya sendiri di cakram**, bukan di sini |
 | `skema_migrasi` | catatan migrasi yang sudah jalan |
+
+Tabel `berkas` sengaja tidak menyimpan bitanya. PostgreSQL bisa, dan tetap
+tidak dipakai begitu: satu video dua puluh megabita di dalam baris membuat
+setiap cadangan basis data ikut membawanya, setiap replikasi mengirimnya lagi,
+dan setiap pembacaan halaman melewati kolam koneksi untuk sesuatu yang bisa
+dilayani berkas statis tanpa satu pun kueri. Yang tersimpan namanya, jenisnya,
+ukurannya, sidik sha256 isinya, dan siapa yang mengunggahnya.
+
+Sidiknya `UNIQUE`, dan itu yang membuat satu foto yang dipakai di tiga tulisan
+tetap satu berkas di cakram. `CHECK` di tabelnya menahan gambar tanpa ukuran
+dan video yang punya ukuran: gambar tanpa lebar dan tinggi akan terbit sebagai
+halaman yang melompat, dan ukuran video di sini hanya bisa datang dari
+tebakan, sebab tidak ada yang mengukurnya.
 
 ## Dua keputusan yang perlu dijelaskan
 

@@ -235,6 +235,10 @@ Fase 5. Seluruhnya di belakang `butuh_admin`, tanpa pengecualian.
 | PATCH | `/api/v1/admin/blog/{slug}` | sunting sebagian |
 | POST | `/api/v1/admin/blog/{slug}/status` | draf, terbit, atau arsip |
 | DELETE | `/api/v1/admin/blog/{slug}` | hapus |
+| POST | `/api/v1/admin/pratinjau` | markah jadi HTML, pakai pembangkit situsnya |
+| GET | `/api/v1/admin/berkas` | foto dan video yang sudah diunggah |
+| POST | `/api/v1/admin/berkas` | unggah satu foto atau satu video |
+| DELETE | `/api/v1/admin/berkas/{nama}` | hapus satu berkas |
 
 Tulisan baru **selalu** mulai sebagai draf. Tidak ada jalur yang menerbitkan
 dan membuat sekaligus: menerbitkan harus jadi tindakan tersendiri yang
@@ -253,6 +257,70 @@ adalah aturan yang bisa dilewati lewat pintu satunya.
 Panjang teks juga dibatasi di skema masuk, bukan diserahkan ke lebar kolom
 basis data. Kalau yang menolak cuma PostgreSQL, yang sampai ke penulis adalah
 500 tanpa penjelasan.
+
+### Pratinjau memakai pembangkit situsnya sendiri
+
+`POST /api/v1/admin/pratinjau` menerima `{isi_en, isi_id}` dan menjalankan
+`tools/bangun_tulisan.badan()`, yaitu fungsi yang sama persis yang membangun
+halaman blog yang sudah terbit. Jawabannya HTML badan tulisannya, hitungan
+kata tiap bahasa, dan jumlah bloknya. Markah yang salah dijawab 422 dengan
+kalimat yang sama dengan yang akan dipakai Simpan menolaknya.
+
+Ia ada supaya tidak ada pengurai markah kedua di peramban. Dua pengurai untuk
+satu bahasa markah akan berpisah, dan yang berpisah diam diam membuat layar
+pratinjau berbohong.
+
+Satu hal yang perlu disebut di kodenya, dan sudah: `badan()` adalah alat baris
+perintah yang berhenti dengan `SystemExit` ketika dua bahasanya tidak
+sebangun. `SystemExit` bukan turunan `Exception`, jadi kalau ia dibiarkan naik
+dari dalam sebuah permintaan HTTP, yang berhenti bukan permintaannya melainkan
+pekerjanya. `backend/layanan/pratinjau.py` menangkapnya dengan sengaja.
+
+## Unggahan foto dan video
+
+`POST /api/v1/admin/berkas` menerima `multipart/form-data` dengan satu medan
+bernama `berkas`.
+
+**Jenisnya ditentukan dari bita pertama berkasnya**, bukan dari `filename` dan
+bukan dari `Content-Type` kirimannya. Keduanya datang dari pengirim, jadi
+keduanya bisa berbunyi apa saja. Berkas HTML bernama `foto.jpg` yang diterima
+lalu disajikan lagi dari alamat situs ini adalah skrip milik pengirimnya yang
+jalan di atas asal situs ini. Yang tidak dikenali dijawab 415 beserta daftar
+yang diterima.
+
+Ukurannya dibaca dari kepala berkasnya dengan pengurai kecil di
+`backend/layanan/berkas.py`, bukan dengan pustaka gambar. Membuka gambar
+dengan pustaka berarti mengurai seluruh isinya, termasuk isi yang disusun
+khusus untuk membuat pengurainya meledak, tepat di jalur yang menerima berkas
+dari luar. Yang dibaca cuma beberapa puluh bita pertama.
+
+Batasnya diperiksa **di tengah pembacaan**, bukan sesudahnya. Membaca dulu
+lalu menolak belakangan berarti berkas satu gigabita tetap sempat masuk ke
+memori proses ini.
+
+Berkasnya ditulis lewat berkas sementara lalu diganti sekaligus dengan
+`os.replace`. Menulis langsung ke nama tujuannya berarti ada saat berkasnya
+sudah ada dan isinya baru separuh, dan yang membukanya saat itu menerima
+gambar terpotong, bukan galat. Kalau baris basis datanya gagal ditulis,
+berkasnya dihapus lagi: berkas tanpa catatan tidak akan pernah muncul di
+daftar dan tidak ada yang tahu ia ada.
+
+Jawabannya membawa `alamat` dan `markah`, yaitu baris siap tempel yang memang
+diterima `tools/markah.py`. Keduanya dihitung di skema, bukan disimpan, supaya
+hanya ada satu tempat yang memutuskan bentuknya.
+
+`DELETE` menolak dengan 409 kalau berkasnya masih disebut sebuah tulisan,
+beserta slug tulisannya.
+
+Berkasnya dilayani sebagai berkas statis di `/unggahan/<nama>`, dengan
+`X-Content-Type-Options: nosniff` dan `Cache-Control: immutable`. Janji
+`immutable` sah di sini karena namanya acak dan tidak pernah dipakai ulang
+untuk isi yang berbeda.
+
+Di nginx ada dua blok khusus untuknya, dan keduanya perlu:
+`client_max_body_size` blok server 2 MB akan menolak setiap video dengan 413
+sebelum satu bita pun sampai ke aplikasi, dan yang sampai ke penulisnya adalah
+halaman galat nginx, bukan kalimat dari dashboard.
 
 ## Fase 6: isi dari API
 

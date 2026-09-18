@@ -64,6 +64,11 @@ langkah "Lint, JavaScript has no syntax error"
 if command -v node >/dev/null 2>&1; then
   node --check assets/js/app.js
   node --check assets/js/peta.js
+  # Dashboard admin membawa skripnya sendiri di dalam <script>, dan satu salah
+  # ketik di sana membuat seluruh halamannya diam tanpa satu pun pesan di mana
+  # pun. vm.Script MENGOMPILASI tanpa menjalankan, jadi yang diperiksa memang
+  # sintaksnya dan tidak ada satu baris pun yang ikut jalan.
+  node -e "const fs=require('fs'),vm=require('vm');const t=fs.readFileSync('backend/admin/index.html','utf8');const s=[...t.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]).join('\n');new vm.Script(s);"
   lulus
 else
   lewat "node is not installed on this machine"

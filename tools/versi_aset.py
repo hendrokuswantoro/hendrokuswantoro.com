@@ -135,6 +135,29 @@ def rencana() -> dict[str, str]:
     return hasil
 
 
+def _tertinggal(nama: str, isi: str) -> bool:
+    """Apakah berkas di cakram berbeda dari yang seharusnya.
+
+    `app.js` dibandingkan per bita, sisanya per teks, dan bedanya bukan
+    kerewelan. Nomor `?v=` milik app.js adalah sha256 dari **bita** berkasnya,
+    dan itu juga yang diperiksa tests/test_terbit.py. Di Windows core.autocrlf
+    memberi salinan kerja berakhiran CRLF, sedangkan berkas ini selalu menulis
+    LF. Dibandingkan sebagai teks, keduanya terlihat sama, jadi app.js yang
+    terlanjur ber-CRLF tidak pernah ditulis ulang, nomornya tidak pernah
+    disamakan, dan yang mengadu belakangan adalah uji terbit dengan dua sidik
+    yang tidak ada hubungannya dengan perubahan yang baru dibuat.
+
+    Halaman HTML tidak dibandingkan per bita justru karena alasan yang sama
+    terbalik: nomornya dibaca sebagai teks, jadi CRLF tidak mengubah apa pun,
+    dan menulis ulang kedua belas halaman di tiap kloning Windows cuma
+    menghasilkan dua belas berkas "berubah" yang tidak berubah isinya.
+    """
+    jalur = AKAR / nama
+    if nama == "assets/js/app.js":
+        return jalur.read_bytes() != isi.encode("utf-8")
+    return jalur.read_text(encoding="utf-8") != isi
+
+
 def main() -> int:
     alasan = argparse.ArgumentParser(description=__doc__)
     alasan.add_argument("--periksa", action="store_true",
@@ -142,10 +165,7 @@ def main() -> int:
     pilihan = alasan.parse_args()
 
     harus = rencana()
-    beda = [
-        nama for nama, isi in harus.items()
-        if (AKAR / nama).read_text(encoding="utf-8") != isi
-    ]
+    beda = [nama for nama, isi in harus.items() if _tertinggal(nama, isi)]
 
     if pilihan.periksa:
         if not beda:
@@ -162,7 +182,7 @@ def main() -> int:
         return 1
 
     for nama, isi in harus.items():
-        if (AKAR / nama).read_text(encoding="utf-8") != isi:
+        if _tertinggal(nama, isi):
             (AKAR / nama).write_text(isi, encoding="utf-8", newline="\n")
             print(f"  ditulis: {nama}")
 

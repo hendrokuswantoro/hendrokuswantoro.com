@@ -38,7 +38,8 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
 
-from backend.api.v1 import admin, auth, keamanan, kesehatan, passkey, peta, proyek, tulisan
+from backend.api.v1 import (admin, auth, berkas, keamanan, kesehatan, passkey,
+                            peta, proyek, tulisan)
 from backend.core import basis_data
 from backend.core.catat import CatatPermintaan, pasang
 from backend.core.konfigurasi import pengaturan
@@ -97,8 +98,41 @@ def buat() -> FastAPI:
 
     app.include_router(kesehatan.rute)
     for bagian in (tulisan.rute, proyek.rute, peta.rute, auth.rute,
-                   passkey.rute, keamanan.rute, admin.rute):
+                   passkey.rute, keamanan.rute, admin.rute, berkas.rute):
         app.include_router(bagian, prefix="/api/v1")
+
+    # --- berkas yang diunggah ------------------------------------------------
+    #
+    # Dilayani sebagai berkas statis, bukan lewat rute yang membaca basis
+    # data. Gambar di dalam tulisan diminta puluhan kali per halaman, dan
+    # tiap permintaan yang melewati kolam koneksi demi mengirim bita yang
+    # sudah ada di cakram adalah koneksi yang direbut dari permintaan yang
+    # benar benar butuh basis data.
+    #
+    # Dua tajuk dipasang sendiri di sini dan tidak diserahkan ke nginx, sebab
+    # jalur ini juga hidup saat dikembangkan tanpa nginx sama sekali:
+    #
+    #   X-Content-Type-Options: nosniff
+    #       Berkasnya sudah dipastikan gambar atau video dari bita pertamanya,
+    #       jadi Content-Type di sini benar. nosniff yang menjaga peramban
+    #       tidak menebak yang lain kalau suatu hari pemeriksaan itu bocor.
+    #   Cache-Control: immutable
+    #       Namanya acak dan tidak pernah dipakai ulang untuk isi yang
+    #       berbeda, jadi janji itu memang bisa dipenuhi. Berkas yang diganti
+    #       isinya akan mendapat nama baru, bukan alamat yang sama.
+    class Unggahan(StaticFiles):
+        def file_response(self, *a, **k):  # type: ignore[override]
+            jawaban = super().file_response(*a, **k)
+            jawaban.headers["X-Content-Type-Options"] = "nosniff"
+            jawaban.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            return jawaban
+
+    # Foldernya dibuat kalau belum ada. StaticFiles menolak berdiri di atas
+    # folder yang tidak ada, dan kegagalannya terjadi saat aplikasi dibangun,
+    # yaitu jauh dari orang yang lupa membuat foldernya.
+    from backend.layanan.berkas import folder as folder_unggahan
+
+    app.mount("/unggahan", Unggahan(directory=folder_unggahan()), name="unggahan")
 
     # --- permukaan menulis ---------------------------------------------------
     #

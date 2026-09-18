@@ -40,3 +40,14 @@ qrcode==8.2
 # dicatat sidiknya. Tanpa modelnya, verifikasi wajah mati dan halaman
 # keamanannya mengatakan begitu; ia tidak pernah diam diam melewatkan orang.
 opencv-python-headless==4.11.0.86
+# Pengurai multipart, dituntut jalur unggah foto dan video.
+#
+# Ia dependensi opsional FastAPI, jadi ketiadaannya tidak terlihat sampai
+# router yang memakai UploadFile benar benar dibangun, dan galatnya muncul
+# saat `import backend.main`, bukan saat ada yang mengunggah. Sama persis
+# dengan yang pernah terjadi pada email-validator di atas.
+#
+# Batas bawahnya bukan selera: 0.0.18 memperbaiki penolakan layanan yang
+# dipicu multipart yang disusun khusus, dan jalur ini justru jalur yang
+# menerima multipart dari luar.
+python-multipart==0.0.32

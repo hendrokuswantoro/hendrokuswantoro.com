@@ -11,6 +11,7 @@ lain, dan kegagalannya berbunyi "fixture not found" yang menyesatkan.
 """
 
 import contextlib
+import collections
 import os
 import pathlib
 import sys
@@ -477,13 +478,27 @@ def _ada_basis_data() -> bool:
 def server_admin():
     """API dan halaman admin di http://localhost:<porta>.
 
-    Ber-scope MODUL, bukan sesi, dan itu bukan pemborosan. Dengan satu server
-    dipakai bersama seluruh berkas uji peramban, berkas yang jalan belakangan
-    gagal seluruhnya sementara berkas yang sama lolos kalau dijalankan
-    sendirian. Servernya melayani berkas pertama dengan baik lalu berhenti
-    menjawab; `Page.goto` pun habis waktu tiga puluh detik. Sebabnya belum
-    saya temukan, dan memberi tiap berkas server sendiri menutup gejalanya
-    dengan ongkos beberapa detik.
+    Ber-scope MODUL, bukan sesi. Dengan satu server dipakai bersama seluruh
+    berkas uji peramban, berkas yang jalan belakangan gagal seluruhnya
+    sementara berkas yang sama lolos kalau dijalankan sendirian.
+
+    **Sebabnya sudah ketemu pada 18 September 2026: pipa stdout yang penuh.**
+    Server ini dijalankan dengan `stdout=PIPE`, dan backend mencatat SETIAP
+    permintaan sebagai satu baris JSON ke stdout. Pipanya hanya dibaca kalau
+    prosesnya mati lebih awal, jadi selama ia hidup tidak ada yang
+    mengosongkannya. Begitu penyangga pipa milik sistem penuh, tulisan
+    berikutnya memblokir, dan yang memblokir adalah proses servernya sendiri:
+    ia berhenti menjawab tanpa mati, tanpa galat, dan tanpa satu baris pun di
+    mana pun. Persis gejala yang dulu tidak terjelaskan.
+
+    Ketahuan lewat uji unggahan: menambah pratinjau yang memanggil server tiap
+    setengah detik membuat pipanya penuh jauh lebih cepat, dan hasilnya
+    unggahan yang menggantung selamanya di tengah jalan.
+
+    Sekarang pipanya dikuras utas latar terus menerus ke dalam deque
+    berbatas, jadi ia tidak pernah penuh dan seribu baris terakhirnya tetap
+    ada untuk pesan galat. Scope modul dipertahankan: ia murah, dan servernya
+    memang lebih sehat kalau tidak dipakai lintas berkas.
 
     Namanya WAJIB localhost, bukan 127.0.0.1. WebAuthn menuntut rp_id berupa
     nama domain, dan alamat IP bukan nama domain, jadi seluruh uji passkey
@@ -514,6 +529,20 @@ def server_admin():
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
     )
 
+    # Pipanya dikuras terus menerus, bukan dibaca saat dibutuhkan saja.
+    # Alasannya di docstring di atas: pipa yang penuh memblokir servernya.
+    catatan: collections.deque[str] = collections.deque(maxlen=1000)
+
+    def kuras() -> None:
+        for baris in proses.stdout:  # type: ignore[union-attr]
+            catatan.append(baris)
+
+    utas = threading.Thread(target=kuras, daemon=True)
+    utas.start()
+
+    def ekor(bita: int = 800) -> str:
+        return "".join(catatan)[-bita:]
+
     import urllib.error
     import urllib.request
 
@@ -521,7 +550,8 @@ def server_admin():
     hidup = False
     while time.time() < batas:
         if proses.poll() is not None:
-            pytest.skip("server berhenti sendiri: " + proses.stdout.read()[-800:])
+            utas.join(timeout=2)
+            pytest.skip("server berhenti sendiri: " + ekor())
         try:
             with urllib.request.urlopen(f"{asal}/health", timeout=2) as j:
                 if j.status == 200:

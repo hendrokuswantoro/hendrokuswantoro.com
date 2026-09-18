@@ -551,10 +551,31 @@ ul { margin: 0; padding: 0; list-style: none; }
   display: flex; flex-wrap: wrap; gap: 6px 20px; align-items: center; justify-content: space-between; font-size: .875rem;
 }
 .footer__bottom p { margin: 0; }
-/* Jam dan koordinatnya lebih redup daripada hak cipta di sebelahnya: ia
-   keterangan tempat, bukan pernyataan. rgba dipakai langsung, bukan token
-   --ink-3, karena footer selalu gelap di kedua tema. */
-.footer__kini { color: rgba(255, 255, 255, .62); font-variant-numeric: tabular-nums; }
+
+/* Tanggal dan jam berdiri sendiri sebagai baris pertama footer, di tengah,
+   dengan garis rambut di bawahnya.
+
+   Dulu keduanya menumpang di baris bawah bersama satu kalimat hak cipta yang
+   panjang. Di layar sempit baris itu patah jadi dua, dan jam yang berdetak
+   tiap detik berakhir sebagai ekor kalimat lain, sama redupnya dengan
+   kalimat itu. Kata "Yogyakarta" dibuang atas permintaan pemilik proyek.
+
+   rgba dipakai langsung, bukan token --ink-3, karena footer selalu gelap di
+   kedua tema. */
+.footer__kini {
+  display: flex; flex-wrap: wrap; gap: 2px 10px;
+  align-items: baseline; justify-content: center;
+  margin: 0 0 18px; padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, .14);
+  font-variant-numeric: tabular-nums;
+}
+/* display: flex mengalahkan aturan hidden bawaan peramban, jadi atribut itu
+   harus disebut lagi di sini. Tanpa baris ini, barisnya tampil kosong pada
+   halaman tanpa JavaScript. */
+.footer__kini[hidden] { display: none; }
+.footer__tanggal { color: rgba(255, 255, 255, .62); }
+.footer__kini .jam { color: #fff; font-size: 1.0625rem; font-weight: 600; }
+.footer__zona { color: rgba(255, 255, 255, .62); font-size: .8125rem; letter-spacing: .06em; }
 
 /* ---------- mobile tab bar ---------- */
 .tabbar {
@@ -722,6 +743,41 @@ ul { margin: 0; padding: 0; list-style: none; }
   color: var(--ink); font-size: 1.0625rem;
 }
 .article blockquote p:last-child { margin-bottom: 0; }
+
+/* Daftar di dalam tulisan.
+   Angka dan butirnya digantung di luar kolom teks, supaya baris kedua sebuah
+   butir sejajar dengan baris pertamanya dan bukan dengan penandanya. */
+.article .tulisan__daftar {
+  margin: 0 0 20px; padding-left: 1.4em; font-size: 1.0625rem; line-height: 1.75;
+}
+.article .tulisan__daftar li { margin-bottom: 6px; }
+.article .tulisan__daftar li::marker { color: var(--ink-3); }
+
+/* Gambar dan video di dalam tulisan.
+
+   Lebarnya boleh melampaui kolom teks sedikit di layar lebar, sebab kolom
+   teks dibatasi 78ch demi kenyamanan membaca dan batas itu tidak berlaku
+   untuk gambar. Di bawah 900 piksel ia kembali selebar teksnya.
+
+   aspect-ratio tidak dipasang di sini: ukuran gambarnya datang dari atribut
+   width dan height yang ditulis pembangkit dari nama berkasnya, dan itu
+   sudah cukup bagi peramban untuk menyediakan tempatnya sebelum gambarnya
+   tiba. Video tidak punya ukuran itu, jadi tempatnya memang baru pasti
+   sesudah metadatanya sampai. */
+.article .tulisan__media { margin: 28px 0; }
+.article .tulisan__media img,
+.article .tulisan__media video {
+  display: block; width: 100%; height: auto;
+  border-radius: var(--r-md); background: var(--surface-2);
+}
+.article .tulisan__media figcaption {
+  margin-top: 10px; color: var(--ink-3);
+  font-size: var(--fs-sm); line-height: 1.6;
+}
+
+@media (min-width: 1100px) {
+  .article .tulisan__media { margin-inline: -40px; }
+}
 .back-link { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: var(--fs-md); margin-bottom: 20px; }
 
 /* the rail */

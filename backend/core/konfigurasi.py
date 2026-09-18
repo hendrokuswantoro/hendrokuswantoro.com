@@ -84,6 +84,23 @@ class Pengaturan(BaseSettings):
     surat_dari: str = Field(default="", alias="SURAT_DARI")
     surat_wajib: bool = Field(default=False, alias="SURAT_WAJIB")
 
+    # --- unggahan foto dan video dari dashboard ------------------------------
+    #
+    # Berkasnya duduk di cakram, bukan di basis data. Satu video dua puluh
+    # megabita di dalam baris membuat setiap cadangan basis data ikut
+    # membawanya dan setiap pembacaan halaman melewati kolam koneksi untuk
+    # sesuatu yang bisa dilayani berkas statis tanpa satu pun kueri.
+    #
+    # Jalur relatif dihitung dari akar repositori. Folder ini ada di
+    # .gitignore: isinya milik satu pemasangan, bukan milik kode.
+    unggahan_dir: str = Field(default="unggahan", alias="UNGGAHAN_DIR")
+
+    # Batasnya per jenis, sebab foto dan video memang beda ukuran. Angkanya
+    # bukan selera: di atas ini yang menunggu adalah pembaca dengan kuota
+    # ponsel, bukan cakram yang penuh.
+    unggahan_gambar_maks_mb: int = Field(default=10, alias="UNGGAHAN_GAMBAR_MAKS_MB")
+    unggahan_video_maks_mb: int = Field(default=80, alias="UNGGAHAN_VIDEO_MAKS_MB")
+
     kolam_min: int = Field(default=1, alias="KOLAM_MIN")
     kolam_maks: int = Field(default=8, alias="KOLAM_MAKS")
 

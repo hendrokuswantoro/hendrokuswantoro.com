@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
 from backend.api.tergantung import butuh_admin
+from backend.layanan import pratinjau as layanan_pratinjau
 from backend.layanan import tulis as layanan
 from backend.skema.tulis import TulisanMasuk, TulisanUbah
 
@@ -20,6 +21,13 @@ rute = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(butuh_ad
 
 class UbahStatus(BaseModel):
     status: Literal["draf", "terbit", "arsip"]
+
+
+class Pratinjau(BaseModel):
+    """Dua bahasa sekaligus, sebab yang diperiksa justru kesebangunannya."""
+
+    isi_en: str = ""
+    isi_id: str = ""
 
 
 def _ke_http(galat: Exception) -> HTTPException:
@@ -67,6 +75,23 @@ async def ubah_status(slug: str, permintaan: UbahStatus) -> dict:
         return await layanan.ubah_status(slug, permintaan.status)
     except (layanan.Ditolak, layanan.TidakAda) as galat:
         raise _ke_http(galat) from galat
+
+
+@rute.post("/pratinjau", summary="Markah jadi HTML, dengan pembangkit situsnya sendiri")
+async def pratinjau(permintaan: Pratinjau) -> dict:
+    """Menjawab 200 dengan HTML-nya, atau 422 dengan alasan yang sama persis
+    dengan alasan yang akan dipakai Simpan menolaknya.
+
+    Satu pengurai untuk pratinjau dan penyimpanan, bukan dua. Dua pengurai
+    untuk satu bahasa markah akan berpisah, dan yang berpisah diam diam
+    membuat layar pratinjau berbohong.
+    """
+    try:
+        return layanan_pratinjau.bangun(permintaan.isi_en, permintaan.isi_id)
+    except layanan_pratinjau.Ditolak as galat:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(galat)
+        ) from galat
 
 
 @rute.delete("/blog/{slug}", status_code=status.HTTP_204_NO_CONTENT, summary="Hapus tulisan")

@@ -62,6 +62,22 @@ def badan(mentah: str, lain: str) -> str:
             raise SystemExit(
                 f"blok ke {nomor + 1} beda jenis: {en.jenis} lawan {idn.jenis}"
             )
+        # Gambar dan video wajib menunjuk berkas yang sama di kedua bahasa.
+        #
+        # Kalau tidak dijaga, pembaca Indonesia dan pembaca Inggris melihat
+        # dua foto berbeda di tempat yang sama, dan tidak ada satu pun yang
+        # mengadu. Keterangannya memang boleh, dan memang harus, berbeda.
+        if en.alamat != idn.alamat:
+            raise SystemExit(
+                f"blok ke {nomor + 1} menunjuk berkas berbeda: "
+                f"{en.alamat} lawan {idn.alamat}"
+            )
+        if len(en.butir) != len(idn.butir):
+            raise SystemExit(
+                f"blok ke {nomor + 1} beda jumlah butir: "
+                f"Inggris {len(en.butir)}, Indonesia {len(idn.butir)}"
+            )
+
         ind = markah.polos(idn.teks)
         isi = markah.sebaris(en.teks)
 
@@ -73,12 +89,66 @@ def badan(mentah: str, lain: str) -> str:
             keluar.append("        <blockquote>")
             keluar.append(f'          <p data-ind="{ind}">{isi}</p>')
             keluar.append("        </blockquote>")
+        elif en.jenis in ("ul", "ol"):
+            keluar.append(f'        <{en.jenis} class="tulisan__daftar">')
+            for a, b in zip(en.butir, idn.butir):
+                keluar.append(
+                    f'          <li data-ind="{markah.polos(b)}">{markah.sebaris(a)}</li>'
+                )
+            keluar.append(f"        </{en.jenis}>")
+        elif en.jenis in ("gambar", "video"):
+            keluar.extend(media(en, idn))
         else:
             keluar.append(f'        <p data-ind="{ind}">')
             keluar.append(f"          {isi}")
             keluar.append("        </p>")
 
     return "\n".join(keluar)
+
+
+def media(en: markah.Blok, idn: markah.Blok) -> list[str]:
+    """Satu gambar atau satu video, dengan keterangannya dua bahasa.
+
+    Keterangan merangkap teks alternatif, dan itu kompromi yang disebut
+    terus terang: keduanya memang berbeda tugas, satu untuk pembaca yang
+    melihat gambarnya dan satu untuk yang tidak. Menuntut penulisnya
+    menuliskan empat kalimat untuk satu foto akan berakhir dengan dua di
+    antaranya disalin dari dua lainnya.
+
+    Yang tetap dijaga: gambar tanpa keterangan keluar dengan alt kosong,
+    yaitu pernyataan "ini hiasan", bukan alt berisi nama berkasnya.
+    """
+    alt = markah.polos(en.teks)
+    ind = markah.polos(idn.teks)
+    baris = ['        <figure class="tulisan__media">']
+
+    if en.jenis == "gambar":
+        ukur = markah.ukuran(en.alamat)
+        # Tanpa ukuran, peramban baru tahu tinggi gambarnya sesudah
+        # mengunduhnya, dan tulisan di bawahnya melompat. Gambar yang tidak
+        # punya ukuran di namanya tetap terbit, hanya tanpa janji itu.
+        sifat = f' width="{ukur[0]}" height="{ukur[1]}"' if ukur else ""
+        baris.append(
+            f'          <img src="{en.alamat}" alt="{alt}" data-ind-alt="{ind}"'
+            f'{sifat} loading="lazy" decoding="async">'
+        )
+    else:
+        # preload="metadata": yang diambil lebih dulu cuma durasi dan
+        # ukurannya, bukan seluruh videonya. Video yang mengunduh dirinya
+        # sendiri di halaman yang mungkin tidak pernah digulir sampai ke sana
+        # adalah kuota pembaca yang dipakai tanpa pernah dimintai izin.
+        baris.append(
+            f'          <video src="{en.alamat}" controls preload="metadata"'
+            ' playsinline></video>'
+        )
+
+    if en.teks:
+        baris.append(
+            f'          <figcaption data-ind="{ind}">'
+            f'{markah.sebaris(en.teks)}</figcaption>'
+        )
+    baris.append("        </figure>")
+    return baris
 
 
 def tautan_lain(ini: Tulisan, semua: list[Tulisan]) -> str:

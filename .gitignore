@@ -37,3 +37,7 @@ cadangan/
 
 # Model pengenalan wajah, 39 MB, diunduh dengan tools/ambil_model.py
 assets/model/
+
+# Foto dan video yang diunggah lewat dashboard. Milik satu pemasangan,
+# bukan milik kode. Catatannya di basis data, berkasnya di sini.
+/unggahan/

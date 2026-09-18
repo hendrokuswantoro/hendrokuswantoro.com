@@ -89,15 +89,47 @@ menyebut nomor baris**, bukan diterjemahkan seadanya.
 | `## Judul bagian` | `<h2>` |
 | baris biasa | `<p>` |
 | `> kutipan` | `<blockquote><p>` |
+| `- butir` | `<ul><li>` |
+| `1. butir` | `<ol><li>` |
+| `![keterangan](/unggahan/x.webp)` | `<figure><img>` |
+| `!video[keterangan](/unggahan/x.mp4)` | `<figure><video>` |
 | `**tebal**` | `<strong>` |
 | `*miring*` | `<em>` |
 | `` `kode` `` | `<code>` |
 | `[teks](/alamat)` | `<a href>` |
 
-Yang ditolak: judul selain `##`, daftar berpoin, tabel, gambar, blok kode
-berpagar, dan HTML mentah. Kalau salah satunya benar benar dibutuhkan,
-tambahkan dukungannya di `tools/markah.py` beserta ujinya, jangan
-menyiasatinya lewat HTML mentah.
+Yang ditolak: judul selain `##`, tabel, blok kode berpagar, dan HTML mentah.
+Kalau salah satunya benar benar dibutuhkan, tambahkan dukungannya di
+`tools/markah.py` beserta ujinya, jangan menyiasatinya lewat HTML mentah.
+
+### Gambar dan video
+
+Alamatnya **wajib** menunjuk berkas yang diunggah ke situs ini, yaitu diawali
+`/unggahan/` atau `/assets/img/`. Gambar dari server orang lain ditolak
+dengan galat, dan itu bukan kerewelan:
+
+- Tiap pembaca yang membuka tulisannya mengirimkan alamat IP-nya ke server itu
+  tanpa pernah diminta.
+- Gambarnya hilang pada hari pemiliknya merapikan berkasnya.
+- `Content-Security-Policy` situs ini memang sudah menolaknya, jadi yang
+  terbit kotak kosong. Ditolak saat menulis berarti Anda tahu sekarang, bukan
+  sesudah halamannya terbit.
+
+Ukuran gambarnya dititipkan di nama berkasnya, misalnya
+`9f3c1a7b2d4e5f60-1600x900.webp`. Yang menuliskannya mesin pengunggah, bukan
+orang. Dari situ pembangkit halaman tahu lebar dan tingginya tanpa membuka
+berkasnya, sehingga tulisan di bawah gambar tidak melompat saat gambarnya
+tiba. Video tidak diukur: mengukurnya menuntut ffmpeg, dan menebaknya berarti
+menuliskan angka yang tidak pernah diukur.
+
+Keterangannya merangkap teks alternatif. Keterangan kosong, yaitu `![]( ... )`
+tanpa isi di dalam kurung siku, terbit dengan `alt=""`, yang berarti "ini
+hiasan". Itu pernyataan yang sah, dan lebih jujur daripada `alt` yang diisi
+nama berkas.
+
+**Gambar yang sama harus disebut di kedua bahasa.** Keterangannya boleh, dan
+memang harus, berbeda; berkasnya tidak. Pembangkitnya berhenti kalau keduanya
+menunjuk berkas berbeda.
 
 ## Kenapa berkas, bukan basis data
 
@@ -131,12 +163,18 @@ python backend/db/buat_admin.py
 
 1. Masuk. Kalau cookie sesi masih hidup, sandinya tidak ditanya lagi.
 2. **Tulisan baru**, isi kolomnya. Inggris dan Indonesia berdampingan.
-3. Isinya Markdown, dengan penghitung blok di bawah tiap kolom dan pratinjau
-   di bawahnya. Kalau jumlah bloknya tidak sama, peringatannya muncul
-   **sebelum** Anda menekan Simpan.
-4. **Simpan.** Statusnya draf. Belum terlihat siapa pun.
-5. **Terbitkan.** Statusnya berubah, dan tulisannya muncul di jalur publik API.
-6. Bangkitkan halamannya lalu dorong:
+3. Isinya Markdown, dengan **bilah format** di atasnya: tebal, miring, judul
+   bagian, kutipan, daftar butir, daftar bernomor, kode, dan tautan.
+   Pintasannya sama dengan yang sudah Anda hafal: Ctrl+B, Ctrl+I, Ctrl+K.
+   Menekan tombol daftar dua kali mencabut tandanya lagi.
+4. **Foto / video** membuka pustaka berkas. Seret berkasnya ke sana atau pilih
+   dari komputer, lalu klik gambarnya untuk menyisipkannya. Ia masuk ke
+   **kedua** bahasa sekaligus, sebab dua bahasa wajib sebangun blok demi blok.
+5. Di bawahnya penghitung blok tiap bahasa dan pratinjau. Kalau jumlah bloknya
+   tidak sama, peringatannya muncul **sebelum** Anda menekan Simpan.
+6. **Simpan.** Statusnya draf. Belum terlihat siapa pun.
+7. **Terbitkan.** Statusnya berubah, dan tulisannya muncul di jalur publik API.
+8. Bangkitkan halamannya lalu dorong:
 
 ```bash
 python tools/bangun_tulisan.py --sumber api
@@ -181,6 +219,74 @@ Token akses disimpan di variabel biasa, bukan `localStorage`. Token di
 ditutup. Yang bertahan antar kunjungan adalah cookie refresh yang HttpOnly,
 yang tidak bisa dibaca JavaScript sama sekali.
 
-Pratinjaunya dirakit dengan `createElement`, bukan `innerHTML`. Isi yang Anda
-tulis sendiri memang tidak berbahaya, tetapi kebiasaan merakit lewat
-`innerHTML` itu yang suatu saat dipakai untuk isi yang datang dari luar.
+### Pratinjaunya dibangun server
+
+Sampai 18 September 2026 tiap dashboard punya pengurai Markdown kecilnya
+sendiri di peramban, dan pratinjaunya dirakit dengan `createElement`. Itu
+aman, dan tetap salah: dua pengurai untuk satu bahasa markah akan berpisah,
+dan yang berpisah diam diam membuat layar pratinjau berbohong. Pratinjau yang
+menerima apa yang Simpan tolak lebih buruk daripada tidak ada pratinjau.
+
+Sekarang keduanya memanggil `POST /api/v1/admin/pratinjau`, yang menjalankan
+`tools/bangun_tulisan.badan()`, yaitu fungsi yang sama persis yang membangun
+halaman blog yang sudah terbit. Kalau pratinjaunya berhasil, yang terbit akan
+sama; kalau ia menolak, Simpan akan menolak dengan kalimat yang sama.
+
+HTML jawabannya dipasang dengan `innerHTML`, dan itu aman justru karena
+sumbernya: ia dibangun `tools/markah.py`, yang meng-escape seluruh teks,
+menolak HTML mentah dengan galat, dan menolak skema tautan selain `http`,
+`https`, dan `mailto`. Membersihkannya lagi di peramban berarti dua aturan
+untuk satu hal, dan dua aturan akan berpisah. Yang tetap ditulis sebagai teks:
+kalimat penolakannya, sebab ia memuat potongan baris yang baru saja diketik.
+
+## Mengunggah foto dan video
+
+Ada di kedua dashboard, di balik tombol **Foto / video** pada bilah format.
+
+| | |
+| --- | --- |
+| Diterima | PNG, JPEG, WebP, GIF, AVIF, MP4, WebM |
+| Batas | foto 10 MB, video 80 MB |
+| Tersimpan di | folder `UNGGAHAN_DIR`, bawaannya `unggahan/` di akar repositori |
+| Dilayani di | `/unggahan/<nama>` |
+| Di basis data | hanya catatannya, tabel `berkas`. Berkasnya di cakram |
+
+**Jenisnya ditentukan dari isi berkasnya, bukan dari namanya dan bukan dari
+`Content-Type` kirimannya.** Keduanya datang dari pengirim, jadi keduanya bisa
+berbunyi apa saja. Berkas HTML bernama `foto.jpg` yang diterima lalu disajikan
+lagi dari alamat situs ini adalah skrip milik pengirimnya yang jalan di atas
+asal situs ini.
+
+Nama di cakram tidak pernah datang dari pengunggahnya. Yang dipakai nama acak
+enam belas heksa, ditambah ukuran gambarnya, ditambah akhiran yang ditentukan
+dari bita pertama berkasnya. Nama aslinya tetap dicatat supaya Anda mengenali
+berkasnya lagi, dan ia tidak pernah dipakai membentuk jalur.
+
+Berkas dengan isi yang sama persis tidak digandakan. Yang dikembalikan yang
+lama, dan layarnya mengatakan begitu.
+
+Menghapus berkas yang masih disebut sebuah tulisan **ditolak** dengan 409,
+beserta slug tulisannya. Menghapusnya adalah kegagalan yang tidak bersuara:
+tulisannya tetap terbit, hanya gambarnya jadi kotak kosong, dan yang
+menyadarinya pembaca.
+
+### Yang TIDAK dikerjakan, dan perlu Anda tahu
+
+- **Metadata EXIF tidak dibuang.** Foto dari ponsel bisa membawa koordinat
+  tempat pemotretannya, dan koordinat itu ikut terbit. Kalimat ini ada di
+  layar unggahnya, bukan hanya di sini. Buang dulu di ponsel kalau tempatnya
+  bukan untuk umum.
+- **Tidak ada pengubahan ukuran atau pemampatan.** Foto delapan megabita akan
+  terbit sebagai foto delapan megabita.
+- **Tidak ada pemindaian malware.** Berkas yang lolos bentuknya tetap bisa
+  berisi apa saja di dalamnya.
+
+### Dua port, dan batas yang jujur di antaranya
+
+Yang ditulis lewat dashboard hidup di PostgreSQL dan dilayani API. Yang terbit
+ke Cloudflare berkas statis, dan gambarnya harus ikut ke sana: jalankan
+`python tools/bangun_tulisan.py --sumber api`, lalu salin berkas dari folder
+unggahan ke `assets/img/` dan sesuaikan alamatnya, atau sajikan situsnya dari
+VPS yang sama dengan API-nya. Yang kedua yang dirancang; yang pertama jalan
+keluar sementara. Tidak ada langkah otomatis yang menyalinnya, dan tidak
+dibuat berpura pura ada.

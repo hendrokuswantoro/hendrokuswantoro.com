@@ -258,6 +258,127 @@ export function peristiwaKeamanan(): Promise<{ peristiwa: Peristiwa[] }> {
   return ambil("/api/v1/keamanan/peristiwa");
 }
 
+// ------------------------------------------------------------- berkas ---
+
+export type Berkas = {
+  id: string;
+  nama: string;
+  nama_asal: string;
+  jenis: "gambar" | "video";
+  tipe_mime: string;
+  bita: number;
+  lebar: number | null;
+  tinggi: number | null;
+  dibuat_pada: string;
+  alamat: string;
+  markah: string;
+};
+
+export type BerkasBaru = Berkas & { sudah_ada: boolean };
+
+export function daftarBerkas(): Promise<{ jumlah: number; isi: Berkas[] }> {
+  return ambil("/api/v1/admin/berkas");
+}
+
+export async function hapusBerkas(nama: string): Promise<void> {
+  const jawaban = await panggil(`/api/v1/admin/berkas/${encodeURIComponent(nama)}`, {
+    method: "DELETE",
+  });
+  if (!jawaban.ok) {
+    throw new GagalApi(pesanGalat(await jawaban.json().catch(() => null)), jawaban.status);
+  }
+}
+
+/**
+ * Mengunggah satu berkas, dengan kemajuannya.
+ *
+ * Memakai XMLHttpRequest, bukan fetch, dan itu satu satunya alasannya:
+ * fetch belum bisa melaporkan berapa bita yang sudah terkirim. Untuk video
+ * delapan puluh megabita di sambungan rumahan, bilah yang bergerak adalah
+ * beda antara menunggu dan mengira aplikasinya menggantung.
+ *
+ * Content-Type sengaja TIDAK dipasang. Peramban menuliskannya sendiri
+ * beserta boundary multipart-nya, dan boundary yang ditulis tangan hampir
+ * selalu salah.
+ */
+function sekaliUnggah(
+  berkas: File,
+  kemajuan?: (persen: number) => void,
+): Promise<{ status: number; isi: unknown }> {
+  return new Promise((selesai, gagal) => {
+    const bentuk = new FormData();
+    bentuk.append("berkas", berkas, berkas.name);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${DASAR}/api/v1/admin/berkas`);
+    xhr.withCredentials = true;
+    if (AKSES) xhr.setRequestHeader("Authorization", `Bearer ${AKSES}`);
+
+    if (kemajuan) {
+      xhr.upload.onprogress = (p) => {
+        if (p.lengthComputable) kemajuan(Math.round((p.loaded / p.total) * 100));
+      };
+    }
+    xhr.onload = () => {
+      let isi: unknown = null;
+      try {
+        isi = JSON.parse(xhr.responseText);
+      } catch {
+        isi = null;
+      }
+      selesai({ status: xhr.status, isi });
+    };
+    xhr.onerror = () => gagal(new GagalApi("sambungan terputus saat mengunggah", 0));
+    xhr.onabort = () => gagal(new GagalApi("unggahan dibatalkan", 0));
+    xhr.send(bentuk);
+  });
+}
+
+export async function unggahBerkas(
+  berkas: File,
+  kemajuan?: (persen: number) => void,
+): Promise<BerkasBaru> {
+  let hasil = await sekaliUnggah(berkas, kemajuan);
+
+  // Access token berumur 15 menit. Mengunggah video besar bisa melewatinya
+  // di tengah jalan, dan kalau tidak diulang, yang hilang adalah unggahan
+  // yang sudah sembilan puluh persen terkirim.
+  if (hasil.status === 401 && AKSES) {
+    const putar = await fetch(`${DASAR}/api/v1/auth/refresh`, {
+      method: "POST",
+      credentials: "same-origin",
+    });
+    if (putar.ok) {
+      AKSES = ((await putar.json()) as Sesi).akses;
+      hasil = await sekaliUnggah(berkas, kemajuan);
+    }
+  }
+
+  if (hasil.status < 200 || hasil.status >= 300) {
+    throw new GagalApi(pesanGalat(hasil.isi), hasil.status);
+  }
+  return hasil.isi as BerkasBaru;
+}
+
+// ----------------------------------------------------------- pratinjau ---
+
+export type Pratinjau = {
+  html: string;
+  kata_en: number;
+  kata_id: number;
+  blok: number;
+};
+
+/** Markah jadi HTML lewat pembangkit situsnya sendiri, bukan lewat pengurai
+ *  kedua di peramban. Dua pengurai untuk satu bahasa markah akan berpisah,
+ *  dan yang berpisah membuat layar pratinjau berbohong. */
+export function pratinjauTulisan(isi_en: string, isi_id: string): Promise<Pratinjau> {
+  return ambil("/api/v1/admin/pratinjau", {
+    method: "POST",
+    body: JSON.stringify({ isi_en, isi_id }),
+  });
+}
+
 /** Dipanggil sekali saat halaman dibuka. Kalau cookie refresh masih hidup,
  *  orangnya langsung masuk tanpa ditanya sandi lagi. */
 export async function sesiYangMasihHidup(): Promise<Sesi | null> {

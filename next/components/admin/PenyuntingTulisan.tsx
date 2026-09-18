@@ -1,8 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import gaya from "@/app/admin/admin.module.css";
-import { ambil, panggil, pesanGalat } from "@/lib/api";
+import {
+  ambil,
+  panggil,
+  pesanGalat,
+  pratinjauTulisan,
+  type Berkas,
+  type Pratinjau,
+} from "@/lib/api";
+import { BilahFormat, terapkan } from "./BilahFormat";
+import { PanelBerkas } from "./PanelBerkas";
 
 /** Persis kolom yang diterima TulisanMasuk di backend/skema/tulis.py. Kalau
  *  daftar ini dan daftar di sana berbeda, yang ketahuan lebih dulu adalah 422
@@ -50,7 +59,17 @@ export function PenyuntingTulisan({
   const [status, setStatus] = useState<string>("belum disimpan");
   const [kabar, setKabar] = useState<{ teks: string; baik: boolean } | null>(null);
   const [sibuk, setSibuk] = useState(false);
+  const [pustaka, setPustaka] = useState(false);
+  const [lihat, setLihat] = useState(true);
+  const [pratinjau, setPratinjau] = useState<Pratinjau | null>(null);
+  const [galatMarkah, setGalatMarkah] = useState<string | null>(null);
   const baru = slug === null;
+
+  const kotakEn = useRef<HTMLTextAreaElement>(null);
+  const kotakId = useRef<HTMLTextAreaElement>(null);
+  /* Kotak yang terakhir disentuh. Tombol bilah format bekerja pada yang ini,
+     supaya satu bilah bisa melayani dua bahasa tanpa menggandakannya. */
+  const terakhir = useRef<"en" | "id">("en");
 
   const muat = useCallback(async () => {
     if (slug === null) {
@@ -78,8 +97,79 @@ export function PenyuntingTulisan({
     [isi.isi_en, isi.isi_id],
   );
 
+  /* Pratinjau dibangun server, oleh pembangkit yang sama dengan yang
+     membangun halaman blog yang sudah terbit. Jadi yang terlihat di sini
+     memang yang akan terbit, dan markah yang ditolak di sini adalah markah
+     yang akan ditolak Simpan, dengan kalimat yang sama.
+
+     Ditunda 500 ms sesudah ketikan terakhir. Tanpa penundaan, tiap huruf
+     mengirim satu permintaan, dan yang sampai duluan belum tentu yang
+     terakhir diketik. */
+  useEffect(() => {
+    if (!lihat) return;
+    if (!isi.isi_en && !isi.isi_id) {
+      setPratinjau(null);
+      setGalatMarkah(null);
+      return;
+    }
+    let batal = false;
+    const tunda = window.setTimeout(() => {
+      pratinjauTulisan(isi.isi_en, isi.isi_id)
+        .then((hasil) => {
+          if (batal) return;
+          setPratinjau(hasil);
+          setGalatMarkah(null);
+        })
+        .catch((e) => {
+          if (batal) return;
+          setGalatMarkah(e instanceof Error ? e.message : "markahnya belum bisa dibaca");
+        });
+    }, 500);
+    return () => {
+      batal = true;
+      window.clearTimeout(tunda);
+    };
+  }, [isi.isi_en, isi.isi_id, lihat]);
+
   function ubah(nama: Kolom, nilai: string) {
     setIsi((s) => ({ ...s, [nama]: nilai }));
+  }
+
+  /** Membaca kembali nilai kotak sesudah bilah format menulis ke dalamnya.
+   *
+   *  Bilah itu menyisipkan lewat execCommand supaya tumpukan urung peramban
+   *  tetap utuh, dan execCommand tidak lewat React. Jadi nilainya disalin
+   *  balik ke state di sini, sesudahnya. */
+  const serap = useCallback(() => {
+    if (kotakEn.current) ubah("isi_en", kotakEn.current.value);
+    if (kotakId.current) ubah("isi_id", kotakId.current.value);
+  }, []);
+
+  /** Menyisipkan gambar atau video ke KEDUA bahasa sekaligus.
+   *
+   *  Bukan kenyamanan: dua bahasa wajib sebangun blok demi blok, jadi gambar
+   *  yang hanya masuk ke satu bahasa langsung membuat tulisannya ditolak.
+   *  Keterangannya dikosongkan supaya penulisnya mengisinya sendiri di tiap
+   *  bahasa, dan gambar tanpa keterangan tetap sah: ia terbit dengan alt
+   *  kosong, yaitu pernyataan "ini hiasan". */
+  function sisipBerkas(berkas: Berkas) {
+    const tanda = berkas.jenis === "video" ? "!video[](" : "![](";
+    const baris = `${tanda}${berkas.alamat})`;
+    for (const kotak of [kotakEn.current, kotakId.current]) {
+      if (!kotak) continue;
+      const perlu = kotak.value && !kotak.value.endsWith("\n\n");
+      terapkan(
+        kotak,
+        { depan: (perlu ? "\n\n" : "") + baris + "\n\n", contoh: "" },
+        () => undefined,
+      );
+    }
+    serap();
+    setPustaka(false);
+    setKabar({
+      teks: `${berkas.nama_asal} disisipkan ke kedua bahasa. Isi keterangannya di dalam kurung siku.`,
+      baik: true,
+    });
   }
 
   async function simpan() {
@@ -203,13 +293,34 @@ export function PenyuntingTulisan({
         </p>
       ) : null}
 
+      <BilahFormat
+        kotak={() => (terakhir.current === "id" ? kotakId.current : kotakEn.current)}
+        onUbah={serap}
+        onGambar={() => setPustaka((b) => !b)}
+        kata={
+          pratinjau
+            ? terakhir.current === "id"
+              ? pratinjau.kata_id
+              : pratinjau.kata_en
+            : 0
+        }
+      />
+
+      {pustaka ? (
+        <PanelBerkas onSisip={sisipBerkas} onTutup={() => setPustaka(false)} />
+      ) : null}
+
       <div className={gaya.dua}>
         <div className={gaya.baris}>
           <label htmlFor="isi_en">Isi, Inggris &middot; {blok(isi.isi_en)} blok</label>
           <textarea
             id="isi_en"
+            ref={kotakEn}
             className={gaya.luas}
             value={isi.isi_en}
+            onFocus={() => {
+              terakhir.current = "en";
+            }}
             onChange={(e) => ubah("isi_en", e.target.value)}
           />
         </div>
@@ -217,12 +328,53 @@ export function PenyuntingTulisan({
           <label htmlFor="isi_id">Isi, Indonesia &middot; {blok(isi.isi_id)} blok</label>
           <textarea
             id="isi_id"
+            ref={kotakId}
             className={gaya.luas}
             value={isi.isi_id}
+            onFocus={() => {
+              terakhir.current = "id";
+            }}
             onChange={(e) => ubah("isi_id", e.target.value)}
           />
         </div>
       </div>
+
+      <div className={gaya.tumpuk}>
+        <h3 style={{ margin: 0 }}>Pratinjau</h3>
+        <div className={gaya.kanan}>
+          <button
+            type="button"
+            className={gaya.tombol}
+            aria-pressed={lihat}
+            onClick={() => setLihat((b) => !b)}
+          >
+            {lihat ? "Sembunyikan" : "Tampilkan"}
+          </button>
+        </div>
+      </div>
+
+      {lihat ? (
+        galatMarkah ? (
+          <p className={`${gaya.kabar} ${gaya.salah}`} role="alert">
+            {galatMarkah}
+          </p>
+        ) : (
+          /* dangerouslySetInnerHTML dengan sengaja, dan aman justru karena
+             sumbernya.
+
+             HTML ini tidak datang dari orang dan tidak datang dari peramban.
+             Ia dibangun tools/markah.py di server, yaitu pengurai yang
+             meng-escape seluruh teks, menolak HTML mentah dengan galat, dan
+             menolak skema tautan selain http, https, dan mailto. Tidak ada
+             satu jalur pun yang membuat markah berubah jadi tag yang tidak
+             ada di daftar itu. Membersihkannya lagi di sini berarti dua
+             aturan untuk satu hal, dan dua aturan akan berpisah. */
+          <div
+            className={`${gaya.pratinjau} article`}
+            dangerouslySetInnerHTML={{ __html: pratinjau?.html ?? "" }}
+          />
+        )
+      ) : null}
 
       <div className={gaya.aksi}>
         <button

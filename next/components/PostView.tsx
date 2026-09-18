@@ -125,6 +125,49 @@ export function PostView({ post }: { post: Post }) {
                   </blockquote>
                 );
               }
+              if (block.kind === "ul" || block.kind === "ol") {
+                const Daftar = block.kind;
+                return (
+                  <Daftar key={key} className="tulisan__daftar">
+                    {block.items.map((butir, nomor) => (
+                      <li key={`${key}-${nomor}`}>{say(butir)}</li>
+                    ))}
+                  </Daftar>
+                );
+              }
+              if (block.kind === "gambar") {
+                /* Keterangan merangkap teks alternatif, sama seperti di port
+                   statisnya. Keterangan kosong berarti alt kosong, yaitu
+                   pernyataan "ini hiasan", bukan alt berisi nama berkas.
+
+                   width dan height ditulis supaya peramban menyediakan
+                   tempatnya sebelum gambarnya tiba. Tanpa itu, tulisan di
+                   bawahnya melompat tepat saat ada yang membacanya. */
+                return (
+                  <figure key={key} className="tulisan__media">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={block.src}
+                      alt={say(block.text)}
+                      width={block.width}
+                      height={block.height}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    {block.text.en ? <figcaption>{say(block.text)}</figcaption> : null}
+                  </figure>
+                );
+              }
+              if (block.kind === "video") {
+                /* preload="metadata": yang diambil lebih dulu cuma durasi dan
+                   ukurannya, bukan seluruh videonya. */
+                return (
+                  <figure key={key} className="tulisan__media">
+                    <video src={block.src} controls preload="metadata" playsInline />
+                    {block.text.en ? <figcaption>{say(block.text)}</figcaption> : null}
+                  </figure>
+                );
+              }
               return <p key={key}>{say(block.text)}</p>;
             })}
 

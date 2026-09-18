@@ -266,26 +266,71 @@
 
   var WIB = "Asia/Jakarta";
 
+  /* Tanggal dan jam di kaki halaman.
+   *
+   * Yang tertulis di layar tidak lagi menyebut "Yogyakarta"; yang menyebut
+   * tempatnya sekarang "WIB" di sebelahnya dan aria-label pada jamnya, supaya
+   * pembaca layar tetap mendengar jam siapa yang sedang dibacakan. Angkanya
+   * tetap dihitung dari zona waktu Yogyakarta lewat Intl, bukan dari jam
+   * perangkat pembaca yang bisa berada di mana saja.
+   *
+   * Barisnya berangkat dengan atribut hidden dan baru dibuka setelah terisi.
+   * Tanpa JavaScript tidak ada tanggal dan tidak ada jam sama sekali, dan itu
+   * memang yang benar: garis strip yang berpura pura jam lebih buruk daripada
+   * baris yang tidak muncul. */
   function initJam() {
-    var tempat = doc.querySelectorAll("[data-jam]");
-    if (!tempat.length) return;
+    var jamnya = doc.querySelectorAll("[data-jam]");
+    var tanggalnya = doc.querySelectorAll("[data-tanggal]");
+    if (!jamnya.length && !tanggalnya.length) return;
 
-    var bentuk;
+    function buang(el) {
+      var induk = el.closest ? el.closest("[data-kini]") : null;
+      (induk || el).remove();
+    }
+
+    var bentukJam;
+    var bentukTanggal = {};
     try {
-      bentuk = new Intl.DateTimeFormat("en-GB", {
+      bentukJam = new Intl.DateTimeFormat("en-GB", {
         timeZone: WIB, hour: "2-digit", minute: "2-digit", hour12: false
+      });
+      bentukTanggal.en = new Intl.DateTimeFormat("en-GB", {
+        timeZone: WIB, weekday: "long", day: "numeric", month: "long", year: "numeric"
+      });
+      bentukTanggal.id = new Intl.DateTimeFormat("id-ID", {
+        timeZone: WIB, weekday: "long", day: "numeric", month: "long", year: "numeric"
       });
     } catch (e) {
       /* Intl tanpa basis data zona waktu. Lebih baik tidak menampilkan jam
          sama sekali daripada menampilkan jam yang salah dan meyakinkan. */
-      each(tempat, function (el) { el.remove(); });
+      each(jamnya, buang);
+      each(tanggalnya, buang);
       return;
     }
 
+    /* Intl tidak mengadu kalau locale yang diminta tidak ada; ia diam diam
+       menjawab dengan locale bawaan. Kalau id-ID tidak terpasang, yang keluar
+       nama hari Inggris di halaman yang sedang berbahasa Indonesia. Lebih
+       jujur memakai satu bentuk yang sama untuk kedua bahasa. */
+    if (bentukTanggal.id.resolvedOptions().locale.indexOf("id") !== 0) {
+      bentukTanggal.id = bentukTanggal.en;
+    }
+
     function tulis() {
-      var jam = bentuk.format(new Date());
-      each(tempat, function (el) {
+      var kini = new Date();
+      var jam = bentukJam.format(kini);
+      each(jamnya, function (el) {
         el.innerHTML = jam.replace(":", '<span class="jam__titik">:</span>');
+      });
+
+      var bahasa = doc.documentElement.getAttribute("lang") === "id" ? "id" : "en";
+      var tanggal = bentukTanggal[bahasa].format(kini);
+      each(tanggalnya, function (el) {
+        if (el.textContent !== tanggal) el.textContent = tanggal;
+      });
+
+      each(doc.querySelectorAll("[data-kini][hidden]"), function (el) {
+        el.removeAttribute("hidden");
       });
     }
 
@@ -293,6 +338,8 @@
     /* Sekali per detik, bukan per menit: yang berdenyut titik dua di
        antaranya, dan denyutnya harus sejalan dengan detik yang sebenarnya. */
     window.setInterval(tulis, 1000);
+    /* Nama harinya ikut berganti bahasa saat pembaca menekan EN atau ID. */
+    doc.addEventListener("hk:lang", tulis);
   }
 
   function initTumpuk() {
