@@ -259,9 +259,12 @@ yaitu `panah-searah`.
 **`map.stop()` bukan sekadar membatalkan animasi.** Ia memanggil
 `handlers.stop()`, yang menyetel ulang seluruh penanganan gerak termasuk
 DragPan. Memanggilnya pada `dragstart` mematahkan seretan yang baru saja
-dimulai peristiwa itu juga: terukur, menyeret 320 piksel cuma menggeser peta
-2,5 persen dari semestinya. Jangan panggil `map.stop()` dari pendengar
-peristiwa gerak; MapLibre sudah mengambil alih animasi dengan sendirinya.
+dimulai peristiwa itu juga. Terukur pada 14 September 2026 di zoom 15,2:
+menyeret 320 piksel menggeser peta 0,000149 derajat bujur, sekitar 16 meter,
+sedangkan semestinya sekitar 1.500 meter. Angkanya sama dengan yang tertulis
+di `assets/js/peta.js`, dan yang menahannya tetap sama adalah uji seretan di
+`tests/test_peramban.py`. Jangan panggil `map.stop()` dari pendengar peristiwa
+gerak; MapLibre sudah mengambil alih animasi dengan sendirinya.
 
 **Tangga warna bangunan mengikuti tinggi yang benar benar ada di sini.**
 Diukur dari 17.956 bangunan Mapbox yang termuat di Yogyakarta: median 3 m,
