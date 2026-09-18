@@ -390,6 +390,37 @@ ul { margin: 0; padding: 0; list-style: none; }
   min-width: 0; overflow: hidden; text-overflow: ellipsis;
 }
 .brand__name span { color: var(--accent); }
+/* Tanggal dan jam, di kepala halaman, tepat di sebelah nama.
+
+   Di sana ia terbaca sebagai keterangan milik situsnya, bukan sebagai menu,
+   dan garis rambut di kirinya yang memisahkannya dari nama. Sebelum ini ia
+   di kaki halaman, tempat yang hanya dilihat orang yang sudah selesai
+   membaca.
+
+   Disembunyikan di bawah 1080px, dan itu bukan kemalasan. Kepala halaman ini
+   sudah dihitung sampai piksel terakhir untuk layar 320px: sisanya lima
+   piksel dari dua ratus delapan puluh delapan, dan keterangan di blok
+   @media (max-width: 380px) di bawah melarang menambah apa pun ke sana tanpa
+   menghitung ulang. Di antara 720px dan 1080px menunya memang sudah hilang,
+   tetapi tombol bahasa dan tema masih di sana bersama nama yang sedang
+   mengecil, jadi satu baris lagi berarti nama yang terpotong.
+
+   display: none jadi bawaannya, lalu dihidupkan di layar yang muat. Ditulis
+   begitu, bukan sebaliknya, supaya atribut hidden tetap berarti: barisnya
+   memang tidak boleh muncul sebelum ada angka yang benar di dalamnya. */
+.kini {
+  display: none; margin: 0; align-items: baseline; gap: .5em;
+  padding-left: 16px; border-left: 1px solid var(--line);
+  font-size: var(--fs-sm); font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+@media (min-width: 1080px) {
+  .kini:not([hidden]) { display: flex; }
+}
+.kini__tanggal { color: var(--ink-3); }
+.kini .jam { color: var(--ink); font-weight: 600; }
+.kini__zona { color: var(--ink-3); font-size: var(--fs-xs); letter-spacing: .06em; }
+
 .nav { margin-left: auto; }
 .nav__list { display: flex; align-items: center; gap: 4px; }
 .nav__link {
@@ -551,31 +582,6 @@ ul { margin: 0; padding: 0; list-style: none; }
   display: flex; flex-wrap: wrap; gap: 6px 20px; align-items: center; justify-content: space-between; font-size: .875rem;
 }
 .footer__bottom p { margin: 0; }
-
-/* Tanggal dan jam berdiri sendiri sebagai baris pertama footer, di tengah,
-   dengan garis rambut di bawahnya.
-
-   Dulu keduanya menumpang di baris bawah bersama satu kalimat hak cipta yang
-   panjang. Di layar sempit baris itu patah jadi dua, dan jam yang berdetak
-   tiap detik berakhir sebagai ekor kalimat lain, sama redupnya dengan
-   kalimat itu. Kata "Yogyakarta" dibuang atas permintaan pemilik proyek.
-
-   rgba dipakai langsung, bukan token --ink-3, karena footer selalu gelap di
-   kedua tema. */
-.footer__kini {
-  display: flex; flex-wrap: wrap; gap: 2px 10px;
-  align-items: baseline; justify-content: center;
-  margin: 0 0 18px; padding-bottom: 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, .14);
-  font-variant-numeric: tabular-nums;
-}
-/* display: flex mengalahkan aturan hidden bawaan peramban, jadi atribut itu
-   harus disebut lagi di sini. Tanpa baris ini, barisnya tampil kosong pada
-   halaman tanpa JavaScript. */
-.footer__kini[hidden] { display: none; }
-.footer__tanggal { color: rgba(255, 255, 255, .62); }
-.footer__kini .jam { color: #fff; font-size: 1.0625rem; font-weight: 600; }
-.footer__zona { color: rgba(255, 255, 255, .62); font-size: .8125rem; letter-spacing: .06em; }
 
 /* ---------- mobile tab bar ---------- */
 .tabbar {

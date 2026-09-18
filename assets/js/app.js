@@ -266,13 +266,17 @@
 
   var WIB = "Asia/Jakarta";
 
-  /* Tanggal dan jam di kaki halaman.
+  /* Tanggal dan jam di kepala halaman.
    *
-   * Yang tertulis di layar tidak lagi menyebut "Yogyakarta"; yang menyebut
-   * tempatnya sekarang "WIB" di sebelahnya dan aria-label pada jamnya, supaya
-   * pembaca layar tetap mendengar jam siapa yang sedang dibacakan. Angkanya
-   * tetap dihitung dari zona waktu Yogyakarta lewat Intl, bukan dari jam
-   * perangkat pembaca yang bisa berada di mana saja.
+   * Yang tertulis di layar tidak menyebut "Yogyakarta"; yang menyebut
+   * tempatnya "WIB" di sebelahnya dan aria-label pada jamnya, supaya pembaca
+   * layar tetap mendengar jam siapa yang sedang dibacakan. Angkanya tetap
+   * dihitung dari zona waktu Yogyakarta lewat Intl, bukan dari jam perangkat
+   * pembaca yang bisa berada di mana saja.
+   *
+   * Tanggalnya ditulis pendek, "Sat, 19 Sept 2026", bukan panjang. Kepala
+   * halaman punya satu baris untuk semuanya, dan nama hari penuh beserta nama
+   * bulan penuh menghabiskan dua ratus piksel yang tidak ada.
    *
    * Barisnya berangkat dengan atribut hidden dan baru dibuka setelah terisi.
    * Tanpa JavaScript tidak ada tanggal dan tidak ada jam sama sekali, dan itu
@@ -295,10 +299,10 @@
         timeZone: WIB, hour: "2-digit", minute: "2-digit", hour12: false
       });
       bentukTanggal.en = new Intl.DateTimeFormat("en-GB", {
-        timeZone: WIB, weekday: "long", day: "numeric", month: "long", year: "numeric"
+        timeZone: WIB, weekday: "short", day: "numeric", month: "short", year: "numeric"
       });
       bentukTanggal.id = new Intl.DateTimeFormat("id-ID", {
-        timeZone: WIB, weekday: "long", day: "numeric", month: "long", year: "numeric"
+        timeZone: WIB, weekday: "short", day: "numeric", month: "short", year: "numeric"
       });
     } catch (e) {
       /* Intl tanpa basis data zona waktu. Lebih baik tidak menampilkan jam

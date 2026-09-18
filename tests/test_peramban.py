@@ -930,9 +930,12 @@ def test_jam_yogyakarta_berjalan_dan_benar(halaman, situs):
                - (benar.hour * 60 + benar.minute)) <= 1, f"{tampil} vs {jam_benar}"
 
 
-def test_kaki_halaman_menyebut_tanggal_hari_ini_bukan_nama_kota(halaman, situs):
-    """Kata "Yogyakarta" dibuang dari kaki halaman atas permintaan pemilik
-    proyek, dan yang menggantikannya tanggal hari ini.
+def test_kepala_halaman_menyebut_tanggal_hari_ini_bukan_nama_kota(halaman, situs):
+    """Kata "Yogyakarta" dibuang atas permintaan pemilik proyek, dan yang
+    menggantikannya tanggal hari ini beserta jamnya.
+
+    Keduanya pindah ke kepala halaman, di sebelah nama. Sebelumnya di kaki
+    halaman, tempat yang hanya dilihat orang yang sudah selesai membaca.
 
     Yang menyebut tempatnya sekarang "WIB" di sebelah jamnya dan aria-label
     pada jam itu, jadi barisnya tetap tidak pernah mengaku sebagai jam
@@ -945,7 +948,7 @@ def test_kaki_halaman_menyebut_tanggal_hari_ini_bukan_nama_kota(halaman, situs):
     if halaman.locator("[data-tanggal]").count() == 0:
         pytest.skip("Intl di peramban ini tanpa zona waktu, jadi barisnya sengaja dibuang")
 
-    baris = halaman.locator(".footer__kini").first
+    baris = halaman.locator(".header .kini").first
     baris.wait_for(state="visible")
 
     teks = baris.inner_text()
@@ -962,17 +965,20 @@ def test_kaki_halaman_menyebut_tanggal_hari_ini_bukan_nama_kota(halaman, situs):
     label = halaman.locator("[data-jam]").first.get_attribute("aria-label") or ""
     assert "Yogyakarta" in label, label
 
+    # Dan kaki halaman tinggal hak ciptanya saja.
+    assert halaman.locator(".footer .kini").count() == 0
 
-def test_nama_hari_di_kaki_halaman_ikut_ganti_bahasa(halaman, situs):
+
+def test_nama_hari_di_kepala_halaman_ikut_ganti_bahasa(halaman, situs):
     """Tanggalnya dibuat JavaScript, jadi ia tidak ikut lewat data-ind. Kalau
     tidak ada yang menuliskannya ulang, halaman berbahasa Indonesia berakhir
-    dengan nama hari Inggris di kakinya."""
+    dengan nama hari Inggris di kepalanya."""
     buka(halaman, situs, "/about")
 
     if halaman.locator("[data-tanggal]").count() == 0:
         pytest.skip("Intl di peramban ini tanpa zona waktu, jadi barisnya sengaja dibuang")
 
-    halaman.locator(".footer__kini").first.wait_for(state="visible")
+    halaman.locator(".header .kini").first.wait_for(state="visible")
     inggris = halaman.locator("[data-tanggal]").first.inner_text()
 
     halaman.locator('.lang__btn[data-lang="id"]').first.click()
@@ -985,6 +991,64 @@ def test_nama_hari_di_kaki_halaman_ikut_ganti_bahasa(halaman, situs):
     assert indonesia != inggris, f"tetap {inggris!r} sesudah pindah bahasa"
 
 
+def test_tanggalnya_pendek_supaya_muat_satu_baris_dengan_menunya(halaman, situs):
+    """Kepala halaman punya satu baris untuk nama, tanggal, menu, dan kedua
+    tombolnya. Nama hari penuh beserta nama bulan penuh menghabiskan dua ratus
+    piksel yang tidak ada di sana.
+
+    Yang dijaga: barisnya tidak pernah patah jadi dua, dan ia tidak pernah
+    mendorong halamannya melebar.
+    """
+    buka(halaman, situs, "/about")
+
+    if halaman.locator("[data-tanggal]").count() == 0:
+        pytest.skip("Intl di peramban ini tanpa zona waktu, jadi barisnya sengaja dibuang")
+
+    halaman.locator(".header .kini").first.wait_for(state="visible")
+
+    ukur = halaman.evaluate("""() => {
+      const k = document.querySelector('.header .kini');
+      const n = document.querySelector('.header .nav');
+      return {
+        tinggi: Math.round(k.getBoundingClientRect().height),
+        baris: Math.round(parseFloat(getComputedStyle(k).lineHeight)),
+        jarak: Math.round(n.getBoundingClientRect().left - k.getBoundingClientRect().right),
+        lebarDokumen: document.documentElement.scrollWidth,
+        lebarLayar: window.innerWidth,
+      };
+    }""")
+
+    assert ukur["tinggi"] <= ukur["baris"] + 2, (
+        f"barisnya setinggi {ukur['tinggi']}px padahal satu baris {ukur['baris']}px, "
+        "jadi ia sudah patah jadi dua"
+    )
+    assert ukur["jarak"] > 16, f"cuma {ukur['jarak']}px sebelum menunya"
+    assert ukur["lebarDokumen"] <= ukur["lebarLayar"], (
+        "kepala halaman mendorong halamannya melebar dari layarnya"
+    )
+
+
+@pytest.mark.parametrize("lebar,tampil", [(1280, True), (1079, False), (390, False)])
+def test_tanggal_menyingkir_di_layar_yang_tidak_muat(halaman, situs, lebar, tampil):
+    """Di bawah 1080px barisnya disembunyikan, dan itu bukan kemalasan.
+
+    Kepala halaman ini sudah dihitung sampai piksel terakhir untuk layar
+    320px, dan keterangan di style.css melarang menambah apa pun ke sana tanpa
+    menghitung ulang. Uji ini yang menahan larangan itu tetap berlaku.
+    """
+    halaman.set_viewport_size({"width": lebar, "height": 900})
+    buka(halaman, situs, "/about")
+
+    if halaman.locator("[data-tanggal]").count() == 0:
+        pytest.skip("Intl di peramban ini tanpa zona waktu, jadi barisnya sengaja dibuang")
+
+    halaman.wait_for_timeout(300)
+    assert halaman.locator(".header .kini").first.is_visible() is tampil
+
+    # Apa pun keadaannya, halamannya tidak boleh melebar dari layarnya.
+    assert halaman.evaluate("() => document.documentElement.scrollWidth") <= lebar
+
+
 def test_baris_tanggal_tidak_tampil_sebelum_ada_angkanya(halaman, situs):
     """Tanpa JavaScript tidak ada tanggal dan tidak ada jam sama sekali.
 
@@ -992,11 +1056,13 @@ def test_baris_tanggal_tidak_tampil_sebelum_ada_angkanya(halaman, situs):
     muncul, dan itu aturan yang sama dengan yang dipakai panel kosong di
     dashboard: nol adalah bacaan, ketiadaan data bukan.
     """
-    bersih = halaman.context.browser.new_context(java_script_enabled=False)
+    bersih = halaman.context.browser.new_context(
+        java_script_enabled=False, viewport={"width": 1280, "height": 900}
+    )
     try:
         tab = bersih.new_page()
         tab.goto(f"{situs}/about", wait_until="domcontentloaded")
-        baris = tab.locator(".footer__kini")
+        baris = tab.locator(".header .kini")
         assert baris.count() == 1, "markupnya hilang, bukan sekadar disembunyikan"
         assert baris.first.is_hidden(), "baris kosong tetap tampil tanpa JavaScript"
         # Hak ciptanya tetap terbaca, sebab itu bukan angka yang berjalan.

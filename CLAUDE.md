@@ -19,7 +19,7 @@ python -m http.server 8080
 # uji
 pip install -r tests/requirements.txt
 python -m pytest                 # 768, tanpa peramban, hitungan detik
-python -m pytest -m peramban     # 71, Chromium sungguhan
+python -m pytest -m peramban     # 75, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
 # backend dan dashboard admin
@@ -60,7 +60,7 @@ backend/db/migrations/    0001 sampai 0006, nomornya wajib unik
 unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    839 uji
+tests/                    843 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting

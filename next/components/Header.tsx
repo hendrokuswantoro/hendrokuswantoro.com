@@ -8,6 +8,7 @@ import { useLang } from "./LanguageProvider";
 import { LanguageSwitch } from "./LanguageSwitch";
 import { ThemeSwitch } from "./ThemeSwitch";
 import { BrandMark } from "./Icons";
+import { JamWIB } from "./JamWIB";
 
 function isCurrent(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
@@ -40,6 +41,8 @@ export function Header() {
               hendro<span>kuswantoro</span>
             </span>
           </Link>
+
+          <JamWIB />
 
           <nav className="nav" aria-label={say(COMMON.mainNav)}>
             <ul className="nav__list">
