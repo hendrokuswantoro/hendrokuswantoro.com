@@ -501,11 +501,71 @@ def test_blok_assets_tidak_kehilangan_header_keamanan():
         )
 
 
-def test_csp_di_blok_assets_sama_dengan_yang_di_server():
-    """Dua CSP yang berbeda di satu berkas adalah satu yang sudah tertinggal."""
-    semua = re.findall(r'add_header Content-Security-Policy "([^"]+)"', NGINX)
-    assert len(semua) >= 2, "CSP hanya tertulis sekali, blok /assets/ belum punya"
-    assert len(set(semua)) == 1, "CSP di nginx tidak seragam antar blok"
+def _csp_dari_blok(awalan: str) -> str:
+    tanda = re.search(r"^ *" + re.escape(awalan) + r" *\{$", NGINX, re.M)
+    assert tanda, f"{awalan} tidak ada di konfigurasi nginx"
+    blok = NGINX[tanda.start():NGINX.index("\n    }", tanda.start())]
+    cocok = re.search(r'add_header Content-Security-Policy "([^"]+)"', blok)
+    assert cocok, f"{awalan} tidak memasang CSP"
+    return cocok.group(1)
+
+
+def _arahan(csp: str) -> dict[str, set[str]]:
+    hasil = {}
+    for bagian in csp.split(";"):
+        potong = bagian.split()
+        if potong:
+            hasil[potong[0]] = set(potong[1:])
+    return hasil
+
+
+def test_csp_situs_seragam_antar_bloknya():
+    """Dua CSP berbeda untuk halaman yang sama adalah satu yang tertinggal.
+
+    Yang dibandingkan blok yang menyajikan situs publik. Blok dashboard
+    sengaja berbeda, dan bedanya dijaga uji di bawah ini.
+    """
+    # _dari_nginx mengambil yang pertama tertulis, yaitu milik blok server
+    # yang menyajikan situsnya.
+    situs = {_csp_dari_blok("location /assets/"), _dari_nginx("Content-Security-Policy")}
+    assert len(situs) == 1, "CSP di nginx tidak seragam antar blok situs"
+
+
+def test_csp_dashboard_lebih_ketat_daripada_situs_publiknya():
+    """Dashboard tidak memuat peta dan tidak punya satu pun skrip atau gaya
+    sebaris, jadi ia tidak perlu satu pun kelonggaran yang dipakai situs
+    publik.
+
+    Sampai 19 September 2026 keduanya sama persis, dan yang sama persis itu
+    justru menolak seluruh skrip dashboard: skripnya sebaris 44 KB sedangkan
+    hash di script-src milik skrip tema tiga baris di situs publik. Dashboard
+    mati total di balik nginx dan tidak ada satu pun pesan di layar.
+
+    Sekarang skrip dan gayanya berkas sendiri, jadi CSP-nya boleh, dan harus,
+    lebih ketat. Uji ini menahan kelonggaran tidak menyelinap balik lewat
+    penyalinan dari blok sebelahnya.
+    """
+    dasbor = _arahan(_csp_dari_blok("location ^~ /admin"))
+    situs = _arahan(_dari_nginx("Content-Security-Policy"))
+
+    assert "'unsafe-inline'" not in dasbor.get("style-src", set())
+    assert not any(s.startswith("'sha256-") for s in dasbor.get("script-src", set())), (
+        "masih ada hash skrip sebaris di CSP dashboard"
+    )
+
+    # Tiap arahan dashboard wajib sama ketat atau lebih ketat daripada milik
+    # situs. Yang dibandingkan himpunannya, bukan kalimatnya, sebab urutan
+    # sumber di dalam satu arahan tidak berarti apa apa.
+    for nama, sumber in dasbor.items():
+        assert sumber <= situs.get(nama, sumber), (
+            f"{nama} di dashboard lebih longgar daripada di situs: "
+            f"{sorted(sumber - situs.get(nama, set()))}"
+        )
+
+    for luar in ("mapbox", "openfreemap", "arcgisonline", "amazonaws"):
+        assert luar not in " ".join(str(s) for s in dasbor.values()), (
+            f"dashboard tidak memuat peta, jadi {luar} tidak perlu ada di CSP-nya"
+        )
 
 
 def test_langkah_peramban_di_ci_menyebut_penandanya():
@@ -549,8 +609,8 @@ def test_kamera_hanya_dibuka_di_halaman_admin():
         "kamera terbuka untuk seluruh situs"
     )
 
-    blok = re.search(r"location = /admin \{(.*?)\n    \}", NGINX, re.S)
-    assert blok, "blok location = /admin tidak ditemukan"
+    blok = re.search(r"location \^~ /admin \{(.*?)\n    \}", NGINX, re.S)
+    assert blok, "blok location ^~ /admin tidak ditemukan"
     isi = blok.group(1)
     assert "camera=(self)" in isi, "halaman admin tidak diizinkan memakai kamera"
 
@@ -560,7 +620,7 @@ def test_blok_admin_tidak_kehilangan_header_lain():
     Blok /admin sekarang memasang Permissions-Policy sendiri, jadi kelima
     header lain wajib ikut diulang, atau halaman admin justru jadi satu
     satunya halaman tanpa CSP dan tanpa nosniff."""
-    blok = re.search(r"location = /admin \{(.*?)\n    \}", NGINX, re.S)
+    blok = re.search(r"location \^~ /admin \{(.*?)\n    \}", NGINX, re.S)
     isi = blok.group(1)
     for arahan in ("X-Content-Type-Options", "X-Frame-Options", "Referrer-Policy",
                    "Strict-Transport-Security", "Content-Security-Policy"):

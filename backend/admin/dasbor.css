@@ -1,0 +1,201 @@
+/* Gaya dashboard admin.
+
+   Dipisah dari index.html sejak 19 September 2026, dan itu bukan kerapian.
+   Selama ia sebaris, CSP produksi harus memberi izin 'unsafe-inline' pada
+   style-src, dan izin itu berlaku untuk seluruh situs, bukan cuma untuk
+   halaman ini.
+
+   Gayanya sengaja tidak menumpang assets/css/style.css: dashboard adalah alat
+   kerja yang harus tetap hidup ketika situsnya sendiri sedang rusak. */
+
+  :root {
+    --bg: #f6f6f6; --kartu: #ffffff; --tinta: #141414; --tinta-2: #545454;
+    --garis: #e2e2e2; --garis-kuat: #cbcbcb; --aksen: #1f63e0; --bahaya: #b4232a;
+    --hijau: #0b7d3f; --r: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d0f11; --kartu: #1a1d20; --tinta: #f2f4f6; --tinta-2: #9aa3ab;
+      --garis: #2b3035; --garis-kuat: #3d444b; --aksen: #5b93ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--tinta);
+    font: 15px/1.5 "Poppins", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  }
+  header {
+    display: flex; align-items: center; gap: 14px; padding: 14px 20px;
+    background: var(--kartu); border-bottom: 1px solid var(--garis);
+    position: sticky; top: 0; z-index: 5;
+  }
+  header h1 { font-size: 1rem; margin: 0; letter-spacing: -.01em; }
+  header .isi { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  main { max-width: 1400px; margin: 0 auto; padding: 20px; }
+  .kartu {
+    background: var(--kartu); border: 1px solid var(--garis);
+    border-radius: var(--r); padding: 18px; margin-bottom: 16px;
+  }
+  label { display: block; font-size: .75rem; font-weight: 600; letter-spacing: .05em;
+          text-transform: uppercase; color: var(--tinta-2); margin: 0 0 5px; }
+  input, textarea, select {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--garis-kuat);
+    border-radius: 8px; background: var(--bg); color: var(--tinta);
+    font: inherit; font-size: .9375rem;
+  }
+  textarea { resize: vertical; min-height: 90px; font-family: ui-monospace, Consolas, monospace; }
+  textarea.isi { min-height: 320px; }
+  .baris { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px; }
+  @media (max-width: 860px) { .baris { grid-template-columns: 1fr; } }
+  .bahasa { font-size: .7rem; color: var(--tinta-2); }
+  button {
+    font: inherit; font-weight: 600; padding: 9px 16px; border-radius: 999px;
+    border: 1px solid var(--garis-kuat); background: var(--kartu);
+    color: var(--tinta); cursor: pointer;
+  }
+  button.utama { background: var(--tinta); color: var(--bg); border-color: var(--tinta); }
+  button.bahaya { color: var(--bahaya); border-color: var(--bahaya); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* Saklar lihat sandi.
+     Bidangnya relatif, tombolnya absolut di dalamnya, dan isiannya diberi
+     padding kanan seluas tombol supaya sandi yang panjang tidak pernah
+     tergulung ke bawah tombolnya. Ukuran sentuhnya 34px, di atas ambang
+     nyaman untuk jari, dan itu sebabnya tombolnya tidak dibuat sekecil
+     ikonnya. */
+  .sandi-bidang { position: relative; }
+  .sandi-bidang input { padding-right: 44px; }
+  .lihat {
+    position: absolute; top: 50%; right: 5px; transform: translateY(-50%);
+    width: 34px; height: 34px; padding: 0; display: grid; place-items: center;
+    border: 0; background: transparent; color: var(--tinta-2); border-radius: 8px;
+  }
+  .lihat:hover { color: var(--tinta); background: var(--bg); }
+  .lihat svg { width: 19px; height: 19px; fill: none; stroke: currentColor;
+               stroke-width: 1.8; stroke-linecap: round; }
+  /* Coretnya muncul saat sandi SEDANG terlihat, sebab saat itu menekannya
+     berarti menyembunyikan. Ikon menyatakan akibat tekanan, bukan keadaan. */
+  .lihat .coret { opacity: 0; }
+  .lihat[aria-pressed="true"] .coret { opacity: 1; }
+
+  /* ---------- dashboard ---------- */
+  .kepala-panel { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .kepala-panel h2 { margin: 0; font-size: 1.05rem; }
+  .kepala-panel > :nth-child(2) { margin-left: auto; }
+  .ket { margin: 0 0 12px; font-size: .8125rem; color: var(--tinta-2); }
+
+  /* auto-fit, bukan jumlah kolom tetap: ubinnya menyesuaikan lebar layar
+     sendiri, dan min-width 0 mencegah anak grid melebar mengikuti isinya. */
+  .ubin { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  .satu-ubin {
+    min-width: 0; display: grid; gap: 2px; padding: 12px 14px;
+    border: 1px solid var(--garis); border-radius: 10px; background: var(--bg);
+  }
+  .satu-ubin .angka { font-size: 1.5rem; font-weight: 700; line-height: 1.15; }
+  .satu-ubin .nama { font-size: .7rem; text-transform: uppercase;
+                     letter-spacing: .06em; color: var(--tinta-2); }
+
+  .keadaan { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .keadaan span {
+    font-size: .75rem; padding: 3px 10px; border-radius: 999px;
+    border: 1px solid var(--garis-kuat); color: var(--tinta-2);
+  }
+  .keadaan span.baik { color: var(--hijau); border-color: var(--hijau); }
+  .keadaan span.belum { color: var(--tinta-2); }
+  .keadaan span.buruk { color: var(--bahaya); border-color: var(--bahaya); }
+
+  .ini-perangkat { font-size: .7rem; color: var(--hijau); border: 1px solid var(--hijau);
+                   border-radius: 999px; padding: 2px 9px; }
+  .kosong { color: var(--tinta-2); font-size: .8125rem; padding: 10px 8px; }
+
+  /* Tabel yang bisa tumbuh panjang diberi atap lalu menggulir di dalam
+     kartunya sendiri. Tanpa ini, dua puluh sesi dan empat puluh peristiwa
+     mendorong panel menulis jauh ke bawah layar, padahal menulis itu justru
+     pekerjaan utama halaman ini. Kepala tabelnya ikut dilekatkan supaya nama
+     kolomnya tidak hilang saat digulir. */
+  .gulung { max-height: 320px; overflow-y: auto; }
+  .gulung thead th { position: sticky; top: 0; background: var(--kartu); z-index: 1; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--garis); }
+  th { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--tinta-2); }
+  .tanda { font-size: .7rem; padding: 2px 9px; border-radius: 999px; border: 1px solid var(--garis-kuat); }
+  .tanda.terbit { color: var(--hijau); border-color: var(--hijau); }
+  .kabar { padding: 11px 14px; border-radius: 8px; margin-bottom: 14px; font-size: .9rem; }
+  .kabar.salah { background: rgba(180,35,42,.12); color: var(--bahaya); }
+  .kabar.baik { background: rgba(11,125,63,.12); color: var(--hijau); }
+  .sembunyi { display: none !important; }
+  .pratinjau { border-left: 3px solid var(--garis); padding-left: 14px; color: var(--tinta-2); }
+  .pratinjau h2 { font-size: 1.1rem; color: var(--tinta); margin: 18px 0 6px; }
+  .pratinjau blockquote { margin: 12px 0; padding-left: 12px; border-left: 3px solid var(--aksen); }
+  .masuk { max-width: 380px; margin: 80px auto; }
+  .petunjuk { font-size: .8rem; color: var(--tinta-2); margin: 6px 0 0; }
+
+  /* Bilah format, pustaka berkas, dan pratinjau medianya.
+     Gaya dashboard ini sengaja tidak menumpang assets/css/style.css: ia alat
+     kerja yang harus tetap hidup ketika situsnya sendiri sedang rusak. */
+  .bilah {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    margin-bottom: 12px; padding: 8px 10px;
+    background: var(--kartu); border: 1px solid var(--garis); border-radius: 8px;
+  }
+  .bilah button {
+    min-width: 34px; height: 32px; padding: 0 9px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid transparent; border-radius: 6px; background: transparent;
+    color: var(--tinta); font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer;
+  }
+  .bilah button:hover { border-color: var(--garis-kuat); }
+  .bilah .pisah { width: 1px; height: 22px; margin: 0 4px; background: var(--garis); }
+  .bilah .kata { margin-left: auto; font-size: .8rem; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
+
+  .jatuh {
+    padding: 16px; text-align: center;
+    border: 2px dashed var(--garis-kuat); border-radius: 8px;
+  }
+  .jatuh.aktif { border-color: var(--aksen); }
+  .laju { height: 6px; max-width: 320px; margin: 12px auto 0; border-radius: 999px;
+          background: var(--garis); overflow: hidden; }
+  .laju span { display: block; height: 100%; background: var(--aksen); }
+  .petak { list-style: none; margin: 14px 0 0; padding: 0;
+           display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .petak li { display: grid; gap: 6px; padding: 10px;
+              border: 1px solid var(--garis); border-radius: 8px; }
+  .petak button.sisip { padding: 0; border: 0; background: var(--garis); border-radius: 6px;
+                        cursor: pointer; overflow: hidden; }
+  .petak img, .petak video { display: block; width: 100%; height: 104px; object-fit: cover; }
+  .petak .nama { margin: 0; font-size: .8rem; font-weight: 600; color: var(--tinta);
+                 overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pratinjau figure { margin: 14px 0; }
+  .pratinjau img, .pratinjau video {
+    display: block; max-width: 100%; max-height: 220px; border-radius: 8px;
+  }
+  .pratinjau figcaption { margin-top: 6px; font-size: .8rem; color: var(--tinta-2); }
+  .pratinjau ul, .pratinjau ol { margin: 0 0 8px; padding-left: 1.3em; }
+
+/* Kelas pengganti atribut style= di dalam markup.
+
+   Sampai 19 September 2026 ketujuh belas gaya di bawah ditulis sebagai
+   `style="..."` langsung di index.html. Itu memaksa CSP memberi izin
+   'unsafe-inline' pada style-src, dan izin itu berlaku untuk seluruh atribut
+   style di halaman, termasuk yang diselundupkan lewat isi yang tidak
+   tersaring. Sekarang style-src dashboard cukup 'self'.
+
+   Namanya menyebut gunanya, bukan nilainya, kecuali beberapa yang memang cuma
+   jarak dan tidak punya nama yang lebih baik. */
+.kartu__judul { margin: 0; font-size: 1.05rem; }
+.isian--lebar { width: 100%; }
+.ke-kanan { margin-left: auto; }
+.ke-kanan-berjajar { margin-left: auto; display: flex; gap: 8px; }
+.garis-pisah { flex: 1; border: 0; border-top: 1px solid var(--garis); }
+.baris-rapat { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.baris-berjajar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+.baris-berjajar-tengah { display: flex; align-items: center; gap: 10px; margin: 14px 0; }
+.ket-atas { margin: 0 0 12px; color: var(--tinta-2); font-size: .85rem; }
+.ket-bawah { margin-top: 10px; font-size: .8125rem; color: var(--tinta-2); }
+.ket-kecil { font-size: .75rem; color: var(--tinta-2); }
+.rapat-bawah-4 { margin: 0 0 4px; }
+.rapat-bawah-10 { margin: 0 0 10px; }
+.jarak-atas-14 { margin-top: 14px; }
+.jarak-bawah-12 { margin-bottom: 12px; }
+.jarak-bawah-16 { margin-bottom: 16px; }
+.tanpa-jarak-atas { margin-top: 0; }

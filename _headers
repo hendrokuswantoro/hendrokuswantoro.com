@@ -1,9 +1,20 @@
 # Cloudflare Pages and Netlify read this file.
 #
-# The work map needs four exceptions: the OpenFreeMap host for the style,
-# the vector tiles, the sprites and the glyphs, blob workers, and inline
-# styles, which MapLibre writes onto its own controls and markers. Scripts
+# The work map needs three exceptions: the OpenFreeMap host for the style,
+# the vector tiles, the sprites and the glyphs, and blob workers. Scripts
 # stay restricted to this origin, which is the part that carries real risk.
+#
+# style-src tidak lagi menyebut 'unsafe-inline'. Kalimat di tempat ini dulu
+# berbunyi bahwa MapLibre menulis gaya sebaris ke kontrol dan penandanya
+# sendiri, jadi izin itu wajib. Itu keliru untuk MapLibre 6: ia menulis lewat
+# CSSOM, yaitu `el.style.x = ...`, dan CSSOM tidak dijaga style-src sama
+# sekali. Yang dijaga style-src cuma elemen <style> dan atribut style= di
+# dalam markup.
+#
+# Terukur 19 September 2026: seluruh halaman disajikan dengan style-src 'self'
+# saja, peta dibuka sampai MapLibre benar benar berdiri, dan tercatat nol
+# pelanggaran. tests/test_csp.py yang mengukurnya, dan ia mengukur ulang tiap
+# kali CI jalan.
 # MapLibre 6 loads its worker as a real module from this origin, resolved
 # through import.meta.url, so worker-src needs 'self' and not only blob:.
 # Version 4 built the worker from a blob, which is why the rule used to be
@@ -29,7 +40,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), interest-cohort=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://tiles.openfreemap.org https://api.mapbox.com https://server.arcgisonline.com https://s3.amazonaws.com; style-src 'self' 'unsafe-inline'; font-src 'self'; script-src 'self' blob: 'sha256-VUnTnFlu5ng6WnqmcjBDYVMXzjgyRSeLJtiwFpIU9Pw='; worker-src 'self' blob:; child-src blob:; connect-src 'self' https://tiles.openfreemap.org https://api.mapbox.com https://events.mapbox.com https://server.arcgisonline.com https://s3.amazonaws.com; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://tiles.openfreemap.org https://api.mapbox.com https://server.arcgisonline.com https://s3.amazonaws.com; style-src 'self'; font-src 'self'; script-src 'self' blob: 'sha256-VUnTnFlu5ng6WnqmcjBDYVMXzjgyRSeLJtiwFpIU9Pw='; worker-src 'self' blob:; child-src blob:; connect-src 'self' https://tiles.openfreemap.org https://api.mapbox.com https://events.mapbox.com https://server.arcgisonline.com https://s3.amazonaws.com; object-src 'none'; upgrade-insecure-requests
 
 # Kenapa ini daftar folder, bukan satu baris /assets/*.
 #

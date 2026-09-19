@@ -32,7 +32,7 @@ if sys.platform == "win32":
 import os
 import pathlib
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -161,6 +161,42 @@ def buat() -> FastAPI:
     async def dashboard() -> FileResponse:
         berkas = (NEXT_ADMIN / "admin" / "index.html") if pakai_next else HTML_ADMIN
         return FileResponse(berkas, headers={"X-Robots-Tag": "noindex, nofollow"})
+
+    # Gaya dan skrip dashboard HTML, sebagai berkas terpisah.
+    #
+    # Sampai 19 September 2026 keduanya sebaris di dalam index.html, dan
+    # akibatnya dashboard mati total di balik nginx: CSP produksi untuk /admin
+    # memakai script-src 'self' ditambah satu hash sha256 milik skrip tema di
+    # situs publik, jadi skrip 44 KB di dalam halaman ini ditolak seluruhnya.
+    # Gagalnya sunyi, tombol Masuk diam, dan jejaknya hanya di konsol.
+    #
+    # Dilayani dari sini, bukan dari StaticFiles yang dipasang di /admin,
+    # sebab /admin sendiri harus tetap menjawab dokumen HTML-nya. Daftarnya
+    # tertutup: dua nama, dipetakan tangan, jadi tidak ada satu pun jalur yang
+    # datang dari pemanggil.
+    ASET_ADMIN = {
+        "dasbor.css": (HTML_ADMIN.parent / "dasbor.css", "text/css; charset=utf-8"),
+        "dasbor.js": (HTML_ADMIN.parent / "dasbor.js", "application/javascript; charset=utf-8"),
+    }
+
+    @app.get("/admin/{nama}", include_in_schema=False)
+    async def aset_dashboard(nama: str):
+        pilihan = ASET_ADMIN.get(nama)
+        if pilihan is None:
+            raise HTTPException(status_code=404, detail="tidak ada")
+        berkas, tipe = pilihan
+        return FileResponse(
+            berkas,
+            media_type=tipe,
+            headers={
+                "X-Robots-Tag": "noindex, nofollow",
+                "X-Content-Type-Options": "nosniff",
+                # Tidak immutable: nama berkasnya tetap, jadi janji itu tidak
+                # bisa dipenuhi. Yang dipakai revalidasi, yang murah untuk
+                # halaman yang cuma dibuka pemiliknya.
+                "Cache-Control": "no-cache",
+            },
+        )
 
     @app.exception_handler(Exception)
     async def galat_tak_terduga(permintaan: Request, galat: Exception):

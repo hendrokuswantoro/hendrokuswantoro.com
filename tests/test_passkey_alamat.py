@@ -38,7 +38,20 @@ import pytest
 
 from konftes import AKAR
 
-ADMIN_STATIS = (AKAR / "backend" / "admin" / "index.html").read_text(encoding="utf-8")
+# Markup dan skripnya dibaca bersama sebagai satu sumber.
+#
+# Sejak 19 September 2026 skripnya berkas sendiri, `dasbor.js`, dan bukan lagi
+# blok <script> sebaris. Sebabnya CSP: selama ia sebaris, script-src harus
+# memberi izin hash atau 'unsafe-inline', dan yang terjadi justru skripnya
+# ditolak seluruhnya sehingga dashboard mati di balik nginx.
+#
+# Yang diuji di berkas ini tetap sama, yaitu isinya, jadi keduanya digabung
+# di sini alih alih memecah tiap uji jadi dua.
+_ADMIN = AKAR / "backend" / "admin"
+ADMIN_STATIS = "\n".join(
+    (_ADMIN / nama).read_text(encoding="utf-8")
+    for nama in ("index.html", "dasbor.js")
+)
 LIB_TS = (AKAR / "next" / "lib" / "passkey.ts").read_text(encoding="utf-8")
 MASUK_TSX = (AKAR / "next" / "components" / "admin" / "MasukView.tsx").read_text(encoding="utf-8")
 PANEL_TSX = (AKAR / "next" / "components" / "admin" / "PanelPasskey.tsx").read_text(encoding="utf-8")
