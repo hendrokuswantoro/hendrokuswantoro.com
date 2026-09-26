@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import sys
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
@@ -22,15 +22,22 @@ from backend.core import basis_data
 from backend.core.catat import CatatPermintaan, pasang
 from backend.core.konfigurasi import pengaturan
 from backend.core.laju import BatasiLaju
+from backend.layanan import pembersihan
 
 
 @asynccontextmanager
 async def daur(app: FastAPI):
     atur = pengaturan()
+    tugas = None
     if atur.siap:
         await basis_data.buka()
+        tugas = asyncio.create_task(pembersihan.ulangi())
     pasang().info("mulai", extra={"tambahan": {"basis_data": atur.siap}})
     yield
+    if tugas is not None:
+        tugas.cancel()
+        with suppress(asyncio.CancelledError):
+            await tugas
     await basis_data.tutup()
 
 
