@@ -202,7 +202,9 @@ def test_gambar_karya_semuanya_webp_dan_dimuat_malas():
     import re
 
     for tag in re.findall(r"<img\b[^>]*>", proyek):
-        sumber = re.search(r'src="([^"]+)"', tag)
+        # Query `?v=` dibuang dulu. Ia sidik isi dari tools/versi_aset.py,
+        # bukan bagian nama berkasnya.
+        sumber = re.search(r'src="([^"?]+)', tag)
         assert sumber and sumber.group(1).endswith(".webp"), f"bukan webp: {tag[:70]}"
         assert 'loading="lazy"' in tag, f"tidak dimuat malas: {tag[:70]}"
         assert re.search(r'width="\d+"', tag) and re.search(r'height="\d+"', tag), (

@@ -28,7 +28,7 @@ export const PARKIR = {
     id: "Pilih titik di peta, zona dan tarifnya muncul. Bagian yang paling lama saya pikirkan justru bukan itu, melainkan kapan peta ini harus menolak menjawab.",
   } as Copy,
 
-  image: "/assets/img/work/parking.webp",
+  image: "/assets/img/work/parking.webp?v=8e000f92a9",
   alt: {
     en: "The parking map showing the zone and the fee for a street in Yogyakarta",
     id: "Peta parkir yang menampilkan zona dan tarif untuk sebuah ruas di Yogyakarta",

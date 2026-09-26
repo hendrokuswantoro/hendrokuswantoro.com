@@ -31,7 +31,7 @@ export const PROJECTS: Project[] = [
   {
     id: "parking",
     point: { lng: 110.3656, lat: -7.7925 },
-    image: "/assets/img/work/parking.webp",
+    image: "/assets/img/work/parking.webp?v=8e000f92a9",
     alt: { en: "Screenshot of the parking map app showing the zone and the fee for Jalan Malioboro", id: "Tangkapan layar aplikasi peta parkir, menampilkan zona dan tarif di Jalan Malioboro" },
     categories: ["app"],
     badge: { en: "Map app", id: "Aplikasi peta" },
@@ -51,7 +51,7 @@ export const PROJECTS: Project[] = [
   {
     id: "fire",
     point: { lng: 113.2, lat: -1.6 },
-    image: "/assets/img/work/fire.webp",
+    image: "/assets/img/work/fire.webp?v=e1e03bc9f7",
     alt: { en: "Six small maps of Kalimantan showing where fires ignited through the 2026 season", id: "Enam peta kecil Kalimantan yang menunjukkan titik api sepanjang musim 2026" },
     categories: ["satellite", "analysis"],
     badge: { en: "Satellite data", id: "Data satelit" },
@@ -70,7 +70,7 @@ export const PROJECTS: Project[] = [
   {
     id: "fish",
     point: { lng: 108.22, lat: 3.7 },
-    image: "/assets/img/work/fish.webp",
+    image: "/assets/img/work/fish.webp?v=ebbd9fdb43",
     alt: { en: "Poster with suitability maps and charts for fish landing sites in Natuna", id: "Poster berisi peta kesesuaian dan grafik lokasi pendaratan ikan di Natuna" },
     categories: ["analysis"],
     badge: { en: "Map analysis", id: "Analisis peta" },
@@ -89,7 +89,7 @@ export const PROJECTS: Project[] = [
   {
     id: "pickup",
     point: { lng: 106.82, lat: -6.21 },
-    image: "/assets/img/work/pickup.webp",
+    image: "/assets/img/work/pickup.webp?v=c87b665813",
     alt: {
       en: "Map of common pickup points from driver GPS pings in Jakarta",
       id: "Peta titik jemput umum dari ping GPS pengemudi di Jakarta",
@@ -114,7 +114,7 @@ export const PROJECTS: Project[] = [
   {
     id: "reach",
     point: { lng: 136.08, lat: -1.18 },
-    image: "/assets/img/work/reach.webp",
+    image: "/assets/img/work/reach.webp?v=416ec76d18",
     alt: { en: "Map sheet of service accessibility in Biak Numfor", id: "Lembar peta aksesibilitas layanan di Biak Numfor" },
     categories: ["analysis", "design"],
     badge: { en: "Service reach", id: "Jangkauan layanan" },
@@ -133,7 +133,7 @@ export const PROJECTS: Project[] = [
   {
     id: "landcover",
     point: { lng: 110.405, lat: -7.755 },
-    image: "/assets/img/work/landcover.webp",
+    image: "/assets/img/work/landcover.webp?v=32d9278ab6",
     alt: { en: "Land cover map sheet of the Yogyakarta urban area", id: "Lembar peta tutupan lahan kawasan perkotaan Yogyakarta" },
     categories: ["design", "satellite"],
     badge: { en: "Map design", id: "Desain peta" },
@@ -149,7 +149,7 @@ export const PROJECTS: Project[] = [
   {
     id: "mimika",
     point: { lng: 137.0, lat: -4.35 },
-    image: "/assets/img/work/mimika.webp",
+    image: "/assets/img/work/mimika.webp?v=2730c6038d",
     alt: { en: "Map of mining excavations and forest cover loss in Mimika", id: "Peta bukaan tambang dan kehilangan tutupan hutan di Mimika" },
     categories: ["satellite", "design"],
     badge: { en: "Satellite data", id: "Data satelit" },
