@@ -504,38 +504,6 @@
     window.addEventListener("resize", onScroll);
   }
 
-  var KABAR_UMPAN = {
-    en: { ok: "Copied. Paste it into your RSS reader.", gagal: "The address is selected. Copy it with Ctrl+C." },
-    id: { ok: "Tersalin. Tempel di aplikasi pembaca RSS Anda.", gagal: "Alamatnya sudah terpilih. Salin dengan Ctrl+C." }
-  };
-
-  function initLangganan() {
-    var kotak = doc.querySelector("[data-langganan]");
-    if (!kotak) return;
-    var isian = kotak.querySelector(".langganan__isian");
-    var kabar = kotak.querySelector(".langganan__kabar");
-    isian.value = new URL(isian.value, window.location.href).href;
-    isian.addEventListener("focus", function () { isian.select(); });
-
-    function lapor(kunci) {
-      kabar.textContent = KABAR_UMPAN[bahasaKini()][kunci];
-    }
-
-    function pilihSendiri() {
-      isian.focus();
-      isian.select();
-      lapor("gagal");
-    }
-
-    kotak.querySelector("button").addEventListener("click", function () {
-      if (!navigator.clipboard || !navigator.clipboard.writeText) {
-        pilihSendiri();
-        return;
-      }
-      navigator.clipboard.writeText(isian.value).then(function () { lapor("ok"); }, pilihSendiri);
-    });
-  }
-
   function initYear() {
     var year = String(new Date().getFullYear());
     each(doc.querySelectorAll("[data-year]"), function (el) { el.textContent = year; });
@@ -554,7 +522,6 @@
     initMap();
     initProgress();
     initToc();
-    initLangganan();
     initYear();
 
     doc.documentElement.setAttribute("data-siap", "1");
