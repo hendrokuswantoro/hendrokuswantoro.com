@@ -41,3 +41,6 @@ assets/model/
 # Foto dan video yang diunggah lewat dashboard. Milik satu pemasangan,
 # bukan milik kode. Catatannya di basis data, berkasnya di sini.
 /unggahan/
+
+# worktree sementara milik sesi Claude Code, berisi salinan seluruh repositori
+.claude/worktrees/
