@@ -175,7 +175,10 @@ def _dsn() -> str:
 
 
 TITIPAN_FAKTOR = AKAR / "cadangan" / "faktor-kedua-sebelum-uji.json"
-KOLOM_FAKTOR = ("totp_rahasia", "totp_aktif_pada", "email_terverifikasi_pada")
+KOLOM_FAKTOR = (
+    "totp_rahasia", "totp_aktif_pada", "email_terverifikasi_pada",
+    "wajah_ciri", "wajah_didaftar_pada",
+)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -199,15 +202,16 @@ def faktor_kedua_untuk_uji():
 
     def pulihkan(simpanan):
         kolom, kode = simpanan["kolom"], simpanan["kode"]
+        passkey = simpanan.get("passkey")
         with psycopg.connect(dsn) as s, s.cursor() as k:
             k.execute(
-                "UPDATE users SET totp_rahasia=%s, totp_aktif_pada=%s, "
-                "email_terverifikasi_pada=%s WHERE lower(email)=lower(%s)",
+                f"UPDATE users SET {', '.join(f'{n}=%s' for n in KOLOM_FAKTOR[:len(kolom)])} "
+                "WHERE lower(email)=lower(%s)",
                 (*kolom, EMAIL_UJI),
             )
             k.execute("SELECT id FROM users WHERE lower(email)=lower(%s)", (EMAIL_UJI,))
             baris = k.fetchone()
-            if baris and kode:
+            if baris:
                 k.execute("DELETE FROM kode_pemulihan WHERE pengguna_id=%s", (baris[0],))
                 for satu in kode:
                     k.execute(
@@ -215,6 +219,11 @@ def faktor_kedua_untuk_uji():
                         "dipakai_pada) VALUES (%s, %s, %s, %s)",
                         (baris[0], *satu),
                     )
+            if baris and passkey is not None:
+                k.execute(
+                    "DELETE FROM kredensial WHERE pengguna_id=%s AND NOT (id::text = ANY(%s))",
+                    (baris[0], passkey),
+                )
             s.commit()
 
     try:
@@ -238,7 +247,12 @@ def faktor_kedua_untuk_uji():
                 "WHERE pengguna_id=%s ORDER BY dibuat_pada",
                 (baris[0],),
             )
-            semula = {"kolom": list(baris[1:]), "kode": [list(r) for r in k.fetchall()]}
+            kode = [list(r) for r in k.fetchall()]
+            k.execute("SELECT id::text FROM kredensial WHERE pengguna_id=%s", (baris[0],))
+            semula = {
+                "kolom": list(baris[1:]), "kode": kode,
+                "passkey": [r[0] for r in k.fetchall()],
+            }
             tulis(semula)
     except Exception:
         yield
