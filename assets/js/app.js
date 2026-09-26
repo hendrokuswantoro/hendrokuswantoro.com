@@ -14,9 +14,22 @@
   }
 
   function writeStore(key, value) {
-    try { window.localStorage.setItem(key, value); } catch (e) {  }
+    try { window.localStorage.setItem(key, value); } catch (e) {}
   }
 
+  function kurangiGerak() {
+    return Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+
+  function bahasaKini() {
+    return doc.documentElement.getAttribute("lang") === "id" ? "id" : "en";
+  }
+
+  var ATRIBUT_TERJEMAHAN = [
+    { ind: "data-ind-label", eng: "data-eng-label", sasaran: "aria-label" },
+    { ind: "data-ind-alt", eng: "data-eng-alt", sasaran: "alt" },
+    { ind: "data-ind-gagal", eng: "data-eng-gagal", sasaran: "data-gagal" }
+  ];
 
   function cacheEnglish() {
     each(doc.querySelectorAll("[data-ind]"), function (el) {
@@ -27,20 +40,10 @@
         el.setAttribute("data-eng", el.innerHTML);
       }
     });
-    each(doc.querySelectorAll("[data-ind-label]"), function (el) {
-      if (!el.hasAttribute("data-eng-label")) {
-        el.setAttribute("data-eng-label", el.getAttribute("aria-label") || "");
-      }
-    });
-    each(doc.querySelectorAll("[data-ind-alt]"), function (el) {
-      if (!el.hasAttribute("data-eng-alt")) {
-        el.setAttribute("data-eng-alt", el.getAttribute("alt") || "");
-      }
-    });
-    each(doc.querySelectorAll("[data-ind-gagal]"), function (el) {
-      if (!el.hasAttribute("data-eng-gagal")) {
-        el.setAttribute("data-eng-gagal", el.getAttribute("data-gagal") || "");
-      }
+    ATRIBUT_TERJEMAHAN.forEach(function (a) {
+      each(doc.querySelectorAll("[" + a.ind + "]"), function (el) {
+        if (!el.hasAttribute(a.eng)) el.setAttribute(a.eng, el.getAttribute(a.sasaran) || "");
+      });
     });
   }
 
@@ -54,19 +57,11 @@
       else { el.innerHTML = value; }
     });
 
-    each(doc.querySelectorAll("[data-ind-label]"), function (el) {
-      var value = useId ? el.getAttribute("data-ind-label") : el.getAttribute("data-eng-label");
-      if (value) el.setAttribute("aria-label", value);
-    });
-
-    each(doc.querySelectorAll("[data-ind-alt]"), function (el) {
-      var value = useId ? el.getAttribute("data-ind-alt") : el.getAttribute("data-eng-alt");
-      if (value) el.setAttribute("alt", value);
-    });
-
-    each(doc.querySelectorAll("[data-ind-gagal]"), function (el) {
-      var value = useId ? el.getAttribute("data-ind-gagal") : el.getAttribute("data-eng-gagal");
-      if (value) el.setAttribute("data-gagal", value);
+    ATRIBUT_TERJEMAHAN.forEach(function (a) {
+      each(doc.querySelectorAll("[" + a.ind + "]"), function (el) {
+        var value = el.getAttribute(useId ? a.ind : a.eng);
+        if (value) el.setAttribute(a.sasaran, value);
+      });
     });
 
     doc.documentElement.setAttribute("lang", useId ? "id" : "en");
@@ -94,7 +89,6 @@
     });
   }
 
-
   function applyTema(tema) {
     var gelap = tema === "dark";
     doc.documentElement.setAttribute("data-theme", gelap ? "dark" : "light");
@@ -118,7 +112,6 @@
     });
   }
 
-
   function initHeader() {
     var header = doc.querySelector(".header");
     if (!header) return;
@@ -128,7 +121,6 @@
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
   }
-
 
   var CATATAN = {
     en: "This text is © Hendro Kuswantoro. Write to kuswantoro.hendro01@gmail.com to reuse it.",
@@ -145,8 +137,7 @@
       catatanEl.setAttribute("role", "status");
       doc.body.appendChild(catatanEl);
     }
-    catatanEl.textContent = doc.documentElement.getAttribute("lang") === "id"
-      ? CATATAN.id : CATATAN.en;
+    catatanEl.textContent = CATATAN[bahasaKini()];
     catatanEl.classList.add("is-in");
 
     window.clearTimeout(catatanWaktu);
@@ -167,8 +158,7 @@
       if (event.clipboardData) {
         event.clipboardData.setData(
           "text/plain",
-          (doc.documentElement.getAttribute("lang") === "id" ? CATATAN.id : CATATAN.en) +
-          "\n" + window.location.href
+          CATATAN[bahasaKini()] + "\n" + window.location.href
         );
       }
       beriTahu();
@@ -200,7 +190,6 @@
       }
     });
   }
-
 
   var WIB = "Asia/Jakarta";
 
@@ -243,8 +232,7 @@
         el.innerHTML = jam.replace(":", '<span class="jam__titik">:</span>');
       });
 
-      var bahasa = doc.documentElement.getAttribute("lang") === "id" ? "id" : "en";
-      var tanggal = bentukTanggal[bahasa].format(kini);
+      var tanggal = bentukTanggal[bahasaKini()].format(kini);
       each(tanggalnya, function (el) {
         if (el.textContent !== tanggal) el.textContent = tanggal;
       });
@@ -268,8 +256,7 @@
   }
 
   function initKilau() {
-    if (!window.matchMedia) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!window.matchMedia || kurangiGerak()) return;
     if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
 
     var menunggu = null;
@@ -287,13 +274,11 @@
     }, { passive: true });
   }
 
-
   function initReveal() {
     var items = doc.querySelectorAll(".reveal");
     if (!items.length) return;
 
-    var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced || !("IntersectionObserver" in window)) {
+    if (kurangiGerak() || !("IntersectionObserver" in window)) {
       each(items, function (el) { el.classList.add("is-in"); });
       return;
     }
@@ -308,7 +293,6 @@
 
     each(items, function (el) { io.observe(el); });
   }
-
 
   function initFilters() {
     var buttons = doc.querySelectorAll("[data-filter]");
@@ -335,7 +319,6 @@
 
     run("all");
   }
-
 
   function loadOnce(kind, url) {
     return new Promise(function (resolve, reject) {
@@ -393,9 +376,7 @@
         start();
 
         function gulirKePeta() {
-          var halus = !(window.matchMedia
-            && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-          wrap.scrollIntoView({ behavior: halus ? "smooth" : "auto", block: "start" });
+          wrap.scrollIntoView({ behavior: kurangiGerak() ? "auto" : "smooth", block: "start" });
         }
 
         if (window.HK_PETA_STATE) {
@@ -406,7 +387,7 @@
           if (window.history && window.history.replaceState) {
             try {
               window.history.replaceState(null, "", "#peta-" + id);
-            } catch (galat) {  }
+            } catch (galat) {}
           }
         }
       });
@@ -422,7 +403,6 @@
     }, { rootMargin: "500px 0px" });
     io.observe(wrap);
   }
-
 
   function initProgress() {
     var bar = doc.querySelector("[data-progres]");
@@ -448,7 +428,6 @@
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
   }
-
 
   function slug(text) {
     return text
@@ -476,8 +455,9 @@
       var indo = head.getAttribute("data-ind") || english;
 
       if (!head.id) {
-        var id = slug(english);
-        while (taken[id]) id += "-2";
+        var dasar = slug(english);
+        var id = dasar;
+        for (var n = 2; taken[id]; n++) id = dasar + "-" + n;
         taken[id] = true;
         head.id = id;
       }
@@ -492,12 +472,12 @@
       list.appendChild(item);
       links.push({ link: link, head: head });
 
-      var mark = doc.createElement("a");
-      mark.className = "anchor";
-      mark.href = "#" + head.id;
-      mark.setAttribute("aria-hidden", "true");
-      mark.setAttribute("tabindex", "-1");
-      head.appendChild(mark);
+      var jangkar = doc.createElement("a");
+      jangkar.className = "anchor";
+      jangkar.href = "#" + head.id;
+      jangkar.setAttribute("aria-hidden", "true");
+      jangkar.setAttribute("tabindex", "-1");
+      head.appendChild(jangkar);
     });
 
     rail.hidden = false;
@@ -524,12 +504,10 @@
     window.addEventListener("resize", onScroll);
   }
 
-
   function initYear() {
     var year = String(new Date().getFullYear());
     each(doc.querySelectorAll("[data-year]"), function (el) { el.textContent = year; });
   }
-
 
   function boot() {
     initLang();
