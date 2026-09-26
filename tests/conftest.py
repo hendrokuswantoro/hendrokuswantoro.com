@@ -269,8 +269,7 @@ def buka(halaman: Page, situs: str, jalur: str) -> None:
 # sandinya: sandinya memang tidak diketahui siapa pun di sini, dan memang
 # tidak perlu diketahui.
 
-SANDI_UJI = "sandi-uji-lokal-panjang"
-EMAIL_UJI = "kuswantoro.hendro01@gmail.com"
+from konftes import EMAIL_UJI, SANDI_UJI  # noqa: E402
 
 # Titipan hash asli, supaya pengembaliannya selamat dari sesi yang mati.
 #

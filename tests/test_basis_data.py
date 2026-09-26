@@ -30,18 +30,11 @@ psycopg = pytest.importorskip("psycopg", reason="psycopg belum terpasang")
 DSN = os.environ.get("DSN", "")
 
 
-def bisa_terhubung() -> bool:
-    if not DSN:
-        return False
-    try:
-        with psycopg.connect(DSN, connect_timeout=3):
-            return True
-    except Exception:
-        return False
+from konftes import ada_basis_data  # noqa: E402
 
 
 pytestmark = pytest.mark.skipif(
-    not bisa_terhubung(),
+    not ada_basis_data(DSN),
     reason="tidak ada basis data. Jalankan: cd infrastructure && docker compose up -d",
 )
 

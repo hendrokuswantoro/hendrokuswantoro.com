@@ -40,18 +40,11 @@ psycopg = pytest.importorskip("psycopg")
 from fastapi.testclient import TestClient  # noqa: E402
 
 DSN = os.environ.get("DSN", "")
-EMAIL = "kuswantoro.hendro01@gmail.com"
-SANDI = "sandi-uji-lokal-panjang"
+from konftes import EMAIL_UJI as EMAIL  # noqa: E402
+from konftes import SANDI_UJI as SANDI  # noqa: E402
 
 
-def _ada_basis_data() -> bool:
-    if not DSN:
-        return False
-    try:
-        with psycopg.connect(DSN, connect_timeout=3):
-            return True
-    except Exception:
-        return False
+from konftes import ada_basis_data  # noqa: E402
 
 
 def _ada_redis() -> bool:
@@ -68,7 +61,7 @@ def _ada_redis() -> bool:
 
 
 pytestmark = [
-    pytest.mark.skipif(not _ada_basis_data(), reason="tidak ada basis data"),
+    pytest.mark.skipif(not ada_basis_data(DSN), reason="tidak ada basis data"),
     pytest.mark.skipif(
         not _ada_redis(),
         reason="tidak ada Redis, jadi pencabutan segera memang tidak berlaku",

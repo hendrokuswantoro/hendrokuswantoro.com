@@ -25,7 +25,6 @@ Dilewati kalau tidak ada basis data.
 
 from __future__ import annotations
 
-import asyncio
 import os
 import sys
 
@@ -46,26 +45,17 @@ psycopg = pytest.importorskip("psycopg")
 from fastapi.testclient import TestClient  # noqa: E402
 
 DSN = os.environ.get("DSN", "")
-EMAIL = "kuswantoro.hendro01@gmail.com"
-SANDI = "sandi-uji-lokal-panjang"
+from konftes import EMAIL_UJI as EMAIL  # noqa: E402
+from konftes import SANDI_UJI as SANDI  # noqa: E402
 
 
-def _loop_untuk_psycopg() -> None:
-    if sys.platform == "win32":
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+from konftes import loop_untuk_psycopg as _loop_untuk_psycopg  # noqa: E402
 
 
-def _bisa_terhubung() -> bool:
-    if not DSN:
-        return False
-    try:
-        with psycopg.connect(DSN, connect_timeout=3):
-            return True
-    except Exception:
-        return False
+from konftes import ada_basis_data  # noqa: E402
 
 
-pytestmark = pytest.mark.skipif(not _bisa_terhubung(), reason="tidak ada basis data")
+pytestmark = pytest.mark.skipif(not ada_basis_data(DSN), reason="tidak ada basis data")
 
 
 @pytest.fixture(autouse=True)

@@ -10,7 +10,6 @@ punya nama metode sama.
 
 from __future__ import annotations
 
-import asyncio
 import os
 import subprocess
 import sys
@@ -27,18 +26,7 @@ from muat_env import muat  # noqa: E402
 muat()
 
 
-def _loop_untuk_psycopg() -> None:
-    """psycopg menolak ProactorEventLoop, yang jadi bawaan Windows.
-
-    Disetel di dalam fixture, bukan saat modul diimpor. pytest mengimpor
-    seluruh modul uji saat mengoleksi, bahkan yang tidak akan dijalankan,
-    jadi menyetelnya di tingkat modul ikut meracuni proses yang sedang
-    menjalankan uji Playwright: Playwright justru menuntut ProactorEventLoop
-    untuk menjalankan subproses, dan gagalnya berbunyi NotImplementedError
-    yang tidak menyebut sebabnya.
-    """
-    if sys.platform == "win32":
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+from konftes import loop_untuk_psycopg as _loop_untuk_psycopg  # noqa: E402
 
 
 pytest.importorskip("fastapi")
@@ -48,22 +36,15 @@ psycopg = pytest.importorskip("psycopg")
 from fastapi.testclient import TestClient  # noqa: E402
 
 DSN = os.environ.get("DSN", "")
-EMAIL = "kuswantoro.hendro01@gmail.com"
-SANDI = "sandi-uji-lokal-panjang"
+from konftes import EMAIL_UJI as EMAIL  # noqa: E402
+from konftes import SANDI_UJI as SANDI  # noqa: E402
 SLUG = "uji-otomatis-jangan-dipakai"
 
 
-def bisa_terhubung() -> bool:
-    if not DSN:
-        return False
-    try:
-        with psycopg.connect(DSN, connect_timeout=3):
-            return True
-    except Exception:
-        return False
+from konftes import ada_basis_data  # noqa: E402
 
 
-pytestmark = pytest.mark.skipif(not bisa_terhubung(), reason="tidak ada basis data")
+pytestmark = pytest.mark.skipif(not ada_basis_data(DSN), reason="tidak ada basis data")
 
 
 def contoh(**ganti) -> dict:
