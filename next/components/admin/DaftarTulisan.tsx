@@ -17,10 +17,14 @@ export function DaftarTulisan({
   onSunting,
   onBaru,
   segarkan,
+  siap,
+  terkunci,
 }: {
   onSunting: (slug: string) => void;
   onBaru: () => void;
   segarkan: number;
+  siap: boolean;
+  terkunci: boolean;
 }) {
   const [isi, setIsi] = useState<Ringkas[] | null>(null);
   const [galat, setGalat] = useState("");
@@ -31,77 +35,90 @@ export function DaftarTulisan({
       const jawaban = await ambil<{ isi: Ringkas[] }>("/api/v1/admin/blog");
       setIsi(jawaban.isi);
     } catch (e) {
-      setGalat(e instanceof Error ? e.message : "gagal memuat");
+      setGalat(e instanceof Error ? e.message : "gagal memuat tulisan");
       setIsi([]);
     }
   }, []);
 
   useEffect(() => {
-    void muat();
-  }, [muat, segarkan]);
+    if (siap && !terkunci) void muat();
+  }, [muat, segarkan, siap, terkunci]);
+
+  const terbit = isi?.filter((t) => t.status === "terbit").length ?? 0;
 
   return (
-    <section className={gaya.kartu}>
+    <section className={gaya.kartu} aria-labelledby="judul-tulisan">
       <div className={gaya.tumpuk}>
-        <h2>Tulisan</h2>
+        <div className={gaya.judulKartu}>
+          <h2 id="judul-tulisan">Tulisan</h2>
+          {isi && isi.length && !terkunci ? (
+            <small>
+              {isi.length} tulisan, {terbit} terbit
+            </small>
+          ) : null}
+        </div>
         <div className={gaya.kanan}>
-          <button type="button" className={`${gaya.tombol} ${gaya.utama}`} onClick={onBaru}>
-            Tulisan baru
+          <button
+            type="button"
+            className={`${gaya.tombol} ${gaya.kecil} ${gaya.utama}`}
+            onClick={onBaru}
+            disabled={terkunci || !siap}
+          >
+            + Tulisan baru
           </button>
         </div>
       </div>
 
-      {galat ? (
-        <p className={`${gaya.kabar} ${gaya.salah}`} role="alert">
-          {galat}
-        </p>
-      ) : null}
-
-      {isi === null ? (
+      {!siap ? (
         <p className={gaya.ket}>Memuat...</p>
-      ) : isi.length === 0 && !galat ? (
+      ) : terkunci ? (
         <p className={gaya.ket}>
-          Belum ada satu tulisan pun di basis data. Tekan <strong>Tulisan baru</strong> untuk
-          memulai, atau jalankan <code>python backend/db/muat_awal.py</code> untuk memuat
-          tulisan yang sudah ada di <code>content/</code>.
+          Daftar tulisan dikunci sampai kamu masuk pakai authenticator atau sidik jari.
         </p>
       ) : (
-        <div className={gaya.tabelBungkus}>
-          <table>
-            <thead>
-              <tr>
-                <th>Judul</th>
-                <th>Status</th>
-                <th>Tanggal</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
+        <>
+          {galat ? (
+            <p className={`${gaya.kabar} ${gaya.salah}`} role="alert">
+              {galat}
+            </p>
+          ) : null}
+
+          {isi === null ? (
+            <p className={gaya.ket}>Memuat...</p>
+          ) : isi.length === 0 && !galat ? (
+            <p className={gaya.ket}>
+              Belum ada tulisan. Tekan <strong>Tulisan baru</strong> untuk mulai, atau jalankan{" "}
+              <code>python backend/db/muat_awal.py</code> untuk memuat tulisan dari{" "}
+              <code>content/</code>.
+            </p>
+          ) : (
+            <ul className={gaya.daftarRingkas}>
               {isi.map((t) => (
-                <tr key={t.slug}>
-                  <td>{t.judul_id || t.judul_en}</td>
-                  <td>
-                    <span
-                      className={`${gaya.tanda} ${t.status === "terbit" ? gaya.terbit : ""}`}
-                    >
+                <li key={t.slug}>
+                  <span>
+                    <strong>{t.judul_id || t.judul_en}</strong>
+                    <small>
+                      {t.terbit_pada ? `Terbit ${t.terbit_pada}` : "Belum terbit"}, /blog/
+                      {t.slug}
+                    </small>
+                  </span>
+                  <span className={gaya.ujungBaris}>
+                    <span className={`${gaya.tanda} ${t.status === "terbit" ? gaya.terbit : ""}`}>
                       {t.status}
                     </span>
-                  </td>
-                  <td>{t.terbit_pada ?? "belum"}</td>
-                  <td>
                     <button
                       type="button"
-                      className={gaya.tombol}
+                      className={`${gaya.tombol} ${gaya.kecil}`}
                       onClick={() => onSunting(t.slug)}
                     >
                       Sunting
                     </button>
-                  </td>
-                </tr>
+                  </span>
+                </li>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </ul>
+          )}
+        </>
       )}
     </section>
   );

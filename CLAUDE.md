@@ -184,6 +184,15 @@ sendiri, lalu masuk lewat passkey itu dengan sesi kuat. Untuk alasan yang sama,
 akun yang hanya punya passkey tidak bisa masuk dengan sandi, dan wajah tidak
 pernah menerbitkan sesi kuat. `tests/test_temuan_audit.py` menahan ketiganya.
 
+**Dashboard wajib tahu kekuatan sesinya sendiri, bukan menebak dari 403.**
+`next/app/admin/page.tsx` membaca `GET /api/v1/keamanan` sekali, dan
+`aksesDari()` di `next/components/admin/akses.ts` menurunkannya jadi tiga
+keadaan: penuh, terkunci (punya faktor tetapi sesinya lemah, misalnya lewat
+wajah), dan perlu faktor. Tiap tombol yang pasti ditolak server dimatikan
+beserta alasannya, dan spanduk di atas menawarkan masuk ulang. Sampai 27
+September 2026 dashboard memanggil jalur kuat dari sesi wajah, menerima 403,
+dan daftar tulisannya hilang tanpa satu kalimat pun.
+
 `tests/conftest.py` mematikan aturan itu untuk seluruh uji lain, supaya uji
 yang masuk dengan sandi saja tetap bisa menulis. Mematikan sebuah penjaga di
 dalam uji hanya sah selama ada uji lain yang menguji penjaganya sendiri.
@@ -438,7 +447,10 @@ memberi situs ini dua tuan.
    dikerjakan paling akhir, jadi merahnya langkah itu bukan kabar baru.
 2. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
    dashboard, serta konfigurasi nginx belum pernah berjalan di server
-   sungguhan. Langkahnya ada di `docs/vps.md`. Basis data di sana mulai dari
+   sungguhan. Langkahnya ada di `docs/vps.md`. `hk-api.service` tidak
+   menyetel `ADMIN_NEXT=1` dan `pasang.sh` tidak membangun `next/out/`, jadi
+   VPS akan menyajikan dashboard HTML, bukan dashboard Next yang dipakai
+   pemiliknya di laptop; putuskan dulu mana yang terbit. Basis data di sana mulai dari
    nol, jadi akun adminnya lahir TANPA faktor kedua, dan selama itu siapa pun
    yang tahu sandinya bisa memasang faktor PERTAMA miliknya sendiri, karena
    `butuh_admin_pendaftar` sengaja mengizinkannya. Pasang TOTP dan passkey

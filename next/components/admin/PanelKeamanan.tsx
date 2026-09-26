@@ -4,13 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import gaya from "@/app/admin/admin.module.css";
 import { KameraWajah } from "@/components/admin/KameraWajah";
 import { PanelPasskey } from "@/components/admin/PanelPasskey";
-import { BarisSetelan } from "@/components/admin/Setelan";
+import { BarisSetelan, Terkunci } from "@/components/admin/Setelan";
+import type { Akses } from "@/components/admin/akses";
 import {
   aktifkanTotp,
   daftarkanWajah,
   GagalApi,
   hapusWajah,
-  keadaanKeamanan,
   kirimVerifikasiEmail,
   konfirmasiEmail,
   matikanTotp,
@@ -49,8 +49,17 @@ function waktu(nilai: string): string {
   }
 }
 
-export function PanelKeamanan() {
-  const [keadaan, setKeadaan] = useState<KeadaanKeamanan | null>(null);
+export function PanelKeamanan({
+  keadaan,
+  galatKeadaan,
+  akses,
+  muatKeadaan,
+}: {
+  keadaan: KeadaanKeamanan | null;
+  galatKeadaan: string;
+  akses: Akses;
+  muatKeadaan: () => Promise<void>;
+}) {
   const [jejak, setJejak] = useState<Peristiwa[]>([]);
   const [galat, setGalat] = useState("");
   const [kabar, setKabar] = useState("");
@@ -64,13 +73,12 @@ export function PanelKeamanan() {
 
   const muat = useCallback(async () => {
     try {
-      const [k, p] = await Promise.all([keadaanKeamanan(), peristiwaKeamanan()]);
-      setKeadaan(k);
+      const [, p] = await Promise.all([muatKeadaan(), peristiwaKeamanan()]);
       setJejak(p.peristiwa);
     } catch (e) {
-      setGalat(e instanceof GagalApi ? e.message : "gagal memuat keadaan keamanan");
+      setGalat(e instanceof GagalApi ? e.message : "gagal memuat aktivitas");
     }
-  }, []);
+  }, [muatKeadaan]);
 
   useEffect(() => {
     void muat();
@@ -111,18 +119,27 @@ export function PanelKeamanan() {
 
   if (!keadaan) {
     return (
-      <section className={gaya.kartu}>
-        <p className={gaya.ket}>Sebentar...</p>
+      <section className={gaya.kartu} id="keamanan">
+        {galatKeadaan ? (
+          <p className={`${gaya.kabar} ${gaya.salah}`} role="alert">
+            {galatKeadaan}
+          </p>
+        ) : (
+          <p className={gaya.ket}>Sebentar...</p>
+        )}
       </section>
     );
   }
 
+  const kuat = akses.penuh;
+  const daftar = akses.bolehMendaftar;
+
   const gagalTerakhir = jejak.filter((p) => !p.berhasil).length;
 
   return (
-    <section className={gaya.kartu}>
+    <section className={gaya.kartu} id="keamanan" aria-labelledby="judul-keamanan">
       <div className={gaya.tumpuk}>
-        <h2>Keamanan akun</h2>
+        <h2 id="judul-keamanan">Keamanan akun</h2>
         <span className={gaya.kanan}>
           <button
             type="button"
@@ -227,6 +244,7 @@ export function PanelKeamanan() {
                 Sudah aktif. Mau matikan? Ketik kode dari aplikasi. Kode cadangan ikut
                 terhapus.
               </p>
+              {!kuat ? <Terkunci /> : null}
               <div className={gaya.barisSebaris}>
                 <input
                   id="kode-matikan"
@@ -241,7 +259,7 @@ export function PanelKeamanan() {
                 <button
                   type="button"
                   className={`${gaya.tombol} ${gaya.kecil} ${gaya.bahaya}`}
-                  disabled={sibuk || kodeMatikan.trim().length < 6}
+                  disabled={sibuk || !kuat || kodeMatikan.trim().length < 6}
                   onClick={() =>
                     jalankan(async () => {
                       await matikanTotp(kodeMatikan.trim());
@@ -306,11 +324,12 @@ export function PanelKeamanan() {
                 Kode 6 angka dari aplikasi di HP kamu, berganti tiap 30 detik. Bisa pakai
                 Aegis, Google Authenticator, atau 1Password.
               </p>
+              {!daftar ? <Terkunci /> : null}
               <div className={gaya.aksi}>
                 <button
                   type="button"
                   className={`${gaya.tombol} ${gaya.kecil} ${gaya.utama}`}
-                  disabled={sibuk || !keadaan.kunci_kolom_siap}
+                  disabled={sibuk || !daftar || !keadaan.kunci_kolom_siap}
                   onClick={() =>
                     jalankan(async () => {
                       const hasil = await mulaiTotp();
@@ -325,7 +344,7 @@ export function PanelKeamanan() {
           )}
         </BarisSetelan>
 
-        <PanelPasskey />
+        <PanelPasskey akses={akses} onBerubah={muatKeadaan} />
 
         <BarisSetelan
           ikon="wajah"
@@ -350,12 +369,14 @@ export function PanelKeamanan() {
             </p>
           ) : null}
 
+          {(keadaan.wajah_terdaftar ? !kuat : !daftar) ? <Terkunci /> : null}
+
           <div className={gaya.aksi}>
             {keadaan.wajah_terdaftar ? (
               <button
                 type="button"
                 className={`${gaya.tombol} ${gaya.kecil} ${gaya.bahaya}`}
-                disabled={sibuk}
+                disabled={sibuk || !kuat}
                 onClick={() =>
                   jalankan(async () => {
                     await hapusWajah();
@@ -370,7 +391,7 @@ export function PanelKeamanan() {
               <button
                 type="button"
                 className={`${gaya.tombol} ${gaya.kecil} ${gaya.utama}`}
-                disabled={sibuk || !keadaan.wajah_siap || !keadaan.kunci_kolom_siap}
+                disabled={sibuk || !daftar || !keadaan.wajah_siap || !keadaan.kunci_kolom_siap}
                 onClick={() => {
                   bersihkan();
                   setKameraHidup(true);

@@ -44,6 +44,14 @@ export function Ikon({ nama }: { nama: keyof typeof GARIS | string }) {
   );
 }
 
+export function Terkunci() {
+  return (
+    <p className={gaya.terkunci}>
+      Dikunci. Masuk ulang pakai authenticator atau sidik jari untuk membukanya.
+    </p>
+  );
+}
+
 export function BarisSetelan({
   ikon,
   judul,

@@ -20,14 +20,14 @@ const NAMA_CARA: Record<CaraFaktorKedua, string> = {
   totp: "Aplikasi authenticator",
   email: "Kode yang dikirim ke email",
   pemulihan: "Kode pemulihan",
-  wajah: "Verifikasi wajah",
+  wajah: "Verifikasi wajah, akses terbatas",
 };
 
 const PETUNJUK: Record<CaraFaktorKedua, string> = {
   totp: "Buka aplikasi authenticator, lalu ketik 6 angka yang muncul.",
   email: "Kami sudah kirim 6 angka ke email kamu. Berlaku 10 menit.",
   pemulihan: "Pakai salah satu kode cadangan yang kamu simpan. Tiap kode sekali pakai.",
-  wajah: "Kamera ambil 3 foto sambil kamu menoleh. Fotonya tidak disimpan.",
+  wajah: "Kamera ambil 3 foto sambil kamu menoleh. Lewat wajah kamu cuma bisa melihat. Menulis dan mengubah keamanan tetap butuh authenticator.",
 };
 
 export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {

@@ -56,8 +56,8 @@ export function PanelBerkas({
         const hasil: BerkasBaru = await unggahBerkas(satu, setPersen, buangMetadata);
         setKabar({
           teks: hasil.sudah_ada
-            ? `${hasil.nama_asal} sudah pernah diunggah, yang dipakai yang lama`
-            : `${hasil.nama_asal} masuk`,
+            ? `${hasil.nama_asal} sudah pernah diunggah. Yang lama yang dipakai.`
+            : `${hasil.nama_asal} berhasil diunggah.`,
           baik: true,
         });
       } catch (e) {
@@ -76,7 +76,7 @@ export function PanelBerkas({
     if (!window.confirm(`Hapus ${berkas.nama_asal}? Ini tidak bisa dibatalkan.`)) return;
     try {
       await hapusBerkas(berkas.nama);
-      setKabar({ teks: `${berkas.nama_asal} dihapus`, baik: true });
+      setKabar({ teks: `${berkas.nama_asal} sudah dihapus.`, baik: true });
       await muat();
     } catch (e) {
       setKabar({ teks: e instanceof Error ? e.message : "gagal menghapus", baik: false });
@@ -88,7 +88,7 @@ export function PanelBerkas({
       <div className={gaya.tumpuk}>
         <h3 style={{ margin: 0 }}>Foto dan video</h3>
         <div className={gaya.kanan}>
-          <button type="button" className={gaya.tombol} onClick={onTutup}>
+          <button type="button" className={`${gaya.tombol} ${gaya.kecil}`} onClick={onTutup}>
             Tutup
           </button>
         </div>
@@ -108,7 +108,7 @@ export function PanelBerkas({
         }}
       >
         <p style={{ margin: "0 0 10px" }}>
-          Seret berkasnya ke sini, atau pilih dari komputer.
+          Seret foto atau video ke sini, atau pilih dari komputer.
         </p>
         <button
           type="button"
@@ -143,8 +143,8 @@ export function PanelBerkas({
         ) : null}
 
         <p className={gaya.ket}>
-          Foto sampai 10 MB, video sampai 80 MB. Yang diterima PNG, JPEG, WebP,
-          GIF, AVIF, MP4, dan WebM.
+          Foto maksimal 10 MB, video maksimal 80 MB. Format: PNG, JPEG, WebP, GIF,
+          AVIF, MP4, dan WebM.
         </p>
 
         <label className={gaya.centang} htmlFor="buang-metadata">
@@ -158,14 +158,12 @@ export function PanelBerkas({
         </label>
 
         <p className={gaya.ket}>
-          Kalau kotak itu tidak dicentang, metadata foto tidak dibuang. Foto
-          dari ponsel bisa membawa koordinat tempat pemotretannya, dan
-          koordinat itu ikut terbit.
+          Foto dari HP bisa menyimpan lokasi tempat foto diambil. Kalau kotak ini tidak
+          dicentang, lokasi itu ikut terbit.
         </p>
         <p className={gaya.ket}>
-          Yang bisa dibuang JPEG, PNG, dan WebP. GIF dan AVIF ditolak kalau
-          kotaknya dicentang, sebab membuang setengah lalu mengaku sudah
-          bersih lebih berbahaya daripada tidak membuang sama sekali.
+          Yang bisa dibersihkan cuma JPEG, PNG, dan WebP. GIF dan AVIF ditolak kalau
+          kotaknya dicentang, supaya tidak ada foto yang setengah bersih.
         </p>
       </div>
 

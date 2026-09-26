@@ -161,7 +161,7 @@ export function PenyuntingTulisan({
         setKabar({ teks: pesanGalat(hasil), baik: false });
         return;
       }
-      setKabar({ teks: baru ? "tersimpan sebagai draf" : "tersimpan", baik: true });
+      setKabar({ teks: baru ? "Tersimpan sebagai draf." : "Tersimpan.", baik: true });
       onBerubah();
       if (baru) onKembali();
     } finally {
@@ -180,12 +180,12 @@ export function PenyuntingTulisan({
       return;
     }
     setStatus(ke);
-    setKabar({ teks: `status jadi ${ke}`, baik: true });
+    setKabar({ teks: ke === "terbit" ? "Tulisan sudah terbit." : "Tulisan jadi draf lagi.", baik: true });
     onBerubah();
   }
 
   async function hapus() {
-    if (!window.confirm(`Hapus "${slug}"? Ini tidak bisa dibatalkan.`)) return;
+    if (!window.confirm(`Hapus "${slug}"? Tulisan yang dihapus tidak bisa dikembalikan.`)) return;
     const jawaban = await panggil(`/api/v1/admin/blog/${slug}`, { method: "DELETE" });
     if (!jawaban.ok) {
       setKabar({ teks: pesanGalat(await jawaban.json().catch(() => null)), baik: false });
@@ -217,8 +217,8 @@ export function PenyuntingTulisan({
           {status}
         </span>
         <div className={gaya.kanan}>
-          <button type="button" className={gaya.tombol} onClick={onKembali}>
-            Kembali
+          <button type="button" className={`${gaya.tombol} ${gaya.kecil}`} onClick={onKembali}>
+            &larr; Kembali
           </button>
         </div>
       </div>
@@ -233,7 +233,7 @@ export function PenyuntingTulisan({
       ) : null}
 
       <div className={gaya.dua}>
-        {isian("slug", "Slug, sekaligus alamatnya")}
+        {isian("slug", "Alamat tulisan (slug)")}
         {isian("tanggal", "Tanggal", "date")}
       </div>
 
@@ -242,10 +242,10 @@ export function PenyuntingTulisan({
         {isian("judul_id", "Judul, Indonesia")}
         {isian("ringkas_en", "Ringkas, Inggris")}
         {isian("ringkas_id", "Ringkas, Indonesia")}
-        {isian("keterangan_en", "Keterangan meta, Inggris")}
-        {isian("keterangan_id", "Keterangan meta, Indonesia")}
-        {isian("lede_en", "Lede, Inggris")}
-        {isian("lede_id", "Lede, Indonesia")}
+        {isian("keterangan_en", "Deskripsi untuk Google, Inggris")}
+        {isian("keterangan_id", "Deskripsi untuk Google, Indonesia")}
+        {isian("lede_en", "Kalimat pembuka, Inggris")}
+        {isian("lede_id", "Kalimat pembuka, Indonesia")}
         {isian("tag_en", "Tag, Inggris")}
         {isian("tag_id", "Tag, Indonesia")}
         {isian("baca_en", "Lama baca, Inggris")}
@@ -254,10 +254,8 @@ export function PenyuntingTulisan({
 
       {timpang ? (
         <p className={`${gaya.kabar} ${gaya.salah}`} role="status">
-          Jumlah blok tidak sama: Inggris {blok(isi.isi_en)}, Indonesia {blok(isi.isi_id)}.
-          Server akan menolaknya. Satu bahasa yang kehilangan satu paragraf adalah
-          kegagalan yang diam: halamannya tetap terbit, hanya isinya berbeda tergantung
-          bahasa yang sedang dipilih pembaca.
+          Jumlah paragraf belum sama: Inggris {blok(isi.isi_en)}, Indonesia{" "}
+          {blok(isi.isi_id)}. Samakan dulu, karena server akan menolaknya.
         </p>
       ) : null}
 
@@ -280,7 +278,7 @@ export function PenyuntingTulisan({
 
       <div className={gaya.dua}>
         <div className={gaya.baris}>
-          <label htmlFor="isi_en">Isi, Inggris &middot; {blok(isi.isi_en)} blok</label>
+          <label htmlFor="isi_en">Isi, Inggris &middot; {blok(isi.isi_en)} paragraf</label>
           <textarea
             id="isi_en"
             ref={kotakEn}
@@ -293,7 +291,7 @@ export function PenyuntingTulisan({
           />
         </div>
         <div className={gaya.baris}>
-          <label htmlFor="isi_id">Isi, Indonesia &middot; {blok(isi.isi_id)} blok</label>
+          <label htmlFor="isi_id">Isi, Indonesia &middot; {blok(isi.isi_id)} paragraf</label>
           <textarea
             id="isi_id"
             ref={kotakId}
@@ -312,7 +310,7 @@ export function PenyuntingTulisan({
         <div className={gaya.kanan}>
           <button
             type="button"
-            className={gaya.tombol}
+            className={`${gaya.tombol} ${gaya.kecil}`}
             aria-pressed={lihat}
             onClick={() => setLihat((b) => !b)}
           >
