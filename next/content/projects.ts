@@ -115,7 +115,7 @@ export const PROJECTS: Project[] = [
     image: "/assets/img/work/reach.webp?v=416ec76d18",
     alt: { en: "Map sheet of service accessibility in Biak Numfor", id: "Lembar peta aksesibilitas layanan di Biak Numfor" },
     categories: ["analysis", "design"],
-    badge: { en: "Service reach", id: "Jangkauan layanan" },
+    badge: { en: "Map analysis", id: "Analisis peta" },
     title: { en: "Service Reach, Biak Numfor", id: "Jangkauan Layanan, Biak Numfor" },
     body: {
       en: "How far people travel on the road to reach a service. Then a closer look at two spots for a fishing port, Fandoi and Bosnik.",

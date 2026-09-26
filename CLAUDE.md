@@ -19,7 +19,7 @@ python -m http.server 8080
 # uji
 pip install -r tests/requirements.txt
 python -m pytest                 # 875, tanpa peramban, hitungan detik
-python -m pytest -m peramban     # 85, Chromium sungguhan
+python -m pytest -m peramban     # 87, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
 # backend dan dashboard admin
@@ -62,7 +62,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    960 uji
+tests/                    962 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -271,6 +271,14 @@ Satu jebakan di CSS yang sudah memakan waktu: **`font: inherit` adalah
 pemendekan yang MENYETEL ULANG `font-size`.** Longhand-nya wajib ditulis
 SESUDAHNYA, kalau tidak nilainya hilang tanpa jejak dan tanpa galat. Ada uji
 yang menangkap pembalikan urutannya.
+
+Jebakan kedua: **`aspect-ratio` bersama `min-height` menurunkan lebar
+minimum lewat rasionya.** `.peta__frame` memakai 21/9 dan `min-height`
+sekitar 504 piksel, jadi lebar minimumnya 1.176 piksel. Sampai 27 September
+2026 halaman Project meluber sampai 1.200 piksel di setiap layar antara 720
+dan 1.200 piksel, dan uji geser mendatar hanya memeriksa lebar 360.
+`width: 100%` yang menahannya; ujinya sekarang berjalan di 360, 768, dan
+1.024.
 
 **Skrip sebaris di `<head>` diizinkan lewat hash sha256, bukan
 `unsafe-inline`.** Skrip tiga baris itu memasang tema sebelum bingkai

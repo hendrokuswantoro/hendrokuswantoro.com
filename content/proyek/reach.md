@@ -5,8 +5,8 @@ kategori: analysis design
 jenis_peta: analysis
 lng: 136.0800
 lat: -1.1800
-badge_en: Service reach
-badge_id: Jangkauan layanan
+badge_en: Map analysis
+badge_id: Analisis peta
 judul_en: Service Reach, Biak Numfor
 judul_id: Jangkauan Layanan, Biak Numfor
 ringkas_en: How far people travel on the road to reach a service. Then a closer look at two spots for a fishing port, Fandoi and Bosnik.

@@ -33,11 +33,13 @@ def test_halaman_terbuka_tanpa_galat(halaman, situs, jalur, judul):
     assert not sisa, f"{jalur}: {sisa[:3]}"
 
 
-def test_tidak_ada_geser_mendatar_di_ponsel(peramban, situs):
-    konteks = peramban.new_context(viewport={"width": 360, "height": 740})
+@pytest.mark.parametrize("lebar", [360, 768, 1024])
+def test_tidak_ada_geser_mendatar_di_lebar_mana_pun(peramban, situs, lebar):
+    konteks = peramban.new_context(viewport={"width": lebar, "height": 900})
     p = konteks.new_page()
     try:
-        for jalur in ("/", "/about", "/project", "/blog/", "/blog/kapan-peta-diam"):
+        for jalur in ("/", "/about", "/project", "/parkir-jogja", "/blog/",
+                      "/blog/kapan-peta-diam", "/404"):
             p.goto(f"{situs}{jalur}", wait_until="networkidle")
             lebar = p.evaluate(
                 "() => [document.documentElement.scrollWidth, window.innerWidth]"
