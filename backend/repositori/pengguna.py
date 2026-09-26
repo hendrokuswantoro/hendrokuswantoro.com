@@ -1,5 +1,3 @@
-"""SQL untuk pengguna, sesi, dan catatan percobaan masuk yang gagal."""
-
 from __future__ import annotations
 
 import datetime as dt
@@ -26,9 +24,6 @@ async def cari_id(pengguna_id: str) -> dict[str, Any] | None:
 async def simpan_hash(pengguna_id: str, hash_baru: str) -> None:
     async with koneksi() as s, s.cursor() as k:
         await k.execute("UPDATE users SET sandi_hash = %s WHERE id = %s", (hash_baru, pengguna_id))
-
-
-# ------------------------------------------------------------------ sesi ---
 
 
 async def buat_sesi(
@@ -62,13 +57,6 @@ async def sesi_hidup(token_hash: str) -> dict[str, Any] | None:
 
 
 async def cabut(token_hash: str) -> list[str]:
-    """Mengembalikan id sesi yang benar benar berubah.
-
-    Id-nya dipakai lapisan layanan untuk menaruhnya di daftar cabut, supaya
-    access token yang sudah terbit dari sesi itu ikut mati saat itu juga dan
-    bukan lima belas menit kemudian. Mengembalikan rowcount saja tidak cukup:
-    yang dibutuhkan id-nya, bukan jumlahnya.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             "UPDATE sesi SET dicabut_pada = now() "
@@ -79,19 +67,6 @@ async def cabut(token_hash: str) -> list[str]:
 
 
 async def daftar_sesi(pengguna_id: str) -> list[dict[str, Any]]:
-    """Sesi yang masih hidup, terbaru lebih dulu.
-
-    Yang dikembalikan sengaja sedikit: kapan dibuat, kapan kedaluwarsa, dan
-    sidik token yang dipendekkan supaya antarmuka bisa menandai mana sesi
-    perangkat yang sedang dipakai. Tidak ada nama perangkat dan tidak ada
-    alamat IP, sebab keduanya memang tidak pernah disimpan. Menambahkannya
-    sekarang berarti mulai mencatat tempat pemiliknya berada, dan itu
-    keputusan tersendiri yang bukan milik sebuah panel.
-
-    Dengan begitu panelnya tetap menjawab pertanyaan yang penting: ada berapa
-    sesi yang hidup, dan apakah jumlahnya lebih banyak daripada perangkat yang
-    Anda ingat.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             """
@@ -106,12 +81,6 @@ async def daftar_sesi(pengguna_id: str) -> list[dict[str, Any]]:
 
 
 async def cabut_lain(pengguna_id: str, token_hash: str) -> list[str]:
-    """Keluar dari perangkat lain, menyisakan yang sedang dipakai.
-
-    Dipisahkan dari `cabut_semua` dengan sengaja. Tombol yang mengeluarkan
-    pemiliknya sendiri bersama penyusupnya akan ragu ragu ditekan, padahal
-    justru saat curiga itulah ia harus ditekan cepat.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             "UPDATE sesi SET dicabut_pada = now() "
@@ -123,7 +92,6 @@ async def cabut_lain(pengguna_id: str, token_hash: str) -> list[str]:
 
 
 async def cabut_semua(pengguna_id: str) -> list[str]:
-    """Keluar dari semua perangkat. Bab 15.10."""
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             "UPDATE sesi SET dicabut_pada = now() "
@@ -131,9 +99,6 @@ async def cabut_semua(pengguna_id: str) -> list[str]:
             (pengguna_id,),
         )
         return [str(b["id"]) for b in await k.fetchall()]
-
-
-# ------------------------------------------------------- percobaan gagal ---
 
 
 async def catat_gagal(email: str, alamat_hash: str) -> None:
@@ -145,7 +110,6 @@ async def catat_gagal(email: str, alamat_hash: str) -> None:
 
 
 async def jumlah_gagal(email: str, menit: int, alamat_hash: str | None = None) -> int:
-    """Percobaan gagal untuk satu email, atau untuk satu email DARI satu alamat."""
     sql = (
         "SELECT count(*) AS n FROM gagal_masuk "
         "WHERE lower(email) = lower(%s) AND pada > now() - make_interval(mins => %s)"

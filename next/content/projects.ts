@@ -13,8 +13,6 @@ export type Project = {
   body: Copy;
   tags: string[];
   meta: Copy;
-  /* Jalur studi kasusnya, kalau ada. Hanya satu proyek yang punya sekarang,
-     dan kartu proyek lain tidak menampilkan tautan apa pun. */
   studiKasus?: string;
   featured: boolean;
 };
@@ -178,8 +176,6 @@ export const PROJECT_PAGE = {
   readCaseStudy: { en: "Read the case study", id: "Baca studi kasusnya" } as Copy,
   mapEyebrow: { en: "The work map", id: "Peta karya" } as Copy,
   mapTitle: { en: "Seven works, one map", id: "Tujuh karya, satu peta" } as Copy,
-  /* Dua kalimat, dua elemen. Yang pertama duduk di bawah judulnya, yang kedua
-     di sampingnya. Lihat .peta__intro di style.css. */
   mapIntro: {
     en: "Every project below is on this map.",
     id: "Tiap proyek di bawah ada di peta ini.",
@@ -188,7 +184,6 @@ export const PROJECT_PAGE = {
     en: "Click a point to see the work.",
     id: "Klik satu titik untuk melihat karyanya.",
   } as Copy,
-  /* Dibacakan pembaca layar, tidak pernah tampil di layar. */
   filterOn: {
     en: "%k. %n of %t works shown.",
     id: "%k. %n dari %t karya ditampilkan.",

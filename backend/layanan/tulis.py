@@ -1,12 +1,3 @@
-"""Aturan menulis, menyunting, dan menerbitkan.
-
-Satu aturan yang ditegakkan di sini dan tidak di mana pun lagi: tulisan hanya
-boleh berpindah ke status terbit kalau tanggalnya sudah ada. Basis data juga
-menahannya lewat CHECK, tetapi kalau yang menahan cuma basis data, yang
-sampai ke penulis adalah 500 tanpa penjelasan, bukan kalimat yang bisa
-ditindaklanjuti.
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -15,11 +6,11 @@ from backend.repositori import tulis as repo
 
 
 class Ditolak(Exception):
-    """Permintaan tulis yang tidak sah, dengan alasan yang bisa dibaca."""
+    pass
 
 
 class TidakAda(Exception):
-    """Slug yang diminta tidak ada."""
+    pass
 
 
 STATUS_SAH = {"draf", "terbit", "arsip"}
@@ -35,7 +26,6 @@ async def ubah(slug: str, nilai: dict[str, Any]) -> dict[str, Any]:
     if not await repo.ada(slug):
         raise TidakAda(slug)
 
-    # nama kolom di basis data berbeda dari nama di skema masuk
     if "tanggal" in nilai:
         nilai = {**nilai, "terbit_pada": nilai.pop("tanggal")}
 
@@ -63,14 +53,6 @@ async def hapus(slug: str) -> None:
 
 
 async def satu(slug: str) -> dict[str, Any]:
-    """Dipakai penyunting untuk membuka tulisan, termasuk yang masih draf.
-
-    Sampai hari ini penyunting membuka tulisan lewat jalur publik
-    /api/v1/blog/{slug}, yang hanya menjawab kalau statusnya sudah terbit.
-    Akibatnya draf yang baru dibuat tidak pernah bisa dibuka lagi, dan
-    satu satunya jalan keluar adalah menerbitkannya lebih dulu, yaitu
-    persis kebalikan dari gunanya draf.
-    """
     baris = await repo.satu(slug)
     if baris is None:
         raise TidakAda(slug)

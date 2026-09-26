@@ -1,23 +1,3 @@
-"""Temuan audit keamanan 26 September 2026, satu uji atau lebih per temuan.
-
-Yang diuji di sini perilakunya, bukan hanya keberadaan barisnya, kecuali
-untuk berkas konfigurasi (systemd dan nginx) yang memang tidak bisa
-dijalankan di mesin uji. Semua uji di sini jalan tanpa basis data: lapisan
-repositori diganti lewat monkeypatch, sebab yang dijaga adalah keputusan di
-lapisan layanan dan router.
-
- 1. Sandi saja tidak boleh cukup untuk mengambil alih akun berpasskey.
- 2. Alamat klien di balik nginx dan soket Unix.
- 3. Batas tebakan faktor kedua per akun.
- 4. Wajah tidak menerbitkan sesi kuat.
- 5. Penguncian per email dan alamat, bukan per email saja.
- 6. Kode TOTP tidak bisa dipakai dua kali.
- 7. Escape di halaman blog yang dibangkitkan.
- 8. Token verifikasi di fragmen, bukan di query.
- 9. Nilai bawaan CORS.
-10. Batas panjang isi tulisan.
-"""
-
 from __future__ import annotations
 
 import asyncio
@@ -67,16 +47,13 @@ def _baca(*jalur: str) -> str:
     return (AKAR.joinpath(*jalur)).read_text(encoding="utf-8")
 
 
-# ------------------------------------------------- 1. pendaftaran faktor ---
-
-
 @pytest.mark.parametrize(
     "kuat, punya, wajib, boleh",
     [
-        (False, False, True, True),    # faktor pertama dari sesi lemah: boleh
-        (False, True, True, False),    # faktor tambahan dari sesi lemah: TIDAK
-        (True, True, True, True),      # sesi kuat: boleh
-        (False, True, False, True),    # jalan pulang FAKTOR_KEDUA_WAJIB=false
+        (False, False, True, True),
+        (False, True, True, False),
+        (True, True, True, True),
+        (False, True, False, True),
     ],
 )
 def test_pendaftar_hanya_boleh_memasang_faktor_pertama(monkeypatch, kuat, punya, wajib, boleh):
@@ -101,7 +78,6 @@ def test_pendaftar_hanya_boleh_memasang_faktor_pertama(monkeypatch, kuat, punya,
 
 
 def _penjaga(isi: str, fungsi: str) -> str:
-    """Nama penjaga yang dipakai satu fungsi router."""
     potong = isi[isi.index(f"async def {fungsi}("):]
     return re.search(r"Depends\((butuh_admin\w*)\)", potong).group(1)
 
@@ -117,8 +93,6 @@ def _penjaga(isi: str, fungsi: str) -> str:
         ("keamanan.py", "totp_matikan", "butuh_admin_kuat"),
         ("keamanan.py", "wajah_daftar", "butuh_admin_pendaftar"),
         ("keamanan.py", "wajah_hapus", "butuh_admin_kuat"),
-        # Membaca keadaan tetap terbuka untuk sesi lemah, supaya pemilik yang
-        # belum punya faktor bisa melihat apa yang harus dipasang.
         ("keamanan.py", "keadaan", "butuh_admin"),
     ],
 )
@@ -127,7 +101,6 @@ def test_jalur_faktor_memakai_penjaga_yang_benar(berkas, fungsi, penjaga):
 
 
 def _login(monkeypatch, cara: list[str]):
-    """Menjalankan router login dengan sandi yang dianggap benar."""
     from fastapi import Response
     from starlette.requests import Request
 
@@ -183,35 +156,23 @@ def test_passkey_tidak_ikut_ditawarkan_di_langkah_tiket(monkeypatch):
 
 
 def test_jalan_pulang_tetap_ada_kalau_aturannya_dimatikan(monkeypatch):
-    """Perangkat hilang: FAKTOR_KEDUA_WAJIB=false membuka jalan sandi lagi,
-    dengan sesi yang lemah."""
     _wajib(monkeypatch, False)
     hasil, terbit = _login(monkeypatch, ["passkey"])
     assert hasil.tahap == "selesai"
     assert terbit["f2"] is False
 
 
-# --------------------------------------------------- 2. alamat klien ---
-
-
 def test_uvicorn_mempercayai_soketnya_sendiri():
-    """Lewat --uds, alamat klien bernilai None, dan '127.0.0.1' tidak pernah
-    cocok dengannya. Akibatnya seluruh permintaan terbaca tanpa alamat."""
     unit = _baca("infrastructure", "systemd", "hk-api.service")
     assert "--uds" in unit
     assert "--forwarded-allow-ips='*'" in unit
 
 
 def test_nginx_menimpa_x_forwarded_for_bukan_menambahkan():
-    """Dengan '*', uvicorn memakai alamat paling kiri. Menambahkan berarti
-    alamat karangan klien yang dipakai."""
     konf = _baca("infrastructure", "nginx", "hendrokuswantoro.conf")
     aktif = "\n".join(b for b in konf.splitlines() if not b.strip().startswith("#"))
     assert "$proxy_add_x_forwarded_for" not in aktif
     assert aktif.count("proxy_set_header X-Forwarded-For $remote_addr;") >= 4
-
-
-# ----------------------------------------- 3 dan 6. batas dan ulang TOTP ---
 
 
 def _siapkan_totp(monkeypatch, *, gagal_sebelumnya=0, langkah_baru=True):
@@ -264,7 +225,6 @@ def test_kode_totp_yang_sudah_dipakai_ditolak_dan_dihitung(monkeypatch):
 def test_kode_totp_salah_dihitung(monkeypatch):
     lapis, _, catatan = _siapkan_totp(monkeypatch)
     assert _jalan(lapis.periksa_totp("u1", "000000", None)) in (False, True)
-    # Peluang 000000 kebetulan benar 3 per sejuta; yang dijaga penghitungnya.
     assert catatan["gagal"] + catatan["bersih"] == 1
 
 
@@ -289,22 +249,14 @@ def test_router_menjawab_429_saat_jatah_habis():
 
 
 def test_janji_di_totp_py_sekarang_ditepati():
-    """Keterangannya berjanji menolak kode yang sudah dipakai. Janji itu
-    hanya benar kalau nomor jendelanya benar benar disimpan."""
     assert "pakai_langkah_totp" in _baca("backend", "layanan", "keamanan.py")
     assert "totp_langkah_terakhir" in _baca("backend", "db", "migrations", "0008_totp_langkah.sql")
-
-
-# ------------------------------------------------------------ 4. wajah ---
 
 
 def test_wajah_tidak_menerbitkan_sesi_kuat():
     isi = _baca("backend", "api", "v1", "auth.py")
     assert 'faktor_kedua=(isian.cara != "wajah")' in isi
     assert "faktor_kedua=True" not in isi
-
-
-# ------------------------------------------------------ 5. penguncian ---
 
 
 @pytest.mark.parametrize(
@@ -332,17 +284,12 @@ def test_penguncian_per_email_dan_alamat(monkeypatch, per_alamat, per_email, ter
     assert galat.value.terkunci is terkunci
 
 
-# ------------------------------------------------------------ 7. escape ---
-
-
 def test_untuk_ind_meng_escape_dua_kali():
     import html
 
     import markah
 
     nilai = markah.untuk_ind('<a href="x">klik</a> & "kutip"')
-    # Satu lapis dibuka peramban saat atribut dibaca, satu lapis lagi dibuka
-    # innerHTML. Yang tersisa sesudah keduanya harus teks, bukan tag.
     sesudah_atribut = html.unescape(nilai)
     assert "<" not in sesudah_atribut
     assert html.unescape(sesudah_atribut) == '<a href="x">klik</a> & "kutip"'
@@ -396,9 +343,6 @@ def test_alamat_media_di_escape():
     assert '"onerror="' not in keluar
 
 
-# ------------------------------------------------ 8. token verifikasi ---
-
-
 def test_token_verifikasi_di_fragmen():
     from backend.layanan import keamanan as lapis
 
@@ -410,9 +354,6 @@ def test_token_verifikasi_di_fragmen():
 def test_dashboard_membaca_token_dari_fragmen():
     isi = _baca("next", "components", "admin", "PanelKeamanan.tsx")
     assert "alamat.hash" in isi
-
-
-# ---------------------------------------------------------------- 9. CORS ---
 
 
 def test_bawaan_cors_hanya_situs_yang_terbit(monkeypatch):
@@ -432,9 +373,6 @@ def test_tautan_surat_tidak_menunjuk_mesin_sendiri(monkeypatch):
     )
     pengaturan.cache_clear()
     assert keamanan._asal(None) == "https://www.hendrokuswantoro.com"
-
-
-# --------------------------------------------------------- 10. panjang ---
 
 
 def test_isi_tulisan_dan_pratinjau_punya_batas():

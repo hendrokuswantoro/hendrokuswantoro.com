@@ -1,20 +1,3 @@
-/**
- * Satu pintu ke API, dipakai seluruh halaman admin.
- *
- * Access token disimpan di variabel modul, **bukan** di localStorage. Token di
- * localStorage bisa diambil satu XSS dan tetap berlaku sesudah tabnya ditutup;
- * yang di memori ikut hilang begitu tab ditutup, dan itu justru yang
- * diinginkan. Yang bertahan antar kunjungan adalah cookie refresh yang
- * HttpOnly, yang tidak bisa dibaca JavaScript sama sekali.
- *
- * Access token berumur 15 menit. Kalau ia mati di tengah orang mengetik,
- * `panggil` memperpanjangnya sekali lalu mengulang permintaannya, sehingga
- * tulisannya tidak hilang hanya karena waktunya habis.
- */
-
-/** Kosong berarti asal yang sama dengan halamannya. Diisi hanya kalau API-nya
- *  memang duduk di host lain, dan kalau begitu asalnya wajib ikut disebut di
- *  ASAL_DIIZINKAN pada sisi server. */
 export const DASAR_KOSONG = process.env.NEXT_PUBLIC_API ?? "";
 const DASAR = DASAR_KOSONG;
 
@@ -27,13 +10,6 @@ export type Sesi = {
   peran: string;
 };
 
-/**
- * Jawaban masuk punya dua bentuk, dan `tahap` yang membedakannya.
- *
- * "selesai" berarti sesinya terbit. "faktor2" berarti sandinya benar dan
- * belum cukup: yang terbit tiket berumur lima menit, bukan sesi, dan `cara`
- * menyebut faktor kedua apa saja yang bisa dipakai.
- */
 export type JawabanMasuk = Sesi & {
   tahap: "selesai" | "faktor2";
   tiket: string;
@@ -85,8 +61,6 @@ export class GagalApi extends Error {
   }
 }
 
-/** FastAPI menjawab galat dalam tiga bentuk. Ketiganya diringkas jadi satu
- *  kalimat yang bisa dibaca manusia, bukan dilempar apa adanya ke layar. */
 export function pesanGalat(isi: unknown): string {
   if (!isi || typeof isi !== "object") return "gagal";
   const detail = (isi as { detail?: unknown }).detail;
@@ -134,8 +108,6 @@ export async function panggil(jalur: string, pilihan: RequestInit = {}): Promise
   return jawaban;
 }
 
-/** Memanggil lalu membaca JSON-nya, dan melempar kalau gagal. Dipakai di
- *  tempat yang memang tidak punya rencana lain selain menampilkan galatnya. */
 export async function ambil<T>(jalur: string, pilihan: RequestInit = {}): Promise<T> {
   const jawaban = await panggil(jalur, pilihan);
   const isi = await jawaban.json().catch(() => null);
@@ -153,10 +125,6 @@ export async function masukSandi(email: string, sandi: string): Promise<JawabanM
   const isi = await jawaban.json().catch(() => null);
   if (!jawaban.ok) throw new GagalApi(pesanGalat(isi), jawaban.status);
   const hasil = isi as JawabanMasuk;
-  // Token hanya disimpan kalau sesinya memang sudah terbit. Tiket faktor
-  // kedua TIDAK pernah masuk ke sini: ia bukan kunci, dan menaruhnya di
-  // tempat kunci adalah cara paling mudah membuatnya diperlakukan sebagai
-  // kunci oleh kode berikutnya.
   if (hasil.tahap === "selesai") AKSES = hasil.akses;
   return hasil;
 }
@@ -191,7 +159,6 @@ export async function kirimUlangKode(tiket: string): Promise<{ terkirim: boolean
   return isi as { terkirim: boolean; catatan: string };
 }
 
-// ----------------------------------------------------------- keamanan ---
 
 export function keadaanKeamanan(): Promise<KeadaanKeamanan> {
   return ambil<KeadaanKeamanan>("/api/v1/keamanan");
@@ -253,7 +220,6 @@ export function peristiwaKeamanan(): Promise<{ peristiwa: Peristiwa[] }> {
   return ambil("/api/v1/keamanan/peristiwa");
 }
 
-// ------------------------------------------------------------- berkas ---
 
 export type Berkas = {
   id: string;
@@ -284,18 +250,6 @@ export async function hapusBerkas(nama: string): Promise<void> {
   }
 }
 
-/**
- * Mengunggah satu berkas, dengan kemajuannya.
- *
- * Memakai XMLHttpRequest, bukan fetch, dan itu satu satunya alasannya:
- * fetch belum bisa melaporkan berapa bita yang sudah terkirim. Untuk video
- * delapan puluh megabita di sambungan rumahan, bilah yang bergerak adalah
- * beda antara menunggu dan mengira aplikasinya menggantung.
- *
- * Content-Type sengaja TIDAK dipasang. Peramban menuliskannya sendiri
- * beserta boundary multipart-nya, dan boundary yang ditulis tangan hampir
- * selalu salah.
- */
 function sekaliUnggah(
   berkas: File,
   kemajuan?: (persen: number) => void,
@@ -304,9 +258,6 @@ function sekaliUnggah(
   return new Promise((selesai, gagal) => {
     const bentuk = new FormData();
     bentuk.append("berkas", berkas, berkas.name);
-    // Dikirim sebagai kata, bukan sebagai boolean: multipart hanya membawa
-    // teks, dan "false" yang dibaca sebagai benar adalah kegagalan yang
-    // arahnya paling merugikan.
     bentuk.append("buang_metadata", buangMetadata ? "true" : "false");
 
     const xhr = new XMLHttpRequest();
@@ -341,9 +292,6 @@ export async function unggahBerkas(
 ): Promise<BerkasBaru> {
   let hasil = await sekaliUnggah(berkas, kemajuan, buangMetadata);
 
-  // Access token berumur 15 menit. Mengunggah video besar bisa melewatinya
-  // di tengah jalan, dan kalau tidak diulang, yang hilang adalah unggahan
-  // yang sudah sembilan puluh persen terkirim.
   if (hasil.status === 401 && AKSES) {
     const putar = await fetch(`${DASAR}/api/v1/auth/refresh`, {
       method: "POST",
@@ -361,7 +309,6 @@ export async function unggahBerkas(
   return hasil.isi as BerkasBaru;
 }
 
-// ----------------------------------------------------------- pratinjau ---
 
 export type Pratinjau = {
   html: string;
@@ -370,9 +317,6 @@ export type Pratinjau = {
   blok: number;
 };
 
-/** Markah jadi HTML lewat pembangkit situsnya sendiri, bukan lewat pengurai
- *  kedua di peramban. Dua pengurai untuk satu bahasa markah akan berpisah,
- *  dan yang berpisah membuat layar pratinjau berbohong. */
 export function pratinjauTulisan(isi_en: string, isi_id: string): Promise<Pratinjau> {
   return ambil("/api/v1/admin/pratinjau", {
     method: "POST",
@@ -380,8 +324,6 @@ export function pratinjauTulisan(isi_en: string, isi_id: string): Promise<Pratin
   });
 }
 
-/** Dipanggil sekali saat halaman dibuka. Kalau cookie refresh masih hidup,
- *  orangnya langsung masuk tanpa ditanya sandi lagi. */
 export async function sesiYangMasihHidup(): Promise<Sesi | null> {
   const putar = await fetch(`${DASAR}/api/v1/auth/refresh`, {
     method: "POST",

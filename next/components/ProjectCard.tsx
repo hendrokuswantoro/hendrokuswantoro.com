@@ -20,8 +20,7 @@ export function ProjectCard({
   return (
     <article className="card reveal" id={`karya-${project.id}`}>
       <div className="card__cover">
-        {/* plain img on purpose: the export is static and the files are already
-            sized and compressed by tools/build_work_images.py */}
+        {}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={project.image}
@@ -45,10 +44,6 @@ export function ProjectCard({
         </ul>
         {withMeta ? <p className="card__meta">{say(project.meta)}</p> : null}
         {withMeta ? (
-          /* Jalan pulang dari kartu ke peta, kebalikan dari tautan di dalam
-             popup penanda. href-nya betulan alamat yang bisa disalin, bukan
-             "#": yang tersalin dari bilah alamat sesudah ini membuka peta di
-             titik yang sama. */
           <p className="card__aksi">
             {project.studiKasus ? (
               <Link href={project.studiKasus}>{say(PROJECT_PAGE.readCaseStudy)}</Link>
@@ -70,25 +65,12 @@ export function ProjectCard({
 
                 if (peta) {
                   peta.buka(project.id);
-                  /* Gulirnya menyusul satu bingkai kemudian, dan urutannya
-                     penting. Popup MapLibre memindahkan fokus ke dalam dirinya
-                     begitu terbuka, focusAfterOpen, dan pemindahan fokus itu
-                     ikut menggulir halaman. Kalau gulir kita berangkat lebih
-                     dulu, ia kalah: terukur berhenti 196 piksel dari tempat
-                     yang dimaksud. */
                   window.requestAnimationFrame(gulirKePeta);
                 } else {
-                  /* petanya baru dimuat, belum ada popup yang berebut gulir.
-                     Alamatnya ditulis sekarang, dan WorkMap membacanya sendiri
-                     begitu selesai. Bukan lewat location.hash: #peta-<id>
-                     tidak menunjuk elemen mana pun, dan peramban menjawab
-                     fragmen yang tidak ditemukan dengan menggulir ke awal
-                     dokumen. */
                   gulirKePeta();
                   try {
                     window.history.replaceState(null, "", `#peta-${project.id}`);
                   } catch {
-                    /* alamat file:// */
                   }
                 }
               }}

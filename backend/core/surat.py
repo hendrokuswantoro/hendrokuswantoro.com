@@ -1,23 +1,3 @@
-"""Mengirim surat, dan berterus terang ketika ia tidak terkirim.
-
-Satu keputusan yang menentukan seluruh bentuk berkas ini: **kalau SMTP belum
-dikonfigurasi, surat tidak dianggap terkirim.** Ia ditulis ke berkas dan
-fungsinya mengembalikan `Hasil(terkirim=False, ...)`, dan pemanggilnya wajib
-memberi tahu penggunanya.
-
-Godaan yang ditolak di sini besar dan biasa: mencetak kodenya ke log, membalas
-"kode sudah dikirim", lalu menganggap selesai. Yang terjadi kemudian selalu
-sama. Verifikasi email yang emailnya tidak pernah sampai bukan verifikasi
-apa apa, dan lebih buruk daripada tidak ada verifikasi, sebab sesudahnya ada
-kolom di basis data yang mengatakan alamat itu sudah terbukti.
-
-Saat SMTP kosong, kodenya ditulis ke `cadangan/surat/` supaya pemilik situs
-yang sedang membangun di mesinnya sendiri tetap bisa meneruskan pekerjaannya.
-Folder itu sudah ada di .gitignore. Lapisan di atasnya yang memutuskan apakah
-itu boleh dipakai; di produksi, `SURAT_WAJIB=1` membuatnya melempar galat
-alih alih menulis berkas.
-"""
-
 from __future__ import annotations
 
 import datetime as dt
@@ -34,13 +14,11 @@ from backend.core.konfigurasi import pengaturan
 AKAR = pathlib.Path(__file__).resolve().parent.parent.parent
 KOTAK = AKAR / "cadangan" / "surat"
 
-# Header yang disuntikkan lewat baris baru di dalam subjek atau nama adalah
-# cara paling tua mengubah satu surat jadi surat ke orang lain.
 BARIS_BARU = re.compile(r"[\r\n]")
 
 
 class TidakTerkirim(RuntimeError):
-    """SMTP diminta wajib, dan ia gagal atau belum dikonfigurasi."""
+    pass
 
 
 @dataclass(frozen=True)
@@ -51,11 +29,6 @@ class Hasil:
 
 
 def _atur() -> dict:
-    # Lewat Pengaturan, bukan os.environ. Aplikasi web ini tidak pernah memuat
-    # .env ke dalam os.environ; yang membaca .env adalah pydantic-settings.
-    # Nilai yang hanya tertulis di .env karena itu tidak akan pernah terlihat
-    # oleh os.environ.get, dan akibatnya SMTP yang sudah dikonfigurasi tetap
-    # dilaporkan belum ada. Variabel lingkungan sungguhan tetap menang.
     a = pengaturan()
     return {
         "host": a.smtp_host.strip(),
@@ -93,12 +66,6 @@ def _tulis_ke_berkas(pesan: EmailMessage, alasan: str) -> Hasil:
 
 
 def kirim(kepada: str, subjek: str, isi: str) -> Hasil:
-    """Mengirim satu surat teks biasa.
-
-    Teks biasa saja, tanpa HTML. Surat autentikasi yang berisi HTML memberi
-    penerima satu hal lagi yang harus dipercaya, dan tidak memberi apa pun
-    yang berguna: yang dibutuhkan pembacanya cuma satu kode atau satu tautan.
-    """
     a = _atur()
     pesan = EmailMessage()
     pesan["From"] = a["dari"] or "hendrokuswantoro.com <tanpa-konfigurasi@localhost>"
@@ -127,9 +94,7 @@ def kirim(kepada: str, subjek: str, isi: str) -> Hasil:
                 if a["pengguna"]:
                     s.login(a["pengguna"], a["sandi"])
                 s.send_message(pesan)
-    except Exception as galat:  # noqa: BLE001 - apa pun sebabnya, ia tidak sampai
-        # Pesan galatnya TIDAK memuat isi suratnya. Kode di dalamnya akan ikut
-        # masuk log, dan log bukan tempat yang aman untuk kode sekali pakai.
+    except Exception as galat:  # noqa: BLE001 
         if a["wajib"]:
             raise TidakTerkirim(f"SMTP menolak: {type(galat).__name__}") from galat
         return _tulis_ke_berkas(pesan, f"SMTP gagal ({type(galat).__name__}).")

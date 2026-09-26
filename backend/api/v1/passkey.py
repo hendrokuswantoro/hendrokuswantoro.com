@@ -1,15 +1,3 @@
-"""Titik akhir passkey.
-
-Empat untuk alurnya, dua untuk mengelolanya. Alur WebAuthn selalu dua
-langkah, mulai lalu selesai, karena tantangannya harus lahir di server dan
-ditandatangani perangkat di antara keduanya.
-
-Perhatikan yang **tidak** ada di sini: tidak ada titik akhir yang menerima
-email lalu menjawab kredensial mana yang dimilikinya. Jawaban semacam itu
-memberi tahu siapa pun yang bertanya bahwa sebuah email terdaftar, dan itu
-separuh pekerjaan penebak. Passkey discoverable tidak membutuhkannya.
-"""
-
 from __future__ import annotations
 
 from typing import Annotated, Any
@@ -45,14 +33,9 @@ def _siap() -> None:
 
 @rute.get("/siap", summary="Apakah jalur passkey hidup")
 async def siap() -> dict:
-    """Dipakai halaman admin untuk memutuskan menampilkan tombolnya atau
-    tidak. Tidak menyebut apa pun tentang pengguna mana pun."""
     from backend.core.konfigurasi import pengaturan
 
     return {"siap": pengaturan().passkey_siap}
-
-
-# --------------------------------------------------------------- daftar ---
 
 
 @rute.post("/daftar/mulai", summary="Mulai mendaftarkan perangkat ini")
@@ -60,10 +43,6 @@ async def daftar_mulai(
     pengguna: Annotated[dict, Depends(butuh_admin_pendaftar)],
     jenis: str = "perangkat",
 ) -> dict:
-    """`jenis=perangkat` meminta sensor yang menempel pada perangkatnya, yaitu
-    sidik jari, wajah, atau Windows Hello. `jenis=kunci` meminta kunci fisik
-    yang dicolokkan. Keduanya sama sama WebAuthn dan sama sama tahan halaman
-    palsu; yang membedakan cuma di mana kunci privatnya tinggal."""
     if jenis not in ("perangkat", "kunci"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -90,9 +69,6 @@ async def daftar_selesai(
     return {"id": hasil.id, "nama": hasil.nama}
 
 
-# ---------------------------------------------------------------- masuk ---
-
-
 @rute.post("/masuk/mulai", summary="Mulai masuk dengan passkey")
 async def masuk_mulai() -> dict:
     _siap()
@@ -106,8 +82,6 @@ async def masuk_selesai(badan: JawabanMasukPasskey, jawaban: Response) -> Jawaba
     try:
         hasil = await layanan.selesaikan_masuk(badan.jawaban)
     except layanan.Ditolak as ditolak:
-        # 401 apa pun sebabnya. Membedakan "kredensial tidak dikenal" dari
-        # "tanda tangan salah" memberi tahu penebak mana yang sudah benar.
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="passkey tidak berlaku"
         ) from ditolak
@@ -116,9 +90,6 @@ async def masuk_selesai(badan: JawabanMasukPasskey, jawaban: Response) -> Jawaba
     return JawabanMasuk(
         akses=hasil.akses, umur_detik=hasil.umur_detik, nama=hasil.nama, peran=hasil.peran
     )
-
-
-# ------------------------------------------------------------- mengelola ---
 
 
 @rute.get("", summary="Daftar passkey milik saya")
@@ -132,6 +103,4 @@ async def cabut(
     kredensial_id: str, pengguna: Annotated[dict, Depends(butuh_admin_kuat)]
 ) -> None:
     if not await layanan.hapus(str(pengguna["id"]), kredensial_id):
-        # 404, bukan 403. Membedakan "bukan milikmu" dari "tidak ada" akan
-        # memberi tahu penanya bahwa kredensial itu ada dan milik orang lain.
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="tidak ada")

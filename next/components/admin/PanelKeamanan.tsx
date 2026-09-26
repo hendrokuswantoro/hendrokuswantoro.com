@@ -18,23 +18,6 @@ import {
   type Peristiwa,
 } from "@/lib/api";
 
-/**
- * Panel keamanan akun.
- *
- * Tiga hal yang membentuk isinya, dan semuanya soal berterus terang:
- *
- * 1. **Keadaan yang sebenarnya ditampilkan, termasuk yang belum siap.** Kalau
- *    SMTP belum dikonfigurasi, tombol kirim tetap ada tetapi disertai
- *    keterangan bahwa suratnya akan ditulis ke berkas dan tidak berangkat.
- *    Tombol yang diam diam gagal jauh lebih buruk daripada tombol yang
- *    menjelaskan kenapa ia belum bisa dipakai.
- * 2. **Kode pemulihan ditampilkan sekali.** Setelah panel ini ditutup, tidak
- *    ada siapa pun yang bisa menunjukkannya lagi, sebab yang tersimpan di
- *    server cuma sidiknya. Itu dikatakan di layar, bukan diasumsikan dimengerti.
- * 3. **Yang gagal ikut ditampilkan di jejaknya.** Daftar yang hanya memuat
- *    keberhasilan cuma memberi tahu pemiliknya apa yang sudah ia lakukan.
- *    Yang gagal memberi tahu bahwa ada orang lain sedang mencoba.
- */
 
 const NAMA_PERISTIWA: Record<string, string> = {
   masuk: "Masuk",
@@ -72,7 +55,6 @@ export function PanelKeamanan() {
   const [kabar, setKabar] = useState("");
   const [sibuk, setSibuk] = useState(false);
 
-  /* Pemasangan TOTP yang sedang berjalan. */
   const [pasang, setPasang] = useState<{ rahasia: string; qr: string; otpauth: string } | null>(null);
   const [kode, setKode] = useState("");
   const [pemulihan, setPemulihan] = useState<string[] | null>(null);
@@ -93,12 +75,6 @@ export function PanelKeamanan() {
     void muat();
   }, [muat]);
 
-  /* Tautan verifikasi dibuka dari kotak surat, dan mendarat di /admin dengan
-     #verifikasi=... di alamatnya. Fragmen, bukan query: fragmen tidak pernah
-     dikirim ke server, jadi tokennya tidak masuk log akses nginx. Query tetap
-     dibaca untuk tautan lama yang dikirim sebelum 26 September 2026 dan
-     masih hidup. Ditangani di sini lalu dihapus dari alamat, supaya tokennya
-     tidak tertinggal di riwayat peramban. */
   useEffect(() => {
     const alamat = new URL(window.location.href);
     const fragmen = new URLSearchParams(alamat.hash.slice(1));
@@ -162,7 +138,7 @@ export function PanelKeamanan() {
         </p>
       ) : null}
 
-      {/* ------------------------------------------------ ringkasan */}
+      {}
 
       <ul className={gaya.daftarKeadaan}>
         <li>
@@ -197,7 +173,7 @@ export function PanelKeamanan() {
         </li>
       </ul>
 
-      {/* ------------------------------------------- verifikasi email */}
+      {}
 
       <h3 className={gaya.subjudul}>Email</h3>
       <p className={gaya.penjelasan}>
@@ -227,7 +203,7 @@ export function PanelKeamanan() {
         </button>
       </div>
 
-      {/* --------------------------------------------------- TOTP */}
+      {}
 
       <h3 className={gaya.subjudul}>Aplikasi authenticator</h3>
       <p className={gaya.penjelasan}>
@@ -306,9 +282,6 @@ export function PanelKeamanan() {
           </p>
           <div
             className={gaya.qr}
-            /* SVG-nya datang dari API situs ini sendiri dan isinya dibangkitkan
-               dari matriks hitam putih, bukan dari masukan pengguna. Tidak ada
-               jalan bagi teks siapa pun untuk sampai ke sini. */
             dangerouslySetInnerHTML={{ __html: pasang.qr }}
           />
           <p className={gaya.penjelasan}>
@@ -366,7 +339,7 @@ export function PanelKeamanan() {
         </div>
       )}
 
-      {/* --------------------------------------------------- wajah */}
+      {}
 
       <h3 className={gaya.subjudul}>Verifikasi wajah</h3>
       <p className={gaya.penjelasan}>
@@ -434,7 +407,7 @@ export function PanelKeamanan() {
         </div>
       )}
 
-      {/* ----------------------------------------------- jejak */}
+      {}
 
       <h3 className={gaya.subjudul}>Aktivitas terakhir</h3>
       <p className={gaya.penjelasan}>

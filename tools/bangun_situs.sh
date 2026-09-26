@@ -1,22 +1,4 @@
 #!/bin/sh
-# Builds dist/, the folder Cloudflare actually serves.
-#
-# Two jobs, in this order:
-#
-#   1. write assets/js/konfigurasi.js from the MAPBOX_TOKEN environment
-#      variable, because that file is gitignored and a clone has no token
-#   2. copy only the files that belong on a web server into dist/
-#
-# What it leaves out: the README, tools/, the Next.js port, and the git
-# metadata. None of those belong in front of a visitor.
-#
-# Cloudflare Workers (wrangler.toml present):
-#   Build command: sh tools/bangun_situs.sh
-#   Assets are read from ./dist, declared in wrangler.toml
-#
-# Cloudflare Pages (legacy workflow):
-#   Build command:           sh tools/bangun_situs.sh
-#   Build output directory:  dist
 
 set -eu
 

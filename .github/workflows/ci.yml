@@ -1,25 +1,5 @@
-# Git Push -> Lint -> Type Check -> Test -> Security Scan -> Build
-#
-# Deploy is not here on purpose. Cloudflare builds and publishes on its own
-# when main moves, so putting a second deploy in this file would give the
-# site two masters. What this pipeline does is refuse to let a push reach
-# that point silently broken.
-#
-# Health Check lives in kesehatan.yml, because it has to run against the
-# site after Cloudflare has finished, not before.
-
 name: CI
 
-# Pemicunya sempat dimatikan pada 14 September 2026 supaya perhatian bisa
-# penuh ke arsitektur situsnya, dan dihidupkan kembali pada hari yang sama
-# atas permintaan pemilik proyek. Isinya tidak pernah ikut dimatikan.
-#
-# Selama pemicunya mati, tidak ada satu pun yang menahan push yang rusak
-# sampai ke Cloudflare. Sekarang ada lagi. Meski begitu, yang di bawah ini
-# tetap dijalankan sebelum push, sebab ia menjalankan uji peramban dan
-# membangun dist/ dalam satu jalan yang sama:
-#
-#     sh tools/verifikasi.sh
 on:
   push:
     branches: [main]
@@ -75,41 +55,24 @@ jobs:
             echo "ok $berkas"
           done
 
-      # Angka rasio kontras yang ditulis di kepala style.css hanya benar
-      # sampai ada yang menggeser satu warna tanpa menghitung ulang.
       - name: Every text colour still passes WCAG AA
         run: python tools/kontras.py
 
-      # Skrip tema sebaris diizinkan CSP lewat hash. Berubah satu byte tanpa
-      # hashnya ikut diperbarui berarti temanya berhenti bekerja di peramban
-      # tanpa satu pun pesan di halaman.
       - name: The inline script hash matches _headers
         run: python tools/hash_skrip.py
 
-      # Dua salinan sistem desain adalah dua tempat yang harus diubah tiap
-      # kali satu warna bergeser, dan yang kedua selalu tertinggal.
       - name: The Next.js port's stylesheet is not behind
         run: python tools/gaya_next.py --periksa
 
-      # Diperiksa nginx sungguhan di dalam kontainer. Salah ketik satu titik
-      # koma di sini jauh lebih murah daripada `systemctl reload nginx` yang
-      # menolak menyala saat situsnya sudah hidup.
       - name: The nginx config is valid
         run: sh infrastructure/periksa_nginx.sh
 
-      # Delapan berkas woff2 plus sha256-nya, diperiksa luring.
       - name: The vendored font matches its record
         run: python tools/ambil_font.py --periksa
 
-      # /assets/* dijanjikan immutable selama setahun. Janji itu hanya sah
-      # kalau alamatnya berganti tiap kali isinya berganti, dan selama ini
-      # tidak: sepuluh commit mengubah peta.js tanpa nomornya naik sekali pun.
       - name: Asset versions match their contents
         run: python tools/versi_aset.py --periksa
 
-      # Migrasi bernomor, dan nomornya tidak boleh kembar. Dua berkas bernomor
-      # sama akan diterapkan menurut urutan abjadnya, bukan urutan yang
-      # dimaksud penulisnya, dan yang kedua bisa menimpa yang pertama.
       - name: Migration numbers are unique
         run: |
           kembar=$(ls backend/db/migrations/ | cut -c1-4 | sort | uniq -d)
@@ -119,14 +82,6 @@ jobs:
           fi
           echo "ok, $(ls backend/db/migrations/ | wc -l) migrasi, nomornya unik"
 
-      # Alur kerjanya sendiri tidak pernah diperiksa sebelum dijalankan.
-      #
-      # Yang dicari bukan hanya sintaks. kesehatan.yml pernah memuat daftar
-      # jalur yang dipisah dengan "\n" harfiah, bukan baris baru, sehingga
-      # shell membacanya sebagai kata bernilai "n" dan pemeriksaannya meminta
-      # alamat yang memang tidak ada. Sintaksnya sah sempurna, jadi bash -n
-      # meloloskannya, dan akibatnya health check gagal tiap malam sambil
-      # membuka isu yang menyatakan situsnya mati. Situsnya sehat.
       - name: The workflows themselves parse
         run: |
           pip install PyYAML==6.0.3
@@ -144,16 +99,11 @@ jobs:
         with:
           node-version: '20'
 
-      # npm ci, bukan npm install: lockfile-nya sudah ada sejak Node
-      # terpasang di mesin pengembangan, dan ci memasang persis versi yang
-      # tertulis di sana, bukan versi terbaru yang kebetulan cocok.
       - run: npm ci --no-audit --no-fund
 
       - name: TypeScript
         run: npm run typecheck
 
-      # Type check membuktikan tipenya benar, bukan bahwa aplikasinya bisa
-      # dibangun.
       - name: Build
         env:
           NEXT_PUBLIC_MAPBOX_TOKEN: ""
@@ -198,59 +148,17 @@ jobs:
         with:
           node-version: '20'
 
-      # The report is printed in full and read, but it does not fail the
-      # pipeline. Every package it covers belongs to next/, a port that has
-      # never been built and never been published: not one npm package
-      # reaches a visitor. The moment that port is deployed, drop the
-      # "|| true" and this becomes a blocking check again.
-      #
-      # The dependency that does reach a visitor is MapLibre, vendored under
-      # assets/vendor/ where npm cannot see it. It carries an unfixed
-      # critical advisory, and the reason it is still here is written down
-      # in docs/keamanan.md rather than hidden behind a green check.
-      # 14 September 2026: sekarang MEMBLOKIR pada tingkat high, dan itu
-      # perubahan sikap yang perlu dijelaskan.
-      #
-      # Sebelumnya langkah ini mencetak laporan lalu selalu lolos, sebab
-      # satu satunya temuan yang tersisa datang dari next/ yang belum
-      # diterbitkan. Temuan itu, empat advisory postcss termasuk satu high,
-      # sudah ditutup dengan `overrides` di package.json, bukan dengan
-      # menaikkan Next ke versi mayor berikutnya seperti saran `npm audit
-      # fix --force`. postcss 8.5.28 masih satu mayor dengan 8.4.31, jadi
-      # ongkosnya jauh lebih kecil daripada risiko Next 16.
-      #
-      # Sesudah itu `npm audit` menjawab nol. Selama ia nol, membiarkannya
-      # "|| true" berarti membuang pemeriksaan yang sudah gratis. Kalau suatu
-      # saat ada temuan yang memang tidak bisa ditambal, tulis alasannya di
-      # docs/audit-keamanan.md lalu kecualikan dengan tersurat, sama seperti
-      # aturan pada paket Python di bawah, bukan dengan mengembalikan
-      # "|| true" yang menutup semuanya sekaligus.
       - name: Dependency audit, enforced
         working-directory: next
         run: |
           npm install --package-lock-only --no-audit --no-fund
           npm audit --audit-level=high
 
-      # Ini MEMBLOKIR, tidak seperti npm audit di atas. Bedanya nyata:
-      # paket Python di bawah ini benar benar berjalan di server yang
-      # menghadap internet dan memegang basis data, sedangkan yang di next/
-      # belum pernah diterbitkan sama sekali.
-      #
-      # Penyisiran 13 September 2026 menemukan 24 temuan di dua paket, dan
-      # keduanya sudah dinaikkan. Langkah ini yang menjaga supaya temuan
-      # berikutnya ketahuan pada hari ia diumumkan, bukan berbulan bulan
-      # kemudian. Kalau suatu saat ada temuan yang memang tidak bisa
-      # ditambal, tulis alasannya di docs/audit-keamanan.md lalu kecualikan
-      # ID-nya di sini dengan tersurat, bukan dengan "|| true".
       - name: Python dependency audit, enforced
         run: |
           pip install -q pip-audit
           pip-audit -r backend/requirements.txt --strict
 
-      # maplibre-gl.js, tanpa m, sudah tidak ada sejak versi 6: MapLibre 6
-      # terbit sebagai ES module saja. Langkah ini masih menunjuk ke berkas
-      # lama, jadi ia GAGAL di tiap push sejak 12 September 2026, dan yang
-      # gagal bukan hal yang dijaganya.
       - name: The vendored library has not moved without the record moving
         run: |
           versi=$(cat assets/vendor/maplibre/VERSI)
@@ -340,9 +248,6 @@ jobs:
           python backend/db/cadangan.py buat
           python backend/db/cadangan.py uji-pulih
 
-      # Langkah yang sama, kali ini terenkripsi. Cadangan yang bisa dibuat
-      # tetapi tidak bisa dibuka lagi adalah cadangan yang tidak ada, dan itu
-      # baru ketahuan pada hari ia dibutuhkan.
       - name: Backup, encrypted, and restored again
         run: |
           eval "$(python backend/db/enkripsi.py kunci | head -1 | sed 's/^/export /')"
@@ -367,19 +272,6 @@ jobs:
           COOKIE_AMAN: "false"
         run: python -m pytest tests/test_admin.py -q
 
-      # Langkah langkah di atas menyebut berkasnya satu per satu, dan itu
-      # menyisakan lubang yang tidak terlihat dari mana pun: berkas uji yang
-      # tidak disebut di sini TIDAK PERNAH DIJALANKAN CI SAMA SEKALI.
-      #
-      # Pekerjaan "Test" tidak menutupinya. Di sana tidak ada basis data dan
-      # tidak ada paket backend, jadi test_sesi.py, test_keamanan_akun.py,
-      # test_keamanan_alur.py, test_cadangan.py, dan bagian server
-      # test_passkey_alamat.py semuanya runtuh jadi satu baris "dilewati".
-      # Terhitung pada 14 September 2026: 168 uji ada di repositori tetapi
-      # tidak dijalankan di mana pun.
-      #
-      # Langkah ini menjalankan seluruhnya, di tempat yang punya basis data
-      # dan paket backend. Ongkosnya 25 detik.
       - name: The whole suite, with a database behind it
         env:
           JWT_SECRET: rahasia-uji-yang-panjangnya-lebih-dari-tiga-puluh-dua
@@ -399,54 +291,13 @@ jobs:
       - name: Install Chromium
         run: python -m playwright install --with-deps chromium chromium-headless-shell
 
-      # Token Mapbox dibutuhkan: tanpa itu peta jatuh ke OpenFreeMap dan yang
-      # diuji bukan lagi peta yang terbit.
-      #
-      # Kalau rahasianya belum dipasang, atau kalau tokennya dibatasi per URL
-      # dan asal runner tidak ada di daftarnya, empat uji peta dilewati dengan
-      # alasan yang menyebut persis apa yang harus dikerjakan. pytest.ini
-      # memakai -rs, jadi alasan itu selalu tercetak di log dan tidak bisa
-      # lolos diam diam. Sampai 13 September 2026 komentar di tempat ini
-      # mengaku begitu padahal ujinya justru GAGAL; sekarang benar.
       - name: Write the map token
         env:
           MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
         run: sh tools/konfigurasi.sh
 
-      # -m peramban wajib ada, dan ketiadaannya yang menggagalkan langkah ini
-      # berhari hari.
-      #
-      # pytest.ini memasang addopts `-m "not peramban"` supaya putaran biasa
-      # tidak menyalakan Chromium. Seluruh test_peramban.py bertanda peramban,
-      # jadi tanpa -m peramban di sini pytest tidak mengumpulkan satu uji pun
-      # dan keluar dengan kode 5. Kode 5 berarti "tidak ada uji", bukan "ada
-      # uji yang gagal", dan tampak di halaman Actions hanya sebagai "Process
-      # completed with exit code 5".
-      #
-      # Selama itu tidak ada satu pun uji peramban yang benar benar berjalan
-      # di CI, sementara komentar di langkah di atas menjelaskan panjang lebar
-      # bagaimana empat uji peta akan dilewati dengan alasan yang jelas. Uji
-      # yang tidak pernah dijalankan tidak menjaga apa pun, dan yang paling
-      # buruk, kegagalannya terbaca seolah ada uji yang jatuh.
-      #
-      # tests/test_infrastruktur.py sekarang menolak langkah peramban di
-      # berkas ini yang tidak menyebut -m peramban.
-      #
-      # Hasilnya ikut ditulis ke ringkasan run, bukan hanya ke log. Log runner
-      # menuntut hak admin repositori untuk dibaca lewat API, jadi kegagalan di
-      # sini pernah tidak bisa ditelusuri sama sekali dari luar.
       - name: Browser tests
         run: |
-          # set +e wajib, dan ketiadaannya membuat dua langkah di bawahnya
-          # tidak pernah berjalan.
-          #
-          # GitHub menjalankan `shell: bash` sebagai `bash -eo pipefail`.
-          # Jadi begitu pytest gagal, pipeline-nya gagal, dan -e membuat
-          # skripnya berhenti persis di baris itu. Blok ringkasan run dan
-          # anotasi kegagalan di bawah tidak pernah dieksekusi, sehingga
-          # satu satunya yang terlihat dari luar adalah kode keluarnya.
-          # Itulah kenapa ringkasan yang dipasang untuk menolong justru
-          # tidak pernah muncul tepat pada saat ia dibutuhkan.
           set +e
           python -m pytest tests/test_peramban.py -q -m peramban --tb=short | tee hasil-peramban.txt
           kode=${PIPESTATUS[0]}
@@ -459,12 +310,6 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-          # Anotasi, bukan hanya ringkasan. Log runner menuntut hak
-          # admin repositori untuk dibaca lewat API, dan ringkasan run
-          # pun tidak terbaca dari sana. Anotasi terbaca. Tanpa ini,
-          # satu satunya yang terlihat dari luar adalah "Process
-          # completed with exit code 5", dan menemukan sebabnya
-          # menuntut menebak. Sudah terjadi.
           if [ "$kode" != "0" ]; then
             ringkas=$(tail -25 hasil-peramban.txt | sed "s/%/%%/g" | awk '{printf "%s%%0A", $0}')
             echo "::error title=Uji peramban gagal, kode $kode::$ringkas"
@@ -474,16 +319,6 @@ jobs:
 
       - name: Performance budgets
         run: |
-          # set +e wajib, dan ketiadaannya membuat dua langkah di bawahnya
-          # tidak pernah berjalan.
-          #
-          # GitHub menjalankan `shell: bash` sebagai `bash -eo pipefail`.
-          # Jadi begitu pytest gagal, pipeline-nya gagal, dan -e membuat
-          # skripnya berhenti persis di baris itu. Blok ringkasan run dan
-          # anotasi kegagalan di bawah tidak pernah dieksekusi, sehingga
-          # satu satunya yang terlihat dari luar adalah kode keluarnya.
-          # Itulah kenapa ringkasan yang dipasang untuk menolong justru
-          # tidak pernah muncul tepat pada saat ia dibutuhkan.
           set +e
           python -m pytest tests/test_performa.py -q -s -m peramban --tb=short | tee hasil-performa.txt
           kode=${PIPESTATUS[0]}
@@ -496,12 +331,6 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-          # Anotasi, bukan hanya ringkasan. Log runner menuntut hak
-          # admin repositori untuk dibaca lewat API, dan ringkasan run
-          # pun tidak terbaca dari sana. Anotasi terbaca. Tanpa ini,
-          # satu satunya yang terlihat dari luar adalah "Process
-          # completed with exit code 5", dan menemukan sebabnya
-          # menuntut menebak. Sudah terjadi.
           if [ "$kode" != "0" ]; then
             ringkas=$(tail -25 hasil-performa.txt | sed "s/%/%%/g" | awk '{printf "%s%%0A", $0}')
             echo "::error title=Anggaran performa gagal, kode $kode::$ringkas"

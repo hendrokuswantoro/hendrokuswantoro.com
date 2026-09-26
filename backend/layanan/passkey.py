@@ -1,34 +1,3 @@
-"""Aturan passkey. WebAuthn level 2, lewat pustaka `webauthn`.
-
-Tidak ada satu baris pun kriptografi buatan sendiri di sini, dan itu bukan
-kebetulan: bab 15.8 melarangnya. Yang dikerjakan berkas ini hanya empat hal
-yang memang keputusan, bukan matematika.
-
-1. **Tantangan lahir di server, sekali pakai, berumur pendek.** Ini bagian
-   yang paling sering salah. Tantangan yang dikirim ke peramban lalu
-   dipercaya kembali apa adanya berarti penyerang boleh memilih tantangannya
-   sendiri, dan seluruh jaminan kesegaran tanda tangan lenyap.
-
-2. **rp_id dan origin diperiksa, keduanya, dari konfigurasi.** Ini yang
-   membuat passkey tahan halaman palsu: authenticator menolak menandatangani
-   untuk alamat yang bukan alamat ini, dan server menolak tanda tangan yang
-   dibuat untuk alamat lain. Sandi tidak punya pertahanan yang setara,
-   sebanyak apa pun ia di-hash.
-
-3. **Penghitung tanda tangan yang mundur berarti kredensialnya disalin.**
-   Nol selamanya bukan pelanggaran, banyak authenticator memang begitu;
-   yang melanggar adalah nilai yang turun.
-
-4. **Mendaftar menuntut sudah masuk.** Titik akhir pendaftaran yang terbuka
-   adalah pintu belakang: siapa pun yang menemukannya bisa menambahkan kunci
-   miliknya ke akun orang lain.
-
-Passkey di sini dibuat discoverable, sehingga pemiliknya bisa masuk tanpa
-mengetik email lebih dulu. Konsekuensinya `allow_credentials` dikosongkan
-saat masuk, dan pemilik kredensialnya baru diketahui sesudah tanda tangannya
-diverifikasi.
-"""
-
 from __future__ import annotations
 
 import datetime as dt
@@ -51,15 +20,13 @@ from backend.layanan import autentikasi
 from backend.repositori import passkey as repo
 from backend.repositori import pengguna as repo_pengguna
 
-# Cukup lama untuk mengambil ponsel dari saku, cukup pendek supaya tantangan
-# yang bocor dari layar tidak berguna satu jam kemudian.
 UMUR_TANTANGAN_DETIK = 300
 
 NAMA_MAKS = 80
 
 
 class Ditolak(Exception):
-    """Tantangan mati, tanda tangan tidak berlaku, atau kredensial asing."""
+    pass
 
 
 @dataclass(frozen=True)
@@ -82,20 +49,7 @@ async def _tantangan_baru(tujuan: str, pengguna_id: str | None = None) -> bytes:
     return nilai
 
 
-# ------------------------------------------------------------- mendaftar ---
-
-
 async def mulai_daftar(pengguna_id: str, jenis: str = "perangkat") -> dict:
-    """Pilihan pendaftaran untuk perangkat yang sedang dipakai.
-
-    Email dan nama dibaca dari basis data, bukan dari token. Token sengaja
-    hanya membawa id dan peran: tiap kolom tambahan di dalamnya adalah kolom
-    yang sudah tidak bisa dicabut sampai tokennya kedaluwarsa.
-
-    Kredensial yang sudah terdaftar ikut dikirim sebagai `exclude_credentials`
-    supaya peramban menolak mendaftarkan perangkat yang sama dua kali, dan
-    pemiliknya tidak berakhir dengan daftar kunci yang tidak bisa dibedakan.
-    """
     rp_id, _ = _rp()
 
     pengguna = await repo_pengguna.cari_id(pengguna_id)
@@ -114,30 +68,8 @@ async def mulai_daftar(pengguna_id: str, jenis: str = "perangkat") -> dict:
         challenge=tantangan,
         timeout=UMUR_TANTANGAN_DETIK * 1000,
         authenticator_selection=AuthenticatorSelectionCriteria(
-            # Discoverable: kuncinya menyimpan siapa pemiliknya, sehingga
-            # masuk tidak perlu mengetik email lebih dulu.
             resident_key=ResidentKeyRequirement.REQUIRED,
-            # REQUIRED inilah yang berarti "sidik jari".
-            #
-            # WebAuthn tidak punya, dan tidak akan pernah punya, permintaan
-            # bernama "minta sidik jari": sidik jarinya tidak pernah
-            # meninggalkan perangkat dan tidak pernah sampai ke server ini.
-            # Yang diminta server adalah user verification, dan perangkatnya
-            # yang memilih cara membuktikan bahwa pemiliknya hadir: sidik jari
-            # di ponsel dan di laptop bersensor, wajah di perangkat yang
-            # punya, PIN kalau tidak ada keduanya. Yang sampai ke sini cuma
-            # satu bita bendera UV di dalam data yang ditandatangani.
-            #
-            # Itu justru lebih kuat daripada mengirim sidik jari ke server:
-            # tidak ada satu pun data biometrik yang disimpan di sini, jadi
-            # tidak ada yang bisa bocor dari sini. Sidik jari yang bocor tidak
-            # bisa diganti seperti kata sandi.
             user_verification=UserVerificationRequirement.REQUIRED,
-            # PLATFORM berarti sensor yang menempel pada perangkatnya sendiri,
-            # bukan kunci USB yang dicolokkan. Itu yang orang maksud dengan
-            # "masuk pakai sidik jari". Pemiliknya tetap boleh memilih kunci
-            # USB lewat jenis="kunci", sebab kunci fisik juga jalur yang baik
-            # dan memaksa salah satunya berarti menutup yang lain.
             authenticator_attachment=(
                 AuthenticatorAttachment.PLATFORM if jenis == "perangkat"
                 else AuthenticatorAttachment.CROSS_PLATFORM
@@ -186,17 +118,7 @@ async def selesaikan_daftar(pengguna_id: str, jawaban: dict, nama: str) -> Terda
     return Terdaftar(id=id_baru, nama=nama)
 
 
-# ----------------------------------------------------------------- masuk ---
-
-
 async def mulai_masuk() -> dict:
-    """`allow_credentials` sengaja kosong.
-
-    Menyebutkan daftar kredensial milik sebuah email berarti memberi tahu
-    siapa pun yang bertanya bahwa email itu terdaftar dan punya berapa kunci.
-    Passkey discoverable tidak perlu daftar itu: perangkatnya sendiri yang
-    tahu kunci mana yang cocok untuk alamat ini.
-    """
     rp_id, _ = _rp()
     tantangan = await _tantangan_baru("masuk")
 
@@ -244,20 +166,7 @@ async def selesaikan_masuk(jawaban: dict) -> autentikasi.Masuk:
     if pengguna is None:
         raise Ditolak("kredensial tidak dikenal")
 
-    # Sesi yang terbit sama persis dengan sesi hasil sandi: access token
-    # pendek plus refresh token berputar. Passkey mengganti cara membuktikan
-    # siapa, bukan cara sesinya dikelola.
-    #
-    # Ditandai faktor kedua, dan itu bukan kelonggaran. Passkey menandatangani
-    # dengan kunci yang tidak pernah meninggalkan perangkat dan terikat pada
-    # alamat situs ini: ia tidak bisa ditebak, tidak bisa dipakai ulang di
-    # tempat lain, dan tidak bisa dipancing lewat halaman palsu. Menuntut TOTP
-    # di atasnya berarti menuntut faktor yang lebih lemah untuk menjaga faktor
-    # yang lebih kuat.
     return await autentikasi.terbitkan(pengguna, faktor_kedua=True)
-
-
-# ------------------------------------------------------------- mengelola ---
 
 
 async def daftar_milik(pengguna_id: str) -> list[dict]:
@@ -279,17 +188,7 @@ async def hapus(pengguna_id: str, kredensial_uuid: str) -> bool:
     return await repo.hapus(pengguna_id, kredensial_uuid)
 
 
-# ------------------------------------------------------------- pembantu ---
-
-
 def _tantangan_dari(jawaban: dict) -> bytes:
-    """Tantangan dibaca dari clientDataJSON, bukan dari kolom terpisah.
-
-    Alasannya bukan kerapian. clientDataJSON adalah bagian yang ikut
-    ditandatangani authenticator; kolom lain di badan permintaan tidak.
-    Mencari barisnya memakai nilai yang ditandatangani berarti permintaan
-    tidak bisa menunjuk satu tantangan sambil menandatangani yang lain.
-    """
     import json
 
     try:
@@ -300,13 +199,6 @@ def _tantangan_dari(jawaban: dict) -> bytes:
 
 
 def _transportasi(jawaban: dict) -> list[str]:
-    """Cara perangkat itu dijangkau: usb, nfc, ble, internal, hybrid.
-
-    Datang dari peramban dan **tidak** ditandatangani, jadi ia disaring
-    terhadap daftar yang dikenal dan tidak pernah dipercaya untuk keputusan
-    apa pun. Gunanya hanya satu: memberi petunjuk ke peramban lain kali,
-    supaya ia tidak menyalakan Bluetooth untuk kunci yang tertanam.
-    """
     dikenal = {"usb", "nfc", "ble", "internal", "hybrid", "smart-card", "cable"}
     nilai = (jawaban.get("response") or {}).get("transports") or []
     if not isinstance(nilai, list):

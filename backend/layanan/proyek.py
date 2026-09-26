@@ -1,5 +1,3 @@
-"""Aturan bisnis untuk proyek."""
-
 from __future__ import annotations
 
 from typing import Any
@@ -47,12 +45,6 @@ async def satu(slug: str) -> Proyek | None:
 
 
 async def geojson() -> KumpulanFitur:
-    """Divalidasi lewat Pydantic sebelum keluar.
-
-    PostGIS sudah merakitnya dengan benar, tetapi memvalidasinya sekali lagi
-    berarti perubahan skema yang merusak bentuk GeoJSON gagal di sini, bukan
-    di peta orang lain berminggu minggu kemudian.
-    """
     return KumpulanFitur.model_validate(await repo.geojson())
 
 

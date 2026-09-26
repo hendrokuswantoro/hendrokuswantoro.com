@@ -1,16 +1,5 @@
 import type { Copy } from "./i18n";
 
-/* Studi kasus Parkir Jogja, salinan port Next dari parkir-jogja.html.
- *
- * Isinya ditaruh di sini, bukan di dalam komponennya, dengan alasan yang sama
- * seperti posts.ts dan projects.ts: tampilannya boleh berubah tanpa menyentuh
- * satu kalimat pun, dan tiap kalimat punya pasangan Indonesianya di baris yang
- * sama sehingga yang hilang terjemahannya langsung kelihatan.
- *
- * Tiap angka di bawah dibaca dari dokumen proyek parkirnya sendiri. Tidak ada
- * satu pun yang dikira kira, dan angka nol di bawah adalah nol yang sungguhan,
- * bukan tempat kosong yang belum diisi.
- */
 
 export type Angka = { num: Copy; label: Copy };
 export type Bagian = { h2: Copy; p: Copy[] };

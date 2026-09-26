@@ -1,12 +1,3 @@
-"""SQL untuk proyek, termasuk yang spasial.
-
-ST_AsGeoJSON dikerjakan di basis data, bukan di Python. Itu bukan soal
-kerapian: PostGIS menulis GeoJSON yang benar menurut RFC 7946 termasuk
-urutan sumbu, sedangkan merakitnya sendiri di Python adalah cara klasik
-menukar bujur dengan lintang tanpa ada yang sadar sampai peta menggambar
-Indonesia di Somalia.
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -63,7 +54,6 @@ async def satu(slug: str) -> dict[str, Any] | None:
 
 
 async def geojson() -> dict[str, Any]:
-    """FeatureCollection dirakit PostGIS, bukan Python."""
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             """
@@ -92,12 +82,6 @@ async def geojson() -> dict[str, Any]:
 
 
 async def dekat(lng: float, lat: float, meter: int, batas: int) -> list[dict[str, Any]]:
-    """Jarak dihitung di geography, jadi satuannya meter dan bukan derajat.
-
-    Derajat bukan satuan jarak: satu derajat bujur di Sabang dan di Merauke
-    panjangnya berbeda, dan menghitung radius dengan derajat menghasilkan
-    lingkaran yang bentuknya berubah ubah menurut lintang.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             f"""

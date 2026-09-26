@@ -1,16 +1,3 @@
-"""Alur keamanan akun lewat HTTP: verifikasi email, TOTP, pemulihan, jejak.
-
-Dipisah dari `test_keamanan_akun.py` karena seluruh isinya menuntut basis
-data, sedangkan yang di sana tidak menuntut apa pun dan harus selalu jalan.
-
-Yang diuji di sini perilaku titik akhirnya, termasuk kode status yang
-dikembalikannya, bukan fungsi di baliknya. Faktor kedua yang bisa dilewati
-adalah faktor kedua yang tidak ada, dan cara melewatinya hampir selalu lewat
-jalur HTTP yang lupa diperiksa, bukan lewat fungsi yang salah hitung.
-
-Dilewati kalau Postgres tidak ada, dengan alasan yang disebut.
-"""
-
 from __future__ import annotations
 
 import os
@@ -44,12 +31,6 @@ from konftes import SANDI_UJI as SANDI  # noqa: E402
 
 
 def _sejak() -> object:
-    """Jam basis data saat rangkaian ini dimuat.
-
-    Diambil dari basis datanya, bukan dari Python, sebab keduanya bisa
-    berselisih beberapa detik dan selisih itu persis yang menentukan satu
-    baris ikut terhapus atau tertinggal.
-    """
     if not DSN:
         return None
     try:
@@ -88,20 +69,9 @@ def klien():
 
 @pytest.fixture(autouse=True)
 def bersihkan_keamanan():
-    """Tiap uji mulai dari keadaan yang sama, dan meninggalkannya begitu juga.
-
-    Yang kedua lebih penting daripada yang pertama: uji yang menyalakan TOTP
-    lalu berhenti di tengah akan meninggalkan akun pemilik situs ini dalam
-    keadaan menuntut kode dari aplikasi yang tidak terpasang di mana pun.
-    """
     def bersih() -> None:
         with psycopg.connect(DSN) as s, s.cursor() as k:
             k.execute("DELETE FROM kode_sekali")
-            # Dua tabel ini memuat hal yang tidak boleh ikut terhapus di basis
-            # data pengembangan: kode pemulihan yang mungkin sudah dicatat
-            # pemiliknya di tempat aman, dan jejak keamanan yang justru ada
-            # supaya bisa dibaca belakangan. Jadi yang dihapus hanya yang lahir
-            # sesudah rangkaian ini dimulai. Lihat SEJAK di bawah.
             if SEJAK is None:
                 k.execute("DELETE FROM kode_pemulihan")
                 k.execute("DELETE FROM peristiwa_keamanan")
@@ -133,14 +103,9 @@ def kunci_kolom(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def tanpa_smtp_wajib(monkeypatch):
-    """Surat ditulis ke berkas, tidak dikirim. Uji yang mengirim surat
-    sungguhan adalah uji yang mengirimi orang surat sungguhan."""
     from backend.core import konfigurasi
 
     monkeypatch.setenv("SURAT_WAJIB", "0")
-    # SMTP dikosongkan juga: uji yang mengirim surat sungguhan adalah uji yang
-    # mengirimi orang surat sungguhan, dan itu tidak boleh tergantung pada apa
-    # yang kebetulan tertulis di .env mesin yang menjalankannya.
     for nama in ("SMTP_HOST", "SMTP_PENGGUNA", "SMTP_SANDI", "SURAT_DARI"):
         monkeypatch.setenv(nama, "")
     konfigurasi.pengaturan.cache_clear()
@@ -167,20 +132,11 @@ def _kepala(token: str) -> dict:
 
 
 def _token_dari_surat(kecuali: set | None = None) -> str:
-    """Diambil dari berkas surat, persis seperti pemiliknya mengambilnya dari
-    kotak suratnya. API tidak pernah mengembalikan tokennya.
-
-    Isinya dibaca lewat pustaka email, bukan dengan membelah berkasnya.
-    Badan surat disandikan quoted-printable, jadi tautan yang panjang dipotong
-    dengan "=" di ujung baris, dan token yang diambil apa adanya dari berkas
-    akan terpotong di tengah. Ini sudah terjadi.
-    """
     import email as pustaka_email
 
     terbaru = _surat_terbaru(kecuali)
     pesan = pustaka_email.message_from_bytes(terbaru.read_bytes())
     isi = pesan.get_payload(decode=True).decode("utf-8", "replace")
-    # Di fragmen, bukan di query: fragmen tidak sampai ke log akses server.
     assert "?verifikasi=" not in isi, "token verifikasi kembali ke query string"
     return isi.split("#verifikasi=")[1].split()[0].strip()
 
@@ -190,14 +146,6 @@ def _kotak_sekarang() -> set:
 
 
 def _surat_terbaru(kecuali: set | None = None) -> pathlib.Path:
-    """Berkas surat terbaru, diurutkan dari waktu tulisnya.
-
-    Namanya memuat detik dan delapan heksa acak, jadi dua surat dalam detik
-    yang sama tidak terurut menurut waktu kalau diurutkan menurut nama. Uji
-    yang meminta dua tautan berturut turut pernah mengambil tautan yang sama
-    dua kali karena itu, lalu melaporkan bahwa tautan lama tidak dimatikan
-    padahal ia dimatikan.
-    """
     calon = [p for p in surat.KOTAK.glob("*.eml") if p not in (kecuali or set())]
     assert calon, "tidak ada surat baru yang ditulis"
     return max(calon, key=lambda p: p.stat().st_mtime_ns)
@@ -209,12 +157,7 @@ def _pasang_totp(klien, akses: str) -> str:
     return mulai.json()["rahasia"]
 
 
-# ----------------------------------------------------------------- keadaan --
-
-
 def test_halaman_keamanan_menyebut_keadaan_lingkungannya(klien):
-    """Tombol yang selalu ada lalu selalu gagal lebih buruk daripada tombol
-    yang menjelaskan kenapa ia belum bisa dipakai."""
     j = klien.get("/api/v1/keamanan", headers=_kepala(_masuk(klien)))
     assert j.status_code == 200, j.text
     isi = j.json()
@@ -226,9 +169,6 @@ def test_halaman_keamanan_menyebut_keadaan_lingkungannya(klien):
 
 def test_halaman_keamanan_menolak_tanpa_token(klien):
     assert klien.get("/api/v1/keamanan").status_code == 401
-
-
-# ------------------------------------------------------- verifikasi email --
 
 
 def test_tautan_verifikasi_sekali_pakai(klien):
@@ -264,8 +204,6 @@ def test_tautan_palsu_ditolak(klien):
 
 
 def test_meminta_tautan_baru_mematikan_yang_lama(klien):
-    """Kalau tidak, tiap permintaan menambah satu tautan hidup, dan ruang
-    tebakannya tumbuh tanpa batas."""
     akses = _masuk(klien)
     sebelum = _kotak_sekarang()
     klien.post("/api/v1/keamanan/email/kirim", headers=_kepala(akses))
@@ -291,16 +229,10 @@ def test_kirim_ulang_terlalu_cepat_ditolak(klien):
     assert lagi.status_code == 429
 
 
-# ------------------------------------------------------------------- TOTP --
-
-
 def test_totp_dipasang_lalu_dipakai_masuk(klien, kunci_kolom):
     akses = _masuk(klien)
     rahasia_baru = _pasang_totp(klien, akses)
 
-    # Belum aktif sampai satu kode yang benar membuktikan perangkatnya bisa
-    # membacanya. Rahasia yang diaktifkan tanpa pernah dibuktikan terbaca
-    # adalah cara mengunci diri sendiri di luar pintunya sendiri.
     keadaan = klien.get("/api/v1/keamanan", headers=_kepala(akses)).json()
     assert keadaan["totp_terpasang"] is True
     assert keadaan["totp_aktif"] is False
@@ -315,7 +247,6 @@ def test_totp_dipasang_lalu_dipakai_masuk(klien, kunci_kolom):
     assert benar.status_code == 200, benar.text
     assert len(benar.json()["kode_pemulihan"]) == totp.JUMLAH_PEMULIHAN
 
-    # Sekarang sandi saja tidak lagi cukup.
     lagi = klien.post("/api/v1/auth/login", json={"email": EMAIL, "sandi": SANDI})
     assert lagi.status_code == 200, lagi.text
     isi = lagi.json()
@@ -323,16 +254,12 @@ def test_totp_dipasang_lalu_dipakai_masuk(klien, kunci_kolom):
     assert isi["akses"] == "", "sesi terbit padahal faktor kedua belum dilewati"
     assert "totp" in isi["cara"]
 
-    # Kode yang baru saja dipakai mengaktifkan sudah terpakai. Sejak
-    # 26 September 2026 ia ditolak, dan itu yang dijaga di sini lebih dulu.
     ulang = klien.post("/api/v1/auth/faktor-kedua", json={
         "tiket": isi["tiket"], "cara": "totp",
         "kode": totp.kode_sekarang(rahasia_baru),
     })
     assert ulang.status_code == 401, "kode TOTP yang sudah dipakai diterima lagi"
 
-    # Kode jendela berikutnya masih di dalam toleransi satu jendela, dan
-    # belum pernah dipakai. Tanpa ini ujinya harus menunggu tiga puluh detik.
     import time as _waktu
 
     berikut = totp.kode_pada(rahasia_baru, int(_waktu.time() // totp.LANGKAH) + 1)
@@ -407,8 +334,6 @@ def test_kode_pemulihan_tidak_tersimpan_apa_adanya(klien, kunci_kolom):
 
 
 def test_mematikan_totp_menuntut_kode_juga(klien, kunci_kolom):
-    """Tanpa itu, siapa pun yang sempat memegang sesi yang sudah masuk bisa
-    mencabut faktor kedua tanpa pernah memilikinya."""
     akses = _masuk(klien)
     r = _pasang_totp(klien, akses)
     klien.post("/api/v1/keamanan/totp/aktifkan",
@@ -422,7 +347,6 @@ def test_mematikan_totp_menuntut_kode_juga(klien, kunci_kolom):
                        json={"kode": totp.kode_sekarang(r)}, headers=_kepala(akses))
     assert benar.status_code == 200, benar.text
 
-    # Rahasianya hilang, bukan sekadar dinonaktifkan, dan kode pemulihannya ikut.
     with psycopg.connect(DSN) as s, s.cursor() as k:
         k.execute("SELECT totp_rahasia FROM users WHERE id = %s", (_pengguna_id(),))
         assert k.fetchone()[0] is None
@@ -431,8 +355,6 @@ def test_mematikan_totp_menuntut_kode_juga(klien, kunci_kolom):
 
 
 def test_tiket_faktor_kedua_bukan_token_admin(klien, kunci_kolom):
-    """Tiket yang diterima sebagai token akses berarti faktor keduanya bisa
-    dilewati seluruhnya."""
     akses = _masuk(klien)
     r = _pasang_totp(klien, akses)
     klien.post("/api/v1/keamanan/totp/aktifkan",
@@ -457,8 +379,6 @@ def test_cara_yang_tidak_ada_di_tiket_ditolak(klien, kunci_kolom):
 
 
 def test_totp_tanpa_kunci_kolom_menjawab_503_bukan_menyimpan_polos(klien, monkeypatch):
-    """Fitur yang menurunkan jaminannya sendiri saat konfigurasinya kurang
-    adalah fitur yang jaminannya tidak pernah bisa dipercaya."""
     from backend.core import konfigurasi
 
     monkeypatch.setenv(rahasia.NAMA_ENV, "")
@@ -468,12 +388,7 @@ def test_totp_tanpa_kunci_kolom_menjawab_503_bukan_menyimpan_polos(klien, monkey
     assert "KUNCI_KOLOM" in j.text, j.text
 
 
-# -------------------------------------------------------------- peristiwa --
-
-
 def test_yang_gagal_ikut_tercatat(klien):
-    """Yang berhasil hanya memberi tahu pemiliknya apa yang sudah ia lakukan.
-    Yang gagal memberi tahu bahwa ada orang lain sedang mencoba."""
     akses = _masuk(klien)
     j = klien.get("/api/v1/keamanan/peristiwa", headers=_kepala(akses))
     assert j.status_code == 200, j.text
@@ -496,7 +411,6 @@ def test_peristiwa_tidak_menyimpan_alamat_ip_apa_adanya(klien):
 
 
 def test_peristiwa_hanya_milik_sendiri(klien):
-    """Jejak keamanan satu akun tidak boleh bisa dibaca dari akun lain."""
     akses = _masuk(klien)
     j = klien.get("/api/v1/keamanan/peristiwa", headers=_kepala(akses))
     for p in j.json()["peristiwa"]:
@@ -504,13 +418,7 @@ def test_peristiwa_hanya_milik_sendiri(klien):
                           "peramban", "pada"}, p
 
 
-# ------------------------------------------------ yang sudah ada tidak berubah --
-
-
 def test_tanpa_faktor_kedua_masuknya_tetap_seperti_dulu(klien):
-    """Lapisan baru tidak boleh mengubah perilaku yang sudah ada hanya karena
-    ia dipasang. Selama tidak ada faktor kedua yang berlaku, sesi terbit
-    langsung, persis seperti sebelumnya."""
     j = klien.post("/api/v1/auth/login", json={"email": EMAIL, "sandi": SANDI})
     assert j.status_code == 200
     isi = j.json()
@@ -523,19 +431,10 @@ def test_sandi_salah_tetap_401(klien):
     assert j.status_code == 401
 
 
-# ============================================================================
-# Wajah. Yang diuji di sini siklus tantangannya lewat HTTP, bukan ketepatan
-# pengenalan wajahnya; alasannya ditulis panjang di tests/test_wajah.py.
-#
-# Ciri wajah "terdaftar" dipasang langsung ke basis data oleh fixture, sebab
-# mendaftarkannya lewat HTTP menuntut foto wajah sungguhan, dan foto wajah
-# sungguhan tidak akan masuk repositori ini.
-# ============================================================================
-
 from backend.layanan import wajah as wajah_modul  # noqa: E402
 
 
-CIRI_PALSU_POLOS = None  # diisi saat pertama dipakai, lihat _ciri_palsu()
+CIRI_PALSU_POLOS = None
 
 
 def _ciri_palsu() -> str:
@@ -546,14 +445,6 @@ def _ciri_palsu() -> str:
 
 @pytest.fixture
 def pasang_wajah(kunci_kolom):
-    """Memasang ciri wajah palsu langsung ke kolomnya, saat uji memintanya.
-
-    Berupa fungsi, bukan fixture yang langsung memasang, karena urutannya
-    penting: begitu wajah terdaftar, masuk dengan sandi berhenti di faktor
-    kedua, jadi uji yang butuh sesi admin harus masuk LEBIH DULU. Itu bukan
-    kerepotan uji melainkan justru perilaku yang benar, dan fixture yang
-    memasangnya duluan akan menyembunyikannya.
-    """
     from backend.core import rahasia as rahasia_kolom
 
     def pasang() -> None:
@@ -629,8 +520,6 @@ def test_tantangan_wajah_sekali_pakai(klien, pasang_wajah):
     assert tantangan["gerakan"][0] == "tengah"
     assert len(tantangan["gerakan"]) == 3
 
-    # Bingkai apa pun: yang diuji bahwa tantangan yang sudah dipakai tidak bisa
-    # dipakai lagi, dan kegagalan bingkainya justru bagian dari itu.
     umpan = {"tiket": tiket, "cara": "wajah", "tantangan": tantangan["tantangan"],
              "bingkai": ["x", "y", "z"]}
     pertama = klien.post("/api/v1/auth/faktor-kedua", json=umpan)
@@ -646,8 +535,6 @@ def test_tantangan_wajah_sekali_pakai(klien, pasang_wajah):
 
 
 def test_tantangan_wajah_menolak_tiket_yang_tidak_menyebut_wajah(klien, kunci_kolom):
-    """Tanpa wajah terdaftar, tiketnya tidak memuat cara wajah, dan meminta
-    tantangannya harus ditolak."""
     isi = klien.post("/api/v1/auth/login", json={"email": EMAIL, "sandi": SANDI}).json()
     tiket = isi.get("tiket", "")
     j = klien.post("/api/v1/auth/faktor-kedua/tantangan-wajah", json={"tiket": tiket})
@@ -655,8 +542,6 @@ def test_tantangan_wajah_menolak_tiket_yang_tidak_menyebut_wajah(klien, kunci_ko
 
 
 def test_menghapus_wajah_benar_benar_menghapus_barisnya(klien, pasang_wajah):
-    # Masuk dulu, baru wajahnya dipasang: sesudah terdaftar, sandi saja tidak
-    # lagi cukup untuk masuk, dan itu memang maksudnya.
     akses = _masuk(klien)
     pasang_wajah()
     j = klien.post("/api/v1/keamanan/wajah/hapus", headers=_kepala(akses))
@@ -671,8 +556,6 @@ def test_menghapus_wajah_benar_benar_menghapus_barisnya(klien, pasang_wajah):
 
 
 def test_ciri_wajah_tersandi_di_basis_data(klien, pasang_wajah):
-    """Bukan sekadar bukan foto: 128 angka itu pun tidak boleh terbaca apa
-    adanya dari dump basis data."""
     pasang_wajah()
     with psycopg.connect(DSN) as s, s.cursor() as k:
         k.execute("SELECT wajah_ciri FROM users WHERE id = %s", (_pengguna_id(),))

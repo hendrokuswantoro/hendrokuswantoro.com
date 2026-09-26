@@ -1,11 +1,3 @@
-"""Structure of every page that gets served.
-
-These are the checks a browser will not complain about but a screen reader,
-a search engine, or a visitor on a broken link will. Two of them caught real
-defects already: card titles were h3 sitting directly under the page h1, and
-the map caption still credited a basemap the site had stopped using.
-"""
-
 from __future__ import annotations
 
 import collections
@@ -30,7 +22,6 @@ def test_satu_h1(berkas):
 
 @pytest.mark.parametrize("berkas", HALAMAN, ids=nama)
 def test_urutan_judul(berkas):
-    """No level may be skipped. A h3 under a h1 is a hole in the outline."""
     p = pindai(berkas)
     for a, b in zip(p.judul, p.judul[1:]):
         assert b <= a + 1, f"{nama(berkas)}: h{a} followed by h{b}"
@@ -73,7 +64,6 @@ def test_aset_ada(berkas):
 
 @pytest.mark.parametrize("berkas", HALAMAN, ids=nama)
 def test_kepala_halaman(berkas):
-    """Language, title, description and canonical, the four a crawler reads."""
     isi = berkas.read_text(encoding="utf-8")
     p = pindai(berkas)
 
@@ -90,7 +80,6 @@ def test_kepala_halaman(berkas):
 
 @pytest.mark.parametrize("berkas", HALAMAN, ids=nama)
 def test_kanonis(berkas):
-    """Every page except the 404 must say which address is the real one."""
     if berkas.name == "404.html":
         pytest.skip("a 404 has no canonical address")
     p = pindai(berkas)
@@ -111,9 +100,6 @@ def test_umpan_ditawarkan(berkas):
     assert umpan[0][1].get("href") == "/feed.xml"
 
 def test_setiap_filter_punya_isi():
-    """A filter button that matches nothing is a button that leads to an
-    empty page for ever. The empty state is for a filter that happens to be
-    empty today, not for one that can never fill."""
     berkas = AKAR / "project.html"
     p = pindai(berkas)
 
@@ -129,8 +115,6 @@ def test_setiap_filter_punya_isi():
 
 
 def test_keadaan_kosong_ada():
-    """Without it, filtering to nothing shows a blank stretch of page with no
-    explanation."""
     p = pindai(AKAR / "project.html")
     kosong = [atur for tag, atur in p.tag if "data-empty" in atur]
     assert kosong, "project.html has no empty state"
@@ -138,8 +122,6 @@ def test_keadaan_kosong_ada():
 
 
 def test_peta_punya_keadaan_gagal():
-    """The map is fetched over the network and can fail. When it does the
-    section has to say so rather than leave a grey rectangle."""
     p = pindai(AKAR / "project.html")
     gagal = [atur for tag, atur in p.tag if atur.get("data-gagal")]
     assert gagal, "the map has no failure message"
@@ -147,7 +129,6 @@ def test_peta_punya_keadaan_gagal():
 
 
 def test_lompat_ke_isi():
-    """The first thing a keyboard reaches must be a way past the header."""
     for berkas in HALAMAN:
         p = pindai(berkas)
         lompat = [t for t in p.tag if t[0] == "a" and "skip-link" in (t[1].get("class") or "")]
@@ -157,9 +138,6 @@ def test_lompat_ke_isi():
 
 @pytest.mark.parametrize("berkas", HALAMAN, ids=nama)
 def test_alamat_tanpa_html(berkas):
-    """Cloudflare answers /about.html with a 307 to /about. Handing out the
-    long form means every internal navigation pays for a redirect, and a
-    canonical that redirects is a canonical pointing at the wrong address."""
     p = pindai(berkas)
     for t in p.tautan:
         if t.startswith("/"):

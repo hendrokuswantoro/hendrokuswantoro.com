@@ -1,39 +1,3 @@
-# Cloudflare Pages and Netlify read this file.
-#
-# The work map needs three exceptions: the OpenFreeMap host for the style,
-# the vector tiles, the sprites and the glyphs, and blob workers. Scripts
-# stay restricted to this origin, which is the part that carries real risk.
-#
-# style-src tidak lagi menyebut 'unsafe-inline'. Kalimat di tempat ini dulu
-# berbunyi bahwa MapLibre menulis gaya sebaris ke kontrol dan penandanya
-# sendiri, jadi izin itu wajib. Itu keliru untuk MapLibre 6: ia menulis lewat
-# CSSOM, yaitu `el.style.x = ...`, dan CSSOM tidak dijaga style-src sama
-# sekali. Yang dijaga style-src cuma elemen <style> dan atribut style= di
-# dalam markup.
-#
-# Terukur 19 September 2026: seluruh halaman disajikan dengan style-src 'self'
-# saja, peta dibuka sampai MapLibre benar benar berdiri, dan tercatat nol
-# pelanggaran. tests/test_csp.py yang mengukurnya, dan ia mengukur ulang tiap
-# kali CI jalan.
-# MapLibre 6 loads its worker as a real module from this origin, resolved
-# through import.meta.url, so worker-src needs 'self' and not only blob:.
-# Version 4 built the worker from a blob, which is why the rule used to be
-# blob: alone. Blob stays because the canvas textures still use blob and
-# data URLs.
-#
-# The one sha256 in script-src is the three-line theme script in every
-# <head>. It has to run before the first paint, so it cannot live in
-# app.js, which is deferred. A hash keeps 'unsafe-inline' out: the moment
-# that script changes by a single byte the browser refuses it, which is
-# exactly the behaviour wanted. Recompute it with:
-#   python tools/hash_skrip.py
-#
-# font-src hanya 'self', dan style-src tidak lagi menyebut
-# fonts.googleapis.com, sebab Poppins sudah disimpan di assets/fonts. Selama
-# fontnya dipanggil dari Google, kebijakan ini harus mengizinkan dua asal
-# yang bisa melihat alamat IP setiap pembaca, dan dua jabat tangan TLS yang
-# harus selesai sebelum huruf pertama digambar. Keduanya hilang sekarang.
-# Lihat tools/ambil_font.py.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
@@ -42,22 +6,6 @@
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
   Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data: blob: https://tiles.openfreemap.org https://api.mapbox.com https://server.arcgisonline.com https://s3.amazonaws.com; style-src 'self'; font-src 'self'; script-src 'self' blob: 'sha256-VUnTnFlu5ng6WnqmcjBDYVMXzjgyRSeLJtiwFpIU9Pw='; worker-src 'self' blob:; child-src blob:; connect-src 'self' https://tiles.openfreemap.org https://api.mapbox.com https://events.mapbox.com https://server.arcgisonline.com https://s3.amazonaws.com; object-src 'none'; upgrade-insecure-requests
 
-# Kenapa ini daftar folder, bukan satu baris /assets/*.
-#
-# Percobaan pertama memakai /assets/* lalu menimpanya dengan aturan khusus
-# untuk konfigurasi.js. Itu TIDAK bekerja, dan kegagalannya sunyi: Cloudflare
-# MENGGABUNGKAN aturan yang cocok, tidak menggantinya, jadi berkas itu
-# disajikan dengan
-#
-#     Cache-Control: public, max-age=31536000, immutable, public, max-age=0, must-revalidate
-#
-# dan peramban membaca `immutable` yang datang lebih dulu. Ketahuan dengan
-# curl terhadap situs yang sudah terbit, bukan dengan membaca berkas ini.
-#
-# Jadi konfigurasi.js dikeluarkan dari cakupannya, bukan ditimpa. Kalau suatu
-# saat ada folder aset baru, tambahkan barisnya di sini; yang terlupa akan
-# kehilangan cache panjangnya, bukan menyajikan berkas basi selama setahun.
-# Arah gagalnya sengaja begitu.
 /assets/css/*
   Cache-Control: public, max-age=31536000, immutable
 
@@ -76,13 +24,6 @@
 /assets/js/peta.js
   Cache-Control: public, max-age=31536000, immutable
 
-# Sisanya, yaitu konfigurasi.js, TIDAK pernah disebut immutable.
-#
-# Isinya ditulis saat membangun dari variabel MAPBOX_TOKEN, jadi sidiknya baru
-# diketahui sesudah app.js yang menyebutnya selesai ditulis, dan alamatnya
-# tidak bisa ikut bercap isinya. Berkasnya 298 bita. Satu permintaan bersyarat
-# per kunjungan jauh lebih murah daripada peta yang mati setahun di peramban
-# seseorang karena ia kebetulan berkunjung saat tokennya sedang kosong.
 /assets/js/konfigurasi.js
   Cache-Control: public, max-age=0, must-revalidate
 

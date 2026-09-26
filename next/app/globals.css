@@ -1,35 +1,3 @@
-/* DIBANGKITKAN, JANGAN DISUNTING.
-   Sumbernya assets/css/style.css. Jalankan: python tools/gaya_next.py
-   Dua perbedaan: Poppins datang dari next/font, dan blok @font-face yang
-   menunjuk ke /assets/fonts dibuang karena alamat itu tidak ada di sini. */
-/* ==========================================================================
-   hendrokuswantoro.com - design system
-   Palette follows the Uber app: black, white, grey, one blue accent.
-   Typography is Poppins, the closest freely licensed match to the Gojek
-   lettering, since the Gojek typeface itself is not public.
-
-   The greys are Uber Base greys and they are neutral: #f6f6f6, #eeeeee,
-   #e2e2e2, #cbcbcb, with no hue at all. The earlier set was a step cooler
-   (#f2f3f5, #e9ebee, #d8dce1) and read faintly blue next to the white cards,
-   which is exactly what the Uber palette avoids.
-
-   Contrast, measured rather than assumed. The lowest pair in the whole
-   light set is --accent on --surface-2 at 4.54:1, and the lowest in the dark
-   set is --ink-3 on --surface-2 at 5.19:1. Against --bg #f6f6f6: --ink
-   19.43:1, --ink-2 7.01:1, --ink-3 5.31:1, --accent 4.96:1. Against --card
-   #ffffff: 21:1, 7.57:1, 5.74:1, 5.36:1.
-
-   --accent is one step darker than Uber's own #276ef1 because it is link
-   text, and #276ef1 reaches only 4.24:1 on #f6f6f6, under the 4.5:1 that
-   body text needs. The brand dot keeps #276ef1: it is a graphic, and 3:1
-   is its threshold.
-
-   Recompute the whole set before changing any of these:
-       python tools/kontras.py
-
-   Buttons always pair --brand with --on-brand, which flips with the theme.
-   ========================================================================== */
-
 :root {
   --ink: #000000;
   --ink-2: #545454;
@@ -67,33 +35,16 @@
   --r-lg: 16px;
   --r-pill: 999px;
 
-  /* Skala huruf, satu sumber untuk situs dan untuk dashboard.
-   *
-   * Sampai 13 September 2026 keduanya punya skalanya sendiri, dan hasilnya
-   * tidak sekadar berbeda melainkan berbeda ke dua arah sekaligus: teks isi di
-   * dashboard 13,6 px sedangkan di situs 15 px, judul kartu 16,8 px sedangkan
-   * di situs 18 px, tetapi tombolnya justru 16 px sedangkan di situs 15 px.
-   * Dua permukaan yang dibuat orang yang sama terasa seperti dua aplikasi.
-   *
-   * Angkanya bukan angka baru. Kelimanya nilai yang memang sudah dipakai di
-   * situs ini, sekarang diberi nama supaya dashboard bisa memakai yang sama
-   * alih alih menebak dari ingatan.
-   */
-  --fs-xs: .75rem;     /* 12px, eyebrow, tag, lencana, kepala tabel */
-  --fs-sm: .8125rem;   /* 13px, keterangan kecil, meta kartu, label isian */
-  --fs-md: .9375rem;   /* 15px, teks isi, tombol, isian, sel tabel */
-  --fs-lg: 1.125rem;   /* 18px, judul kartu */
-  --fs-xl: 1.5rem;     /* 24px, nama merek */
+  --fs-xs: .75rem;
+  --fs-sm: .8125rem;
+  --fs-md: .9375rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.5rem;
 
   --sh-1: 0 1px 2px rgba(0, 0, 0, .05), 0 4px 14px rgba(0, 0, 0, .05);
   --sh-2: 0 2px 6px rgba(0, 0, 0, .06), 0 14px 34px rgba(0, 0, 0, .10);
   --sh-brand: 0 6px 16px rgba(0, 0, 0, .22);
 
-  /* Naik dari 72px bersama nama merek yang naik dari 22px ke 24px. Tingginya
-     bukan angka yang berdiri sendiri: lambang 40px ditambah ruang 18px di
-     atas dan di bawahnya. Seluruh sauh gulir, panel lengket, dan sisa tinggi
-     peta bersandar pada nilai ini, jadi mengubahnya di sini sudah cukup dan
-     tidak ada satu pun angka tinggi header yang ditulis di tempat lain. */
   --header-h: 76px;
   --tabbar-h: 66px;
   --maxw: 1440px;
@@ -104,14 +55,6 @@
   color-scheme: light;
 }
 
-/* Dark is opt in, not the system's decision.
-
-   It used to hang off @media (prefers-color-scheme: dark), which meant a
-   reader whose laptop is in dark mode never saw the light palette at all,
-   and never had a way to ask for it. The Uber app opens light and keeps a
-   switch; so does this. The switch sits next to the language one, writes
-   localStorage["hk-tema"], and a small inline script in <head> applies it
-   before the first paint so the page never flashes the other theme. */
 :root[data-theme="dark"] {
   --ink: #f5f5f5;
   --ink-2: #c7c7c7;
@@ -153,27 +96,6 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-/* ==========================================================================
-   Perlindungan isi
-
-   Apa yang benar benar dikerjakan bagian ini, disebut terus terang supaya
-   tidak ada yang mengira ia lebih kuat daripada yang sebenarnya:
-
-   BISA  menghentikan penyalinan sambil lalu, yaitu blok, Ctrl+C, klik kanan,
-         seret teks keluar, dan cetak ke PDF
-   TIDAK menghentikan siapa pun yang membuka Lihat Sumber, mematikan
-         JavaScript, memakai mode baca, memanggil alamatnya lewat curl, atau
-         membaca umpan RSS-nya
-   TIDAK menghentikan tangkapan layar, satu pun caranya
-
-   Teksnya tetap ada di dalam HTML, sebab di situlah mesin pencari dan
-   pembaca layar membacanya. Isi yang benar benar tidak boleh disalin adalah
-   isi yang tidak diterbitkan.
-
-   Kolom isian, area teks, dan elemen yang bisa disunting dikecualikan.
-   Tanpa pengecualian itu, halaman admin dan setiap formulir jadi tidak bisa
-   dipakai, dan cacat semacam itu baru ketahuan lama sesudahnya.
-   ========================================================================== */
 body {
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -187,9 +109,6 @@ input, textarea, select, [contenteditable="true"], .boleh-salin {
 }
 img, svg, .hero__card, .card__cover { -webkit-user-drag: none; user-drag: none; }
 
-/* Cetak ke PDF adalah jalan paling mudah membawa seluruh tulisan keluar,
-   dan ia tidak menyentuh papan ketik sama sekali. Yang tercetak sekarang
-   satu halaman keterangan, bukan isinya. */
 @media print {
   body > *:not(.cetak-catatan) { display: none !important; }
   body::before {
@@ -202,9 +121,6 @@ img, svg, .hero__card, .card__cover { -webkit-user-drag: none; user-drag: none; 
   }
 }
 
-/* Pesan singkat saat ada yang mencoba menyalin. Muncul sebentar lalu pergi
-   sendiri: peringatan yang harus ditutup manual akan terasa seperti hukuman
-   untuk sesuatu yang bukan kejahatan. */
 .salin-catatan {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(8px);
   z-index: 60; max-width: min(92vw, 460px);
@@ -247,10 +163,7 @@ ul { margin: 0; padding: 0; list-style: none; }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }
 
-/* ---------- layout ---------- */
 .wrap { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: var(--gutter); }
-/* the bars run wider than the text, so the logo and the menu sit near the
-   edges of the screen instead of floating in the middle of it */
 .header .wrap, .footer .wrap { max-width: var(--maxw-wide); }
 .section { padding: clamp(48px, 7vw, 88px) 0; }
 .section--surface { background: var(--surface); }
@@ -269,7 +182,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .skip-link:focus { top: 12px; text-decoration: none; }
 
-/* ---------- buttons ---------- */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   font-family: inherit; font-size: var(--fs-md); font-weight: 600; line-height: 1;
@@ -290,7 +202,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 .btn--outline-light:hover { background: rgba(255, 255, 255, .12); }
 .btn--sm { padding: 10px 18px; font-size: .875rem; }
 
-/* ---------- header ---------- */
 .header {
   position: sticky; top: 0; z-index: 60;
   height: var(--header-h); display: flex; align-items: center;
@@ -314,48 +225,12 @@ ul { margin: 0; padding: 0; list-style: none; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 700; letter-spacing: -.02em; min-width: 0; }
 .brand:hover { text-decoration: none; }
 .brand__mark { width: 40px; height: 40px; border-radius: 12px; flex: none; box-shadow: var(--sh-brand); }
-/* Ukurannya datang dari --fs-xl, yang sejak awal diberi keterangan "nama
-   merek" tetapi tidak pernah benar benar dipakai di sini: angkanya diketik
-   ulang tepat di bawah token yang seharusnya menjadi sumbernya. Itu bentuk
-   hanyut yang paling halus, sebab keduanya kebetulan bernilai sama sehingga
-   tidak ada yang terlihat salah sampai salah satunya diubah.
-
-   white-space: nowrap membuat lebar terkecil .brand adalah seluruh nama, dan
-   flex item tidak pernah menyusut di bawah lebar terkecilnya kecuali
-   min-width disetel 0. Tanpa min-width di sini dan di .brand, header
-   mendorong halaman melebar di layar sempit, tanpa satu pun galat di mana
-   pun. Yang membuat namanya muat pada 320px adalah clamp di
-   @media (max-width: 520px); overflow dan text-overflow di sini hanya jaring
-   pengaman untuk layar yang lebih sempit daripada itu, dan pada layar
-   selebar itu namanya memang lebih baik terpotong daripada menyeret seluruh
-   halaman ke samping. */
 .brand__name {
   font-family: var(--font-poppins), system-ui, sans-serif; font-size: var(--fs-xl); font-weight: 700;
   letter-spacing: -.03em; white-space: nowrap;
   min-width: 0; overflow: hidden; text-overflow: ellipsis;
 }
 .brand__name span { color: var(--accent); }
-/* Tanggal dan jam, di kepala halaman, tepat di sebelah nama.
-
-   Di sana ia terbaca sebagai keterangan milik situsnya, bukan sebagai menu,
-   dan garis rambut di kirinya yang memisahkannya dari nama. Sebelum ini ia
-   di kaki halaman, tempat yang hanya dilihat orang yang sudah selesai
-   membaca.
-
-   Disembunyikan di bawah 1080px, dan itu bukan kemalasan. Kepala halaman ini
-   sudah dihitung sampai piksel terakhir untuk layar 320px: sisanya lima
-   piksel dari dua ratus delapan puluh delapan, dan keterangan di blok
-   @media (max-width: 380px) di bawah melarang menambah apa pun ke sana tanpa
-   menghitung ulang. Di antara 720px dan 1080px menunya memang sudah hilang,
-   tetapi tombol bahasa dan tema masih di sana bersama nama yang sedang
-   mengecil, jadi satu baris lagi berarti nama yang terpotong.
-
-   display: none jadi bawaannya, lalu dihidupkan di layar yang muat. Ditulis
-   begitu, bukan sebaliknya, supaya atribut hidden tetap berarti: barisnya
-   memang tidak boleh muncul sebelum ada angka yang benar di dalamnya. */
-/* Tebal sejak 26 September 2026, garisnya juga: garis rambut abu abu
-   setebal satu piksel hampir tidak terlihat di sebelah nama yang tebal, dan
-   tanpa garis itu tanggalnya terbaca sebagai sambungan nama. */
 .kini {
   display: none; margin: 0; align-items: baseline; gap: .5em;
   padding-left: 16px; border-left: 2px solid var(--ink);
@@ -390,10 +265,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 .lang__btn:hover { color: var(--ink); }
 .lang__btn[aria-pressed="true"] { background: var(--card); color: var(--brand-strong); box-shadow: var(--sh-1); }
 
-/* Saklar tema. Satu tombol, bukan dua seperti bahasa: tema cuma punya dua
-   keadaan dan yang kedua selalu "yang satunya", jadi aria-pressed sudah
-   cukup menyatakannya. Labelnya tetap, "Dark theme", supaya penerjemah
-   data-ind-label tidak berebut dengan JavaScript yang mengubah aria-label. */
 .tema {
   display: inline-grid; place-items: center; width: 38px; height: 38px; flex: none;
   padding: 0; background: var(--card); color: var(--ink-2);
@@ -409,7 +280,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 :root[data-theme="dark"] .tema__bulan { display: none; }
 :root[data-theme="dark"] .tema__matahari { display: block; }
 
-/* ---------- hero ---------- */
 .hero { position: relative; overflow: hidden; background: var(--bg); }
 .hero::before {
   content: ""; position: absolute; inset: 0 0 auto; height: 78%;
@@ -446,7 +316,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 .pulse i { width: 8px; height: 8px; border-radius: 50%; background: var(--brand); animation: pulse 2s var(--ease) infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.8); } }
 
-/* ---------- quick action tiles ---------- */
 .tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 @media (min-width: 560px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 960px) { .tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
@@ -463,7 +332,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 .tile:hover .tile__icon { background: var(--brand-btn); color: var(--on-brand); transform: scale(1.06); }
 .tile__label { font-size: .875rem; font-weight: 600; color: var(--ink); line-height: 1.35; }
 
-/* ---------- cards ---------- */
 .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 288px), 1fr)); }
 .card {
   min-width: 0; display: flex; flex-direction: column;
@@ -486,8 +354,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 .card__body h2 { margin: 0; }
 .card__body p { margin: 0; color: var(--ink-2); font-size: var(--fs-md); }
 .card__meta { margin-top: auto; padding-top: 6px; color: var(--ink-3); font-size: var(--fs-sm); }
-/* Jalan pulang dari kartu ke peta, kebalikan dari tautan di dalam popup
-   penanda yang membawa pembaca dari peta ke kartu. */
 .card__aksi { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0; font-size: var(--fs-sm); }
 .card__aksi a { font-weight: 600; }
 .tags { display: flex; flex-wrap: wrap; gap: 7px; }
@@ -497,17 +363,12 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .tag--muted { color: var(--ink-3); background: var(--surface-2); }
 
-/* ---------- stats ---------- */
 .stats { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (min-width: 760px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .stat { min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-md); padding: 22px; box-shadow: var(--sh-1); }
-/* Keduanya block. Sebagai span sebaris, angka dan keterangannya menyambung
-   jadi satu kalimat, "495street segments stored for Zone I and II", dan
-   margin-top pada keterangannya tidak berlaku sama sekali. */
 .stat__num { display: block; font-family: var(--font-poppins), sans-serif; font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.5rem); font-weight: 700; color: var(--brand-ink); line-height: 1.1; letter-spacing: -.03em; }
 .stat__label { display: block; font-size: .875rem; color: var(--ink-3); margin-top: 4px; }
 
-/* ---------- gradient panel ---------- */
 .panel {
   position: relative; overflow: hidden; color: var(--panel-ink);
   background: var(--panel-bg); color: var(--panel-ink);
@@ -529,7 +390,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 .panel p { color: rgba(255, 255, 255, .92); max-width: 62ch; font-size: var(--fs-md); margin-bottom: 0; }
 .panel__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; position: relative; z-index: 1; }
 
-/* ---------- project filter ---------- */
 .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
 .filter {
   font: inherit; font-size: .875rem; font-weight: 600; cursor: pointer;
@@ -542,7 +402,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 .is-hidden { display: none !important; }
 .empty { padding: 40px 0; color: var(--ink-3); text-align: center; }
 
-/* ---------- footer ---------- */
 .footer { background: var(--footer-bg); color: rgba(255, 255, 255, .82); padding: 28px 0; }
 .footer a { color: rgba(255, 255, 255, .88); }
 .footer a:hover { color: #fff; }
@@ -551,7 +410,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .footer__bottom p { margin: 0; }
 
-/* ---------- mobile tab bar ---------- */
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 70;
   height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
@@ -569,11 +427,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 .tabbar__link:hover { text-decoration: none; }
 .tabbar__link svg { width: 22px; height: 22px; }
 .tabbar__link[aria-current="page"] { color: var(--ink); }
-/* Aturan ini dulu duduk sendirian di ekor berkas, SESUDAH blok 520px di
-   bawah. Keduanya cocok pada layar 320px, kekhususannya sama, jadi yang
-   ditulis terakhir yang menang: --gutter jadi 24px justru di layar yang
-   paling butuh 16px. Urutan penulisan di sinilah yang menegakkan maksudnya,
-   bukan lebar media query-nya. Jangan pindahkan ke bawah blok 520px. */
 @media (max-width: 1024px) { :root { --gutter: 24px; } }
 
 @media (max-width: 719px) {
@@ -583,20 +436,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 @media (max-width: 420px) { .header__actions .btn { display: none; } }
 
-/* the wordmark is large on purpose, but it cannot push the header wider
-   than the phone it is read on
-
-   Ukurannya mengikuti lebar layar, bukan melompat di titik putus. Sebabnya
-   bukan selera: ruang yang tersisa untuk nama adalah fungsi lurus dari lebar
-   layar (lebar layar dikurangi pinggir, lambang, jarak, tombol bahasa, dan
-   tombol tema), jadi ukuran yang muat juga lurus. Satu angka tetap per pita
-   selalu meleset di salah satu ujung pita itu. 2,5vw + 5px melewati 13px
-   pada 320px dan 18px pada 520px; 18px adalah ukuran yang dipakai pita ini
-   sebelumnya, jadi ujung atasnya tidak berubah.
-
-   Tombol bahasa ikut dipadatkan di sini, bukan hanya di bawah 380px. Pada
-   layar 390px sisa ruangnya kurang 0,45px sebelum ini, dan kurang sedikit
-   tetap berarti namanya terpotong. */
 @media (max-width: 520px) {
   :root { --gutter: 16px; --header-h: 64px; }
   .brand__name { font-size: clamp(0.8125rem, 2.5vw + 5px, 1.125rem); }
@@ -605,11 +444,6 @@ ul { margin: 0; padding: 0; list-style: none; }
   .lang__btn { padding: 6px 10px; font-size: var(--fs-xs); }
 }
 
-/* Ukuran nama tetap dipegang clamp di blok 520px di atas; yang dikerjakan
-   di sini adalah memperkecil segala sesuatu di sekelilingnya, supaya garis
-   yang sama tetap muat sampai 320px. Pada 320px yang tersedia 288px dan
-   isinya 283px, jadi sisanya tipis: jangan menambah apa pun ke header di
-   bawah titik putus ini tanpa menghitung ulang. */
 @media (max-width: 380px) {
   .brand__mark { width: 32px; height: 32px; }
   .brand { gap: 8px; }
@@ -618,7 +452,6 @@ ul { margin: 0; padding: 0; list-style: none; }
   .lang__btn { padding: 6px 8px; }
 }
 
-/* ---------- utilities ---------- */
 .mt-24 { margin-top: 24px; }
 .mt-32 { margin-top: 32px; }
 .center { text-align: center; margin-inline: auto; }
@@ -629,18 +462,9 @@ ul { margin: 0; padding: 0; list-style: none; }
 .reveal { opacity: 0; transform: translateY(14px); transition: opacity .55s var(--ease), transform .55s var(--ease); }
 .reveal.is-in { opacity: 1; transform: none; }
 
-/* Muncul berurutan, bukan serentak. --i disetel app.js untuk tiap anak di
-   dalam satu .reveal, dan jedanya dibatasi supaya baris kesepuluh tidak
-   menunggu setengah detik hanya demi rapi. */
 .reveal > * { transition-delay: calc(var(--i, 0) * 70ms); }
 .reveal.is-in > * { transition-delay: calc(var(--i, 0) * 70ms); }
 
-/* Kilau yang mengikuti kursor.
-
-   Radiusnya besar dan opasitasnya kecil dengan sengaja: yang diinginkan
-   kesan permukaan yang sadar ada tangan di atasnya, bukan lampu sorot.
-   --mx dan --my disetel app.js; sebelum ada kursor, keduanya 50% sehingga
-   kartunya tetap benar tanpa JavaScript sama sekali. */
 .card, .tile, .post, .stat {
   position: relative;
   isolation: isolate;
@@ -659,10 +483,6 @@ ul { margin: 0; padding: 0; list-style: none; }
   opacity: 1;
 }
 
-/* Jam Yogyakarta. Satu satunya angka di halaman ini yang benar benar berubah
-   sendiri, dan itu sebabnya ia ada: ia nyata, bukan hiasan yang bergerak.
-   Lebarnya dikunci dengan tabular-nums supaya detiknya tidak menggoyang
-   baris di sebelahnya tiap kali angkanya berganti. */
 .jam { font-variant-numeric: tabular-nums; letter-spacing: .01em; }
 .jam__titik { animation: jamTitik 1s steps(1, end) infinite; }
 @keyframes jamTitik { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .25; } }
@@ -674,7 +494,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; } }
 
-/* ---------- blog ---------- */
 .post-list { display: grid; gap: 14px; }
 .post {
   min-width: 0; display: block; padding: 24px; background: var(--card); color: inherit;
@@ -688,11 +507,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 .post__meta .tag { font-size: var(--fs-xs); }
 .post__more { display: inline-block; margin-top: 14px; font-size: var(--fs-md); font-weight: 600; color: var(--accent); }
 
-/* An article is a reading column plus a rail. Below 1080px the rail drops
-   under the text and the column takes the full width; above it the two sit
-   at the outer edges of the wrap, so the page fills the same width as the
-   header instead of leaving a wide empty margin on both sides. The reading
-   line itself stays at a length the eye can follow. */
 .article { max-width: 78ch; margin-inline: auto; }
 .article__head { margin-bottom: 28px; }
 .article__head h1 { font-size: clamp(1.75rem, 1.3rem + 2vw, 2.75rem); }
@@ -702,7 +516,6 @@ ul { margin: 0; padding: 0; list-style: none; }
   scroll-margin-top: calc(var(--header-h) + 20px);
 }
 
-/* a heading you can link to: the mark only appears when you are on it */
 .article h2 .anchor {
   margin-left: 8px; font-weight: 500; color: var(--ink-3); text-decoration: none;
   opacity: 0; transition: opacity .16s var(--ease), color .16s var(--ease);
@@ -718,26 +531,12 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .article blockquote p:last-child { margin-bottom: 0; }
 
-/* Daftar di dalam tulisan.
-   Angka dan butirnya digantung di luar kolom teks, supaya baris kedua sebuah
-   butir sejajar dengan baris pertamanya dan bukan dengan penandanya. */
 .article .tulisan__daftar {
   margin: 0 0 20px; padding-left: 1.4em; font-size: 1.0625rem; line-height: 1.75;
 }
 .article .tulisan__daftar li { margin-bottom: 6px; }
 .article .tulisan__daftar li::marker { color: var(--ink-3); }
 
-/* Gambar dan video di dalam tulisan.
-
-   Lebarnya boleh melampaui kolom teks sedikit di layar lebar, sebab kolom
-   teks dibatasi 78ch demi kenyamanan membaca dan batas itu tidak berlaku
-   untuk gambar. Di bawah 900 piksel ia kembali selebar teksnya.
-
-   aspect-ratio tidak dipasang di sini: ukuran gambarnya datang dari atribut
-   width dan height yang ditulis pembangkit dari nama berkasnya, dan itu
-   sudah cukup bagi peramban untuk menyediakan tempatnya sebelum gambarnya
-   tiba. Video tidak punya ukuran itu, jadi tempatnya memang baru pasti
-   sesudah metadatanya sampai. */
 .article .tulisan__media { margin: 28px 0; }
 .article .tulisan__media img,
 .article .tulisan__media video {
@@ -754,11 +553,8 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .back-link { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: var(--fs-md); margin-bottom: 20px; }
 
-/* the rail */
 .rail { display: grid; gap: 26px; margin-top: 40px; }
 
-/* narrow screens put the rail under the article, where a contents list no
-   longer helps anyone: what stays is the link to the other posts */
 @media (max-width: 1079px) {
   .rail { border-top: 1px solid var(--line); padding-top: 24px; }
   .rail__daftar { display: none; }
@@ -791,34 +587,14 @@ ul { margin: 0; padding: 0; list-style: none; }
   }
 }
 
-/* ---------- work map ---------- */
-/* Peta karya.
-
-   Ia diberi kepala dan tinggi yang sepadan, sebab sebelumnya ia cuma persegi
-   panjang tanpa nama di atas daftar kartu. Pembaca yang tidak diberi tahu apa
-   yang sedang ia lihat akan menggulir melewatinya, dan yang terlewat justru
-   satu satunya hal di situs ini yang tidak dimiliki portofolio lain.
-
-   Tingginya memakai min-height, bukan mengganti aspect-ratio, supaya rasio
-   yang sudah diuji di sepuluh ukuran layar tidak ikut berubah. */
 .peta { position: relative; margin-bottom: 32px; }
-/* Namanya BUKAN .peta__kepala, dan itu bukan selera. Kelas itu sudah dipakai
-   peta.js untuk kepala legendanya sendiri, jadi memakainya lagi di sini
-   membuat aturan ini ikut kena ke dalam legenda. */
 .peta__intro { max-width: 68ch; margin-bottom: 24px; }
 
-/* Ajakan ke peta di beranda. Tujuh titiknya tujuh karya yang memang ada di
-   peta halaman Proyek, bukan angka hiasan. Gambarnya aria-hidden: yang
-   dikatakannya sudah dikatakan teks di sebelahnya. */
 .ajak-peta {
   display: grid; gap: clamp(24px, 4vw, 56px); align-items: center;
   grid-template-columns: 1fr;
 }
 .ajak-peta > * { min-width: 0; }
-/* Dua kolom baru mulai 1240px, dan gambarnya dibatasi 400px. Pemilik proyek
-   meminta dua kalimat pengantarnya sebaris, dan di kolom selebar setengah
-   halaman kalimat kedua jatuh ke baris berikutnya. Uji
-   test_pengantar_peta_dua_kalimat_sebaris_dan_rapat yang menahannya. */
 @media (min-width: 1240px) { .ajak-peta { grid-template-columns: minmax(0, 1fr) minmax(0, 400px); } }
 .ajak-peta .peta__intro { margin-bottom: 20px; }
 .ajak-peta__gambar {
@@ -828,25 +604,18 @@ ul { margin: 0; padding: 0; list-style: none; }
 .ajak-peta__gambar svg { display: block; width: 100%; height: auto; }
 .ajak-peta__gambar .titik { transform-box: fill-box; transform-origin: 50% 100%;
   animation: titikJatuh .7s var(--ease) both; animation-delay: .2s; }
-/* Jatuh bergiliran. Jedanya ditulis per titik, bukan lewat --i di atribut
-   style: CSP situs ini menolak atribut style, dan itu disengaja. */
 .ajak-peta__gambar g > g:nth-child(2) .titik { animation-delay: .31s; }
 .ajak-peta__gambar g > g:nth-child(3) .titik { animation-delay: .42s; }
 .ajak-peta__gambar g > g:nth-child(4) .titik { animation-delay: .53s; }
 .ajak-peta__gambar g > g:nth-child(5) .titik { animation-delay: .64s; }
 .ajak-peta__gambar g > g:nth-child(6) .titik { animation-delay: .75s; }
 .ajak-peta__gambar g > g:nth-child(7) .titik { animation-delay: .86s; }
-/* Titiknya baru jatuh ketika gambarnya masuk layar, bukan saat halaman
-   dimuat jauh di atasnya. */
 .ajak-peta__gambar.reveal:not(.is-in) .titik { animation-play-state: paused; }
 .ajak-peta__gambar .gelombang { transform-box: fill-box; transform-origin: center;
   animation: gelombang 2.4s var(--ease) infinite; }
 @keyframes titikJatuh { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
 @keyframes gelombang { 0% { opacity: .7; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.4); } }
 
-/* Tiga langkah dihubungkan satu rute putus putus, seperti jalur di peta.
-   Garisnya di belakang kartu, jadi yang terlihat hanya potongannya di
-   celah antarkartu. Hanya saat ketiganya sebaris. */
 .langkah { position: relative; }
 .langkah .stat__num {
   display: inline-grid; place-items: center; width: 52px; height: 52px; border-radius: 50%;
@@ -863,18 +632,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .peta__intro h2 { font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.25rem); margin-bottom: .3em; }
 .peta__intro p { color: var(--ink-3); font-size: 1.0625rem; margin: 0 0 .35em; }
 
-/* Di layar lebar judulnya duduk di kiri dan kalimatnya di kanan, sebaris.
-   Sebagai satu kolom selebar 68ch, blok ini meninggalkan separuh halaman
-   kosong di sebelahnya, dan kosongnya makin lebar justru setelah kalimatnya
-   dipendekkan. Batasnya tetap ada, cuma pindah ke tiap kolom, sebab baris
-   selebar seratus karakter susah diikuti mata. */
 @media (min-width: 980px) {
-  /* Flex, bukan grid dua kolom.
-     Dengan dua kolom selebar setengah halaman, kalimat pertama berhenti di
-     tempatnya sendiri sedangkan kalimat kedua tetap menunggu di garis tengah,
-     dan di antara keduanya menganga jarak yang tidak ada gunanya. Sebagai
-     baris flex, tiap kalimat selebar isinya saja dan jaraknya tinggal satu
-     spasi yang disetel di sini. */
   .peta__intro {
     max-width: none;
     display: flex;
@@ -884,9 +642,6 @@ ul { margin: 0; padding: 0; list-style: none; }
   }
   .peta__intro .eyebrow,
   .peta__intro h2 { flex: 0 0 100%; }
-  /* Kalimat pertama di bawah judulnya, kalimat kedua di sampingnya, bukan
-     di bawahnya lagi. Batas 46ch menahan keduanya tetap terbaca, dan kalau
-     berdua tidak muat, yang kedua turun sendiri ke baris berikutnya. */
   .peta__intro p { flex: 0 1 auto; max-width: 46ch; margin: 0; }
 }
 @media (min-width: 720px) { .peta__frame { min-height: clamp(360px, 56vh, 620px); } }
@@ -896,9 +651,6 @@ ul { margin: 0; padding: 0; list-style: none; }
   background: var(--surface-2); aspect-ratio: 4 / 3;
 }
 @media (min-width: 720px) { .peta__frame { aspect-ratio: 21 / 9; } }
-/* two class selector on purpose: maplibre-gl.css loads later and its own
-   .maplibregl-map { position: relative } would otherwise win, collapsing this
-   box to zero height and hiding the whole map */
 .peta__frame .peta__kanvas { position: absolute; inset: 0; height: 100%; }
 .peta__frame::after {
   content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
@@ -929,15 +681,10 @@ ul { margin: 0; padding: 0; list-style: none; }
 .peta__popup a { font-size: .875rem; font-weight: 600; }
 .maplibregl-ctrl-attrib { font-size: .6875rem; }
 
-/* hero variant without the side by side split */
 .hero__grid--solo { grid-template-columns: 1fr; padding-bottom: 0; }
 @media (min-width: 900px) { .hero__grid--solo { grid-template-columns: 1fr; } }
 .wrap--narrow { max-width: 680px; }
 
-/* ---------- signature motion ----------
-   Three small things, all switched off when the visitor asks for less
-   motion: the dot on the logo breathes, the nav underlines itself on
-   hover, and the route on the hero map draws itself once on load. */
 .brand__mark .mark-dot { transform-origin: 37.5px 11.5px; animation: markDot 3.6s var(--ease) infinite; }
 @keyframes markDot {
   0%, 100% { transform: scale(1); opacity: 1; }
@@ -979,11 +726,9 @@ ul { margin: 0; padding: 0; list-style: none; }
   .nav__link::after { transition: none; }
 }
 
-/* ---------- map polish ---------- */
 .peta__frame { background: var(--surface); }
 .peta__pin {
   width: 16px; height: 16px; border-radius: 50%; padding: 0; cursor: pointer;
-  /* the basemap stays light in both themes, so the pin does not flip */
   background: #0b0b0b; border: 3px solid #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, .4);
   transition: transform .18s var(--ease);
@@ -993,18 +738,12 @@ ul { margin: 0; padding: 0; list-style: none; }
 .maplibregl-ctrl-group { border-radius: var(--r-sm) !important; }
 .maplibregl-ctrl-group button { width: 32px !important; height: 32px !important; }
 
-/* ==========================================================================
-   Polish pass
-   ========================================================================== */
-
-/* the brand mark flips with the theme, CSS wins over the fill attribute */
 .brand__mark rect { fill: var(--mark-bg); }
 .brand__mark path { fill: var(--mark-ink); }
 .brand__mark .mark-dot { fill: var(--mark-dot); }
 .footer .brand__mark rect { fill: #ffffff; }
 .footer .brand__mark path { fill: #000000; }
 
-/* typographic rhythm */
 h1 { font-size: clamp(2.25rem, 1.4rem + 3.4vw, 4rem); line-height: 1.06; }
 h2 { font-size: clamp(1.6rem, 1.25rem + 1.6vw, 2.5rem); line-height: 1.12; }
 h3 { font-size: 1.125rem; line-height: 1.3; }
@@ -1017,7 +756,6 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 }
 .eyebrow::before { content: ""; width: 22px; height: 1px; background: currentColor; }
 
-/* cards: the map inside breathes a little when pointed at */
 .card { border-radius: var(--r-lg); }
 .card__cover { overflow: hidden; }
 .card__cover img { transition: transform .5s var(--ease); }
@@ -1029,33 +767,25 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 .card__meta { border-top: 1px solid var(--line); margin-top: auto; padding-top: 12px; }
 .tag { background: var(--surface-2); color: var(--ink-2); font-weight: 500; }
 
-/* tiles read as a row of quiet chips rather than boxes */
 .tile { box-shadow: none; background: var(--surface); border-color: transparent; }
 .tile:hover { background: var(--card); border-color: var(--line); box-shadow: var(--sh-1); }
 .tile__icon { background: transparent; color: var(--ink); }
 
-/* section rhythm */
 .section { padding: clamp(56px, 6vw, 96px) 0; }
 .section--surface { background: var(--surface); }
 
-/* blog list: every post gets the same frame, the same title size and the
-   same lede size, so the list reads as a list and not as a ranking */
 .post { padding: 26px; border-radius: var(--r-lg); }
 .post h2 { font-size: clamp(1.1875rem, 1.1rem + .4vw, 1.4375rem); line-height: 1.3; letter-spacing: -.01em; transition: color .18s var(--ease); }
-/* card and post titles are h2 for the outline, not for the size: they sit
-   under the page title and must not shout as loud as a section heading */
 .card__body h2 { font-size: 1.125rem; line-height: 1.3; letter-spacing: -.01em; }
 .post p { font-size: 1rem; }
 .post:hover h2 { color: var(--accent); }
 
-/* reading progress on articles */
 .progres {
   position: fixed; top: 0; left: 0; height: 3px; width: 100%; z-index: 90;
   transform: scaleX(0); transform-origin: left;
   background: var(--accent); pointer-events: none;
 }
 
-/* the tools strip under the hero, built from names already on the page */
 .pita-alat { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); overflow: hidden; }
 .pita-alat__jalur { display: flex; gap: 44px; padding: 16px 0; width: max-content; animation: geser 38s linear infinite; }
 .pita-alat span {
@@ -1068,9 +798,6 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
   .card:hover .card__cover img { transform: none; }
 }
 
-/* Map chrome stays light in both themes, because the basemap under it is
-   always light. Following the site theme here turned the scale bar and the
-   credit line into dark text on a dark box sitting on a pale map. */
 .maplibregl-ctrl-scale {
   background: rgba(255, 255, 255, .92) !important;
   border: 1px solid #b9bfc5 !important; border-top: 0 !important;
@@ -1093,7 +820,6 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 .maplibregl-popup-anchor-left .maplibregl-popup-tip { border-right-color: var(--card) !important; }
 .maplibregl-popup-anchor-right .maplibregl-popup-tip { border-left-color: var(--card) !important; }
 
-/* ---------- map legend and controls ---------- */
 .peta__legenda {
   position: absolute; left: 12px; top: 12px; z-index: 4;
   background: var(--card); border: 1px solid var(--line); border-radius: var(--r-sm);
@@ -1122,8 +848,6 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 .peta__reset:hover { text-decoration: underline; }
 .peta__legenda.is-filtered .peta__reset { font-weight: 700; }
 
-/* one colour per kind of work, set here rather than inline so the
-   Content Security Policy can keep refusing inline styles */
 .peta__pin[data-kind="app"], .peta__baris[data-kind="app"] i { background: #276ef1; }
 .peta__pin[data-kind="analysis"] { background: #0b0b0b; }
 .peta__baris[data-kind="analysis"] i { background: var(--ink); }
@@ -1135,9 +859,6 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 .peta__kind--design { color: #05944f; }
 .peta__pin.is-off { display: none; }
 
-
-/* on a phone the legend would cover a third of the map, so it drops below it
-   and turns into a row of chips */
 @media (max-width: 620px) {
   .peta__legenda {
     position: static; min-width: 0; margin-top: 10px; padding: 10px;
@@ -1153,7 +874,6 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
   .peta__reset { border-top: 0; padding: 5px 8px; margin: 0; }
 }
 
-/* ---------- map control panel ---------- */
 .peta__legenda { min-width: 194px; max-width: 246px; max-height: calc(100% - 24px); overflow: auto; }
 .peta__grup { display: grid; gap: 6px; }
 .peta__grup + .peta__grup { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
@@ -1174,7 +894,6 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
   .peta__legenda-judul { width: auto; margin: 0 2px 0 0; }
 }
 
-/* home control and the live legend summary */
 .peta__rumah {
   display: grid; place-items: center; width: 29px; height: 29px;
   background: transparent; border: 0; cursor: pointer;
@@ -1185,7 +904,6 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 }
 .peta__ringkas::first-line { font-weight: 600; }
 
-/* when the map cannot load at all, say so instead of leaving a grey box */
 .peta.is-failed .peta__frame::after { opacity: 1; animation: none; background: var(--surface); }
 .peta.is-failed .peta__frame::before {
   content: attr(data-gagal); position: absolute; inset: 0; z-index: 4;
@@ -1193,7 +911,6 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
   color: var(--ink-3); font-size: .875rem;
 }
 
-/* folding the map panel away */
 .peta__kepala {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
 }
@@ -1218,7 +935,4 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
   .peta__lipat { transition: none; }
 }
 
-/* jumping to a card from the map popup used to hide it under the sticky
-   header, so every anchor target keeps the header height clear. .peta is the
-   other direction, the one the card links take. */
 [id^="karya-"], #main, .peta { scroll-margin-top: calc(var(--header-h) + 16px); }

@@ -1,23 +1,3 @@
-/* Gaya dashboard admin.
-
-   Dipisah dari index.html sejak 19 September 2026, dan itu bukan kerapian.
-   Selama ia sebaris, CSP produksi harus memberi izin 'unsafe-inline' pada
-   style-src, dan izin itu berlaku untuk seluruh situs, bukan cuma untuk
-   halaman ini.
-
-   Gayanya sengaja tidak menumpang assets/css/style.css: dashboard adalah alat
-   kerja yang harus tetap hidup ketika situsnya sendiri sedang rusak.
-
-   Tata letaknya sejak 26 September 2026: menu di samping pada layar lebar,
-   bilah menu yang bisa digeser di atas pada ponsel, dan panel yang berjajar
-   dua kolom bila layarnya muat. Sebelumnya seluruh panel menumpuk satu
-   kolom, dan panel menulis muncul PALING BAWAH, di bawah daftar perangkat dan
-   jejak keamanan, sehingga membuka tulisan berarti menggulir melewati dua
-   tabel yang tidak ada hubungannya. */
-
-/* Poppins yang sama dengan situsnya, dilayani backend dari /admin/.
-   Kalau berkasnya tidak ada, yang dipakai huruf sistem dan tidak ada yang
-   rusak: huruf bukan bagian dari alat kerjanya. */
 @font-face { font-family: "Poppins"; font-style: normal; font-weight: 400; font-display: swap;
   src: url("/admin/poppins-400.woff2") format("woff2"); }
 @font-face { font-family: "Poppins"; font-style: normal; font-weight: 600; font-display: swap;
@@ -63,12 +43,9 @@ body {
 :focus-visible { outline: 3px solid var(--aksen); outline-offset: 2px; border-radius: 6px; }
 a { color: var(--aksen); }
 
-/* ---------- kerangka ---------- */
 .kerangka { min-height: 100vh; }
 .panggung { min-width: 0; }
 
-/* Menu samping disembunyikan sebelum masuk. Menu yang menunjuk panel yang
-   belum boleh dibuka cuma janji kosong. */
 .sisi { display: none; }
 .sudah-masuk .sisi { display: flex; }
 
@@ -102,9 +79,6 @@ a { color: var(--aksen); }
 .menu__luar { margin-top: auto; }
 
 @media (min-width: 960px) {
-  /* Latar kolom menu digambar di kerangkanya, bukan hanya di menunya: menu
-     yang lengket setinggi layar berhenti di tepi bawah layar pertama, dan
-     halaman yang lebih panjang menampakkan celah terang di bawahnya. */
   .sudah-masuk .kerangka {
     display: grid; grid-template-columns: var(--lebar-sisi) minmax(0, 1fr);
     background: linear-gradient(90deg, var(--sisi) var(--lebar-sisi), transparent 0);
@@ -112,9 +86,6 @@ a { color: var(--aksen); }
   .sisi { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
 }
 
-/* Di ponsel menunya jadi satu bilah yang bisa digeser ke samping, lengket di
-   atas. Lima tautan tidak pernah muat di 360px, dan membungkusnya jadi dua
-   baris memakan seperlima layar. */
 @media (max-width: 959px) {
   .sisi {
     position: sticky; top: 0; z-index: 10;
@@ -134,7 +105,6 @@ a { color: var(--aksen); }
   .menu__luar { display: none; }
 }
 
-/* ---------- bilah atas ---------- */
 .atas {
   display: flex; align-items: center; gap: 14px; padding: 16px clamp(16px, 3vw, 32px);
   background: color-mix(in srgb, var(--bg) 86%, transparent);
@@ -147,9 +117,6 @@ a { color: var(--aksen); }
 .atas__sub { margin: 0; font-size: .8rem; color: var(--tinta-2); }
 .atas .isi { margin-left: auto; display: flex; gap: 10px; align-items: center; }
 
-/* Nama pengguna dengan lingkaran huruf depannya. Hurufnya ditulis
-   dasbor.js ke data-awal; kosong berarti belum masuk, dan lingkarannya
-   tidak digambar. */
 .pengguna { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: .875rem; }
 .pengguna[data-awal]::before {
   content: attr(data-awal);
@@ -164,8 +131,6 @@ main.isi-utama {
 }
 .isi-utama > * { grid-column: 1 / -1; min-width: 0; }
 
-/* Urutan tampil, bukan urutan di markup. Pesan selalu paling atas, dan panel
-   menulis tepat di bawahnya begitu dibuka. */
 #kabar { order: -2; margin-bottom: 0; }
 #layar-sunting { order: -1; }
 
@@ -176,10 +141,8 @@ main.isi-utama {
   #layar-jejak { grid-column: span 7; }
 }
 
-/* Sauh gulir memperhitungkan bilah atas yang lengket. */
 .isi-utama > section { scroll-margin-top: 90px; }
 
-/* ---------- kartu ---------- */
 .kartu {
   background: var(--kartu); border: 1px solid var(--garis);
   border-radius: var(--r); padding: clamp(16px, 2vw, 22px); box-shadow: var(--bayang);
@@ -222,12 +185,6 @@ button.bahaya { color: var(--bahaya); border-color: color-mix(in srgb, var(--bah
 button.bahaya:hover { background: color-mix(in srgb, var(--bahaya) 10%, transparent); border-color: var(--bahaya); }
 button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
-/* Saklar lihat sandi.
-   Bidangnya relatif, tombolnya absolut di dalamnya, dan isiannya diberi
-   padding kanan seluas tombol supaya sandi yang panjang tidak pernah
-   tergulung ke bawah tombolnya. Ukuran sentuhnya 34px, di atas ambang
-   nyaman untuk jari, dan itu sebabnya tombolnya tidak dibuat sekecil
-   ikonnya. */
 .sandi-bidang { position: relative; }
 .sandi-bidang input { padding-right: 44px; }
 .lihat {
@@ -239,19 +196,14 @@ button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 .lihat:active { transform: translateY(-50%); }
 .lihat svg { width: 19px; height: 19px; fill: none; stroke: currentColor;
              stroke-width: 1.8; stroke-linecap: round; }
-/* Coretnya muncul saat sandi SEDANG terlihat, sebab saat itu menekannya
-   berarti menyembunyikan. Ikon menyatakan akibat tekanan, bukan keadaan. */
 .lihat .coret { opacity: 0; }
 .lihat[aria-pressed="true"] .coret { opacity: 1; }
 
-/* ---------- layar masuk ---------- */
 .masuk {
   width: 100%; max-width: 400px; margin: clamp(32px, 10vh, 96px) auto;
   padding: 28px; box-shadow: var(--bayang-naik);
 }
 .masuk__lambang { width: 48px; height: 48px; display: block; margin-bottom: 18px; }
-/* Lambang hitam di kartu gelap nyaris hilang; di tema gelap warnanya dibalik,
-   sama seperti lambang di situs. */
 @media (prefers-color-scheme: dark) {
   .masuk__lambang rect { fill: #ffffff; }
   .masuk__lambang path { fill: #000000; }
@@ -260,17 +212,12 @@ button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 .masuk__sub { margin: 0 0 22px; color: var(--tinta-2); font-size: .875rem; }
 .masuk button.utama { padding: 12px 16px; }
 
-/* ---------- panel ---------- */
 .kepala-panel { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-bottom: 14px; }
 .kepala-panel h2 { margin: 0; font-size: 1.05rem; letter-spacing: -.01em; }
 .kepala-panel > :nth-child(2) { margin-left: auto; }
 .ket { margin: 0 0 14px; font-size: .8125rem; color: var(--tinta-2); }
 
-/* auto-fit, bukan jumlah kolom tetap: ubinnya menyesuaikan lebar layar
-   sendiri, dan min-width 0 mencegah anak grid melebar mengikuti isinya. */
 .ubin { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
-/* Dua kolom di ponsel, bukan satu: empat ubin yang menumpuk menghabiskan
-   satu layar penuh hanya untuk empat angka. */
 @media (max-width: 520px) {
   .ubin { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .satu-ubin { grid-template-columns: 1fr; padding: 12px; }
@@ -310,22 +257,10 @@ button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
                  border-radius: 999px; padding: 2px 9px; }
 .kosong { color: var(--tinta-2); font-size: .8125rem; padding: 18px 8px; text-align: center; }
 
-/* ---------- tabel ---------- */
-/* Tabel yang bisa tumbuh panjang diberi atap lalu menggulir di dalam
-   kartunya sendiri. Tanpa ini, dua puluh sesi dan empat puluh peristiwa
-   mendorong panel menulis jauh ke bawah layar, padahal menulis itu justru
-   pekerjaan utama halaman ini. Kepala tabelnya ikut dilekatkan supaya nama
-   kolomnya tidak hilang saat digulir.
-
-   overflow-x ikut di sini untuk ponsel: tabel empat kolom tidak muat di
-   360px, dan yang menggulir ke samping mestinya tabelnya, bukan halamannya. */
 .gulung { max-height: 360px; overflow: auto; margin: 0 -4px; padding: 0 4px; }
 .tabel-bungkus { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
 .gulung thead th { position: sticky; top: 0; background: var(--kartu); z-index: 1; }
 table { width: 100%; border-collapse: collapse; font-size: .875rem; }
-/* Di layar sempit tabelnya dijaga selebar yang masih terbaca, lalu
-   digulir ke samping di dalam kartunya. Tabel yang diperas memecah "18 Sep
-   2026" jadi dua baris dan judul jadi empat. */
 @media (max-width: 700px) {
   .gulung table, .tabel-bungkus table { min-width: 520px; }
 }
@@ -349,7 +284,6 @@ td button { padding: 6px 13px; font-size: .8rem; }
               border-color: color-mix(in srgb, var(--hijau) 30%, transparent); }
 .sembunyi { display: none !important; }
 
-/* ---------- penyunting ---------- */
 .pratinjau { border-left: 3px solid var(--garis); padding-left: 16px; color: var(--tinta-2); }
 .pratinjau h2 { font-size: 1.1rem; color: var(--tinta); margin: 18px 0 6px; }
 .pratinjau blockquote { margin: 12px 0; padding-left: 12px; border-left: 3px solid var(--aksen); }
@@ -357,10 +291,6 @@ td button { padding: 6px 13px; font-size: .8rem; }
 .petunjuk code, .pratinjau code { font-size: .78rem; background: var(--bg); border: 1px solid var(--garis);
                                   border-radius: 5px; padding: 1px 5px; }
 
-/* Bilah format, pustaka berkas, dan pratinjau medianya.
-   Bilahnya lengket di bawah bilah atas selama kartu penyuntingnya masih di
-   layar, seperti di Word: tombol tebal tidak boleh hilang ke atas begitu
-   tulisannya lebih panjang dari satu layar. */
 .bilah {
   position: sticky; top: 76px; z-index: 3;
   display: flex; flex-wrap: wrap; align-items: center; gap: 4px;
@@ -408,16 +338,6 @@ td button { padding: 6px 13px; font-size: .8rem; }
 .pratinjau figcaption { margin-top: 6px; font-size: .8rem; color: var(--tinta-2); }
 .pratinjau ul, .pratinjau ol { margin: 0 0 8px; padding-left: 1.3em; }
 
-/* Kelas pengganti atribut style= di dalam markup.
-
-   Sampai 19 September 2026 ketujuh belas gaya di bawah ditulis sebagai
-   `style="..."` langsung di index.html. Itu memaksa CSP memberi izin
-   'unsafe-inline' pada style-src, dan izin itu berlaku untuk seluruh atribut
-   style di halaman, termasuk yang diselundupkan lewat isi yang tidak
-   tersaring. Sekarang style-src dashboard cukup 'self'.
-
-   Namanya menyebut gunanya, bukan nilainya, kecuali beberapa yang memang cuma
-   jarak dan tidak punya nama yang lebih baik. */
 .kartu__judul { margin: 0; font-size: 1.05rem; letter-spacing: -.01em; }
 .isian--lebar { width: 100%; }
 .ke-kanan { margin-left: auto; }

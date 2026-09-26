@@ -8,8 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default function NotFound() {
-  /* Halaman ini duduk di akar, di luar (situs), sebab Next memakainya untuk
-     404 seluruh situs. Jadi perabotnya dipasang sendiri di sini. */
   return (
     <KerangkaSitus>
       <main id="main">

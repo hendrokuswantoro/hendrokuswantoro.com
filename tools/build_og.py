@@ -1,12 +1,3 @@
-"""Generate the social preview image (Open Graph / Twitter card).
-
-Run from the project root:
-    python tools/build_og.py
-
-Output: assets/img/og-cover.png at 1200x630, the size every major platform
-crops from. Re-run it whenever the name or tagline changes.
-"""
-
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
@@ -35,26 +26,22 @@ def main():
     img = Image.new("RGB", (W, H), INK)
     draw = ImageDraw.Draw(img, "RGBA")
 
-    # vertical green wash, dark at the top
     for y in range(H):
         t = y / (H - 1)
         colour = tuple(int(INK[i] + (INK_SOFT[i] - INK[i]) * t) for i in range(3))
         draw.line([(0, y), (W, y)], fill=colour)
 
-    # map grid
     for x in range(0, W, 80):
         draw.line([(x, 0), (x, H)], fill=(255, 255, 255, 18), width=1)
     for y in range(0, H, 80):
         draw.line([(0, y), (W, y)], fill=(255, 255, 255, 18), width=1)
 
-    # route line and survey points
     draw.line([(-20, 600), (240, 556), (470, 602), (720, 516), (980, 556), (1220, 492)],
               fill=(39, 110, 241, 255), width=10, joint="curve")
     for cx, cy, r in ((240, 556, 12), (720, 516, 16), (1180, 500, 10)):
         draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=ACCENT)
     draw.ellipse([720 - 34, 516 - 34, 720 + 34, 516 + 34], outline=(255, 255, 255, 120), width=3)
 
-    # logo mark
     draw.rounded_rectangle([80, 74, 158, 152], radius=24, fill=WHITE)
     draw.text((119, 113), "H", font=load(BOLD, 52), fill=INK, anchor="mm")
 

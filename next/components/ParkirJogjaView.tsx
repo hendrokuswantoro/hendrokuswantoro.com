@@ -4,15 +4,6 @@ import Link from "next/link";
 import { PARKIR } from "@/content/parkir-jogja";
 import { useLang } from "./LanguageProvider";
 
-/* Studi kasus Parkir Jogja. Pasangan port Next dari parkir-jogja.html.
- *
- * Kelas CSS-nya sama persis dengan yang dipakai halaman statisnya, dan itu
- * disengaja: keduanya membaca style.css yang sama lewat tools/gaya_next.py,
- * jadi satu perubahan gaya berlaku untuk keduanya tanpa ada yang tertinggal.
- *
- * Gambarnya <img> biasa, bukan next/image, sebab ekspornya statis dan
- * berkasnya sudah diukur serta dimampatkan tools/build_work_images.py.
- */
 export function ParkirJogjaView() {
   const { say } = useLang();
 

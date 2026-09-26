@@ -3,11 +3,6 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-/**
- * One observer for the whole page, the same approach the plain HTML version
- * uses. Elements only need the `reveal` class, no wrapper component and no
- * refs to thread through the tree.
- */
 export function RevealObserver() {
   const pathname = usePathname();
 

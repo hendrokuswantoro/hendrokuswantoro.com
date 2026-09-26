@@ -1,9 +1,3 @@
-"""Jalur admin. Seluruhnya di belakang butuh_admin.
-
-Bab 15.9: otorisasi diverifikasi di backend, tanpa pengecualian. Tidak ada
-satu pun rute di berkas ini yang bisa dicapai tanpa token beperan admin.
-"""
-
 from __future__ import annotations
 
 from typing import Annotated, Literal
@@ -16,10 +10,6 @@ from backend.layanan import pratinjau as layanan_pratinjau
 from backend.layanan import tulis as layanan
 from backend.skema.tulis import PANJANG_ISI, TulisanMasuk, TulisanUbah
 
-# butuh_admin_kuat, bukan butuh_admin: seluruh rute di berkas ini mengubah
-# isi situs, dan permukaan itu menuntut sesi yang lahir lewat faktor kedua.
-# Halaman keamanan sengaja TIDAK memakainya, supaya faktor keduanya masih bisa
-# dipasang oleh orang yang belum punya.
 rute = APIRouter(
     prefix="/admin", tags=["admin"], dependencies=[Depends(butuh_admin_kuat)]
 )
@@ -30,8 +20,6 @@ class UbahStatus(BaseModel):
 
 
 class Pratinjau(BaseModel):
-    """Dua bahasa sekaligus, sebab yang diperiksa justru kesebangunannya."""
-
     isi_en: str = Field(default="", max_length=PANJANG_ISI)
     isi_id: str = Field(default="", max_length=PANJANG_ISI)
 
@@ -85,13 +73,6 @@ async def ubah_status(slug: str, permintaan: UbahStatus) -> dict:
 
 @rute.post("/pratinjau", summary="Markah jadi HTML, dengan pembangkit situsnya sendiri")
 async def pratinjau(permintaan: Pratinjau) -> dict:
-    """Menjawab 200 dengan HTML-nya, atau 422 dengan alasan yang sama persis
-    dengan alasan yang akan dipakai Simpan menolaknya.
-
-    Satu pengurai untuk pratinjau dan penyimpanan, bukan dua. Dua pengurai
-    untuk satu bahasa markah akan berpisah, dan yang berpisah diam diam
-    membuat layar pratinjau berbohong.
-    """
     try:
         return layanan_pratinjau.bangun(permintaan.isi_en, permintaan.isi_id)
     except layanan_pratinjau.Ditolak as galat:

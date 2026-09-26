@@ -1,10 +1,3 @@
-"""SQL untuk menulis tulisan. Terpisah dari repositori baca.
-
-Yang membaca dipakai pengunjung, yang menulis hanya dipakai admin. Memisahkan
-berkasnya membuat jelas mana kueri yang pernah tersentuh permintaan publik
-dan mana yang tidak.
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -40,16 +33,6 @@ async def buat(nilai: dict[str, Any], penulis_id: str) -> dict[str, Any]:
 
 
 async def ubah(slug: str, nilai: dict[str, Any]) -> dict[str, Any] | None:
-    """Hanya kolom yang disebut yang diubah.
-
-    Nama kolomnya tidak pernah datang dari pemanggil: yang boleh diubah
-    disaring lebih dulu terhadap daftar tetap di berkas ini. Nama kolom
-    dinamis dari luar adalah injeksi SQL yang menunggu giliran.
-    """
-    # Skema menyebutnya `tanggal`, kolomnya bernama `terbit_pada`. Sampai
-    # hari ini terjemahan itu tidak ada di sini, jadi mengubah tanggal lewat
-    # PATCH tersaring diam diam: jawabannya 200, tanggalnya tidak berubah,
-    # dan tidak ada satu pun pesan yang menyebutkannya.
     nilai = dict(nilai)
     if "tanggal" in nilai:
         nilai["terbit_pada"] = nilai.pop("tanggal")
@@ -86,19 +69,8 @@ async def hapus(slug: str) -> bool:
 
 
 async def satu(slug: str) -> dict[str, Any] | None:
-    """Satu tulisan apa pun statusnya, termasuk draf dan arsip.
-
-    Kembarannya di repositori/tulisan.py sengaja menyaring status = 'terbit',
-    sebab itu jalur yang dibaca pengunjung. Yang ini tidak menyaring, dan
-    karena itu ia hidup di repositori tulis, bukan di repositori baca: yang
-    memanggilnya wajib sudah lewat butuh_admin.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
-            # terbit_pada disebut dua kali dengan sengaja: penyunting
-            # mengenalnya sebagai `tanggal`, dan jawabannya harus bisa
-            # dikirim balik apa adanya lewat PATCH tanpa diterjemahkan lagi
-            # di sisi peramban.
             "SELECT slug, status, terbit_pada AS tanggal, terbit_pada, "
             "judul_en, judul_id, ringkas_en, ringkas_id, "
             "keterangan_en, keterangan_id, lede_en, lede_id, "
@@ -110,7 +82,6 @@ async def satu(slug: str) -> dict[str, Any] | None:
 
 
 async def daftar_semua() -> list[dict[str, Any]]:
-    """Termasuk draf dan arsip. Hanya untuk admin."""
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             "SELECT slug, status, terbit_pada, judul_en, judul_id, diubah_pada "

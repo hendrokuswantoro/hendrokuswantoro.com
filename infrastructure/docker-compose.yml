@@ -1,14 +1,3 @@
-# Basis data dan cache untuk pengembangan lokal.
-#
-#   cd infrastructure && docker compose up -d
-#
-# Hanya dua layanan di sini. Backend dan frontend belum ikut sampai Fase 2,
-# sebab menjalankan kontainer untuk kode yang belum ada tidak menghasilkan
-# apa pun selain kontainer yang mati.
-#
-# Tidak ada kata sandi bawaan di berkas ini. Nilainya datang dari .env di
-# akar repositori, yang tidak pernah ikut git.
-
 name: hendrokuswantoro
 
 services:
@@ -20,10 +9,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER belum diisi di .env}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD belum diisi di .env}
       POSTGRES_DB: ${POSTGRES_DB:-hendrokuswantoro}
-      # Locale Indonesia untuk pengurutan teks yang benar
       LANG: C.UTF-8
     ports:
-      # hanya ke localhost. Basis data tidak pernah menghadap internet.
       - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
     volumes:
       - data_db:/var/lib/postgresql/data
@@ -32,7 +19,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 12
-    # bab 15.14: kontainer tidak berjalan sebagai root bila bisa dihindari
     security_opt:
       - no-new-privileges:true
 

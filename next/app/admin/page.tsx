@@ -10,19 +10,6 @@ import { PanelPasskey } from "@/components/admin/PanelPasskey";
 import { PenyuntingTulisan } from "@/components/admin/PenyuntingTulisan";
 import { keluar as keluarApi, sesiYangMasihHidup, type Sesi } from "@/lib/api";
 
-/**
- * Permukaan menulis, versi Next.js.
- *
- * Seluruhnya klien. Tidak ada satu pun bagian yang dirender di server, dan itu
- * memang maunya: `next.config.ts` memakai output "export", sehingga yang
- * terbit adalah berkas statis tanpa runtime Node. Isinya datang dari API saat
- * halamannya dibuka, bukan saat ia dibangun, sebab draf yang ikut terbangun
- * ke dalam berkas statis berarti draf yang bisa dibaca siapa saja.
- *
- * Otorisasinya tetap sepenuhnya di server. Yang dikerjakan halaman ini hanya
- * menyembunyikan tombol yang tidak akan berhasil; setiap permintaan tetap
- * melewati `butuh_admin`. Menyembunyikan tombol bukan otorisasi.
- */
 export default function Admin() {
   const [sesi, setSesi] = useState<Sesi | null>(null);
   const [memuat, setMemuat] = useState(true);
@@ -32,7 +19,6 @@ export default function Admin() {
   });
   const [segarkan, setSegarkan] = useState(0);
 
-  /* Kalau cookie refresh masih hidup, langsung masuk tanpa menanyakan sandi. */
   useEffect(() => {
     let batal = false;
     sesiYangMasihHidup()
@@ -74,9 +60,7 @@ export default function Admin() {
   return (
     <main className={gaya.bingkai}>
       <header className={gaya.kepala}>
-        {/* Lambang yang sama dengan yang dipakai situs publiknya, bukan
-            gambar lain yang mirip. Satu berkas, satu bentuk: kalau lambangnya
-            berubah, ia berubah di kedua tempat sekaligus. */}
+        {}
         <a className={gaya.lambang} href="/" aria-label="Kembali ke situs">
           <BrandMark size={30} />
         </a>

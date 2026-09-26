@@ -4,20 +4,6 @@ import { useEffect, useState } from "react";
 import { COMMON } from "@/content/nav";
 import { useLang } from "./LanguageProvider";
 
-/**
- * Satu tombol, bukan dua seperti saklar bahasa: tema hanya punya dua keadaan
- * dan yang kedua selalu "yang satunya", jadi aria-pressed sudah menyatakannya
- * dan labelnya bisa tetap.
- *
- * Bawaannya terang. Dulu palet gelap menempel pada prefers-color-scheme,
- * yang berarti pembaca dengan laptop gelap tidak pernah melihat palet terang
- * dan tidak punya cara memintanya.
- *
- * Yang mencegah kedipan bukan komponen ini melainkan skrip sebaris di
- * app/layout.tsx: React baru menyala setelah hidrasi, jadi kalau atribut
- * data-theme baru dipasang di sini, pembaca yang memilih gelap melihat satu
- * bingkai putih lebih dulu.
- */
 export function ThemeSwitch() {
   const { say } = useLang();
   const [gelap, setGelap] = useState(false);
@@ -33,7 +19,6 @@ export function ThemeSwitch() {
     try {
       window.localStorage.setItem("hk-tema", berikut ? "dark" : "light");
     } catch {
-      /* mode penyamaran */
     }
   }
 

@@ -1,10 +1,3 @@
-"""Masuk, perpanjang, keluar.
-
-Refresh token hidup di cookie HttpOnly Secure SameSite=Strict, bukan di
-badan jawaban. Bab 15.10. Token yang bisa dibaca JavaScript adalah token
-yang bisa diambil satu XSS.
-"""
-
 from __future__ import annotations
 
 from typing import Annotated
@@ -30,18 +23,6 @@ class Kredensial(BaseModel):
 
 
 class JawabanMasuk(BaseModel):
-    """Satu bentuk jawaban untuk dua keadaan, dan `tahap` yang membedakannya.
-
-    `tahap="selesai"` berarti sesinya terbit dan `akses` terisi.
-    `tahap="faktor2"` berarti sandinya benar dan belum cukup: `tiket` terisi,
-    `akses` kosong, dan `cara` menyebut faktor kedua apa yang bisa dipakai.
-
-    Kenapa tiket, bukan sesi yang ditandai "belum lengkap": sesi sudah berupa
-    kunci, dan apa pun yang lupa memeriksa tandanya akan menerimanya. Tiket
-    audiensnya berbeda, jadi pustaka JWT-nya sendiri yang menolaknya di setiap
-    pintu selain pintu faktor kedua, bukan satu baris if yang bisa terlupa.
-    """
-
     tahap: str = "selesai"
     akses: str = ""
     umur_detik: int = 0
@@ -52,8 +33,6 @@ class JawabanMasuk(BaseModel):
 
 
 def pasang_cookie(jawaban: Response, hasil: layanan.Masuk) -> None:
-    """Dipakai jalur sandi dan jalur passkey. Satu tempat, supaya tidak
-    mungkin salah satunya lupa httponly atau lupa samesite."""
     atur = pengaturan()
     jawaban.set_cookie(
         NAMA_COOKIE,
@@ -85,22 +64,13 @@ async def login(
     try:
         pengguna = await layanan.periksa_sandi(kredensial.email, kredensial.sandi, alamat)
     except layanan.Ditolak as ditolak:
-        # 429 kalau terkunci, 401 kalau salah. Keduanya tidak pernah
-        # menyebut apakah emailnya terdaftar.
         kode = status.HTTP_429_TOO_MANY_REQUESTS if ditolak.terkunci else status.HTTP_401_UNAUTHORIZED
         raise HTTPException(status_code=kode, detail=str(ditolak)) from ditolak
 
     peramban = permintaan.headers.get("user-agent", "")
 
-    # Sandi yang benar belum tentu cukup. Kalau ada faktor kedua yang berlaku,
-    # yang terbit tiket, bukan sesi.
     cara = await lapis.faktor_kedua_yang_berlaku(pengguna)
 
-    # Passkey tidak bisa diselesaikan di langkah tiket: ia punya jalurnya
-    # sendiri. Akun yang HANYA punya passkey tidak boleh masuk lewat sandi
-    # saja, sebab sesi itu cukup untuk mencabut passkey pemiliknya.
-    # FAKTOR_KEDUA_WAJIB=false tetap jadi jalan pulang untuk perangkat yang
-    # hilang, sama seperti untuk TOTP yang hilang.
     if cara == ["passkey"] and pengaturan().faktor_kedua_wajib:
         await lapis.catat_peristiwa(
             str(pengguna["id"]), "sandi_benar", False, "akun memakai passkey",
@@ -117,22 +87,12 @@ async def login(
             str(pengguna["id"]), "sandi_benar", True, "menunggu faktor kedua", alamat, peramban
         )
         if cara == ["email"]:
-            # Kodenya dikirim sekarang juga: satu langkah lebih sedikit untuk
-            # pemiliknya, dan kode yang kedaluwarsa tetap bisa diminta ulang.
             try:
                 await lapis.kirim_otp_masuk(pengguna, alamat)
             except lapis.Ditolak:
                 pass
         return JawabanMasuk(tahap="faktor2", tiket=tiket, umur_detik=umur, cara=cara)
 
-    # Sampai di sini berarti akun ini memang tidak punya satu pun faktor
-    # kedua yang bisa dipakai, sebab kalau ada, jawabannya sudah pulang di
-    # cabang di atas. Sesinya terbit dan ditandai lemah: ia bisa membaca
-    # dashboard dan bisa memasang TOTP, tetapi tidak bisa menulis.
-    # Dikabari SEBELUM peristiwanya dicatat, sebab yang menentukan "perangkat
-    # baru" adalah ada tidaknya catatan masuk yang cocok. Kalau urutannya
-    # dibalik, catatan yang baru saja ditulis membuat tiap perangkat terlihat
-    # sudah pernah dikenal, dan tidak akan ada satu pun kabar yang terkirim.
     await kabar.kabari_masuk(pengguna, "sandi", alamat, peramban)
 
     hasil = await layanan.terbitkan(pengguna, faktor_kedua=False)
@@ -144,20 +104,10 @@ async def login(
 
 
 class FaktorKedua(BaseModel):
-    """Satu bentuk untuk empat cara, dan yang tidak dipakai dibiarkan kosong.
-
-    `kode` untuk totp, email, dan pemulihan. `tantangan` dan `bingkai` untuk
-    wajah. Dipisah jadi dua model akan membuat routernya bercabang dua sejak
-    baris pertama tanpa alasan: yang berbeda cuma isian, bukan alurnya.
-    """
-
     tiket: str
     cara: str = Field(pattern="^(totp|email|pemulihan|wajah)$")
     kode: str = Field(default="", max_length=40)
     tantangan: str = Field(default="", max_length=64)
-    # Tiga bingkai base64. Batas panjangnya dijaga lagi di lapisan wajah,
-    # per bingkai, dan itu yang benar benar menahan: batas di sini menahan
-    # badan permintaan, batas di sana menahan gambar yang didekode.
     bingkai: list[str] = Field(default_factory=list, max_length=5)
 
 
@@ -199,7 +149,6 @@ async def faktor_kedua(
         else:
             lolos = await lapis.periksa_pemulihan(pengguna_id, isian.kode, alamat)
     except lapis.Ditolak as ditolak:
-        # Jatah tebakan akun ini habis.
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(ditolak)
         ) from ditolak
@@ -215,10 +164,6 @@ async def faktor_kedua(
         pengguna, isian.cara, alamat, permintaan.headers.get("user-agent", "")
     )
 
-    # Faktor keduanya baru saja dibuktikan, jadi sesinya kuat. KECUALI wajah:
-    # layar pendaftarannya sendiri mengatakan wajah bisa ditembus rekaman
-    # video, jadi sandi ditambah video pemiliknya dari media sosial tidak boleh
-    # membuka jalur yang menerbitkan tulisan. Wajah tetap membuka dashboard.
     hasil = await layanan.terbitkan(pengguna, faktor_kedua=(isian.cara != "wajah"))
     pasang_cookie(jawaban, hasil)
     await lapis.catat_peristiwa(
@@ -235,14 +180,6 @@ class MintaKode(BaseModel):
 
 @rute.post("/faktor-kedua/tantangan-wajah", summary="Minta urutan gerakan untuk verifikasi wajah")
 async def tantangan_wajah(isian: MintaKode) -> dict:
-    """Urutan gerakannya diputuskan server dan berlaku dua menit.
-
-    Tanpa ini, "kirim tiga foto wajah Anda" bisa dijawab dengan tiga berkas
-    yang sudah disiapkan sejak lama. Dengan ini, ketiganya harus kebetulan
-    memuat urutan yang baru saja diminta. Perlu dikatakan terus terang bahwa
-    menyulitkan bukan menutup: rekaman video yang cukup panjang tetap memuat
-    semuanya.
-    """
     _wajib_siap()
     muatan = inti.baca_tiket_faktor_kedua(isian.tiket)
     if muatan is None or "wajah" not in muatan.get("cara", []):
@@ -315,13 +252,6 @@ async def logout_semua(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
 async def sesi(
     permintaan: Request, pengguna: Annotated[dict, Depends(butuh_admin)]
 ) -> dict:
-    """Daftar sesi yang masih hidup.
-
-    Tidak memuat nama perangkat maupun alamat IP, sebab keduanya memang tidak
-    pernah disimpan. Yang dijawabnya pertanyaan yang justru paling berguna:
-    ada berapa sesi yang hidup, dan apakah jumlahnya lebih banyak daripada
-    perangkat yang Anda ingat.
-    """
     daftar = await layanan.sesi_saya(pengguna["id"], permintaan.cookies.get(NAMA_COOKIE))
     return {"sesi": daftar, "jumlah": len(daftar)}
 

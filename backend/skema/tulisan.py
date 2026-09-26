@@ -8,8 +8,6 @@ from backend.skema.umum import Halaman, Teks
 
 
 class TulisanRingkas(BaseModel):
-    """Yang dibutuhkan kartu di halaman Blog."""
-
     model_config = ConfigDict(frozen=True)
 
     slug: str

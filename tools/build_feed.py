@@ -1,14 +1,3 @@
-"""Writes feed.xml from the posts in blog/.
-
-The posts are the source of truth. Nothing is typed twice: the title, the
-summary, the date and the address all come out of the HTML that is already
-published, so a feed can never drift from the page it points at.
-
-Run from the project root:
-
-    python tools/build_feed.py
-"""
-
 from __future__ import annotations
 
 import html

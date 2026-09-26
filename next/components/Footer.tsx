@@ -10,10 +10,6 @@ export function Footer() {
   const { say } = useLang();
   const [year, setYear] = useState(BUILD_YEAR);
 
-  /* Tahunnya dibetulkan di peramban, bukan dibekukan saat dibangun. Situs
-     statis yang dibangun Desember akan menulis tahun lama sepanjang Januari,
-     dan tidak ada satu pun yang mengadukannya. Nilai awalnya tetap tahun
-     build supaya render server dan render pertama peramban sama. */
   useEffect(() => {
     setYear(new Date().getFullYear());
   }, []);

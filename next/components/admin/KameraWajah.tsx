@@ -3,27 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import gaya from "@/app/admin/admin.module.css";
 
-/**
- * Mengambil beberapa bingkai wajah dari kamera, satu per arah yang diminta.
- *
- * Tiga hal yang membentuk bentuknya:
- *
- * 1. **Kameranya dimatikan begitu selesai.** Lampu kamera yang tetap menyala
- *    sesudah orangnya selesai adalah hal yang membuat orang tidak percaya
- *    lagi pada fitur seperti ini, dan mereka benar. Setiap jalan keluar dari
- *    komponen ini menghentikan trek medianya, termasuk ketika komponennya
- *    dilepas di tengah jalan.
- * 2. **Ditekan, bukan otomatis.** Pengambilan otomatis membuat orang tidak
- *    tahu kapan gambarnya diambil. Tombolnya ditekan sendiri, satu per arah,
- *    dan arah yang diminta ditulis besar di atasnya.
- * 3. **Gambarnya tidak pernah meninggalkan komponen ini kecuali lewat
- *    `selesai`.** Tidak disimpan di state induk, tidak di localStorage, tidak
- *    di mana pun.
- *
- * Apa yang gambar ini bisa dan tidak bisa buktikan ditulis di layar yang
- * memanggil komponen ini, bukan di sini, supaya kalimatnya muncul sebelum
- * orangnya menyalakan kamera.
- */
 
 const JUDUL: Record<string, string> = {
   tengah: "Hadap lurus ke kamera",
@@ -107,8 +86,6 @@ export function KameraWajah({
     if (!konteks) return;
     konteks.drawImage(el, 0, 0);
 
-    /* JPEG mutu 0,85: cukup untuk pengenalan wajah, sekitar 60 KB per bingkai.
-       PNG akan tiga kali lebih besar tanpa menambah ketepatan apa pun. */
     const berikut = [...diambil, kanvas.toDataURL("image/jpeg", 0.85)];
     setDiambil(berikut);
 
@@ -129,9 +106,7 @@ export function KameraWajah({
       ) : null}
 
       <div className={gaya.kameraBingkai}>
-        {/* muted dan playsInline wajib: tanpa keduanya, iOS menolak memutar
-            video di dalam halaman dan menampilkannya sebagai pemutar layar
-            penuh. */}
+        {}
         <video ref={video} muted playsInline className={gaya.kameraVideo} />
         {sekarang ? (
           <div className={gaya.kameraArah}>

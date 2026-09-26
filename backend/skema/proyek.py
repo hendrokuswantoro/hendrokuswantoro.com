@@ -31,9 +31,6 @@ class DaftarProyek(Halaman):
     isi: list[Proyek]
 
 
-# --- GeoJSON, bentuknya ditentukan RFC 7946 ---------------------------------
-
-
 class Titik(BaseModel):
     model_config = ConfigDict(frozen=True)
     type: Literal["Point"] = "Point"
@@ -57,9 +54,6 @@ class Fitur(BaseModel):
 
 
 class KumpulanFitur(BaseModel):
-    """Titik ini tempat menggantungkan penanda, bukan koordinat survei.
-    Keterangan yang sama tercetak di bawah peta dan di komentar kolom geom."""
-
     model_config = ConfigDict(frozen=True)
     type: Literal["FeatureCollection"] = "FeatureCollection"
     features: list[Fitur]

@@ -1,16 +1,3 @@
-/**
- * Passkey di sisi peramban.
- *
- * WebAuthn mengirim dan menerima ArrayBuffer, JSON hanya mengenal teks, jadi
- * base64url adalah jembatannya. Dua fungsi konversi di bawah adalah bagian
- * yang paling sering ditulis salah di contoh contoh yang beredar: padding "="
- * harus dikembalikan sebelum atob, dan dibuang lagi sesudah btoa.
- *
- * Tidak ada satu pun keputusan keamanan di berkas ini. Tantangan lahir di
- * server, diverifikasi di server, dan apa pun yang dikirim dari sini
- * diperlakukan server sebagai tidak dipercaya.
- */
-
 import { DASAR_KOSONG, panggil, pesanGalat, type Sesi } from "./api";
 
 export function keBuffer(teks: string): ArrayBuffer {
@@ -36,8 +23,6 @@ export function didukung(): boolean {
   );
 }
 
-/** Dibatalkan pengguna bukan kegagalan. Menampilkannya sebagai galat merah
- *  hanya membuat orang mengira ada yang rusak. */
 export function dibatalkan(galat: unknown): boolean {
   const nama = (galat as { name?: string })?.name;
   return nama === "NotAllowedError" || nama === "AbortError";
@@ -45,23 +30,6 @@ export function dibatalkan(galat: unknown): boolean {
 
 export type Kendala = { sebab: "alamat-ip" | "tanpa-https"; pesan: string; saran: string };
 
-/**
- * Kenapa sidik jari tidak bisa dipakai di alamat ini, kalau memang tidak bisa.
- *
- * WebAuthn menuntut rp_id berupa NAMA DOMAIN. Alamat IP bukan nama domain,
- * dan itu bukan soal konfigurasi yang kurang: peramban menolaknya sebelum
- * satu pun permintaan dikirim, dengan `SecurityError: This is an invalid
- * domain.` Sudah diperiksa di Chromium dari halaman http://127.0.0.1:8099,
- * dan rp_id "127.0.0.1" pun ditolak sama persis. Jadi tidak ada nilai rp_id
- * mana pun yang membuat 127.0.0.1 bekerja.
- *
- * "localhost" adalah nama, bukan alamat, dan ia diizinkan. Keduanya menunjuk
- * mesin yang sama, dan justru itu yang membuat cacat ini mahal: alamatnya
- * terlihat setara, tombolnya terlihat hidup, lalu gagal dengan kalimat
- * berbahasa Inggris yang tidak menyebutkan apa yang harus dilakukan.
- *
- * Mengembalikan null berarti tidak ada yang menghalangi.
- */
 export function kendala(): Kendala | null {
   if (typeof window === "undefined") return null;
 
@@ -77,7 +45,6 @@ export function kendala(): Kendala | null {
     };
   }
 
-  // http di luar localhost bukan konteks aman, dan WebAuthn mati di sana.
   if (!window.isSecureContext) {
     return {
       sebab: "tanpa-https",
@@ -89,7 +56,6 @@ export function kendala(): Kendala | null {
   return null;
 }
 
-/** Alamat yang sama persis, hanya namanya diganti jadi localhost. */
 function alamatLocalhost(): string {
   if (typeof window === "undefined") return "";
   const l = window.location;
@@ -158,21 +124,6 @@ export async function masuk(): Promise<Sesi> {
   return isi as Sesi;
 }
 
-/**
- * `jenis` menentukan authenticator mana yang diminta.
- *
- * "perangkat" berarti sensor yang menempel pada perangkatnya sendiri: sidik
- * jari di ponsel, Touch ID, Windows Hello. Itu yang orang maksud dengan
- * "masuk pakai sidik jari". "kunci" berarti kunci fisik yang dicolokkan.
- *
- * Yang perlu diluruskan: sidik jarinya tidak pernah sampai ke server ini, dan
- * tidak akan pernah. Perangkatnya yang memeriksa, lalu menandatangani dengan
- * kunci privat yang tidak pernah keluar dari sana. Yang diterima server cuma
- * tanda tangan dan satu bendera bahwa pemiliknya sudah diperiksa. Itu justru
- * lebih kuat daripada mengirim sidik jari: tidak ada biometrik yang disimpan
- * di sini, jadi tidak ada yang bisa bocor dari sini, dan sidik jari yang bocor
- * tidak bisa diganti seperti kata sandi.
- */
 export async function daftarkan(nama: string, jenis: "perangkat" | "kunci" = "perangkat"): Promise<void> {
   const mulai = await panggil(
     `/api/v1/auth/passkey/daftar/mulai?jenis=${encodeURIComponent(jenis)}`,

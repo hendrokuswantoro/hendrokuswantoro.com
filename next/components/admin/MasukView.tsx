@@ -16,21 +16,6 @@ import {
 } from "@/lib/api";
 import * as passkey from "@/lib/passkey";
 
-/**
- * Tiga jalan masuk, dan urutannya disengaja.
- *
- * Passkey lebih dulu karena ia yang tahan halaman palsu: kunci privatnya tidak
- * pernah meninggalkan perangkat, dan tanda tangannya terikat pada alamat situs
- * ini. Sandi tetap ada di bawahnya sebagai jalan pulang; perangkat bisa
- * hilang, dan akun yang satu satunya kunci ikut hilang bersama ponselnya
- * adalah akun yang terkunci selamanya.
- *
- * Jalur sandi bisa berhenti di tengah. Kalau ada faktor kedua yang berlaku,
- * yang kembali dari server bukan sesi melainkan tiket berumur lima menit, dan
- * layar ini berganti jadi kotak kode. Passkey tidak lewat situ, dan itu benar:
- * passkey sudah dua faktor pada dirinya sendiri, yaitu perangkatnya dan sidik
- * jari atau PIN yang membukanya.
- */
 
 const NAMA_CARA: Record<CaraFaktorKedua, string> = {
   totp: "Aplikasi authenticator",
@@ -53,16 +38,9 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
   const [kabar, setKabar] = useState("");
   const [sibuk, setSibuk] = useState(false);
   const [adaPasskey, setAdaPasskey] = useState(false);
-  /* Sandi terlihat atau tidak. Bawaannya tidak, dan ia dikembalikan ke tidak
-     begitu sesinya terbuka: sandi yang tadi ditampilkan tidak boleh tinggal
-     terbaca di layar yang mungkin ditinggalkan pemiliknya. */
   const [sandiTerlihat, setSandiTerlihat] = useState(false);
-  /* Kenapa sidik jari tidak bisa dipakai di alamat ini, kalau memang tidak
-     bisa. Diisi di useEffect, bukan saat render, sebab ia membaca
-     window.location dan server tidak punya itu. */
   const [halangan, setHalangan] = useState<passkey.Kendala | null>(null);
 
-  /* Tahap kedua. Null berarti belum sampai ke sana. */
   const [tiket, setTiket] = useState<{ nilai: string; cara: CaraFaktorKedua[] } | null>(null);
   const [caraDipakai, setCaraDipakai] = useState<CaraFaktorKedua>("totp");
   const [kode, setKode] = useState("");
@@ -93,8 +71,6 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
       if (hasil.tahap === "faktor2") {
         setTiket({ nilai: hasil.tiket, cara: hasil.cara });
         setCaraDipakai(hasil.cara[0]);
-        /* Sandinya dibuang dari memori begitu ia tidak dibutuhkan lagi, dan
-           saklarnya dikembalikan ke tersembunyi bersamanya. */
         setSandi("");
         setSandiTerlihat(false);
         return;
@@ -130,10 +106,6 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
     setSibuk(true);
     try {
       const hasil = await kirimUlangKode(tiket.nilai);
-      /* Kalau SMTP belum dikonfigurasi, server mengatakannya terus terang dan
-         layar ini ikut mengatakannya. Membalas "kode sudah dikirim" untuk
-         surat yang tidak pernah berangkat adalah cara mengunci orang di luar
-         pintunya sendiri sambil meyakinkannya bahwa semuanya baik baik saja. */
       setKabar(hasil.terkirim ? "Kode baru sudah dikirim." : hasil.catatan);
     } catch (e) {
       setGalat(e instanceof GagalApi ? e.message : "gagal menghubungi server");
@@ -167,9 +139,6 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
         }),
       );
     } catch (e) {
-      /* Tantangannya sekali pakai, jadi gagal berarti harus minta yang baru.
-         Dikosongkan di sini supaya layarnya tidak menawarkan tombol yang
-         sudah pasti ditolak. */
       setTantangan(null);
       setGalat(
         e instanceof GagalApi
@@ -184,8 +153,6 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
   async function denganPasskey() {
     bersihkan();
 
-    /* Diperiksa lagi di sini, bukan hanya saat tombolnya digambar. Alamat
-       halaman bisa berganti tanpa komponennya dipasang ulang. */
     const h = passkey.kendala();
     if (h) {
       setHalangan(h);
@@ -198,9 +165,6 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
       sesudah(await passkey.masuk());
     } catch (e) {
       if (passkey.dibatalkan(e)) return;
-      /* SecurityError datang dari peramban, bukan dari server, dan bunyinya
-         "This is an invalid domain." Kalimat itu benar tetapi tidak memberi
-         tahu siapa pun apa yang harus dikerjakan. */
       if ((e as { name?: string })?.name === "SecurityError") {
         const lagi = passkey.kendala();
         setGalat(
@@ -245,7 +209,6 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
     </>
   );
 
-  /* ------------------------------------------------------- tahap kedua */
 
   if (tiket) {
     return (
@@ -327,8 +290,6 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
             <input
               id="kode"
               className={`${gaya.isian} ${gaya.kodeIsian}`}
-              /* inputMode numeric, bukan type number: type number membawa
-                 tombol naik turun dan membuang angka nol di depan. */
               inputMode={caraDipakai === "pemulihan" ? "text" : "numeric"}
               autoComplete={caraDipakai === "pemulihan" ? "off" : "one-time-code"}
               autoFocus
@@ -372,7 +333,6 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
     );
   }
 
-  /* ------------------------------------------------------ tahap pertama */
 
   return (
     <section className={`${gaya.kartu} ${gaya.masuk}`}>
@@ -425,8 +385,7 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
 
         <div className={gaya.baris}>
           <label htmlFor="sandi">Sandi</label>
-          {/* Tombolnya di DALAM bidang isian, dan isiannya diberi ruang kanan
-              supaya sandi yang panjang tidak pernah tersembunyi di baliknya. */}
+          {}
           <div className={gaya.sandiBidang}>
             <input
               id="sandi"

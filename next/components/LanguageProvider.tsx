@@ -16,11 +16,6 @@ const LanguageContext = createContext<LanguageValue>({
   say: (copy) => copy.en,
 });
 
-/**
- * The exported HTML is English, so English is also the first render. The
- * stored or browser language is applied in an effect, which keeps server and
- * client markup identical and avoids a hydration mismatch.
- */
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en");
 
@@ -48,7 +43,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     try {
       window.localStorage.setItem(STORAGE_KEY, next);
     } catch {
-      /* private mode, the choice simply does not persist */
     }
   }, []);
 

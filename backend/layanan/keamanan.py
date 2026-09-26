@@ -1,30 +1,3 @@
-"""Verifikasi email, kode sekali pakai, TOTP, kode pemulihan, jejak keamanan.
-
-Bagian ini menambah lapisan yang sudah ada, bukan menggantinya. Yang sudah
-ada: sandi Argon2id, passkey WebAuthn, sesi yang berputar dan bisa dicabut.
-Yang ditambahkan:
-
-1. **Alamat email dibuktikan.** Akun yang emailnya tidak pernah dibuktikan
-   adalah akun yang jalur pemulihannya menuju entah ke mana, dan seluruh
-   lapisan lain berdiri di atas anggapan bahwa alamat itu milik pemiliknya.
-2. **Faktor kedua.** TOTP dari aplikasi authenticator, atau kode enam angka
-   lewat email kalau TOTP belum dipasang.
-3. **Kode pemulihan.** Delapan, sekali pakai, dicetak sekali. Tanpa ini,
-   ponsel yang hilang berarti akun yang terkunci selamanya, dan akun yang
-   terkunci selamanya membuat orang mematikan faktor keduanya.
-4. **Jejak.** Yang berhasil dan yang GAGAL. Yang berhasil hanya memberi tahu
-   pemiliknya apa yang sudah ia lakukan; yang gagal memberi tahu bahwa ada
-   orang lain sedang mencoba.
-
-Dua hal yang dijaga ketat di seluruh berkas ini:
-
-- **Tidak ada kode yang tersimpan apa adanya.** Yang masuk basis data selalu
-  sha256-nya. Kode OTP yang tersimpan apa adanya sama saja dengan sandi yang
-  tersimpan apa adanya, hanya umurnya lebih pendek.
-- **Tidak ada kode yang masuk log.** Pesan galat di sini tidak pernah memuat
-  kodenya, dan `surat.py` sengaja tidak menaruh isi surat di pesan galatnya.
-"""
-
 from __future__ import annotations
 
 import datetime as dt
@@ -42,21 +15,16 @@ UMUR_TAUTAN_JAM = 24
 UMUR_OTP_MENIT = 10
 JEDA_KIRIM_DETIK = 60
 
-# Batas tebakan faktor kedua per akun, bukan per alamat IP. Sampai
-# 26 September 2026 hanya OTP email yang punya batas; TOTP dan kode pemulihan
-# boleh ditebak tanpa henti selama tiketnya hidup, dan satu tiket bisa
-# dipakai berulang selama lima menit. Penebak yang berpindah pindah alamat
-# tetap membakar jatah akun yang sama.
 BATAS_F2 = 5
 JENDELA_F2_MENIT = 15
 
 
 class Ditolak(Exception):
-    """Kode salah, kedaluwarsa, atau langkahnya tidak boleh dikerjakan."""
+    pass
 
 
 class BelumSiap(Exception):
-    """Konfigurasi yang dibutuhkan belum ada. Disebut, bukan disiasati."""
+    pass
 
 
 @dataclass(frozen=True)
@@ -66,30 +34,14 @@ class Kiriman:
 
 
 def _kode_angka() -> str:
-    """Enam angka, dari secrets, bukan random.
-
-    `random` bisa ditebak seluruhnya setelah beberapa keluaran terlihat.
-    Untuk kode yang menjaga jalan masuk, itu bukan detail.
-    """
     return f"{secrets.randbelow(1_000_000):06d}"
 
 
 def _tautan(token: str, asal: str) -> str:
-    """Tokennya di fragmen #, bukan di query ?.
-
-    Fragmen tidak pernah dikirim peramban ke server. Sampai 26 September 2026
-    tokennya ada di query, dan format log bawaan nginx mencatat query string,
-    jadi token sekali pakai itu ikut tersimpan di log akses selama sisa
-    umurnya.
-    """
     return f"{asal.rstrip('/')}/admin#verifikasi={token}"
 
 
-# ------------------------------------------------------- verifikasi email ---
-
-
 async def kirim_verifikasi_email(pengguna: dict, asal: str, alamat: str | None) -> Kiriman:
-    """Mengirim tautan verifikasi. Tautannya sekali pakai dan hidup 24 jam."""
     sedang = await repo.kode_hidup(pengguna["id"], "email")
     if sedang:
         umur = dt.datetime.now(dt.timezone.utc) - sedang["dibuat_pada"]
@@ -134,9 +86,6 @@ async def selesaikan_verifikasi_email(token: str, alamat: str | None) -> dict:
     return await repo_pengguna.cari_id(pengguna_id)
 
 
-# ---------------------------------------------------------- OTP via email ---
-
-
 async def kirim_otp_masuk(pengguna: dict, alamat: str | None) -> Kiriman:
     sedang = await repo.kode_hidup(pengguna["id"], "masuk")
     if sedang:
@@ -179,11 +128,7 @@ async def periksa_otp_masuk(pengguna_id: str, kode: str, alamat: str | None) -> 
     return False
 
 
-# ------------------------------------------------ batas tebakan faktor 2 ---
-
-
 def _kunci_f2(pengguna_id: str) -> str:
-    # Menumpang tabel gagal_masuk dengan awalan yang tidak mungkin jadi email.
     return f"f2:{pengguna_id}"
 
 
@@ -204,16 +149,7 @@ async def _berhasil_f2(pengguna_id: str) -> None:
     await repo_pengguna.bersihkan_gagal(_kunci_f2(pengguna_id))
 
 
-# ------------------------------------------------------------------ TOTP ---
-
-
 async def mulai_totp(pengguna: dict) -> dict:
-    """Membuat rahasia baru dan mengembalikan URI otpauth untuk kode QR.
-
-    Rahasianya disimpan tersandi tetapi BELUM aktif. Yang mengaktifkannya satu
-    kode yang benar dari perangkatnya, sebab rahasia yang diaktifkan tanpa
-    pernah dibuktikan terbaca adalah cara mengunci diri sendiri di luar.
-    """
     if not rahasia.siap():
         raise BelumSiap(
             "KUNCI_KOLOM belum diisi, jadi rahasia TOTP tidak bisa disimpan tersandi. "
@@ -225,10 +161,6 @@ async def mulai_totp(pengguna: dict) -> dict:
     return {
         "rahasia": baru,
         "otpauth": alamat,
-        # QR-nya digambar di sini, bukan diminta ke layanan luar. Alamat
-        # otpauth MEMUAT rahasianya; mengirimnya ke pembuat QR mana pun berarti
-        # menyerahkan faktor kedua kepada orang yang tidak pernah diminta
-        # menjaganya.
         "qr": totp_modul.qr_svg(alamat),
     }
 
@@ -243,11 +175,6 @@ async def _rahasia_aktif(pengguna_id: str, harus_aktif: bool) -> str:
 
 
 async def aktifkan_totp(pengguna: dict, kode: str, alamat: str | None) -> list[str]:
-    """Mengaktifkan TOTP dan mengembalikan delapan kode pemulihan.
-
-    Kodenya dikembalikan SEKALI, di sini, dan tidak pernah bisa dilihat lagi:
-    yang tersimpan cuma sidiknya.
-    """
     rahasia_nya = await _rahasia_aktif(pengguna["id"], harus_aktif=False)
     langkah = totp_modul.cocok(rahasia_nya, kode)
     if langkah is None:
@@ -255,8 +182,6 @@ async def aktifkan_totp(pengguna: dict, kode: str, alamat: str | None) -> list[s
         raise Ditolak("kode dari aplikasi tidak cocok")
 
     await repo.aktifkan_totp(pengguna["id"])
-    # Kode yang dipakai mengaktifkan ikut terpakai: ia tidak boleh dipakai
-    # lagi untuk masuk dalam sembilan puluh detik berikutnya.
     await repo.pakai_langkah_totp(pengguna["id"], langkah)
     kode_pemulihan = [totp_modul.kode_pemulihan_baru() for _ in range(totp_modul.JUMLAH_PEMULIHAN)]
     await repo.ganti_kode_pemulihan(
@@ -268,10 +193,6 @@ async def aktifkan_totp(pengguna: dict, kode: str, alamat: str | None) -> list[s
 
 
 async def matikan_totp(pengguna: dict, kode: str, alamat: str | None) -> None:
-    """Mematikan menuntut satu kode yang benar, sama seperti menyalakannya.
-
-    Tanpa itu, siapa pun yang sempat memegang sesi yang sudah masuk bisa
-    mencabut faktor kedua tanpa pernah memilikinya."""
     rahasia_nya = await _rahasia_aktif(pengguna["id"], harus_aktif=True)
     if totp_modul.cocok(rahasia_nya, kode) is None:
         await repo.catat(pengguna["id"], "totp_matikan", False, "kode salah", alamat)
@@ -281,10 +202,6 @@ async def matikan_totp(pengguna: dict, kode: str, alamat: str | None) -> None:
 
 
 async def periksa_totp(pengguna_id: str, kode: str, alamat: str | None) -> bool:
-    """Benar kalau kodenya cocok DAN jendelanya belum pernah dipakai.
-
-    Menaikkan Ditolak kalau jatah tebakan akun ini sudah habis.
-    """
     await cek_kunci_f2(pengguna_id)
     try:
         rahasia_nya = await _rahasia_aktif(pengguna_id, harus_aktif=True)
@@ -302,9 +219,6 @@ async def periksa_totp(pengguna_id: str, kode: str, alamat: str | None) -> bool:
     return False
 
 
-# ------------------------------------------------------- kode pemulihan ---
-
-
 async def periksa_pemulihan(pengguna_id: str, kode: str, alamat: str | None) -> bool:
     await cek_kunci_f2(pengguna_id)
     bersih = totp_modul.normalkan_pemulihan(kode)
@@ -319,33 +233,16 @@ async def periksa_pemulihan(pengguna_id: str, kode: str, alamat: str | None) -> 
     return dipakai
 
 
-# ------------------------------------------------ apa yang masih kurang ---
-
-
 async def faktor_kedua_yang_berlaku(pengguna: dict) -> list[str]:
-    """Cara faktor kedua apa saja yang bisa dipakai pengguna ini sekarang.
-
-    Kosong berarti tidak ada faktor kedua sama sekali, dan lapisan masuk akan
-    menerbitkan sesi langsung. Itu keadaan yang boleh, dan halaman keamanan
-    menyebutnya terus terang alih alih diam.
-    """
     baris = await repo.keadaan(pengguna["id"])
     cara: list[str] = []
     if baris and baris["totp_aktif_pada"]:
         cara.append("totp")
         if baris["pemulihan_sisa"]:
             cara.append("pemulihan")
-    # Wajah berdiri sendiri dan bisa dipakai bersama TOTP. Ia ditawarkan hanya
-    # kalau memang sudah didaftarkan DAN modelnya ada di mesin ini; menawarkan
-    # cara yang pasti gagal berarti mengunci pemiliknya di luar pintunya.
     if baris and baris["wajah_didaftar_pada"] and wajah_modul.siap():
         cara.append("wajah")
 
-    # Passkey ikut dihitung sejak 26 September 2026. Sebelumnya akun yang
-    # hanya memasang passkey tetap bisa masuk dengan sandi saja, lalu dari
-    # sesi itu menghapus passkey pemiliknya dan mendaftarkan passkey sendiri.
-    # Passkey tidak bisa dipakai di langkah tiket; router yang memutuskan
-    # apa artinya kalau hanya passkey yang ada.
     if baris and baris["passkey"]:
         cara.append("passkey")
 
@@ -353,33 +250,13 @@ async def faktor_kedua_yang_berlaku(pengguna: dict) -> list[str]:
         return cara
 
     if baris and baris["email_terverifikasi_pada"] and surat.siap():
-        # OTP email hanya ditawarkan kalau alamatnya sudah dibuktikan DAN surat
-        # memang bisa dikirim. Menawarkan kode yang tidak akan pernah sampai
-        # berarti mengunci pemiliknya di luar pintunya sendiri.
         cara.append("email")
     return cara
 
 
 async def punya_faktor(pengguna_id: str) -> bool:
-    """Apakah akun ini sudah punya faktor kedua apa pun yang terpasang.
-
-    Dipakai penjaga pendaftaran faktor: sesi yang lahir dari sandi saja boleh
-    memasang faktor PERTAMA, tidak boleh memasang faktor tambahan. Kalau
-    boleh, yang tahu sandinya cukup memasang faktor miliknya sendiri lalu
-    masuk lewat faktor itu, dan faktor kedua pemiliknya tidak menjaga apa apa.
-    """
     b = await repo.keadaan(pengguna_id)
     return bool(b and (b["totp_aktif_pada"] or b["passkey"] or b["wajah_didaftar_pada"]))
-
-
-# ------------------------------------------- pintu untuk lapisan router ---
-
-# Router berbicara ke layanan, layanan berbicara ke repositori. Tiga fungsi di
-# bawah ini ada supaya aturan itu tetap berlaku untuk hal hal kecil juga:
-# mencatat satu peristiwa dan membaca satu pengguna terasa terlalu sepele untuk
-# dilewatkan lapisan, dan justru di situlah lapisan biasanya mulai bocor.
-# `tests/test_api.py` menolak router yang mengimpor repositori, dan ia sudah
-# menangkap saya sekali di sini.
 
 
 async def catat_peristiwa(
@@ -402,19 +279,10 @@ async def jejak(pengguna_id: str, batas: int = 40) -> list[dict]:
     return await repo.peristiwa(pengguna_id, batas)
 
 
-# ------------------------------------------------------------------ wajah ---
-
-# Batas lapisan ini ditulis panjang di backend/layanan/wajah.py, dan diulang di
-# layar tempat ia dinyalakan. Ringkasnya: ia menaikkan ongkos masuk bagi orang
-# yang sudah tahu kata sandinya, dan ia TIDAK membuktikan kehadiran. Rekaman
-# video wajah pemiliknya akan lolos. Karena itu ia tambahan yang dinyalakan
-# sendiri, bukan bawaan, dan bukan pengganti passkey.
-
 UMUR_TANTANGAN_WAJAH_DETIK = 120
 
 
 async def daftarkan_wajah(pengguna: dict, bingkai: list[str], alamat: str | None) -> dict:
-    """Mendaftarkan wajah dari beberapa bingkai. Fotonya tidak disimpan."""
     if not rahasia.siap():
         raise BelumSiap(
             "KUNCI_KOLOM belum diisi, jadi ciri wajah tidak bisa disimpan tersandi. "
@@ -438,7 +306,6 @@ async def hapus_wajah(pengguna: dict, alamat: str | None) -> None:
 
 
 async def tantangan_wajah(pengguna_id: str) -> dict:
-    """Urutan gerakan yang diputuskan server, berlaku dua menit, sekali pakai."""
     if not await repo.ciri_wajah(pengguna_id):
         raise Ditolak("wajah belum didaftarkan")
     gerakan = wajah_modul.gerakan_acak()

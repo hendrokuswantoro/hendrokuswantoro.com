@@ -1,15 +1,3 @@
-/* Halaman admin punya lembar gayanya sendiri, bukan menumpang globals.css.
-   Dua alasan:
-
-   1. globals.css DIBANGKITKAN dari assets/css/style.css oleh
-      tools/gaya_next.py. Apa pun yang ditambahkan ke sana akan hilang pada
-      pembangkitan berikutnya, tanpa pesan apa pun.
-   2. Halaman admin bukan bagian situs yang dibaca pengunjung. Ia alat kerja,
-      dan alat kerja boleh punya kerapatan yang berbeda dari brosur.
-
-   Token warnanya tetap diambil dari globals.css, jadi tema terang dan gelap
-   ikut berlaku di sini tanpa disalin. */
-
 .bingkai {
   min-height: 100dvh;
   background: var(--bg);
@@ -29,10 +17,6 @@
   backdrop-filter: saturate(140%) blur(8px);
 }
 
-/* Lambang di header, dan satu jebakan yang sudah pernah memakan korban di
-   proyek lain: kelasnya dipasang pada pembungkusnya, dan aturan warnanya ada
-   pada svg di dalamnya. Dipasang langsung pada svg, yang tampak hanya kotak
-   hitam tanpa hurufnya. */
 .lambang {
   display: inline-flex;
   align-items: center;
@@ -75,9 +59,6 @@
   border-radius: var(--r-lg);
   padding: clamp(16px, 3vw, 24px);
   box-shadow: var(--sh-1);
-  /* Anak grid bawaannya tidak boleh menyusut lebih sempit daripada isinya,
-     dan tabel di dalamnya punya lebar minimum sendiri. Tanpa baris ini,
-     kartunya melebar mengikuti tabel lalu menyembul keluar layar. */
   min-width: 0;
 }
 
@@ -97,10 +78,6 @@
 .baris { display: grid; gap: 6px; margin-bottom: 14px; }
 .dua { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 
-/* CSS Modules menuntut tiap pemilih memuat setidaknya satu kelas lokal.
-   Aturannya masuk akal: `label { }` di dalam modul akan menyentuh seluruh
-   label di halaman, dan seluruh gunanya modul justru supaya itu tidak
-   terjadi. */
 .baris label {
   font-size: var(--fs-sm);
   font-weight: 600;
@@ -111,7 +88,6 @@
 .isian,
 .luas {
   width: 100%;
-  /* font-size sesudah `font: inherit`, bukan sebelumnya. Lihat .tombol. */
   font: inherit;
   font-size: var(--fs-md);
   color: var(--ink);
@@ -125,11 +101,6 @@
 .luas { min-height: 240px; resize: vertical; font-family: ui-monospace, "Cascadia Code", Menlo, monospace; font-size: var(--fs-md); line-height: 1.6; }
 
 .tombol {
-  /* Urutannya penting, dan ini sudah salah sekali.
-     `font: inherit` adalah pemendekan yang MENYETEL ULANG font-size, jadi
-     font-size yang ditulis di atasnya hilang tanpa jejak dan tombolnya
-     kembali 16 px sementara tombol di situs 15 px. Yang terlihat cuma
-     tombolnya sedikit lebih besar, dan tidak ada satu pun galat. */
   font: inherit;
   font-size: var(--fs-md);
   font-weight: 600;
@@ -179,20 +150,6 @@
 .pisah { display: flex; align-items: center; gap: 10px; margin: 16px 0; color: var(--ink-3); font-size: var(--fs-sm); }
 .pisah::before, .pisah::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
 
-/* Rata kiri kanan, dengan dua hal yang membuatnya tidak merusak bacaan.
- *
- * `hyphens: auto` wajib menyertainya. Tanpa pemenggalan, rata kiri kanan
- * melebarkan spasi untuk menutup baris, dan pada kolom sempit hasilnya sungai
- * putih yang menembus paragraf. Peramban hanya bisa memenggal kalau ia tahu
- * bahasanya, dan itu datang dari atribut lang di <html>, yang sudah dipasang.
- *
- * `text-align-last: left` menahan baris terakhir supaya tidak ikut
- * direntangkan; hanya sebagian peramban yang menerapkannya, dan yang tidak
- * pun sudah membiarkan baris terakhir rata kiri.
- *
- * Tidak dipasang pada tabel, label, atau tombol. Rata kiri kanan hanya masuk
- * akal untuk kalimat yang panjangnya beberapa baris.
- */
 .ket,
 .penjelasan,
 .pratinjau :global(p),
@@ -229,10 +186,6 @@
 }
 .pratinjau :global(h2) { font-size: var(--fs-lg); margin: 14px 0 6px; }
 .pratinjau :global(p) { margin: 0 0 8px; }
-/* Gambar dan video di dalam pratinjau dibatasi tingginya. Pratinjau yang
-   satu fotonya setinggi layar memaksa penulisnya menggulir untuk melihat
-   kalimat berikutnya, dan pratinjau yang harus digulir berhenti jadi
-   pratinjau. */
 .pratinjau :global(figure) { margin: 14px 0; }
 .pratinjau :global(img),
 .pratinjau :global(video) {
@@ -248,12 +201,6 @@
   color: var(--ink-2);
 }
 
-
-/* --------------------------------------------------------- bilah format --- */
-
-/* Bilah menempel di atas kotak tulisan saat digulir. Tanpa position sticky,
-   tombol tebal berada di luar layar tepat ketika seseorang sedang menulis
-   paragraf kedelapan, yaitu saat ia paling dibutuhkan. */
 .bilah {
   position: sticky;
   top: 62px;
@@ -280,8 +227,6 @@
   background: transparent;
   color: var(--ink);
   font: inherit;
-  /* font: inherit MENYETEL ULANG font-size, jadi longhand-nya wajib di
-     bawahnya. Kalau dibalik, ukurannya hilang tanpa jejak dan tanpa galat. */
   font-size: var(--fs-md);
   font-weight: 600;
   cursor: pointer;
@@ -295,9 +240,6 @@
   margin-left: auto; color: var(--ink-3); font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
 }
-
-
-/* ------------------------------------------------------- pustaka berkas --- */
 
 .pustaka {
   margin-bottom: 16px;
@@ -374,9 +316,6 @@
   white-space: nowrap;
 }
 
-
-/* ------------------------------------------------------------ keamanan --- */
-
 .subjudul {
   margin: 26px 0 8px;
   font-size: var(--fs-xs);
@@ -397,8 +336,6 @@
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 10px;
-  /* min-width 0 pada anak grid: tanpa itu isi yang panjang melebarkan
-     gridnya alih alih membungkus, dan kartunya menyembul keluar layar. */
   min-width: 0;
   font-size: var(--fs-md);
 }
@@ -406,8 +343,6 @@
 
 .gagal { background: #fdecee; color: #8f1c22; }
 
-/* Angka yang dibaca satu per satu, bukan sebagai kata. tabular-nums menahan
-   lebarnya supaya kotaknya tidak bergoyang saat diketik. */
 .kodeIsian {
   font-family: ui-monospace, "Cascadia Code", Menlo, monospace;
   font-variant-numeric: tabular-nums;
@@ -424,7 +359,6 @@
   border-radius: var(--r-sm);
   line-height: 0;
 }
-/* Lebarnya dibatasi kotaknya, bukan dipatok, supaya ia tetap muat di ponsel. */
 .qr svg { width: min(232px, 60vw); height: auto; display: block; }
 
 .pemulihan {
@@ -452,11 +386,8 @@
   font-size: var(--fs-md);
   letter-spacing: 0.06em;
   text-align: center;
-  /* Kode ini disalin dengan tangan dari layar ke kertas. Boleh diblok. */
   user-select: all;
 }
-
-/* ------------------------------------------------------------- kamera --- */
 
 .kamera { margin: 4px 0 14px; }
 
@@ -471,11 +402,6 @@
   margin-bottom: 12px;
 }
 
-/* Dicerminkan mendatar. Video kamera depan yang tidak dicerminkan membuat
-   orang menoleh ke arah yang salah ketika diminta menoleh, sebab yang ia
-   lihat bergerak berlawanan dengan kepalanya. Yang dicerminkan hanya
-   tampilannya; bingkai yang dikirim ke server diambil dari elemen videonya,
-   bukan dari tampilan ini, jadi arah aslinya tidak berubah. */
 .kameraVideo {
   width: 100%;
   height: 100%;
@@ -498,11 +424,6 @@
 .kameraArah span { font-size: var(--fs-md); font-weight: 600; }
 .kameraArah small { font-size: var(--fs-xs); opacity: .8; }
 
-/* ---------- saklar lihat sandi ----------
-   Bidangnya relatif, tombolnya absolut di dalamnya, dan isiannya diberi
-   padding kanan seluas tombol supaya sandi yang panjang tidak pernah
-   tergulung ke bawah tombolnya. Ukuran sentuhnya 34px, di atas ambang nyaman
-   untuk jari, dan itu sebabnya tombolnya tidak dibuat sekecil ikonnya. */
 .sandiBidang {
   position: relative;
 }
@@ -542,8 +463,6 @@
   stroke-linecap: round;
 }
 
-/* Coretnya muncul saat sandi SEDANG terlihat, sebab saat itu menekannya
-   berarti menyembunyikan. Ikon menyatakan akibat tekanan, bukan keadaan. */
 .coret {
   opacity: 0;
 }

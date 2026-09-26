@@ -1,23 +1,3 @@
-"""Nginx, systemd, pengiriman cadangan, dan alur deploy. Bab 12, 14, 15, 18.
-
-Tidak ada VPS di mesin ini, dan berpura pura ada akan menghasilkan uji yang
-membuktikan hal yang salah. Yang bisa dibuktikan tanpa server justru yang
-paling sering rusak diam diam, dan itu yang diuji di sini:
-
-1. Header keamanan di nginx sama persis dengan yang dikirim Cloudflare.
-   Situs yang aturannya berbeda tergantung siapa yang menyajikannya adalah
-   dua situs yang berbeda, dan yang satunya tidak pernah diuji.
-2. Berkas unit systemd punya bagian dan kunci yang benar, dan pengerasannya
-   masih ada. Baris NoNewPrivileges yang terhapus tidak menimbulkan galat
-   apa pun; layanannya tetap menyala, hanya tidak lagi terkurung.
-3. Skrip pengirim menolak berkas yang tidak terenkripsi.
-4. Tidak ada satu pun rahasia tertulis di berkas infrastruktur.
-
-Susunan nginx-nya sendiri diuji nginx sungguhan lewat
-`sh infrastructure/periksa_nginx.sh`, yang menjalankannya di dalam kontainer.
-Itu dipanggil CI, bukan dari sini, sebab ia menuntut Docker.
-"""
-
 from __future__ import annotations
 
 import configparser
@@ -35,9 +15,6 @@ KEPALA = (AKAR / "_headers").read_text(encoding="utf-8")
 
 
 def tanpa_komentar(teks: str, tanda: str = "#") -> str:
-    """Komentar boleh menyebut aturan yang justru dilarang, untuk menjelaskan
-    kenapa ia dilarang. Uji yang menghukum penjelasan semacam itu akan
-    membuat orang menghapus penjelasannya, bukan memperbaiki kodenya."""
     return "\n".join(
         b for b in teks.splitlines() if not b.strip().startswith(tanda)
     )
@@ -62,9 +39,6 @@ def _dari_nginx(nama: str) -> str:
     return cocok.group(1)
 
 
-# ----------------------------------------------------------------- nginx ---
-
-
 @pytest.mark.parametrize("header", [
     "X-Content-Type-Options",
     "X-Frame-Options",
@@ -80,17 +54,12 @@ def test_header_nginx_sama_dengan_cloudflare(header):
 
 
 def test_hash_skrip_sebaris_ikut_ke_nginx():
-    """Kalau skrip temanya berubah dan hanya _headers yang diperbarui, temanya
-    akan bekerja di Cloudflare dan diam diam ditolak di VPS."""
     hash_headers = set(re.findall(r"'(sha256-[A-Za-z0-9+/=]+)'", KEPALA))
     hash_nginx = set(re.findall(r"'(sha256-[A-Za-z0-9+/=]+)'", NGINX))
     assert hash_headers == hash_nginx, "hash CSP tidak sama di kedua tempat"
 
 
 def test_setiap_add_header_memakai_always():
-    """Tanpa `always`, nginx melewatkan header pada jawaban 4xx dan 5xx. Halaman
-    404 tanpa CSP adalah halaman yang aturannya paling longgar di seluruh
-    situs, dan itu halaman yang paling mudah dipancing untuk muncul."""
     for baris in NGINX.splitlines():
         b = baris.strip()
         if b.startswith("add_header ") and not b.startswith("add_header Cache-Control"):
@@ -98,10 +67,6 @@ def test_setiap_add_header_memakai_always():
 
 
 def test_location_api_tidak_memasang_add_header_sendiri():
-    """Jebakan nginx yang paling sering memakan korban: satu add_header di
-    dalam location MENGHAPUS seluruh add_header milik blok server. Menambahkan
-    satu header di /api/ berarti membuang enam header keamanan dari seluruh
-    jawaban API tanpa satu pun peringatan."""
     blok = re.findall(r"location\s+[^{]*/api/[^{]*\{(.*?)\n    \}", NGINX_KODE, re.DOTALL)
     assert blok, "tidak menemukan blok location /api/"
     for isi in blok:
@@ -111,7 +76,6 @@ def test_location_api_tidak_memasang_add_header_sendiri():
 
 
 def test_api_lewat_soket_unix_bukan_porta():
-    """Porta di localhost bisa dihubungi proses mana pun di mesin itu."""
     assert "unix:/run/hk-api/api.sock" in NGINX
     assert not re.search(r"proxy_pass\s+http://127\.0\.0\.1:\d+", NGINX)
 
@@ -125,8 +89,6 @@ def test_jalur_masuk_dibatasi_lebih_ketat_daripada_jalur_biasa():
 
 
 def test_alamat_html_lama_tetap_hidup():
-    """Tautan yang sudah beredar tidak boleh mati hanya karena situsnya
-    berpindah dari Cloudflare ke VPS."""
     assert re.search(r"location\s+~\s+\^\(/\.\+\)\\\.html\$", NGINX), (
         "tidak ada pengalihan dari alamat .html yang lama"
     )
@@ -144,15 +106,8 @@ def test_http_hanya_untuk_dialihkan_dan_acme():
     assert "return 308 https://" in blok.group(1)
 
 
-# --------------------------------------------------------------- systemd ---
-
-
 def _baca_unit(berkas):
-    # interpolation=None: systemd memakai %i dan %n sebagai penanda templat,
-    # dan configparser bawaan mengira % miliknya lalu menolak seluruh berkas.
     p = configparser.ConfigParser(strict=False, allow_no_value=True, interpolation=None)
-    # Nama kunci systemd peka huruf besar kecil; configparser memaksanya jadi
-    # huruf kecil kalau tidak dicegah.
     p.optionxform = str
     p.read_string(berkas.read_text(encoding="utf-8"))
     return p
@@ -176,16 +131,11 @@ def test_layanan_api_tidak_berjalan_sebagai_root():
     "RestrictSUIDSGID", "LockPersonality", "CapabilityBoundingSet",
 ])
 def test_pengerasan_api_masih_ada(kunci):
-    """Baris yang terhapus di sini tidak menimbulkan galat apa pun. Layanannya
-    tetap menyala, hanya tidak lagi terkurung, dan tidak ada yang tahu sampai
-    ada yang memanfaatkannya."""
     p = _baca_unit(INFRA / "systemd" / "hk-api.service")
     assert kunci in p["Service"], f"pengerasan {kunci} hilang dari hk-api.service"
 
 
 def test_rahasia_datang_dari_berkas_bukan_dari_unit():
-    """Berkas unit bisa dibaca siapa saja di mesin itu. EnvironmentFile
-    dimiliki root dengan izin 0640."""
     for nama in ("hk-api.service", "hk-cadangan.service"):
         isi = (INFRA / "systemd" / nama).read_text(encoding="utf-8")
         assert "EnvironmentFile=" in isi, nama
@@ -194,9 +144,6 @@ def test_rahasia_datang_dari_berkas_bukan_dari_unit():
 
 
 def test_cadangan_menguji_pemulihan_tiap_kali_dijalankan():
-    """Cadangan yang belum pernah dipulihkan belum terbukti apa apa, dan
-    pemulihan pertama tidak boleh dicoba pada hari datanya benar benar
-    hilang."""
     isi = (INFRA / "systemd" / "hk-cadangan.service").read_text(encoding="utf-8")
     langkah = [b for b in isi.splitlines() if b.startswith("ExecStart=")]
     assert len(langkah) == 3, langkah
@@ -232,9 +179,6 @@ def test_folder_cadangan_satu_satunya_yang_boleh_ditulis():
     assert p["Service"]["UMask"] == "0077", "cadangan berisi salinan penuh basis data"
 
 
-# ---------------------------------------------------------------- skrip ---
-
-
 @pytest.mark.parametrize("berkas", SKRIP, ids=lambda p: p.name)
 def test_skrip_tidak_punya_galat_sintaks(berkas):
     hasil = subprocess.run(["sh", "-n", str(berkas)], capture_output=True, text=True)
@@ -243,8 +187,6 @@ def test_skrip_tidak_punya_galat_sintaks(berkas):
 
 @pytest.mark.parametrize("berkas", SKRIP, ids=lambda p: p.name)
 def test_skrip_berhenti_saat_gagal(berkas):
-    """Tanpa `set -e`, skrip pemasangan yang gagal di tengah tetap berjalan
-    sampai akhir lalu melaporkan berhasil."""
     isi = berkas.read_text(encoding="utf-8")
     assert re.search(r"^set -eu?", isi, re.M), f"{berkas.name} tidak memakai set -e"
 
@@ -253,7 +195,6 @@ def test_pengirim_menolak_berkas_yang_tidak_terenkripsi():
     isi = (INFRA / "kirim.sh").read_text(encoding="utf-8")
     assert "HKCAD1" in isi, "pengirim tidak memeriksa penanda enkripsi"
     assert "hk-*.sql.gz.enc" in isi
-    # Dibaca dari isinya, bukan dari namanya: nama berkas bisa diganti siapa saja.
     assert "head -c 6" in isi
 
 
@@ -263,8 +204,6 @@ def test_pengirim_punya_retensi():
         "cadangan yang menumpuk selamanya adalah tagihan yang tumbuh selamanya"
     )
 
-
-# -------------------------------------------------------------- rahasia ---
 
 CURIGA = re.compile(
     r"(?i)\b(password|passwd|secret|token|api[_-]?key)\s*=\s*['\"]?[A-Za-z0-9/+_-]{12,}"
@@ -276,27 +215,19 @@ CURIGA = re.compile(
                                     AKAR / ".github" / "workflows" / "vps.yml"],
                          ids=lambda p: p.name)
 def test_tidak_ada_rahasia_tertulis(berkas):
-    """Bab 15.11. Rahasia yang pernah masuk git tetap ada di git selamanya,
-    bahkan sesudah baris itu dihapus di commit berikutnya."""
     for nomor, baris in enumerate(berkas.read_text(encoding="utf-8").splitlines(), 1):
         bersih = baris.strip()
         if bersih.startswith("#") or bersih.startswith(";"):
             continue
-        # ${VAR} dan ${{ secrets.X }} justru cara yang benar
         if "${" in bersih:
             continue
         assert not CURIGA.search(bersih), f"{berkas.name}:{nomor} {bersih[:70]}"
 
 
-# -------------------------------------------------------------- deploy ---
-
 VPS = (AKAR / ".github" / "workflows" / "vps.yml").read_text(encoding="utf-8")
 
 
 def test_deploy_mati_sampai_dinyalakan():
-    """Alur kerja yang mencoba menghubungi VPS yang belum ada akan gagal tiap
-    push, dan lampu merah yang selalu menyala adalah lampu merah yang berhenti
-    dibaca."""
     assert "vars.VPS_AKTIF == '1'" in VPS
 
 
@@ -305,8 +236,6 @@ def test_deploy_tidak_pernah_mengirim_commit_yang_ci_nya_merah():
 
 
 def test_deploy_menyematkan_kunci_host():
-    """StrictHostKeyChecking=no berarti menerima siapa pun yang kebetulan
-    menjawab di alamat itu."""
     assert "ssh-keyscan" in VPS
     assert "StrictHostKeyChecking=no" not in tanpa_komentar(VPS)
 
@@ -332,15 +261,6 @@ def test_hanya_satu_deploy_berjalan_sekaligus():
     assert "concurrency:" in VPS and "group: vps" in VPS
 
 
-# --------------------------------------------- pengirim, benar benar dijalankan ---
-#
-# Dua uji di bawah menjalankan kirim.sh sungguhan dengan --coba, yang tidak
-# menghubungi siapa pun. Keduanya ada karena membaca skripnya saja tidak cukup:
-# percobaan pertama skrip ini menolak berkas yang sah, gara gara spasi di nama
-# folder memecah jalurnya jadi dua kata. Tidak ada pembacaan kode yang akan
-# menemukan itu.
-
-
 def _jalankan_kirim(folder, *arg):
     return subprocess.run(
         ["sh", str(INFRA / "kirim.sh"), "--coba", *arg],
@@ -358,8 +278,6 @@ def test_pengirim_menolak_berkas_polos_yang_namanya_enc(tmp_path):
 
 
 def test_pengirim_menerima_berkas_terenkripsi_walau_jalurnya_berspasi(tmp_path):
-    """Folder berspasi bukan kasus buatan: repositori ini sendiri tinggal di
-    "D:/Projects/personal web"."""
     folder = tmp_path / "ada spasi di sini"
     folder.mkdir()
     (folder / "hk-2026-01-01-0000.sql.gz.enc").write_bytes(b"HKCAD1\n" + b"x" * 64)
@@ -370,9 +288,6 @@ def test_pengirim_menerima_berkas_terenkripsi_walau_jalurnya_berspasi(tmp_path):
 
 
 def test_pengirim_diam_kalau_tujuannya_belum_diisi(tmp_path):
-    """Tujuan yang belum diisi bukan kegagalan: ia berarti pengiriman keluar
-    memang belum dinyalakan, dan menggagalkan unit cadangan karenanya akan
-    membuat cadangan lokalnya ikut dilaporkan gagal tiap malam."""
     hasil = subprocess.run(
         ["sh", str(INFRA / "kirim.sh"), "--coba"],
         capture_output=True, text=True,
@@ -382,18 +297,6 @@ def test_pengirim_diam_kalau_tujuannya_belum_diisi(tmp_path):
     assert hasil.returncode == 0
     assert "belum diisi" in hasil.stderr
 
-
-# ------------------------------------------------------- alur kerja sendiri ---
-
-# Alur kerja GitHub Actions tidak pernah diperiksa sebelum dijalankan di sana,
-# dan satu kekeliruan di dalamnya membuat pemeriksaan kesehatan gagal tiap
-# malam selama berhari hari sambil membuka isu otomatis yang menyatakan
-# situsnya mati. Situsnya sehat sepanjang waktu itu.
-#
-# Rangkaian uji di bawah ikut menguji pemeriksanya sendiri: ia diberi kembali
-# baris yang dulu lolos, dan kalau pemeriksanya meloloskannya lagi, ujinya
-# gagal. Pemeriksa yang tidak pernah dibuktikan bisa menangkap apa pun adalah
-# pemeriksa yang belum tentu menangkap apa pun.
 
 import sys  # noqa: E402
 
@@ -410,12 +313,9 @@ def test_seluruh_alur_kerja_lolos_pemeriksanya():
 
 
 def test_pemeriksa_menangkap_baris_yang_dulu_lolos():
-    """Baris aslinya, apa adanya, dari kesehatan.yml sebelum diperbaiki."""
     pytest.importorskip("yaml", reason="pyyaml belum terpasang")
     from periksa_alur import periksa_garis_miring
 
-    # Rangkaian mentah: di sini \n wajib dua karakter, bukan baris baru.
-    # Kalau ia sampai jadi baris baru, ujinya akan lolos tanpa menguji apa pun.
     asli = (
         r"for jalur in / /about /project /blog/ \n                       "
         r"/blog/kapan-peta-diam \n                       /robots.txt; do"
@@ -438,7 +338,6 @@ def test_pemeriksa_tidak_menghukum_printf():
 
 
 def test_pemeriksa_tidak_menghukum_komentar():
-    """Komentar yang menjelaskan kekeliruan itu wajib boleh menyebutnya."""
     pytest.importorskip("yaml", reason="pyyaml belum terpasang")
     from periksa_alur import periksa_garis_miring
 
@@ -448,8 +347,6 @@ def test_pemeriksa_tidak_menghukum_komentar():
 
 
 def test_tidak_ada_lagi_garis_miring_n_di_kesehatan():
-    """Langsung ke berkasnya, bukan lewat pemeriksanya: kalau suatu saat
-    pemeriksanya rusak, uji ini masih berdiri."""
     teks = (AKAR / ".github" / "workflows" / "kesehatan.yml").read_text(encoding="utf-8")
     baris_daftar = [
         b for b in teks.splitlines()
@@ -461,10 +358,6 @@ def test_tidak_ada_lagi_garis_miring_n_di_kesehatan():
 
 
 def test_alamat_kanonik_ikut_diperiksa_kesehatan():
-    """Alamat yang situs ini sebut tentang dirinya sendiri wajib eksis. Pada
-    13 September 2026 www.hendrokuswantoro.com belum terdaftar sama sekali,
-    sementara seluruh rel=canonical, sitemap, dan umpan RSS menunjuk ke sana,
-    dan tidak ada satu pun pemeriksaan yang menyadarinya."""
     teks = (AKAR / ".github" / "workflows" / "kesehatan.yml").read_text(encoding="utf-8")
     assert "canonical" in teks, "tidak ada langkah yang memeriksa alamat kanonik"
     assert "getent hosts" in teks or "nslookup" in teks or "dig " in teks, (
@@ -473,14 +366,6 @@ def test_alamat_kanonik_ikut_diperiksa_kesehatan():
 
 
 def test_blok_assets_tidak_kehilangan_header_keamanan():
-    """Satu add_header di dalam location menghapus seluruh add_header induknya.
-
-    Blok /assets/ memasang Cache-Control, jadi sampai 13 September 2026 setiap
-    berkas JavaScript, SVG, dan font di situs ini dikirim nginx tanpa nosniff,
-    tanpa HSTS, dan tanpa CSP, sementara Cloudflare mengirim semuanya karena
-    _headers menumpuk aturan alih alih menggantinya. Dua penyaji dengan aturan
-    berbeda, dan yang diuji hanya salah satunya.
-    """
     blok = re.search(
         r"location /assets/ \{(.*?)\n    \}", NGINX, re.S
     )
@@ -520,31 +405,11 @@ def _arahan(csp: str) -> dict[str, set[str]]:
 
 
 def test_csp_situs_seragam_antar_bloknya():
-    """Dua CSP berbeda untuk halaman yang sama adalah satu yang tertinggal.
-
-    Yang dibandingkan blok yang menyajikan situs publik. Blok dashboard
-    sengaja berbeda, dan bedanya dijaga uji di bawah ini.
-    """
-    # _dari_nginx mengambil yang pertama tertulis, yaitu milik blok server
-    # yang menyajikan situsnya.
     situs = {_csp_dari_blok("location /assets/"), _dari_nginx("Content-Security-Policy")}
     assert len(situs) == 1, "CSP di nginx tidak seragam antar blok situs"
 
 
 def test_csp_dashboard_lebih_ketat_daripada_situs_publiknya():
-    """Dashboard tidak memuat peta dan tidak punya satu pun skrip atau gaya
-    sebaris, jadi ia tidak perlu satu pun kelonggaran yang dipakai situs
-    publik.
-
-    Sampai 19 September 2026 keduanya sama persis, dan yang sama persis itu
-    justru menolak seluruh skrip dashboard: skripnya sebaris 44 KB sedangkan
-    hash di script-src milik skrip tema tiga baris di situs publik. Dashboard
-    mati total di balik nginx dan tidak ada satu pun pesan di layar.
-
-    Sekarang skrip dan gayanya berkas sendiri, jadi CSP-nya boleh, dan harus,
-    lebih ketat. Uji ini menahan kelonggaran tidak menyelinap balik lewat
-    penyalinan dari blok sebelahnya.
-    """
     dasbor = _arahan(_csp_dari_blok("location ^~ /admin"))
     situs = _arahan(_dari_nginx("Content-Security-Policy"))
 
@@ -553,9 +418,6 @@ def test_csp_dashboard_lebih_ketat_daripada_situs_publiknya():
         "masih ada hash skrip sebaris di CSP dashboard"
     )
 
-    # Tiap arahan dashboard wajib sama ketat atau lebih ketat daripada milik
-    # situs. Yang dibandingkan himpunannya, bukan kalimatnya, sebab urutan
-    # sumber di dalam satu arahan tidak berarti apa apa.
     for nama, sumber in dasbor.items():
         assert sumber <= situs.get(nama, sumber), (
             f"{nama} di dashboard lebih longgar daripada di situs: "
@@ -569,13 +431,6 @@ def test_csp_dashboard_lebih_ketat_daripada_situs_publiknya():
 
 
 def test_langkah_peramban_di_ci_menyebut_penandanya():
-    """pytest.ini memasang addopts `-m "not peramban"` supaya putaran biasa
-    tidak menyalakan Chromium. Tanpa `-m peramban` di CI, pytest tidak
-    mengumpulkan satu uji pun dan keluar dengan kode 5, yang berarti "tidak ada
-    uji" dan bukan "ada uji yang gagal". Selama berhari hari tidak satu pun uji
-    peramban berjalan di CI, dan halaman Actions hanya berbunyi "Process
-    completed with exit code 5".
-    """
     alur = (AKAR / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     perintah = [
         b.strip() for b in alur.splitlines()
@@ -589,22 +444,11 @@ def test_langkah_peramban_di_ci_menyebut_penandanya():
 
 
 def test_pytest_ini_memang_mengecualikan_peramban():
-    """Uji di atas hanya masuk akal selama pengecualiannya masih ada. Kalau
-    suatu saat addopts-nya dicabut, uji ini yang memberi tahu, bukan kegagalan
-    membingungkan di CI."""
     ini = (AKAR / "pytest.ini").read_text(encoding="utf-8")
     assert 'not peramban' in ini
 
 
 def test_kamera_hanya_dibuka_di_halaman_admin():
-    """Permissions-Policy di blok server mematikan kamera untuk seluruh situs,
-    dan itu benar: halaman yang tidak bisa menyalakan kamera tidak bisa disuruh
-    menyalakannya oleh skrip yang diselundupkan ke dalamnya.
-
-    Verifikasi wajah butuh kamera, jadi pengecualiannya dibuat di satu alamat
-    saja. Uji ini menjaga dua sisinya sekaligus: yang umum tetap tertutup, dan
-    yang khusus memang terbuka.
-    """
     assert 'camera=()' in _dari_nginx("Permissions-Policy"), (
         "kamera terbuka untuk seluruh situs"
     )
@@ -616,10 +460,6 @@ def test_kamera_hanya_dibuka_di_halaman_admin():
 
 
 def test_blok_admin_tidak_kehilangan_header_lain():
-    """Satu add_header di dalam location menghapus seluruh add_header induknya.
-    Blok /admin sekarang memasang Permissions-Policy sendiri, jadi kelima
-    header lain wajib ikut diulang, atau halaman admin justru jadi satu
-    satunya halaman tanpa CSP dan tanpa nosniff."""
     blok = re.search(r"location \^~ /admin \{(.*?)\n    \}", NGINX, re.S)
     isi = blok.group(1)
     for arahan in ("X-Content-Type-Options", "X-Frame-Options", "Referrer-Policy",

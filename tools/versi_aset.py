@@ -67,8 +67,6 @@ import sys
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent
 
-# Aset yang dinomori dari isinya. Kunci: jalur berkasnya. Nilai: pola yang
-# menyebutnya di berkas lain.
 BERSIDIK = {
     "assets/css/style.css": r"/assets/css/style\.css\?v=([0-9a-z]+)",
     "assets/js/app.js": r"/assets/js/app\.js\?v=([0-9a-z]+)",
@@ -78,17 +76,12 @@ BERSIDIK = {
 VENDOR = AKAR / "assets" / "vendor" / "maplibre"
 POLA_VENDOR = re.compile(r"/assets/vendor/maplibre/(?:[0-9][0-9a-zA-Z.\-]*/)?(maplibre-gl[a-z.\-]*)")
 
-# Gambar kartu karya. Nomor lama yang sudah terpasang ikut tertangkap pola ini
-# supaya bisa diganti, bukan ditumpuk jadi dua `?v=`.
 KARYA = AKAR / "assets" / "img" / "work"
 POLA_KARYA = re.compile(r"/assets/img/work/([a-z0-9\-]+\.webp)(?:\?v=[0-9a-z]+)?")
 
-# Folder port Next yang boleh menyebut gambar karya. Berkas yang dibangkitkan,
-# `out/`, `.next/`, dan `node_modules/`, sengaja tidak ada di sini.
 NEXT = AKAR / "next"
 FOLDER_NEXT = ("app", "components", "content", "lib")
 
-# Berkas yang menyebut aset aset itu.
 def halaman() -> list[pathlib.Path]:
     tidak = {"next", "dist", "backend", ".git", ".claude"}
     return sorted(
@@ -98,11 +91,6 @@ def halaman() -> list[pathlib.Path]:
 
 
 def berkas_next() -> list[pathlib.Path]:
-    """Berkas port Next yang menyebut gambar karya.
-
-    Hanya yang menyebutnya yang diperiksa. Sisanya tidak punya apa pun untuk
-    dinomori, dan menghitungnya cuma membesarkan angka di laporan.
-    """
     hasil = []
     for folder in FOLDER_NEXT:
         for p in (NEXT / folder).rglob("*"):
@@ -116,15 +104,6 @@ def sidik(jalur: pathlib.Path) -> str:
 
 
 def cap_karya(teks: str) -> str:
-    """Tiap sebutan gambar karya diberi sidik berkasnya sendiri.
-
-    Dipakai juga oleh tools/bangun_tulisan.py untuk gambar di dalam tulisan,
-    supaya dua alat tidak pernah menulis nomor yang berbeda di satu halaman.
-
-    Sidiknya dibaca dari `assets/img/work/`, tempat build_work_images.py
-    menulis. Gambar yang disebut tetapi tidak ada adalah galat, bukan sebutan
-    yang dibiarkan tanpa nomor: yang terbit dari situ kotak kosong.
-    """
     tercatat: dict[str, str] = {}
 
     def satu(m: re.Match) -> str:
@@ -158,17 +137,6 @@ def _ganti(teks: str, pola: str, nilai: str) -> tuple[str, int]:
 
 
 def rencana() -> dict[str, str]:
-    """Isi yang seharusnya, per berkas. Urutannya penting.
-
-    `app.js` menyebut `peta.js` dan pustaka petanya, jadi ia harus selesai
-    ditulis sebelum sidiknya sendiri dihitung. Menghitungnya lebih dulu berarti
-    menomori berkas yang belum ada.
-
-    Gambar karya diberi nomor paling dulu, sebab sebutannya bisa ada di dalam
-    `peta.js` atau `app.js`. Hari ini keduanya tidak menyebut satu pun. Kalau
-    kelak popup peta menampilkan gambar karya, nomornya ikut mengubah isi
-    `peta.js`, dan sidik `peta.js` harus dihitung sesudahnya.
-    """
     hasil: dict[str, str] = {}
     vendor = versi_vendor()
 
@@ -180,8 +148,6 @@ def rencana() -> dict[str, str]:
     app = POLA_VENDOR.sub(rf"/assets/vendor/maplibre/{vendor}/\1", app)
     hasil["assets/js/app.js"] = app
 
-    # Sidik app.js dihitung dari isi yang barusan disusun, bukan dari berkas
-    # yang masih ada di cakram.
     nomor = {
         "assets/css/style.css": sidik(AKAR / "assets/css/style.css"),
         "assets/js/app.js": _sidik_teks(app),
@@ -194,7 +160,6 @@ def rencana() -> dict[str, str]:
                 teks, _ = _ganti(teks, pola, nomor[aset])
         hasil[p.relative_to(AKAR).as_posix()] = cap_karya(teks)
 
-    # Port Next memakai gambar yang sama dengan alamat yang sama.
     for p in berkas_next():
         hasil[p.relative_to(AKAR).as_posix()] = cap_karya(p.read_text(encoding="utf-8"))
 
@@ -202,32 +167,13 @@ def rencana() -> dict[str, str]:
 
 
 def _sidik_teks(isi: str) -> str:
-    """Sidik isi yang baru disusun, belum ditulis ke cakram."""
     return hashlib.sha256(isi.encode("utf-8")).hexdigest()[:10]
 
 
-# Berkas yang sidiknya dihitung dari isi yang disusun di sini. Keduanya harus
-# sama per bita dengan yang di cakram, alasannya di _tertinggal.
 PER_BITA = {"assets/js/app.js", "assets/js/peta.js"}
 
 
 def _tertinggal(nama: str, isi: str) -> bool:
-    """Apakah berkas di cakram berbeda dari yang seharusnya.
-
-    `app.js` dan `peta.js` dibandingkan per bita, sisanya per teks, dan
-    bedanya bukan kerewelan. Nomor `?v=` milik app.js adalah sha256 dari **bita** berkasnya,
-    dan itu juga yang diperiksa tests/test_terbit.py. Di Windows core.autocrlf
-    memberi salinan kerja berakhiran CRLF, sedangkan berkas ini selalu menulis
-    LF. Dibandingkan sebagai teks, keduanya terlihat sama, jadi app.js yang
-    terlanjur ber-CRLF tidak pernah ditulis ulang, nomornya tidak pernah
-    disamakan, dan yang mengadu belakangan adalah uji terbit dengan dua sidik
-    yang tidak ada hubungannya dengan perubahan yang baru dibuat.
-
-    Halaman HTML tidak dibandingkan per bita justru karena alasan yang sama
-    terbalik: nomornya dibaca sebagai teks, jadi CRLF tidak mengubah apa pun,
-    dan menulis ulang kedua belas halaman di tiap kloning Windows cuma
-    menghasilkan dua belas berkas "berubah" yang tidak berubah isinya.
-    """
     jalur = AKAR / nama
     if nama in PER_BITA:
         return jalur.read_bytes() != isi.encode("utf-8")

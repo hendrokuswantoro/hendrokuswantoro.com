@@ -38,17 +38,10 @@ JADI = "font-family: var(--font-poppins),"
 MULAI = "/* >>> font, dibangkitkan tools/ambil_font.py, jangan disunting */"
 SELESAI = "/* <<< font */"
 
-KEPALA = """/* DIBANGKITKAN, JANGAN DISUNTING.
-   Sumbernya assets/css/style.css. Jalankan: python tools/gaya_next.py
-   Dua perbedaan: Poppins datang dari next/font, dan blok @font-face yang
-   menunjuk ke /assets/fonts dibuang karena alamat itu tidak ada di sini. */
-"""
+KEPALA = ""
 
 
 def tanpa_font_face(teks: str) -> str:
-    """Membuang blok @font-face beserta penandanya. Kalau penandanya tidak ada,
-    berkas induknya belum pernah disentuh tools/ambil_font.py, dan itu bukan
-    keadaan yang boleh lolos diam diam."""
     if MULAI not in teks:
         sys.exit(
             f"tidak menemukan penanda font di {SUMBER.name}. "

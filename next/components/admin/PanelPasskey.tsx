@@ -9,8 +9,6 @@ export function PanelPasskey() {
   const [daftar, setDaftar] = useState<passkey.Kunci[] | null>(null);
   const [kabar, setKabar] = useState<{ teks: string; baik: boolean } | null>(null);
   const [bisa, setBisa] = useState(false);
-  /* Alasan alamat ini tidak bisa dipakai, kalau ada. Mendaftarkan perangkat
-     tersandung hal yang sama dengan masuk: alamat IP bukan nama domain. */
   const [halangan, setHalangan] = useState<passkey.Kendala | null>(null);
 
   const muat = useCallback(async () => {

@@ -1,32 +1,3 @@
-"""Memeriksa berkas alur kerja GitHub Actions sebelum ia dijalankan di sana.
-
-    python tools/periksa_alur.py
-
-Tiga hal, dan ketiganya pernah benar benar lolos sampai ke cabang main:
-
-1. YAML-nya sah. Alur yang tidak bisa diparse tidak berjalan sama sekali, dan
-   GitHub tidak memberi tahu apa pun selain bahwa tidak ada yang jalan.
-2. Setiap blok `run` lolos `bash -n`. Satu bita carriage return pernah
-   menyelundup ke dalam skrip dan membuat `sh -n` gagal di runner sementara
-   lolos di mesin pengembangan.
-3. Tidak ada "\\n" harfiah di luar printf, echo, atau sed.
-
-Butir ketiga yang paling mahal. `kesehatan.yml` pernah memuat:
-
-    for jalur in / /about \\n                   /blog/ ...
-
-"\\n" di situ bukan baris baru, melainkan dua karakter yang dibaca shell
-sebagai satu kata bernilai "n". Jadi pemeriksaan kesehatan meminta
-`$situs/n`, dijawab 404, dan gagal tiap malam selama berhari hari sambil
-membuka isu otomatis yang menyatakan situsnya mati. Situsnya sehat sepanjang
-waktu itu. Pemeriksaan yang berbohong lebih buruk daripada tidak ada
-pemeriksaan, dan `bash -n` tidak bisa menolongnya: sintaksnya sah sempurna.
-
-Komentar di dalam blok run tidak diperiksa butir ketiga. Komentar memang
-tempat menjelaskan kesalahan yang sudah lewat, dan aturan yang menghukum
-penjelasan akan menghapus penjelasannya, bukan kesalahannya.
-"""
-
 from __future__ import annotations
 
 import pathlib
@@ -38,23 +9,16 @@ import tempfile
 
 try:
     import yaml
-except ImportError:  # pragma: no cover - hanya saat pyyaml belum terpasang
+except ImportError:  # pragma: no cover
     sys.exit("pyyaml belum terpasang. Jalankan: pip install pyyaml")
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent
 ALUR = AKAR / ".github" / "workflows"
 
-# Di sini "\n" memang berarti baris baru, jadi tidak dilarang.
 BOLEH = ("printf", "echo", "sed", "awk", "tr", "python", "node", "join(")
 
 
 def _bash() -> str | None:
-    """Bash yang bisa membaca jalur Windows.
-
-    Di Windows, `bash` di PATH sering menunjuk WSL, yang tidak bisa membuka
-    berkas sementara milik Windows dan gagal dengan pesan yang tidak
-    menyinggung soal itu sama sekali.
-    """
     for calon in (r"C:\Program Files\Git\usr\bin\bash.exe", "/bin/bash"):
         if pathlib.Path(calon).exists():
             return calon
@@ -73,7 +37,6 @@ def blok_run(berkas: pathlib.Path) -> list[tuple[str, str]]:
 
 
 def periksa_sintaks(bash: str, nama: str, skrip: str) -> list[str]:
-    # Ekspresi ${{ }} milik GitHub bukan sintaks shell; diganti satu kata.
     bersih = re.sub(r"\$\{\{[^}]*\}\}", "X", skrip)
     sementara = pathlib.Path(tempfile.mkdtemp()) / "langkah.sh"
     sementara.write_text(bersih, encoding="utf-8", newline="\n")

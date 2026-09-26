@@ -1,13 +1,3 @@
-"""Bundle the files that should actually be served into one zip.
-
-    python tools/build_dist.py
-
-The result, dist-hendrokuswantoro.zip, is what you drag into the Cloudflare
-Pages "Upload assets" box. It leaves out the README, the tools folder, the
-git metadata and the Next.js port, since none of those belong on a web
-server.
-"""
-
 import zipfile
 from pathlib import Path
 

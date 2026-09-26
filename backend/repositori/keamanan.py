@@ -1,24 +1,9 @@
-"""SQL untuk verifikasi email, kode sekali pakai, TOTP, pemulihan, dan jejak.
-
-Satu aturan berlaku di seluruh berkas ini: yang masuk dan keluar kolom
-`kode_hash` selalu sidiknya, tidak pernah kodenya. Fungsi di sini tidak pernah
-menerima kode mentah dan tidak pernah mengembalikannya.
-
-Aturan kedua, yang lebih halus: kode dipakai lewat satu pernyataan
-`UPDATE ... RETURNING`, bukan SELECT lalu UPDATE. Dua pernyataan terpisah
-membuka jendela bagi dua permintaan yang tiba bersamaan untuk sama sama
-melihat kode itu masih belum terpakai. Pola yang sama sudah dipakai tabel
-`tantangan` milik passkey, dan alasannya sama.
-"""
-
 from __future__ import annotations
 
 import datetime as dt
 from typing import Any
 
 from backend.core.basis_data import koneksi
-
-# ------------------------------------------------------- verifikasi email ---
 
 
 async def tandai_email_terverifikasi(pengguna_id: str) -> None:
@@ -30,7 +15,6 @@ async def tandai_email_terverifikasi(pengguna_id: str) -> None:
 
 
 async def keadaan(pengguna_id: str) -> dict[str, Any] | None:
-    """Semua yang halaman keamanan perlu tahu, dalam satu perjalanan."""
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             """
@@ -50,17 +34,11 @@ async def keadaan(pengguna_id: str) -> dict[str, Any] | None:
         return await k.fetchone()
 
 
-# ------------------------------------------------------ kode sekali pakai ---
-
-
 async def simpan_kode(
     pengguna_id: str, tujuan: str, kode_hash: str,
     kadaluarsa: dt.datetime, alamat: str | None,
 ) -> str:
     async with koneksi() as s, s.cursor() as k:
-        # Kode lama untuk tujuan yang sama dimatikan lebih dulu. Meminta kode
-        # baru harus berarti yang lama tidak berlaku lagi; kalau tidak, tiap
-        # permintaan menambah satu kode hidup dan ruang tebakannya tumbuh.
         await k.execute(
             """
             UPDATE kode_sekali SET dipakai_pada = now()
@@ -79,13 +57,6 @@ async def simpan_kode(
 
 
 async def pakai_kode(tujuan: str, kode_hash: str) -> dict[str, Any] | None:
-    """Menandai kode terpakai dan mengembalikan pemiliknya, dalam satu langkah.
-
-    Mengembalikan None kalau kodenya tidak ada, sudah dipakai, sudah lewat
-    waktunya, atau jatah tebakannya habis. Keempatnya sengaja tidak dibedakan
-    di sini: yang memanggil tidak perlu tahu, dan jawaban yang membedakannya
-    memberi tahu penebak sejauh mana ia sudah sampai.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             """
@@ -108,12 +79,6 @@ async def pakai_kode(tujuan: str, kode_hash: str) -> dict[str, Any] | None:
 
 
 async def catat_tebakan_gagal(pengguna_id: str, tujuan: str) -> int:
-    """Menaikkan penghitung tebakan pada kode yang sedang hidup.
-
-    Dihitung pada barisnya, bukan per alamat IP. Penebak yang berpindah pindah
-    alamat tetap membakar jatah kode yang sama, dan kodenya mati sebelum ruang
-    tebakan enam angka habis.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             """
@@ -142,9 +107,6 @@ async def kode_hidup(pengguna_id: str, tujuan: str) -> dict[str, Any] | None:
         return await k.fetchone()
 
 
-# ------------------------------------------------------------------ TOTP ---
-
-
 async def simpan_rahasia_totp(pengguna_id: str, tersandi: str) -> None:
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
@@ -163,9 +125,6 @@ async def aktifkan_totp(pengguna_id: str) -> None:
 
 async def matikan_totp(pengguna_id: str) -> None:
     async with koneksi() as s, s.cursor() as k:
-        # Rahasianya dihapus, bukan sekadar dinonaktifkan, dan kode
-        # pemulihannya ikut. Rahasia yang tertinggal adalah rahasia yang masih
-        # bisa dipakai kalau kolom aktifnya suatu saat terisi lagi.
         await k.execute(
             "UPDATE users SET totp_rahasia = NULL, totp_aktif_pada = NULL, "
             "totp_langkah_terakhir = NULL WHERE id = %s",
@@ -175,13 +134,6 @@ async def matikan_totp(pengguna_id: str) -> None:
 
 
 async def pakai_langkah_totp(pengguna_id: str, langkah: int) -> bool:
-    """Menandai satu jendela TOTP terpakai. False kalau sudah pernah.
-
-    Satu UPDATE bersyarat, bukan baca lalu tulis: dua permintaan yang
-    membawa kode yang sama pada saat bersamaan tidak boleh sama sama lolos.
-    Syaratnya "lebih kecil", bukan "tidak sama", supaya kode dari jendela
-    yang lebih tua daripada yang terakhir dipakai juga ditolak.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             "UPDATE users SET totp_langkah_terakhir = %s WHERE id = %s "
@@ -198,9 +150,6 @@ async def rahasia_totp(pengguna_id: str) -> dict[str, Any] | None:
             (pengguna_id,),
         )
         return await k.fetchone()
-
-
-# ------------------------------------------------------------- pemulihan ---
 
 
 async def ganti_kode_pemulihan(pengguna_id: str, sidik: list[str]) -> None:
@@ -224,9 +173,6 @@ async def pakai_kode_pemulihan(pengguna_id: str, kode_hash: str) -> bool:
             (pengguna_id, kode_hash),
         )
         return (await k.fetchone()) is not None
-
-
-# --------------------------------------------------------------- peristiwa --
 
 
 async def catat(
@@ -259,9 +205,6 @@ async def peristiwa(pengguna_id: str, batas: int = 40) -> list[dict[str, Any]]:
         return list(await k.fetchall())
 
 
-# ------------------------------------------------------------------ wajah ---
-
-
 async def simpan_wajah(pengguna_id: str, tersandi: str) -> None:
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
@@ -271,12 +214,6 @@ async def simpan_wajah(pengguna_id: str, tersandi: str) -> None:
 
 
 async def hapus_wajah(pengguna_id: str) -> None:
-    """Menghapus barisnya, bukan menandainya nonaktif.
-
-    Data biometrik yang "dinonaktifkan" tetap data biometrik yang tersimpan.
-    UU 27/2022 menggolongkannya sebagai data pribadi yang bersifat spesifik,
-    dan subjeknya berhak menghapusnya, bukan menyembunyikannya.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             "UPDATE users SET wajah_ciri = NULL, wajah_didaftar_pada = NULL WHERE id = %s",
@@ -296,8 +233,6 @@ async def tantangan_wajah_baru(
     pengguna_id: str, gerakan: list[str], kadaluarsa: dt.datetime
 ) -> str:
     async with koneksi() as s, s.cursor() as k:
-        # Tantangan lama dimatikan lebih dulu, sama seperti kode sekali pakai:
-        # meminta tantangan baru harus berarti yang lama tidak berlaku lagi.
         await k.execute(
             "UPDATE tantangan_wajah SET dipakai_pada = now() "
             "WHERE pengguna_id = %s AND dipakai_pada IS NULL",
@@ -312,12 +247,6 @@ async def tantangan_wajah_baru(
 
 
 async def pakai_tantangan_wajah(pengguna_id: str, tantangan_id: str) -> list[str] | None:
-    """Menandai tantangan terpakai dan mengembalikan urutan gerakannya.
-
-    Satu pernyataan, seperti kode sekali pakai dan tantangan passkey: SELECT
-    lalu UPDATE membuka jendela bagi dua permintaan yang tiba bersamaan untuk
-    sama sama melihatnya belum terpakai.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             """
@@ -335,14 +264,6 @@ async def pakai_tantangan_wajah(pengguna_id: str, tantangan_id: str) -> list[str
 async def pernah_masuk_dari(
     pengguna_id: str, alamat: str | None, peramban: str | None
 ) -> bool:
-    """Apakah pasangan alamat dan peramban ini pernah berhasil masuk sebelumnya.
-
-    Alamatnya sudah berupa ringkasan SHA-256 sebelum sampai ke sini, dan yang
-    tersimpan juga ringkasannya. Tidak ada satu pun alamat IP yang disimpan
-    apa adanya, bahkan untuk keperluan ini.
-
-    Dibatasi 1 baris: yang ditanyakan ada atau tidak, bukan berapa.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             "SELECT 1 AS ada FROM peristiwa_keamanan "

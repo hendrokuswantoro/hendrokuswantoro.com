@@ -1,18 +1,3 @@
-; API FastAPI di VPS. Bab 14.
-;
-; Dipasang ke /etc/systemd/system/hk-api.service oleh infrastructure/pasang.sh.
-;
-; Uvicorn mendengar di soket Unix, bukan porta TCP. Porta pada localhost tetap
-; bisa dihubungi proses mana pun di mesin itu; soket dengan pemilik dan izin
-; berkas hanya bisa dihubungi yang memang boleh. Nginx yang meneruskan.
-;
-; Seluruh baris pengerasan di bawah bukan hiasan. Aplikasi ini membaca satu
-; basis data, membaca beberapa berkas, dan menulis satu berkas soket. Ia tidak
-; perlu bisa menulis ke /usr, tidak perlu melihat /home, tidak perlu modul
-; kernel, dan tidak perlu menaikkan hak. Yang tidak dibutuhkan sebaiknya tidak
-; bisa, supaya hari ketika ada cacat di salah satu pustakanya, kerusakannya
-; berhenti di batas ini.
-
 [Unit]
 Description=hendrokuswantoro.com API
 Documentation=https://github.com/hendrokuswantoro/personal-web
@@ -25,24 +10,8 @@ User=hk
 Group=hk
 WorkingDirectory=/srv/hendrokuswantoro/app
 
-; Rahasia datang dari berkas ini, bukan dari baris Environment= di sini.
-; Berkas unit bisa dibaca siapa saja; EnvironmentFile dimiliki root dengan
-; izin 0640 dan hanya bisa dibaca grup hk.
 EnvironmentFile=/etc/hendrokuswantoro/env
 
-; --forwarded-allow-ips='*', bukan '127.0.0.1'.
-;
-; Lewat --uds, uvicorn tidak punya alamat klien sama sekali: scope["client"]
-; bernilai None, dan '127.0.0.1' tidak pernah cocok dengan None. Sampai
-; 26 September 2026 akibatnya X-Forwarded-For dari nginx diabaikan, SETIAP
-; permintaan terbaca tanpa alamat, pembatas laju di aplikasi meloloskan
-; semuanya, dan seluruh jejak keamanan memakai satu ringkasan alamat yang sama.
-;
-; '*' aman di sini karena satu satunya yang bisa membuka soketnya adalah
-; nginx (izin 0660, lihat ExecStartPost). Syaratnya satu: nginx harus MENIMPA
-; X-Forwarded-For dengan $remote_addr, bukan menambahkannya. Dengan '*',
-; uvicorn memakai alamat paling kiri, dan $proxy_add_x_forwarded_for
-; mempertahankan alamat karangan klien di posisi itu.
 ExecStart=/srv/hendrokuswantoro/venv/bin/python -m uvicorn backend.main:aplikasi \
     --uds /run/hk-api/api.sock \
     --workers 2 \
@@ -50,19 +19,15 @@ ExecStart=/srv/hendrokuswantoro/venv/bin/python -m uvicorn backend.main:aplikasi
     --forwarded-allow-ips='*' \
     --no-access-log
 
-; Nginx berjalan sebagai www-data dan harus bisa menulis ke soketnya.
 ExecStartPost=/bin/sh -c 'until [ -S /run/hk-api/api.sock ]; do sleep 0.1; done; chmod 660 /run/hk-api/api.sock'
 
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=3s
 
-; Direktori soket dibuat systemd, bukan skrip, supaya izinnya benar sejak
-; boot pertama dan tidak bergantung pada urutan yang kebetulan.
 RuntimeDirectory=hk-api
 RuntimeDirectoryMode=0750
 
-; --- pengerasan -------------------------------------------------------------
 NoNewPrivileges=true
 PrivateTmp=true
 PrivateDevices=true
@@ -87,13 +52,6 @@ SystemCallErrorNumber=EPERM
 CapabilityBoundingSet=
 UMask=0027
 
-; ProtectSystem=strict membuat seluruh sistem berkas hanya bisa dibaca.
-; Tidak ada ReadWritePaths sama sekali: satu satunya yang ditulis proses ini
-; adalah soket di /run, dan itu sudah diurus RuntimeDirectory.
-
-; --- batas --------------------------------------------------------------
-; Bukan untuk berhemat, melainkan supaya satu kebocoran memori menjatuhkan
-; satu layanan ini saja, bukan seluruh VPS beserta basis datanya.
 MemoryMax=512M
 TasksMax=128
 LimitNOFILE=4096

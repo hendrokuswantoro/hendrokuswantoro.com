@@ -1,7 +1,3 @@
-/**
- * Inline icons. Stroke icons inherit `currentColor` so the stylesheet keeps
- * control of their colour, exactly as in the plain HTML version.
- */
 const stroke = {
   fill: "none",
   stroke: "currentColor",

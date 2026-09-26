@@ -50,10 +50,6 @@ MODEL = {
     ),
 }
 
-# Berkas ONNX selalu dimulai dengan bita ini, bagian dari Protocol Buffers-nya.
-# Tanpa pemeriksaan ini, halaman galat HTML dari GitHub akan tersimpan dengan
-# nama .onnx dan baru ketahuan saat OpenCV menolaknya dengan pesan yang tidak
-# menyinggung soal itu sama sekali.
 AWALAN_ONNX = b"\x08"
 
 

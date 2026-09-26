@@ -1,12 +1,3 @@
-"""Isi situs dan dari mana ia datang.
-
-`SumberIsi` sengaja dibuat antarmuka sejak hari pertama. Hari ini isinya
-datang dari berkas Markdown di `content/`, dan suatu saat dari API yang
-membaca PostgreSQL. Pembangkit situs tidak boleh tahu bedanya: berpindah
-harus berarti mengganti satu baris yang memilih implementasi, bukan menulis
-ulang pembangkitnya. Lihat docs/rancangan-platform.md bagian 5.
-"""
-
 from __future__ import annotations
 
 import pathlib
@@ -16,18 +7,11 @@ from typing import Protocol
 
 
 class IsiSalah(ValueError):
-    """Berkas isi yang tidak bisa dibaca, disertai nama berkasnya."""
+    pass
 
 
 @dataclass(frozen=True)
 class Teks:
-    """Satu kalimat dalam dua bahasa. Keduanya selalu wajib ada.
-
-    Ini cerminan dari keputusan skema di rancangan: kolom berpasangan yang
-    NOT NULL, bukan tabel terjemahan, supaya tulisan tanpa terjemahan jadi
-    keadaan yang mustahil, bukan sekadar tidak dianjurkan.
-    """
-
     en: str
     id: str
 
@@ -39,24 +23,24 @@ class Teks:
 @dataclass(frozen=True)
 class Tulisan:
     slug: str
-    tanggal: str            # ISO, 2026-09-02
-    tanggal_label: Teks     # "2 Sep 2026"
+    tanggal: str
+    tanggal_label: Teks
     judul: Teks
     tag: Teks
-    baca: Teks              # "3 min read"
-    ringkas: Teks           # kartu di halaman Blog
-    keterangan: Teks        # meta description
-    lede: Teks              # paragraf pembuka artikel
-    isi_en: str             # Markdown
-    isi_id: str             # Markdown
+    baca: Teks
+    ringkas: Teks
+    keterangan: Teks
+    lede: Teks
+    isi_en: str
+    isi_id: str
 
 
 @dataclass(frozen=True)
 class Proyek:
     slug: str
     urut: int
-    kategori: tuple[str, ...]      # app, analysis, satellite, design
-    jenis_peta: str                # yang menentukan warna penanda di peta
+    kategori: tuple[str, ...]
+    jenis_peta: str
     lng: float
     lat: float
     badge: Teks
@@ -75,20 +59,17 @@ class Proyek:
 
 class SumberIsi(Protocol):
     def tulisan(self) -> list[Tulisan]:
-        """Terbaru lebih dulu."""
+        pass
 
     def proyek(self) -> list[Proyek]:
-        """Urut sesuai kolom urut."""
+        pass
 
 
 PISAH = re.compile(r"^=== (en|id) ===\s*$", re.M)
 
 
 class SumberBerkas:
-    """Fase 0. Membaca content/blog/*.md."""
-
     def __init__(self, akar: pathlib.Path) -> None:
-        """`akar` adalah folder content/, yang memuat blog/ dan proyek/."""
         self.akar = akar
 
     def tulisan(self) -> list[Tulisan]:
@@ -171,18 +152,6 @@ class SumberBerkas:
         return {"en": potong[2].strip("\n"), "id": potong[4].strip("\n")}
 
 class SumberApi:
-    """Fase 6. Membaca isi dari API, bukan dari berkas.
-
-    Antarmukanya sama persis dengan SumberBerkas, jadi pembangkit situs tidak
-    berubah satu baris pun saat berpindah ke sini. Itu seluruh alasan
-    SumberIsi dibuat sebagai antarmuka sejak Fase 0, bukan dijadikan refactor
-    yang ditunda.
-
-    Memakai urllib dari pustaka standar, bukan requests atau httpx: pembangkit
-    situs berjalan di mesin build Cloudflare, dan menambah dependensi di sana
-    berarti menambah satu hal lagi yang bisa gagal saat menerbitkan.
-    """
-
     def __init__(self, pangkal: str, waktu_tunggu: int = 20) -> None:
         self.pangkal = pangkal.rstrip("/")
         self.waktu_tunggu = waktu_tunggu
@@ -248,12 +217,6 @@ BULAN_ID = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
 
 
 def _label_tanggal(iso: str) -> dict[str, str]:
-    """Label tanggal yang terbaca, dua bahasa.
-
-    Tidak disimpan di basis data karena bisa diturunkan dari tanggalnya, dan
-    data turunan yang ikut disimpan adalah data yang bisa berbeda dari
-    asalnya.
-    """
     tahun, bulan, hari = (int(x) for x in iso.split("-"))
     return {
         "en": f"{hari} {BULAN_EN[bulan - 1]} {tahun}",

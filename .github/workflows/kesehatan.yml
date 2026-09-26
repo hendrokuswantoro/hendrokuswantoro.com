@@ -1,30 +1,5 @@
-# Health Check, the last step of the pipeline in the specification.
-#
-# It runs against the published site, not against the working copy, because
-# what matters is whether a visitor can read the page, not whether the files
-# looked right before they were uploaded. Cloudflare does the deploying, so
-# this watches from outside rather than pretending to be part of it.
-#
-# The address lives in a repository variable named SITUS so it can move to
-# the real domain without editing this file. Settings, Secrets and variables,
-# Actions, Variables tab.
-
 name: Health Check
 
-# Dihidupkan kembali bersama CI, 14 September 2026.
-#
-# Yang perlu diketahui sebelum melihat hasilnya: langkah terakhirnya, "The
-# canonical address exists", akan GAGAL tiap malam selama hendrokuswantoro.com
-# belum terdaftar, dan kegagalan itu membuka satu isu berlabel "kesehatan".
-# Isunya satu saja, tidak menumpuk: kejadian berikutnya cuma menambah komentar
-# di isu yang sama, dan isunya ditutup sendiri begitu pemeriksaannya lolos.
-#
-# Jadi lampu merahnya benar, bukan salah. Yang dilaporkannya bukan situs yang
-# mati, melainkan nama yang belum ada. Situsnya sendiri sehat di alamat
-# .workers.dev, dan sembilan pemeriksaan sebelum langkah itu membuktikannya
-# tiap malam. Kalau laporannya ingin hijau lebih dulu daripada namanya
-# didaftarkan, setel variabel repositori SITUS ke alamat .workers.dev dan
-# ganti rel=canonical seluruh halaman ke nama yang sama.
 on:
   schedule:
     - cron: '17 1 * * *'
@@ -52,17 +27,6 @@ jobs:
           echo "situs=$situs" >> "$GITHUB_OUTPUT"
           echo "checking $situs"
 
-      # Daftar jalurnya ditulis satu per baris lewat here-doc, bukan dirangkai
-      # di dalam `for`.
-      #
-      # Sebelumnya baris itu memuat rangkaian "\n" harfiah, bukan baris baru
-      # sungguhan. Shell memperlakukan setiap "\n" sebagai kata tersendiri
-      # yang nilainya "n", jadi yang diminta termasuk "$situs/n", dijawab 404,
-      # dan langkah ini gagal setiap malam sejak dipasang. Situsnya sendiri
-      # selalu sehat. Yang sakit pemeriksanya, dan karena ia membuka isu
-      # otomatis tiap kali gagal, ia juga mengarang laporan bahwa situsnya
-      # mati. Pemeriksaan yang berbohong lebih buruk daripada tidak ada
-      # pemeriksaan.
       - name: Every page answers
         run: |
           situs="${{ steps.alamat.outputs.situs }}"
@@ -145,27 +109,6 @@ jobs:
           grep -q 'mapboxToken: "pk\.' konfigurasi.js
           echo "token present"
 
-      # Alamat kanonik wajib eksis, dan selama ini tidak ada yang memeriksanya.
-      #
-      # Tiap halaman memuat <link rel="canonical"> ke www.hendrokuswantoro.com,
-      # begitu juga sitemap.xml, feed.xml, og:url, dan JSON-LD. Pada 13
-      # September 2026 nama itu belum terdaftar sama sekali: otoritas .com
-      # menjawab NXDOMAIN, bukan sekadar tanpa A record. Artinya setiap alamat
-      # yang situs ini sebut tentang dirinya sendiri menunjuk ke tempat yang
-      # tidak ada. Mesin pencari mengindeks yang kanonik, jadi selama itu
-      # dibiarkan, situsnya boleh sehat sempurna dan tetap tidak bisa
-      # ditemukan, dan tiap tautan di umpan RSS-nya mati.
-      #
-      # Dua jalan keluarnya, dan keduanya disebut di pesan gagalnya: daftarkan
-      # namanya lalu arahkan ke Cloudflare, atau ganti CNAME beserta seluruh
-      # alamat kanonik ke nama yang benar benar dipakai.
-      #
-      # Ditaruh paling akhir dengan sengaja. Langkah yang gagal menghentikan
-      # seluruh langkah sesudahnya, dan cacat ini akan gagal setiap malam
-      # sampai namanya didaftarkan. Kalau ia berdiri di tengah, lima
-      # pemeriksaan lain, termasuk header keamanan dan bentuk umpan RSS,
-      # tidak akan pernah dijalankan lagi selama itu. Satu kegagalan yang
-      # sudah diketahui tidak boleh menutupi kegagalan yang belum.
       - name: The canonical address exists
         run: |
           situs="${{ steps.alamat.outputs.situs }}"
@@ -186,12 +129,6 @@ jobs:
           echo "dan setiap rel=canonical ke nama yang benar benar dipakai."
           exit 1
 
-      # Bab 15.17 menuntut alerting. Sampai sekarang kegagalan health check
-      # hanya duduk di halaman Actions sampai ada yang membukanya, dan
-      # pemeriksaan yang tidak pernah dibaca sama saja dengan tidak ada.
-      #
-      # Satu isu per kejadian, ditutup sendiri begitu situsnya pulih, supaya
-      # tidak menumpuk jadi kebisingan yang akhirnya diabaikan juga.
       - name: Open an issue when the site is down
         if: failure()
         uses: actions/github-script@v7

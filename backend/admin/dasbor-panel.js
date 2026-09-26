@@ -1,17 +1,3 @@
-/* Dashboard admin, bagian 2 dari 4: panel yang menampilkan keadaan.
-
-   Ringkasan, perangkat yang masuk, jejak keamanan, passkey, dan daftar
-   tulisan. Memakai $, panggil, kabar, dan AKSES dari dasbor-inti.js, yang
-   dimuat lebih dulu. Urutan keempat berkasnya ada di index.html. */
-
-/* --- dashboard yang hidup -------------------------------------------- */
-
-/* Selang penyegaran. Lima belas detik cukup untuk terasa hidup dan cukup
-   jarang untuk tidak membebani apa pun. Yang lebih penting: penyegarannya
-   BERHENTI saat tab tidak terlihat. Tab yang ditinggalkan terbuka berhari
-   hari tidak boleh terus mengetuk server, dan peramban sendiri sudah
-   memperlambat timer di tab tersembunyi sehingga hasilnya cuma antrean
-   permintaan yang menumpuk lalu meledak sekaligus saat tab dibuka lagi. */
 const SELANG_SEGAR_MS = 15000;
 let jamSegar = null;
 
@@ -24,9 +10,6 @@ function waktuPendek(iso) {
   });
 }
 
-/* Angka yang belum bisa dibaca ditulis "?", bukan 0.
-   Nol adalah bacaan, ketiadaan data bukan, dan perbedaan itu wajib terlihat
-   oleh yang membacanya. */
 function pasangAngka(id, nilai) {
   $(id).textContent = (nilai === null || nilai === undefined) ? "?" : String(nilai);
 }
@@ -40,16 +23,6 @@ function tandaKeadaan(nama, keadaan, keterangan) {
 }
 
 async function muatRingkasan() {
-  /* Diminta BERURUTAN, dan itu keputusan yang dibayar mahal untuk dipelajari.
-     Versi pertama memintanya berbarengan dengan Promise.all, tujuh permintaan
-     sekaligus bersama dua panel lain. Akibatnya masuk dengan passkey berhenti
-     di tengah tanpa satu pun pesan: kotak kabar kosong, konsol bersih, dan
-     halamannya tetap di layar masuk. Dipersempit satu per satu, tiap panel
-     sendirian lolos dan ketiganya bersama gagal, jadi yang mematikan memang
-     ledakan permintaannya. Peramban hanya membuka enam sambungan sekaligus ke
-     satu asal, dan permintaan yang mengantre di belakangnya ikut menahan alur
-     yang sedang berjalan.
-     Dashboard yang menyegar tiap lima belas detik tidak butuh paralel. */
   const ambil = async (jalur, pakaiToken = true) => {
     try {
       const j = pakaiToken ? await panggil(jalur) : await fetch(jalur);
@@ -71,9 +44,6 @@ async function muatRingkasan() {
   pasangAngka("ubin-passkey", kunci ? kunci.daftar.length : null);
   pasangAngka("ubin-sesi", sesi ? sesi.jumlah : null);
 
-  /* Keadaan sistem. Yang belum siap disebut apa adanya beserta nama
-     variabelnya, sebab tombol yang diam diam gagal lebih buruk daripada
-     tombol yang menjelaskan kenapa ia belum bisa dipakai. */
   const kotak = $("keadaan-sistem");
   kotak.replaceChildren();
 
@@ -93,8 +63,6 @@ async function muatRingkasan() {
       keamanan.email_terverifikasi ? "email terbukti" : "email belum terbukti",
       keamanan.email_terverifikasi ? "baik" : "belum",
     ));
-    /* Kekuatan sesi ini sendiri. Tanpa penanda ini, tombol Simpan yang
-       menolak dengan 403 terlihat seperti kerusakan, bukan seperti aturan. */
     if (keamanan.faktor_kedua_wajib) {
       kotak.appendChild(tandaKeadaan(
         keamanan.sesi_kuat ? "sesi kuat" : "sesi lemah, tidak bisa menulis",
@@ -106,9 +74,6 @@ async function muatRingkasan() {
       ));
     }
 
-    /* Pencabutan segera. Tanpa Redis, tombol keluarkan perangkat lain hanya
-       mematikan refresh token-nya, dan token aksesnya masih hidup sampai
-       lima belas menit berikutnya. Disebutkan, bukan didiamkan. */
     if (!keamanan.pencabutan_segera_siap) {
       kotak.appendChild(tandaKeadaan("pencabutan tertunda 15 menit", "belum",
         "REDIS_URL belum diisi. Tanpa itu, sesi yang dicabut baru benar benar "
@@ -175,9 +140,6 @@ async function muatSesi() {
   }
 }
 
-/* Nama peristiwa diterjemahkan, tidak ditampilkan apa adanya.
-   Yang tidak ada di kamus ditulis apa adanya, bukan dibuang: peristiwa
-   keamanan yang hilang dari layar lebih buruk daripada yang namanya jelek. */
 const NAMA_PERISTIWA = {
   masuk: "Masuk",
   verifikasi_email: "Verifikasi email",
@@ -222,9 +184,6 @@ async function muatJejak() {
 
     const apa = document.createElement("td");
     apa.textContent = NAMA_PERISTIWA[p.jenis] || p.jenis;
-    /* Keterangannya ditaruh di title, bukan di kolom sendiri: isinya pendek
-       dan tidak selalu ada, dan kolom yang sering kosong cuma memperlebar
-       tabel tanpa memberi tahu apa apa. */
     if (p.keterangan) apa.title = p.keterangan;
 
     const hasil = document.createElement("td");
@@ -241,13 +200,8 @@ async function muatJejak() {
 }
 
 async function segarkan() {
-  /* Berurutan, bukan berbarengan. Alasannya sama dengan di muatRingkasan:
-     ledakan permintaan serentak menahan alur lain yang sedang berjalan.
-     Galat tiap pemuat ditahan di sini supaya satu panel yang gagal tidak
-     menjatuhkan dua panel lain; masing masing sudah menulis keadaan gagalnya
-     sendiri di layar. */
   for (const muat of [muatRingkasan, muatSesi, muatJejak]) {
-    try { await muat(); } catch { /* panelnya sendiri yang mengabarkan */ }
+    try { await muat(); } catch {  }
   }
 }
 
@@ -263,9 +217,6 @@ function hentikanSegarBerkala() {
   if (jamSegar) { clearInterval(jamSegar); jamSegar = null; }
 }
 
-/* Begitu tab dibuka lagi, disegarkan sekali di luar giliran. Menunggu sampai
-   lima belas detik berikutnya berarti angka yang pertama dilihat orang adalah
-   angka basi dari sebelum ia pergi. */
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && AKSES) segarkan();
 });
@@ -314,7 +265,6 @@ async function cabutKunci(id, nama) {
   await muatKunci();
 }
 
-/* --- daftar --------------------------------------------------------- */
 
 async function muatDaftar() {
   const jawaban = await panggil("/api/v1/admin/blog");

@@ -1,11 +1,3 @@
-"""What actually reaches the web server, and whether it agrees with itself.
-
-The first test here exists because the bug it catches fooled me twice in one
-day: the version string on style.css and app.js drifted apart between pages,
-so a returning visitor got the new HTML and the old stylesheet on every page
-but one. Nothing errors. The site just looks wrong for some people.
-"""
-
 from __future__ import annotations
 
 import pathlib
@@ -28,8 +20,6 @@ def versi(berkas: pathlib.Path, aset: str) -> str | None:
 
 @pytest.mark.parametrize("aset", ["/assets/css/style.css", "/assets/js/app.js"])
 def test_versi_seragam(aset):
-    """One version per asset across the whole site, or the cache serves a
-    mixture of old and new to anyone who has been here before."""
     dipakai = {nama(b): versi(b, aset) for b in HALAMAN}
     hilang = [k for k, v in dipakai.items() if v is None]
     assert not hilang, f"{aset} has no version string on {hilang}"
@@ -39,25 +29,6 @@ def test_versi_seragam(aset):
 def test_peta_ikut_diberi_versi():
     app = (AKAR / "assets" / "js" / "app.js").read_text(encoding="utf-8")
     assert re.search(r"peta\.js\?v=[0-9a-z]+", app), "peta.js is loaded without a version"
-
-
-# ------------------------------------------------- nomor versi dari isinya ---
-
-# Kenapa bagian ini ada.
-#
-# `/assets/*` disajikan dengan janji `immutable` selama setahun, yang berarti
-# peramban tidak akan pernah menanyakan berkasnya lagi, bahkan tidak dengan
-# permintaan bersyarat. Janji itu hanya sah kalau alamatnya berganti setiap
-# kali isinya berganti.
-#
-# Sampai 13 September 2026 janji itu tidak dipenuhi. Sepuluh commit mengubah
-# assets/js/peta.js dan nomor ?v=34 tidak pernah naik satu pun. maplibre-gl.css
-# diganti seluruhnya saat MapLibre naik dari 4 ke 6, di alamat yang sama.
-# Komentar di style.css sendiri menjelaskan akibatnya: lembar gaya peta yang
-# tidak cocok membuat kotaknya mengerut jadi nol dan seluruh petanya hilang.
-#
-# Sekarang nomornya dihitung dari isi berkasnya oleh tools/versi_aset.py.
-# Nomor yang diketik tangan hanyut; nomor yang dihitung tidak bisa.
 
 
 def test_nomor_aset_tidak_tertinggal_dari_isinya():
@@ -72,7 +43,6 @@ def test_nomor_aset_tidak_tertinggal_dari_isinya():
 
 
 def test_nomor_aset_memang_sidik_isinya():
-    """Bukan sekadar ada, melainkan cocok dengan berkas yang dilayani."""
     import hashlib
 
     beranda = (AKAR / "index.html").read_text(encoding="utf-8")
@@ -88,12 +58,6 @@ def test_nomor_aset_memang_sidik_isinya():
         )
 
 
-# Gambar kartu karya ditulis ulang oleh tools/build_work_images.py di alamat
-# yang sama, misalnya ketika nama situs mulai digambar di pojoknya. Janji
-# immutable berlaku juga untuknya, jadi tiap sebutannya wajib membawa sidik
-# berkasnya sendiri. Pola dan daftar berkas di sini sengaja ditulis ulang, bukan
-# diimpor dari versi_aset.py: uji yang memakai kode yang diujinya ikut buta
-# ketika kode itu salah.
 POLA_GAMBAR_KARYA = re.compile(r"/assets/img/work/([a-z0-9-]+\.webp)(?:\?v=([0-9a-z]+))?")
 WAJIB_MENYEBUT_KARYA = {
     "index.html",
@@ -160,9 +124,6 @@ def test_nomor_gambar_karya_diganti_bukan_ditumpuk():
 
 
 def test_gambar_karya_di_tulisan_ikut_bernomor():
-    """Tulisan boleh memuat gambar dari /assets/img/. Pembangkit blog dan
-    versi_aset.py sama sama menulis blog/*.html, jadi keduanya harus menulis
-    nomor yang sama, atau --periksa milik salah satunya selalu merah."""
     import hashlib
     import sys
 
@@ -177,9 +138,6 @@ def test_gambar_karya_di_tulisan_ikut_bernomor():
 
 
 def test_pustaka_peta_dipanggil_dari_folder_berversi():
-    """Query pada modul induk tidak menurun ke modul yang diimpornya secara
-    relatif, jadi maplibre-gl-shared.mjs tidak bisa dinomori lewat ?v=.
-    Foldernya yang dinomori."""
     app = (AKAR / "assets" / "js" / "app.js").read_text(encoding="utf-8")
     versi_pustaka = (AKAR / "assets" / "vendor" / "maplibre" / "VERSI").read_text(
         encoding="utf-8").strip()
@@ -190,9 +148,6 @@ def test_pustaka_peta_dipanggil_dari_folder_berversi():
 
 
 def test_konfigurasi_dikecualikan_dari_immutable():
-    """Satu satunya aset yang alamatnya tidak bisa bercap isinya, sebab isinya
-    baru ditulis saat membangun. Kalau ia ikut immutable, pembaca yang
-    kebetulan datang saat tokennya kosong kehilangan petanya selama setahun."""
     assert "/assets/js/konfigurasi.js" in HEADERS, (
         "_headers tidak mengecualikan konfigurasi.js dari immutable"
     )
@@ -201,13 +156,6 @@ def test_konfigurasi_dikecualikan_dari_immutable():
     assert "must-revalidate" in aturan, aturan
     assert "immutable" not in aturan, aturan
 
-    # Dan tidak ada aturan LAIN yang ikut mencakupnya.
-    #
-    # Cloudflare MENGGABUNGKAN aturan yang cocok, tidak menggantinya. Aturan
-    # /assets/* yang menyebut immutable akan ikut menempel pada berkas ini,
-    # datang lebih dulu, dan dibaca peramban lebih dulu. Itu sudah terjadi:
-    # situs yang terbit menyajikannya dengan dua Cache-Control berturut turut,
-    # dan ketahuan lewat curl terhadap situsnya, bukan lewat membaca berkasnya.
     baris_aturan = [
         b.strip() for b in HEADERS.splitlines()
         if b.startswith("/") and not b.strip().startswith("#")
@@ -225,16 +173,12 @@ def test_konfigurasi_dikecualikan_dari_immutable():
 
 
 def test_dua_pembangun_sepakat():
-    """The zip and the folder Cloudflare serves must contain the same files.
-    They are built by different scripts and drifted once already."""
     py = (AKAR / "tools" / "build_dist.py").read_text(encoding="utf-8")
     sh = (AKAR / "tools" / "bangun_situs.sh").read_text(encoding="utf-8")
 
     daftar_py = set(re.findall(r'^\s+"([\w.\-]+)",', py, re.M))
     blok = re.search(r"for berkas in (.*?); do", sh, re.S)
     assert blok, "the copy loop in bangun_situs.sh changed shape"
-    # the shell wraps the list across lines with backslashes, which are
-    # separators, not file names
     daftar_sh = {k for k in blok.group(1).split() if k != chr(92)}
 
     assert daftar_py == daftar_sh, (
@@ -256,8 +200,6 @@ def test_sitemap_menunjuk_berkas_nyata():
 
 
 def test_setiap_tulisan_terdaftar():
-    """A post nobody can find is a post that was never published."""
-    # addresses carry no .html, so the slug is what has to appear
     tulisan = sorted(p.stem for p in (AKAR / "blog").glob("*.html") if p.stem != "index")
     sitemap = (AKAR / "sitemap.xml").read_text(encoding="utf-8")
     umpan = (AKAR / "feed.xml").read_text(encoding="utf-8")
@@ -306,8 +248,6 @@ def test_csp_menahan_yang_penting(sumber):
 
 
 def test_tidak_ada_redirects_lagi():
-    """Cloudflare Workers rejects a cross host rule in _redirects and fails
-    the whole deploy. The apex to www redirect lives in a Redirect Rule."""
     assert not (AKAR / "_redirects").exists(), (
         "_redirects is back. Workers will refuse the deploy with code 100324."
     )
@@ -318,8 +258,6 @@ def test_wrangler_menunjuk_dist():
     assert 'directory = "./dist"' in WRANGLER
     assert 'not_found_handling = "404-page"' in WRANGLER
 
-
-# --------------------------------------------------- halaman benar benar terbit ---
 
 PEMBANGUN = {
     "tools/bangun_situs.sh": (AKAR / "tools" / "bangun_situs.sh").read_text(encoding="utf-8"),
@@ -333,21 +271,6 @@ PEMBANGUN = {
     ids=nama,
 )
 def test_setiap_halaman_ikut_dibangun(berkas):
-    """Halaman yang ada di repositori tetapi tidak ada di pembangun tidak akan
-    pernah terbit, dan tidak ada yang berwarna merah karenanya.
-
-    Kedua pembangun `dist/` memakai daftar izin, bukan daftar tolak, dan itu
-    pilihan yang benar: README, tools/, dan port Next.js memang tidak boleh
-    ikut ke depan pengunjung. Harganya, tiap halaman baru wajib didaftarkan,
-    dan lupa mendaftarkannya tidak menimbulkan galat apa pun.
-
-    Itu hampir terjadi pada 14 September 2026: halaman studi kasus ditulis,
-    diuji, masuk sitemap, lalu `dist/ holds 63 files` tetap seperti sebelumnya.
-    Satu satunya yang menyelamatkannya adalah angka itu dibaca orang.
-
-    Halaman di dalam blog/ tidak ikut diperiksa di sini sebab foldernya
-    disalin utuh, bukan disebut satu per satu.
-    """
     for nama_pembangun, isi in PEMBANGUN.items():
         assert berkas.name in isi, (
             f"{berkas.name} tidak disebut {nama_pembangun}, "

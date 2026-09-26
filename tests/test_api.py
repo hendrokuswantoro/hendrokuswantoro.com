@@ -1,13 +1,3 @@
-"""API: bentuk jawabannya, kode statusnya, dan lapisan yang menopangnya.
-
-Dilewati kalau tidak ada basis data, sama seperti test_basis_data.py.
-
-Uji terakhir di berkas ini tidak menyentuh HTTP sama sekali. Ia menegakkan
-pemisahan lapisan yang diminta bab 15.4, sebab pemisahan yang hanya ditulis
-di dokumen akan runtuh pada hari pertama seseorang menulis satu kueri di
-tempat yang salah karena sedang buru buru.
-"""
-
 from __future__ import annotations
 
 import os
@@ -45,19 +35,6 @@ ADA_DB = ada_basis_data(DSN)
 
 @pytest.fixture(scope="module")
 def klien():
-    """Klien uji, dan ia menyerah lebih dulu kalau basis datanya tidak ada.
-
-    Tanpa baris skip di bawah, uji yang lupa memakai @butuh_db tidak dilewati
-    melainkan GALAT, dan galatnya berbunyi `PoolTimeout: pool initialization
-    incomplete after 10 sec` sesudah menunggu sepuluh detik. Kalimat itu
-    menuduh kolam koneksinya, padahal yang tidak ada cuma basis datanya.
-
-    Itu sudah terjadi pada `test_openapi_tertutup_kecuali_diminta`: satu uji
-    yang lupa ditandai membuat seluruh rangkaian terlihat merah di setiap
-    mesin yang Docker-nya sedang tidak hidup. Penjaganya ditaruh di fixture,
-    bukan ditambahkan sebagai tanda pada satu uji itu saja, sebab yang tidak
-    bisa dibuat tanpa basis data memang fixture ini.
-    """
     if not ADA_DB:
         pytest.skip("tidak ada basis data. cd infrastructure && docker compose up -d")
 
@@ -121,7 +98,6 @@ def test_saring_proyek_per_kategori(klien):
 
 @butuh_db
 def test_kategori_ngawur_ditolak_422(klien):
-    """Validasi Pydantic, bukan 500 dari basis data."""
     assert klien.get("/api/v1/projects?kategori=bukan-kategori").status_code == 422
 
 
@@ -140,16 +116,12 @@ def test_geojson_bentuknya_benar(klien):
         assert f["type"] == "Feature"
         assert f["geometry"]["type"] == "Point"
         bujur, lintang = f["geometry"]["coordinates"]
-        # urutan sumbu RFC 7946: bujur dulu. Tertukar berarti Indonesia
-        # digambar di Somalia, dan tidak ada galat yang menyebutnya
         assert 94 <= bujur <= 142, f"{f['properties']['slug']}: bujur di luar Indonesia"
         assert -12 <= lintang <= 7, f"{f['properties']['slug']}: lintang di luar Indonesia"
 
 
 @butuh_db
 def test_nearby_jaraknya_meter(klien):
-    """Jarak dalam derajat tidak ada artinya. Parkir ada di tengah Yogyakarta,
-    jadi jaraknya dari Tugu wajib di bawah 5 km, bukan angka tanpa satuan."""
     isi = klien.get(
         "/api/v1/maps/nearby?lng=110.3671&lat=-7.7828&radius_m=60000"
     ).json()
@@ -167,14 +139,6 @@ def test_koordinat_di_luar_indonesia_ditolak(klien):
 
 @butuh_db
 def test_openapi_terbit():
-    """Bab 15.22 menuntut dokumentasi API. FastAPI membuatnya, tetapi hanya
-    kalau tiap rute benar benar punya response_model.
-
-    Dibaca dari aplikasinya langsung, bukan lewat HTTP. Sejak penyisiran
-    keamanan 13 September 2026, /openapi.json tertutup kecuali DOKUMEN_API=1,
-    jadi mengambilnya lewat HTTP akan menguji setelan itu, bukan kelengkapan
-    dokumentasinya.
-    """
     from backend.main import aplikasi
 
     jalur = aplikasi.openapi()["paths"]
@@ -183,27 +147,20 @@ def test_openapi_terbit():
 
 
 def test_openapi_tertutup_kecuali_diminta(klien, monkeypatch):
-    """Peta lengkap permukaan API, termasuk tiap titik akhir admin, tidak
-    diberikan cuma cuma kepada siapa pun yang membukanya."""
     for jalur in ("/openapi.json", "/docs", "/redoc"):
         assert klien.get(jalur).status_code == 404, f"{jalur} terbuka"
 
-
-# --------------------------------------------------------------- lapisan ---
 
 SQL = re.compile(r"\b(SELECT|INSERT|UPDATE|DELETE|TRUNCATE)\s", re.I)
 
 
 def test_sql_hanya_ada_di_lapisan_repositori():
-    """Bab 15.4. Begitu satu kueri ditulis di lapisan layanan atau di router,
-    seluruh pemisahannya jadi hiasan."""
     bocor = []
     for berkas in (AKAR / "backend").rglob("*.py"):
         bagian = set(berkas.relative_to(AKAR / "backend").parts)
         if bagian & {"repositori", "db"}:
             continue
         isi = berkas.read_text(encoding="utf-8")
-        # abaikan docstring dan komentar yang menyebut SQL sebagai kata biasa
         baris_kode = [b for b in isi.splitlines() if not b.strip().startswith("#")]
         if SQL.search("\n".join(baris_kode)):
             bocor.append(berkas.relative_to(AKAR).as_posix())
@@ -211,7 +168,6 @@ def test_sql_hanya_ada_di_lapisan_repositori():
 
 
 def test_router_tidak_memanggil_repositori_langsung():
-    """Router berbicara ke layanan, layanan berbicara ke repositori."""
     bocor = []
     for berkas in (AKAR / "backend" / "api").rglob("*.py"):
         isi = berkas.read_text(encoding="utf-8")
@@ -220,18 +176,7 @@ def test_router_tidak_memanggil_repositori_langsung():
     assert not bocor, f"router melompati lapisan layanan: {bocor}"
 
 
-# ------------------------------------------------- hak basis data terkecil ---
-
-
 def test_aplikasi_tidak_pernah_mengubah_susunan_basis_data():
-    """Aplikasi berjalan sebagai pengguna yang tidak boleh CREATE, DROP, atau
-    ALTER. Lihat infrastructure/postgres/hak_terkecil.sql.
-
-    Yang menegakkannya PostgreSQL, bukan uji ini. Yang dikerjakan uji ini
-    menangkapnya lebih awal: kueri DDL yang menyelinap ke lapisan repositori
-    akan menjawab galat izin di produksi, dan galat izin yang muncul pertama
-    kali di produksi adalah galat yang ditemukan pembaca, bukan penulisnya.
-    """
     import re
 
     larangan = re.compile(
@@ -242,8 +187,6 @@ def test_aplikasi_tidak_pernah_mengubah_susunan_basis_data():
     for berkas in sorted((AKAR / "backend").rglob("*.py")):
         if "__pycache__" in berkas.parts:
             continue
-        # Pemasang migrasi memang pekerjaannya begitu, dan ia dijalankan
-        # pemilik skemanya, bukan oleh aplikasi.
         if berkas.name == "migrasi.py" or "db" in berkas.parts:
             continue
         isi = berkas.read_text(encoding="utf-8")
@@ -255,7 +198,6 @@ def test_aplikasi_tidak_pernah_mengubah_susunan_basis_data():
 
 
 def test_berkas_hak_terkecil_ada_dan_tidak_memuat_sandi():
-    """Sandinya datang dari luar. Berkas ini masuk git."""
     berkas = AKAR / "infrastructure" / "postgres" / "hak_terkecil.sql"
     assert berkas.exists(), "infrastructure/postgres/hak_terkecil.sql hilang"
 
@@ -263,7 +205,5 @@ def test_berkas_hak_terkecil_ada_dan_tidak_memuat_sandi():
     assert "sandi_app" in isi
     assert "PASSWORD '" not in isi, "ada sandi tertulis di berkas yang masuk git"
 
-    # Hak yang tidak boleh diberikan, disebut satu per satu supaya yang
-    # menambahkannya kembali harus menghapus barisnya lebih dulu.
     for jahat in ("GRANT ALL", "SUPERUSER", "CREATEDB", "CREATEROLE"):
         assert jahat not in isi, f"hak_terkecil.sql memberi {jahat}"

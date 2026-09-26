@@ -1,12 +1,3 @@
-"""Generate the PWA and Apple touch icons from the brand mark.
-
-Run from the project root:
-    python tools/build_icons.py
-
-Outputs assets/img/icon-192.png, icon-512.png and apple-touch-icon.png.
-The SVG favicon stays the source of truth for browsers that support it.
-"""
-
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 

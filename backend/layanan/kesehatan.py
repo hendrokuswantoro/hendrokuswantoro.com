@@ -1,6 +1,3 @@
-"""Kesehatan sistem. Tipis, tetapi tetap lewat lapisannya sendiri supaya
-router tidak pernah memanggil repositori langsung."""
-
 from __future__ import annotations
 
 from backend.repositori import kesehatan as repo

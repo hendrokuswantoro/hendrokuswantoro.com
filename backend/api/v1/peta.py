@@ -1,8 +1,3 @@
-"""Titik akhir spasial. Fase 3.
-
-Jalur datanya: PostGIS -> FastAPI -> GeoJSON -> MapLibre.
-"""
-
 from __future__ import annotations
 
 from fastapi import APIRouter, Query
@@ -19,8 +14,6 @@ rute = APIRouter(prefix="/maps", tags=["peta"])
     summary="Lokasi proyek sebagai GeoJSON FeatureCollection",
 )
 async def projects_spatial() -> KumpulanFitur:
-    """Titik ini tempat menggantungkan penanda di peta, **bukan** koordinat
-    survei dan bukan batas wilayah kajian."""
     return await layanan.geojson()
 
 

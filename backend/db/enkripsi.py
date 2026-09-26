@@ -45,23 +45,20 @@ PENANDA = b"HKCAD1\n"
 PANJANG_NONCE = 12
 PANJANG_KUNCI = 32
 
-# 512 MB. Jauh di atas ukuran cadangan situs ini, dan jauh di bawah titik
-# tempat memuat seluruhnya ke memori jadi berbahaya.
 BATAS_BITA = 512 * 1024 * 1024
 
 NAMA_ENV = "CADANGAN_KUNCI"
 
 
 class KunciTidakAda(RuntimeError):
-    """Diminta mengenkripsi tanpa kunci di environment."""
+    pass
 
 
 class TidakBisaDibuka(RuntimeError):
-    """Kunci salah, berkasnya berubah, atau bukan berkas cadangan."""
+    pass
 
 
 def buat_kunci() -> str:
-    """32 bita acak, ditulis base64 supaya muat di satu baris .env."""
     return base64.b64encode(secrets.token_bytes(PANJANG_KUNCI)).decode("ascii")
 
 
@@ -104,8 +101,6 @@ def kunci(isi: bytes, kunci_rahasia: bytes) -> bytes:
             f"{BATAS_BITA // 1024 // 1024} MB yang dibaca sekali jalan"
         )
     nonce = secrets.token_bytes(PANJANG_NONCE)
-    # Penanda ikut diautentikasi sebagai associated data: berkas yang
-    # penandanya diganti akan gagal dibuka, bukan diterima diam diam.
     sandi = _aesgcm(kunci_rahasia).encrypt(nonce, isi, PENANDA)
     return PENANDA + nonce + sandi
 

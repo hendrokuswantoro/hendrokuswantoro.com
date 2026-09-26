@@ -6,9 +6,6 @@ import { POSTS, type Post } from "@/content/posts";
 import { COMMON } from "@/content/nav";
 import { useLang } from "./LanguageProvider";
 
-/* The id is cut from the English heading on purpose. It has to survive the
-   language switch, otherwise every link into the article would break the
-   moment a reader presses ID. */
 function slug(text: string): string {
   return (
     text
@@ -26,7 +23,6 @@ export function PostView({ post }: { post: Post }) {
   const article = useRef<HTMLElement | null>(null);
   const [now, setNow] = useState<string>("");
 
-  /* the contents list is the article's own headings, never a second copy */
   const heads = useMemo(() => {
     const taken = new Set<string>();
     return post.blocks
@@ -42,8 +38,6 @@ export function PostView({ post }: { post: Post }) {
   const others = POSTS.filter((other) => other.slug !== post.slug);
   const ids = useMemo(() => heads.map((head) => head.id), [heads]);
 
-  /* the bar tracks how much of the article has gone past the top of the
-     screen, not how far the whole page has scrolled */
   useEffect(() => {
     let frame = 0;
 
@@ -59,7 +53,6 @@ export function PostView({ post }: { post: Post }) {
         bar.current.style.transform = `scaleX(${done})`;
       }
 
-      /* and the entry you are reading gets marked */
       const edge = window.innerHeight * 0.3;
       let seen = ids[0] ?? "";
       ids.forEach((id) => {
@@ -136,13 +129,6 @@ export function PostView({ post }: { post: Post }) {
                 );
               }
               if (block.kind === "gambar") {
-                /* Keterangan merangkap teks alternatif, sama seperti di port
-                   statisnya. Keterangan kosong berarti alt kosong, yaitu
-                   pernyataan "ini hiasan", bukan alt berisi nama berkas.
-
-                   width dan height ditulis supaya peramban menyediakan
-                   tempatnya sebelum gambarnya tiba. Tanpa itu, tulisan di
-                   bawahnya melompat tepat saat ada yang membacanya. */
                 return (
                   <figure key={key} className="tulisan__media">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -159,8 +145,6 @@ export function PostView({ post }: { post: Post }) {
                 );
               }
               if (block.kind === "video") {
-                /* preload="metadata": yang diambil lebih dulu cuma durasi dan
-                   ukurannya, bukan seluruh videonya. */
                 return (
                   <figure key={key} className="tulisan__media">
                     <video src={block.src} controls preload="metadata" playsInline />

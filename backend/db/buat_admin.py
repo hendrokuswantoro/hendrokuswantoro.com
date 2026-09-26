@@ -49,8 +49,6 @@ from backend.core.keamanan import hash_sandi  # noqa: E402
 
 PANJANG_MINIMAL = 12
 
-# 96 kata. Dipilih yang tidak punya ejaan kembar dan tidak mudah tertukar
-# saat didiktekan lewat telepon.
 KATA = (
     "peta jalan sungai gunung lembah pantai pulau hutan sawah kebun danau muara "
     "utara selatan timur barat pagi siang sore malam fajar senja hujan angin "
@@ -63,14 +61,6 @@ KATA = (
 ).split()
 
 
-# Ambang entropi, bukan jumlah kata. Jumlah kata yang dipatok akan berbohong
-# begitu daftar katanya diubah panjangnya; ambang bit tetap benar.
-#
-# 64 bit. Sandi ini dijaga Argon2id dan dibatasi lima percobaan per 15 menit,
-# jadi tebakan lewat jaringan bukan ancamannya; yang jadi ancaman adalah hash
-# yang ikut bocor lalu ditebak di luar jaringan, dan di situ yang berlaku
-# hanya entropinya. Percobaan pertama berkas ini memakai lima kata, yaitu 33
-# bit, dan itu terlalu sedikit untuk dipakai menjaga apa pun.
 MINIMAL_BIT = 64
 
 
@@ -79,12 +69,6 @@ def jumlah_kata_untuk(bit: int = MINIMAL_BIT) -> int:
 
 
 def sandi_acak(jumlah_kata: int | None = None) -> tuple[str, float]:
-    """Mengembalikan sandinya beserta entropinya dalam bit.
-
-    secrets.choice, bukan random.choice. Yang kedua memakai Mersenne Twister,
-    yang keluarannya bisa diramalkan dari beberapa nilai sebelumnya, dan itu
-    persis yang tidak boleh untuk sandi.
-    """
     jumlah_kata = jumlah_kata or jumlah_kata_untuk()
     kata = [secrets.choice(KATA) for _ in range(jumlah_kata)]
     entropi = jumlah_kata * math.log2(len(KATA))
@@ -139,9 +123,6 @@ def main() -> int:
         )
         if k.rowcount == 0:
             sys.exit(f"tidak ada pengguna dengan email {email}. Jalankan muat_awal.py dulu.")
-        # Sesi lama dicabut di sini juga, bukan cuma disarankan. Sandi yang
-        # diganti karena dicurigai bocor tidak ada gunanya kalau sesi yang
-        # sudah terbit dengan sandi lama tetap hidup.
         k.execute(
             "UPDATE sesi SET dicabut_pada = now() "
             "WHERE pengguna_id = (SELECT id FROM users WHERE lower(email) = lower(%s)) "

@@ -1,13 +1,3 @@
-"""Jalur tulis admin, dan sumber isi dari API.
-
-Fase 5 dan 6. Dilewati kalau tidak ada basis data.
-
-Uji terakhir di berkas ini yang paling berarti: HTML yang dibangkitkan dari
-API harus sama persis dengan yang dibangkitkan dari berkas. Itu bukti bahwa
-SumberIsi benar benar antarmuka, bukan sekadar dua kelas yang kebetulan
-punya nama metode sama.
-"""
-
 from __future__ import annotations
 
 import os
@@ -95,9 +85,6 @@ def bersihkan():
         s.commit()
 
 
-# ------------------------------------------------------------- otorisasi ---
-
-
 @pytest.mark.parametrize("metode,jalur", [
     ("get", "/api/v1/admin/blog"),
     ("post", "/api/v1/admin/blog"),
@@ -109,13 +96,9 @@ def bersihkan():
     ("delete", "/api/v1/admin/berkas/contoh.webp"),
 ])
 def test_semua_jalur_admin_tertutup_tanpa_token(klien, metode, jalur):
-    """Bab 15.9. Satu rute yang lupa dijaga sudah cukup untuk membuka semuanya."""
     kirim = {"json": {}} if metode in ("post", "patch") else {}
     j = getattr(klien, metode)(jalur, **kirim)
     assert j.status_code == 401, f"{metode.upper()} {jalur} terbuka tanpa token"
-
-
-# ------------------------------------------------------------------ alur ---
 
 
 def test_tulisan_baru_mulai_sebagai_draf(klien, kepala):
@@ -123,7 +106,6 @@ def test_tulisan_baru_mulai_sebagai_draf(klien, kepala):
     assert j.status_code == 201, j.text
     assert j.json()["status"] == "draf"
 
-    # draf tidak boleh terlihat di jalur publik
     assert klien.get(f"/api/v1/blog/{SLUG}").status_code == 404
 
 
@@ -171,12 +153,7 @@ def test_slug_tidak_ada_menjawab_404(klien, kepala):
     assert j.status_code == 404
 
 
-# ---------------------------------------------------------- yang ditolak ---
-
-
 def test_dua_bahasa_tidak_sebangun_ditolak(klien, kepala):
-    """Aturan yang sama dengan yang dijaga pembangkit situs statis: satu
-    bahasa kehilangan satu paragraf adalah kegagalan yang diam."""
     j = klien.post("/api/v1/admin/blog", headers=kepala,
                    json=contoh(isi_id="## Satu\n\nSatu paragraf."))
     assert j.status_code == 422
@@ -184,9 +161,6 @@ def test_dua_bahasa_tidak_sebangun_ditolak(klien, kepala):
 
 
 def test_markah_tidak_didukung_ditolak(klien, kepala):
-    # Dulu yang dipakai di sini "- daftar". Daftar didukung sejak 18
-    # September 2026, jadi contohnya diganti dengan yang memang masih
-    # ditolak, bukan ujinya yang dihapus.
     j = klien.post("/api/v1/admin/blog", headers=kepala,
                    json=contoh(isi_en="| a | b |", isi_id="| a | b |"))
     assert j.status_code == 422
@@ -194,10 +168,6 @@ def test_markah_tidak_didukung_ditolak(klien, kepala):
 
 
 def test_gambar_dari_server_orang_lain_ditolak(klien, kepala):
-    """Gambar yang menunjuk ke luar mengirimkan alamat IP tiap pembaca ke
-    sana tanpa pernah memintanya, dan CSP situs ini memang sudah menolaknya,
-    jadi yang terbit kotak kosong. Ditolak di sini berarti penulisnya tahu
-    sebelum menekan Simpan."""
     jahat = "![peta](https://contoh.example/a.png)"
     j = klien.post("/api/v1/admin/blog", headers=kepala,
                    json=contoh(isi_en=jahat, isi_id=jahat))
@@ -211,17 +181,11 @@ def test_slug_berspasi_ditolak(klien, kepala):
 
 
 def test_terlalu_panjang_ditolak_sebelum_sampai_basis_data(klien, kepala):
-    """Kalau yang menolak cuma PostgreSQL, yang sampai ke penulis adalah 500
-    tanpa penjelasan."""
     j = klien.post("/api/v1/admin/blog", headers=kepala, json=contoh(judul_en="x" * 400))
     assert j.status_code == 422
 
 
-# --------------------------------------------------------------- fase 6 ---
-
-
 def test_sumber_api_sama_dengan_sumber_berkas():
-    """Antarmuka SumberIsi dipenuhi dua implementasi yang hasilnya identik."""
     from isi import SumberApi, SumberBerkas
 
     api = SumberApi("http://127.0.0.1:8000")
@@ -240,8 +204,6 @@ def test_sumber_api_sama_dengan_sumber_berkas():
 
 
 def test_bangkitan_dari_api_sama_persis_dengan_yang_ter_commit():
-    """Bukti paling keras bahwa Fase 0 tidak terbuang: pembangkit yang sama,
-    sumber yang berbeda, keluaran yang sama sampai ke byte."""
     hasil = subprocess.run(
         [sys.executable, "tools/bangun_tulisan.py", "--sumber", "api", "--periksa"],
         cwd=AKAR, capture_output=True, text=True,

@@ -1,20 +1,3 @@
-"""Palet, kontras, tema, dan satu satunya skrip sebaris di situs ini.
-
-Warna adalah tempat paling mudah membuat klaim yang tidak diuji. Komentar di
-kepala `style.css` menyebut angka rasio kontras; tanpa berkas ini, angka itu
-hanya kalimat yang kebetulan ada di sana, dan akan tetap ada di sana lama
-sesudah warnanya bergeser.
-
-Yang dijaga:
-
-1. Tiap pasangan teks dan latar lolos 4,5:1, dihitung ulang dari CSS-nya,
-   bukan dari angka yang diketik di komentar.
-2. Angka yang ditulis di komentar memang angka yang dihitung.
-3. Tema gelap tidak kembali menempel pada prefers-color-scheme.
-4. Tiap halaman punya skrip anti-kedip, dan hash CSP-nya cocok.
-5. Salinan CSS di port Next.js tidak tertinggal.
-"""
-
 from __future__ import annotations
 
 import re
@@ -32,14 +15,8 @@ from hash_skrip import hash_csp, hash_terpasang, skrip_sebaris  # noqa: E402
 from kontras import AMBANG, matriks, rasio, token  # noqa: E402
 
 GAYA = (AKAR / "assets" / "css" / "style.css").read_text(encoding="utf-8")
-# Komentar dibuang sebelum diperiksa: komentar boleh menyebut aturan lama
-# untuk menjelaskan kenapa ia diganti, dan uji yang melarang itu akan
-# menghukum penjelasan yang justru berguna.
 GAYA_TANPA_KOMENTAR = re.sub(r"/\*.*?\*/", "", GAYA, flags=re.DOTALL)
 KEPALA = (AKAR / "_headers").read_text(encoding="utf-8")
-
-
-# ------------------------------------------------------------------ warna ---
 
 
 @pytest.mark.parametrize("tema", ["terang", "gelap"])
@@ -49,8 +26,6 @@ def test_setiap_pasangan_teks_lolos_wcag(tema):
 
 
 def test_latar_terang_memang_putih_keabuan():
-    """Permintaannya jelas: putih agak ke abu abu, seperti aplikasi Uber.
-    Bukan putih polos, bukan abu abu tua, dan bukan abu abu yang punya rona."""
     warna = token("terang")
     heks = warna["bg"].lstrip("#")
     r, g, b = (int(heks[i:i + 2], 16) for i in (0, 2, 4))
@@ -69,8 +44,7 @@ def test_seluruh_abu_abu_terang_netral():
         assert r == g == b, f"--{n} {warna[n]} punya rona; palet Uber netral"
 
 
-def test_angka_di_komentar_memang_dihitung():
-    """Komentar yang berbohong lebih berbahaya daripada tidak ada komentar."""
+def test_angka_kontras_yang_dicatat_memang_dihitung():
     warna = token("terang")
     disebut = {
         "ink": 19.43, "ink-2": 7.01, "ink-3": 5.31, "accent": 4.96,
@@ -78,37 +52,26 @@ def test_angka_di_komentar_memang_dihitung():
     for n, nilai in disebut.items():
         nyata = rasio(warna[n], warna["bg"])
         assert abs(nyata - nilai) < 0.02, (
-            f"komentar menyebut --{n} {nilai}:1 terhadap --bg, "
+            f"tercatat --{n} {nilai}:1 terhadap --bg, "
             f"yang sebenarnya {nyata:.2f}:1"
         )
-
-    terendah = min(n for _, _, n in matriks("terang"))
-    assert "4.54:1" in GAYA, f"pasangan terendah sekarang {terendah:.2f}:1"
 
 
 def test_paling_rendah_yang_disebut_memang_paling_rendah():
     for tema, sebut in (("terang", 4.54), ("gelap", 5.19)):
         terendah = min(n for _, _, n in matriks(tema))
         assert abs(terendah - sebut) < 0.02, (
-            f"tema {tema}: komentar menyebut {sebut}:1, terendah sebenarnya {terendah:.2f}:1"
+            f"tema {tema}: tercatat {sebut}:1, terendah sebenarnya {terendah:.2f}:1"
         )
 
 
 def test_semua_token_warna_ada_di_kedua_tema():
-    """Token yang cuma ada di satu tema akan mewarisi nilai tema satunya,
-    dan itu hampir selalu tabrakan yang tidak terlihat di layar penulisnya."""
     terang, gelap = token("terang"), token("gelap")
     hanya_gelap = set(gelap) - set(terang)
     assert not hanya_gelap, f"token cuma ada di tema gelap: {sorted(hanya_gelap)}"
 
 
-# ------------------------------------------------------------------- tema ---
-
-
 def test_tema_gelap_tidak_lagi_otomatis():
-    """Kalau ini kembali jadi @media, pembaca yang sistemnya gelap tidak akan
-    pernah melihat latar putih keabuan yang diminta, dan tidak punya cara
-    memintanya."""
     assert ':root[data-theme="dark"] {' in GAYA_TANPA_KOMENTAR
     assert "prefers-color-scheme" not in GAYA_TANPA_KOMENTAR, (
         "palet gelap kembali menempel pada setelan sistem"
@@ -125,8 +88,6 @@ def test_setiap_halaman_punya_saklar_tema(berkas):
 
 @pytest.mark.parametrize("berkas", HALAMAN, ids=nama)
 def test_skrip_tema_jalan_sebelum_lembar_gaya(berkas):
-    """Urutannya penting. Skrip yang datang sesudah CSS tetap mencegah kedip,
-    tetapi skrip yang datang sesudah <body> tidak."""
     teks = berkas.read_text(encoding="utf-8")
     assert "hk-tema" in teks, f"{nama(berkas)} tidak punya skrip anti-kedip"
     assert teks.index("hk-tema") < teks.index("<body"), (
@@ -144,9 +105,6 @@ def test_theme_color_ikut_latar(berkas):
     )
 
 
-# -------------------------------------------------------------------- CSP ---
-
-
 def test_hash_csp_cocok_dengan_skrip_yang_ada():
     assert subprocess.run(
         [sys.executable, str(AKAR / "tools" / "hash_skrip.py")],
@@ -155,8 +113,6 @@ def test_hash_csp_cocok_dengan_skrip_yang_ada():
 
 
 def test_csp_tidak_membuka_unsafe_inline_untuk_skrip():
-    """Hash mengizinkan satu skrip yang sudah dikenal. 'unsafe-inline'
-    mengizinkan semuanya, termasuk yang disuntikkan lewat XSS."""
     csp = next(b for b in KEPALA.splitlines() if "Content-Security-Policy" in b)
     skrip = next(b.strip() for b in csp.split(";") if b.strip().startswith("script-src"))
     assert "'unsafe-inline'" not in skrip, skrip
@@ -166,15 +122,10 @@ def test_csp_tidak_membuka_unsafe_inline_untuk_skrip():
 
 @pytest.mark.parametrize("berkas", HALAMAN, ids=nama)
 def test_tidak_ada_skrip_sebaris_lain(berkas):
-    """Tiap skrip sebaris baru butuh hash baru, dan yang lupa dihitung akan
-    diam diam ditolak peramban tanpa satu pun pesan di halaman."""
     for isi in skrip_sebaris(berkas):
         assert hash_csp(isi) in hash_terpasang(), (
             f"{nama(berkas)} punya skrip sebaris tanpa hash di _headers:\n  {isi[:80]}"
         )
-
-
-# ------------------------------------------------------------ port Next.js ---
 
 
 def test_gaya_port_next_tidak_tertinggal():
@@ -193,23 +144,11 @@ def test_port_next_punya_saklar_tema_juga():
 
 
 def test_kunci_penyimpanan_sama_di_kedua_versi():
-    """Kalau kuncinya berbeda, pindah dari satu versi ke satunya akan
-    melupakan pilihan pembacanya tanpa alasan yang bisa dijelaskan."""
     app = (AKAR / "assets" / "js" / "app.js").read_text(encoding="utf-8")
     tata = (AKAR / "next" / "app" / "layout.tsx").read_text(encoding="utf-8")
     assert 'TEMA_KEY = "hk-tema"' in app
     assert '"hk-tema"' in tata
 
-
-# ------------------------------------------------------------------- font ---
-
-# Poppins dipindahkan ke dalam repositori ini pada 13 September 2026. Yang
-# dijaga di bawah bukan selera, melainkan tiga hal yang gampang hilang lagi
-# diam diam: tidak ada halaman yang kembali memanggil Google, berkas yang
-# dideklarasikan memang ada, dan preload-nya menunjuk alamat yang sama persis
-# dengan yang dipakai @font-face. Preload yang alamatnya selisih satu karakter
-# tetap diunduh, lalu diunduh kedua kalinya oleh CSS, dan hasilnya bukan lebih
-# cepat melainkan dua kali lebih berat.
 
 FONT = AKAR / "assets" / "fonts"
 TEBAL_PRELOAD = (400, 600, 700)
@@ -229,8 +168,6 @@ def test_tidak_ada_halaman_yang_memanggil_google(berkas):
 
 
 def test_csp_menutup_asal_font_luar():
-    # Komentarnya memang menyebut kedua asal itu, untuk menjelaskan kenapa
-    # keduanya dicabut. Yang diperiksa arahannya, bukan penjelasannya.
     arahan = "\n".join(
         b for b in KEPALA.splitlines() if not b.lstrip().startswith("#")
     )
@@ -248,9 +185,6 @@ def test_setiap_font_yang_dideklarasikan_ada_berkasnya():
 
 
 def test_catatan_font_cocok_dengan_berkasnya():
-    """tools/ambil_font.py --periksa menghitung sha256 tiap berkas dan
-    membandingkannya dengan assets/fonts/sumber.json. Luring: CI tidak ikut
-    bergantung pada Google untuk bisa lulus."""
     hasil = subprocess.run(
         [sys.executable, str(AKAR / "tools" / "ambil_font.py"), "--periksa"],
         capture_output=True, text=True, cwd=AKAR,
@@ -259,7 +193,6 @@ def test_catatan_font_cocok_dengan_berkasnya():
 
 
 def test_lisensi_font_ikut_dibawa():
-    """OFL 1.1 menuntut salinan lisensinya menyertai font yang disebarkan."""
     ofl = (FONT / "OFL.txt").read_text(encoding="utf-8")
     assert "SIL Open Font License" in ofl
     assert "Poppins" in ofl
@@ -288,9 +221,6 @@ def test_preload_font_menunjuk_alamat_yang_dipakai_css(berkas):
 
 @pytest.mark.parametrize("berkas", HALAMAN)
 def test_preload_font_memakai_crossorigin(berkas):
-    """Tanpa crossorigin, permintaan preload dan permintaan CSS dianggap dua
-    hal berbeda oleh peramban, dan fontnya diunduh dua kali. Aturan ini
-    berlaku walau fontnya dari asal sendiri."""
     teks = berkas.read_text(encoding="utf-8")
     for tag in re.findall(r'<link rel="preload"[^>]*assets/fonts[^>]*>', teks):
         assert 'as="font"' in tag, tag
@@ -299,8 +229,6 @@ def test_preload_font_memakai_crossorigin(berkas):
 
 
 def test_hanya_subset_latin_yang_disimpan():
-    """Poppins juga membawa devanagari, sekitar 17 KB per tebal, dan situs ini
-    tidak memuat satu pun aksara itu."""
     semua = sorted(p.name for p in FONT.glob("*.woff2"))
     assert semua, "tidak ada berkas font"
     for n in semua:
@@ -312,22 +240,7 @@ def test_hanya_subset_latin_yang_disimpan():
     assert latin < 40 * 1024, f"subset latin berjumlah {latin / 1024:.1f} KB"
 
 
-# ------------------------------------------------------- skala huruf ---
-
-# Situs dan dashboard sempat punya skalanya masing masing, dan hasilnya tidak
-# sekadar berbeda melainkan berbeda ke dua arah sekaligus: teks isi di
-# dashboard 13,6 px sedangkan di situs 15 px, judul kartu 16,8 px sedangkan di
-# situs 18 px, tetapi tombolnya justru 16 px sedangkan di situs 15 px. Dua
-# permukaan yang dibuat orang yang sama terasa seperti dua aplikasi.
-#
-# Sekarang angkanya satu sumber, di :root. Uji di bawah menjaga supaya tidak
-# ada yang kembali mengetik angka sendiri di salah satunya.
-
 ADMIN_CSS = (AKAR / "next" / "app" / "admin" / "admin.module.css").read_text(encoding="utf-8")
-# Komentar dibuang sebelum diperiksa, sama seperti GAYA_TANPA_KOMENTAR di atas.
-# Komentar di sini justru MENJELASKAN urutan font-size dan `font: inherit`,
-# jadi uji yang membacanya sebagai kode akan menghukum penjelasannya. Itu
-# sudah terjadi sekali di berkas ini.
 ADMIN_KODE = re.sub(r"/\*.*?\*/", "", ADMIN_CSS, flags=re.DOTALL)
 
 SKALA = ("--fs-xs", "--fs-sm", "--fs-md", "--fs-lg", "--fs-xl")
@@ -335,18 +248,13 @@ SKALA = ("--fs-xs", "--fs-sm", "--fs-md", "--fs-lg", "--fs-xl")
 
 @pytest.mark.parametrize("nama", SKALA)
 def test_skala_huruf_ada_di_root(nama):
-    warna = token("terang")  # hanya untuk memastikan blok :root memang terbaca
+    warna = token("terang")
     assert warna
     akar = GAYA.split("\n:root {", 1)[1].split("\n}", 1)[0]
     assert f"{nama}:" in akar, f"{nama} tidak ada di :root"
 
 
 def test_dashboard_tidak_mengetik_ukuran_huruf_sendiri():
-    """Setiap ukuran huruf di dashboard datang dari skala bersama.
-
-    Angka yang diketik langsung akan hanyut dari situsnya, dan hanyutnya tidak
-    terlihat sampai seseorang membuka keduanya berdampingan.
-    """
     harfiah = re.findall(r"font-size:\s*([0-9.]+(?:rem|px|em))", ADMIN_KODE)
     assert not harfiah, f"ukuran huruf yang diketik langsung: {sorted(set(harfiah))}"
 
@@ -357,20 +265,11 @@ def test_dashboard_memakai_skalanya():
 
 
 def test_situs_juga_memakai_skala_yang_sama():
-    """Token yang cuma dipakai dashboard bukan skala bersama, melainkan skala
-    dashboard yang kebetulan tinggal di berkas situs."""
     for nama in ("--fs-xs", "--fs-sm", "--fs-md"):
         assert GAYA.count(f"var({nama})") >= 3, f"{nama} hampir tidak dipakai situs"
 
 
 def test_font_size_tidak_tertimpa_pemendekan_font():
-    """`font: inherit` adalah pemendekan yang MENYETEL ULANG font-size.
-
-    Menulis font-size di ATASNYA berarti nilainya hilang tanpa jejak. Itu sudah
-    terjadi di sini: tombol dashboard kembali 16 px sementara tombol di situs
-    15 px, dan yang terlihat cuma tombolnya sedikit lebih besar tanpa satu pun
-    galat.
-    """
     for blok in re.findall(r"\{[^{}]*font:\s*inherit[^{}]*\}", ADMIN_KODE):
         if "font-size" not in blok:
             continue

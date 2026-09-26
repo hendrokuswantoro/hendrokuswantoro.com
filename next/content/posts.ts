@@ -1,9 +1,5 @@
 import type { Copy } from "./i18n";
 
-/* Jenisnya sama persis dengan yang dihasilkan tools/markah.py, dan
- * tests/test_penyunting.py menahan keduanya tetap sama. Port yang mengenal
- * lebih sedikit jenis daripada pengurainya akan menerbitkan halaman yang
- * kehilangan satu gambar tanpa satu pun galat. */
 export type Block =
   | { kind: "p"; text: Copy }
   | { kind: "h2"; text: Copy }

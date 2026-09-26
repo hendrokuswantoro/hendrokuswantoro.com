@@ -1,15 +1,3 @@
-"""Pembantu bersama seluruh rangkaian uji.
-
-Selain menaruh konftes.py di jalur impor, berkas ini memegang fixture
-peramban: server statis yang menyajikan situs dengan CSP yang sama persis
-dengan yang disajikan Cloudflare, dan halaman Playwright yang mengumpulkan
-galat konsol.
-
-Fixture-nya ada di sini, bukan di salah satu berkas uji, karena dipakai dua
-berkas. Fixture yang tinggal di satu berkas uji tidak pernah terlihat berkas
-lain, dan kegagalannya berbunyi "fixture not found" yang menyesatkan.
-"""
-
 import contextlib
 import collections
 import os
@@ -19,16 +7,6 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
-# Pembatas laju menghitung per alamat, dan seluruh rangkaian uji datang dari
-# satu alamat yang sama, "testclient". Dengan batas produksi 120 permintaan
-# per menit, berkas uji yang dijalankan sendiri sendiri lolos sedangkan yang
-# dijalankan bersama sama mulai dijawab 429 di tengah jalan, dan pesan
-# gagalnya menyesatkan: ia berbunyi seolah passkey-nya yang ditolak.
-#
-# Yang dinaikkan hanya batas laju, bukan penguncian setelah lima sandi salah.
-# Keduanya sama sama menjawab 429 tetapi mekanismenya berbeda, dan justru
-# karena batas laju dinaikkan di sini, 429 di test_auth.py hanya mungkin
-# datang dari penguncian yang memang sedang diujinya.
 os.environ.setdefault("LAJU_JUMLAH", "100000")
 
 import http.server
@@ -41,38 +19,15 @@ import pytest
 
 from konftes import AKAR
 
-# --- faktor kedua dimatikan untuk seluruh uji, dengan sengaja ---------------
-#
-# Sejak 19 September 2026 jalur tulis menuntut sesi yang lahir lewat faktor
-# kedua. Akun uji di mesin ini tidak punya TOTP, jadi tanpa baris ini seluruh
-# uji tulis menjawab 403.
-#
-# Kenapa dimatikan, bukan akun ujinya yang dipasangi TOTP: memasangnya
-# mengubah keadaan akun yang sama yang dipakai uji peramban, dan uji peramban
-# masuk dengan sandi saja. Satu berkas uji akan memperbaiki dirinya sendiri
-# sambil mematahkan berkas uji lain, dan yang patah baru terlihat kalau
-# keduanya dijalankan berurutan.
-#
-# Yang membuktikan aturannya benar benar berlaku ada di
-# tests/test_faktor_kedua_wajib.py, termasuk satu uji yang menyalakannya lagi
-# lalu menuntut 403. Mematikan sebuah penjaga di sini hanya sah selama ada
-# yang menguji penjaganya sendiri di sana.
-#
-# setdefault, bukan penugasan langsung: siapa pun yang menjalankan ujinya
-# dengan FAKTOR_KEDUA_WAJIB=1 di lingkungannya tetap mendapat yang ia minta.
 os.environ.setdefault("FAKTOR_KEDUA_WAJIB", "false")
 
 try:
     from playwright.sync_api import Page, sync_playwright
-except ImportError:  # playwright belum terpasang, fixture-nya tidak akan dipakai
+except ImportError:
     Page = object  # type: ignore[assignment,misc]
     sync_playwright = None  # type: ignore[assignment]
 
 
-# CSP yang sama dengan yang disajikan Cloudflare. Tanpa ini, uji berjalan di
-# bawah aturan yang lebih longgar daripada produksi, dan justru kegagalan
-# akibat CSP yang paling sulit ditemukan belakangan: pelanggaran di dalam
-# worker tidak muncul di konsol halaman sama sekali.
 def _csp() -> str:
     for baris in (AKAR / "_headers").read_text(encoding="utf-8").splitlines():
         if "Content-Security-Policy:" in baris:
@@ -101,36 +56,12 @@ class Penyaji(http.server.SimpleHTTPRequestHandler):
         pass
 
 
-# Porta tetap, dengan porta acak sebagai cadangan.
-#
-# Alasannya bukan kerapian melainkan Mapbox. Token petanya dibatasi per URL,
-# dan pembatasan itu mencocokkan asal, bukan jalur. Porta yang berganti tiap
-# kali uji dijalankan berarti asal yang tidak pernah bisa didaftarkan, dan
-# ubinnya dijawab 403 selamanya.
 PORTA_UJI = 8099
 
-# Dan alamatnya "localhost", BUKAN "127.0.0.1".
-#
-# Pada 14 September 2026 console.mapbox.com menolak alamat IP dengan kalimat
-# tersurat: "IP addresses are not supported in URL restrictions. Use a domain
-# name instead." Jadi selama server uji ini menjawab di 127.0.0.1, asalnya
-# tidak akan pernah bisa didaftarkan, dan empat uji peta akan dilewati
-# selamanya di tiap mesin dan di CI. Yang pindah server ujinya, bukan
-# pemiliknya yang harus memaksa Mapbox.
-#
-# "localhost" adalah nama domain, dan itu sudah cukup bagi Mapbox maupun bagi
-# WebAuthn, yang menuntut hal yang sama untuk alasan yang berbeda.
 INANG_UJI = "localhost"
 
 
 def _porta() -> int:
-    """Porta yang bebas di KEDUA tumpukan, bukan cuma di IPv4.
-
-    localhost menunjuk ke dua alamat, dan server ini mengikat keduanya. Porta
-    yang bebas di 127.0.0.1 tetapi terpakai di ::1 akan membuat separuh
-    permintaan gagal, dan gagalnya bergantung pada urutan resolusi nama, yang
-    berbeda antara Windows dan Linux.
-    """
     def bebas(porta: int) -> bool:
         for keluarga, alamat in ((socket.AF_INET, "127.0.0.1"), (socket.AF_INET6, "::1")):
             try:
@@ -148,29 +79,12 @@ def _porta() -> int:
 
 
 def _server(keluarga: int, alamat: str, porta: int):
-    """Satu server pada satu tumpukan. Dipanggil dua kali.
-
-    Windows menjawab localhost dengan ::1 lebih dulu, Linux dengan 127.0.0.1.
-    Server yang cuma mengikat satu di antaranya membuat tiap permintaan
-    menunggu tenggang sambungan sebelum mencoba yang lain; terukur 2050 ms
-    lawan 16 ms pada mesin ini. Mengikat "::" akan menyelesaikannya sekaligus,
-    tetapi itu membuka server uji ke seluruh jaringan lokal. Dua soket
-    loopback lebih murah daripada itu.
-    """
     class Loopback(http.server.ThreadingHTTPServer):
         address_family = keluarga
         daemon_threads = True
         allow_reuse_address = True
 
         def handle_error(self, request, client_address):
-            """Sambungan yang diputus peramban bukan galat.
-
-            Peramban membatalkan permintaan yang tidak jadi dipakai, misalnya
-            ubin peta yang keburu keluar layar, dan bawaan http.server
-            mencetak jejak tumpukan penuh untuk tiap satunya. Jejak itu
-            muncul di tengah keluaran pytest dan terbaca seperti ujinya yang
-            rusak. Galat lain tetap dicetak.
-            """
             import sys
             if isinstance(sys.exc_info()[1], (ConnectionError, TimeoutError)):
                 return
@@ -183,7 +97,6 @@ def _server(keluarga: int, alamat: str, porta: int):
 
 @pytest.fixture(scope="session")
 def situs():
-    """Menyajikan situs statis persis seperti Cloudflare menyajikannya."""
     Penyaji.csp = _csp()
     porta = _porta()
 
@@ -191,8 +104,6 @@ def situs():
     try:
         server.append(_server(socket.AF_INET6, "::1", porta))
     except OSError:
-        # mesin tanpa IPv6. Di sana localhost menunjuk ke 127.0.0.1 saja,
-        # dan server pertama sudah cukup.
         pass
 
     try:
@@ -221,12 +132,6 @@ def halaman(peramban):
     p.on("pageerror", lambda e: p.galat.append(str(e)))
     p.on("console", lambda m: p.galat.append(m.text) if m.type == "error" else None)
 
-    # Jawaban yang ditolak ikut dicatat beserta alamatnya.
-    #
-    # Pesan konsol untuk berkas yang gagal dimuat berbunyi "Failed to load
-    # resource: the server responded with a status of 403 ()", tanpa menyebut
-    # alamatnya sama sekali. Tanpa daftar ini, 403 dari ubin Mapbox yang
-    # dibatasi per URL tidak bisa dibedakan dari 403 yang benar benar salah.
     p.tolakan = []
     p.on("response", lambda r: p.tolakan.append((r.url, r.status)) if r.status >= 400 else None)
 
@@ -235,58 +140,12 @@ def halaman(peramban):
 
 
 def buka(halaman: Page, situs: str, jalur: str) -> None:
-    """Membuka halaman lalu menunggu sampai app.js selesai menyiapkannya.
-
-    Dulu yang ditunggu "networkidle", dan itu salah untuk satu halaman:
-    /project memuat peta, peta terus meminta ubin selama masih terlihat, dan
-    jaringan yang tidak pernah diam selama 500 ms tidak pernah memenuhi
-    syarat itu. Hasilnya Page.goto berjalan sampai batas 30 detik lalu gagal,
-    dengan pesan yang hanya menyebut timeout dan tidak menyebut peta sama
-    sekali. Di mesin ini ia lolos justru karena tokennya dibatasi per URL:
-    tiap ubin dijawab 403 dalam sekejap, jaringannya diam, dan ujinya hijau
-    karena petanya rusak. Di CI, OpenFreeMap menjawab sungguhan, ubinnya
-    mengalir, dan ujinya gagal.
-
-    Sekarang yang ditunggu `data-siap`, dipasang app.js di akhir boot(). Itu
-    pernyataan dari kode yang menyiapkan halamannya, bukan tebakan dari
-    perilaku jaringan. Uji yang butuh petanya benar benar siap memanggil
-    `peta_siap()` sendiri, dan itu memang urusan uji peta, bukan urusan
-    pembuka halaman.
-    """
     halaman.goto(f"{situs}{jalur}", wait_until="load")
     halaman.wait_for_selector("html[data-siap]", state="attached", timeout=15000)
 
 
-# --------------------------------------------------------------- sandi uji ---
-
-# Rangkaian uji yang butuh basis data ikut masuk sebagai admin, dan selama ini
-# ia mengandalkan sandi yang kebetulan terpasang di basis data pengembangan.
-# Begitu pemiliknya mengganti sandinya sendiri, sebelas uji gagal sekaligus
-# dengan pesan 401 yang tidak menyebut sebabnya sama sekali.
-#
-# Jadi ujinya memasang sandinya sendiri di awal sesi lalu MENGEMBALIKAN hash
-# yang tadi ada di akhir sesi. Yang disimpan dan dikembalikan hashnya, bukan
-# sandinya: sandinya memang tidak diketahui siapa pun di sini, dan memang
-# tidak perlu diketahui.
-
 from konftes import EMAIL_UJI, SANDI_UJI  # noqa: E402
 
-# Titipan hash asli, supaya pengembaliannya selamat dari sesi yang mati.
-#
-# Rancangan "simpan di memori, kembalikan di finally" hanya benar selama
-# prosesnya hidup sampai akhir. Pada 14 September 2026 satu jalannya pytest
-# dihentikan paksa di tengah, finally-nya tidak pernah jalan, dan sandi uji
-# tertinggal terpasang di akun admin. Yang lebih buruk: sesi berikutnya
-# membaca hash yang sudah tertukar itu sebagai "yang asli" lalu menyimpannya,
-# sehingga sandi aslinya hilang untuk selamanya, bukan sekadar tertunda
-# kembalinya.
-#
-# Karena itu hash aslinya dititipkan ke berkas lebih dulu. Sesi berikutnya
-# mengembalikannya sebelum mengerjakan apa pun, jadi satu sesi yang mati
-# paling jauh cuma menunda, tidak lagi menghancurkan.
-#
-# Isinya hash, bukan sandi, dan letaknya di cadangan/ yang sudah diabaikan
-# git. Berkasnya dihapus begitu pengembaliannya berhasil.
 TITIPAN = AKAR / "cadangan" / "sandi-admin-sebelum-uji.txt"
 
 
@@ -315,24 +174,6 @@ def _dsn() -> str:
     return os.environ.get("DSN", "")
 
 
-# Keadaan faktor kedua milik akun sungguhan, dijaga dengan cara yang sama.
-#
-# `tests/test_keamanan_alur.py` menjalankan
-#
-#     UPDATE users SET totp_rahasia = NULL, totp_aktif_pada = NULL,
-#                      email_terverifikasi_pada = NULL
-#
-# tanpa WHERE, sebab tiap uji memang harus mulai dari akun yang faktor
-# keduanya mati. Yang tidak disadari: di basis data pengembangan tabel itu
-# berisi akun sungguhan, jadi sekali rangkaian uji dijalankan, TOTP yang sudah
-# dipasang ikut mati dan email yang sudah terbukti kembali jadi belum terbukti.
-# Tidak ada galat dan tidak ada peringatan. Yang terjadi cuma authenticator
-# yang tiba tiba tidak diminta lagi saat masuk, dan itu penurunan keamanan yang
-# tidak diputuskan siapa pun.
-#
-# Pada 14 September 2026 ketiganya kebetulan memang sudah kosong, jadi tidak
-# ada yang hilang. Jebakannya tetap dipasangi penjaga sekarang, bukan nanti
-# sesudah TOTP dinyalakan.
 TITIPAN_FAKTOR = AKAR / "cadangan" / "faktor-kedua-sebelum-uji.json"
 KOLOM_FAKTOR = ("totp_rahasia", "totp_aktif_pada", "email_terverifikasi_pada")
 
@@ -357,15 +198,6 @@ def faktor_kedua_untuk_uji():
         TITIPAN_FAKTOR.write_text(json.dumps(nilai, default=str), encoding="utf-8")
 
     def pulihkan(simpanan):
-        """Mengembalikan kolom faktor kedua DAN kode pemulihannya.
-
-        Kode pemulihan ikut, dan itu bukan kelebihan kehati hatian. Mematikan
-        TOTP memang menghapus seluruh kode pemulihan, dan itu perilaku yang
-        benar. Tetapi ujinya menjalankan hal itu pada akun sungguhan, jadi
-        tanpa baris ini akun pemiliknya berakhir dalam keadaan ganjil:
-        rahasia TOTP-nya kembali, sedangkan kode pemulihan yang sudah ia catat
-        di tempat aman tidak berlaku lagi, tanpa satu pun pemberitahuan.
-        """
         kolom, kode = simpanan["kolom"], simpanan["kode"]
         with psycopg.connect(dsn) as s, s.cursor() as k:
             k.execute(
@@ -438,9 +270,6 @@ def sandi_admin_untuk_uji():
 
     try:
         with psycopg.connect(dsn, connect_timeout=3) as s, s.cursor() as k:
-            # Sesi sebelumnya mungkin mati sebelum sempat mengembalikan.
-            # Kalau titipannya masih ada, itu yang benar, bukan yang ada di
-            # basis data sekarang.
             tertinggal = _titipan_baca()
             if tertinggal:
                 k.execute("UPDATE users SET sandi_hash=%s WHERE lower(email)=lower(%s)",
@@ -471,13 +300,6 @@ def sandi_admin_untuk_uji():
         _titipan_hapus()
 
 
-# --------------------------------------------------- server admin sungguhan ---
-#
-# Dipakai uji peramban yang perlu halaman admin BESERTA API-nya, bukan situs
-# statis. Ditaruh di sini, bukan di salah satu berkas uji, sebab dua berkas
-# sudah memakainya dan fixture yang tinggal di satu berkas uji tidak pernah
-# terlihat berkas lain.
-
 TENGGAT_SERVER_DETIK = 45
 
 
@@ -496,40 +318,6 @@ def _ada_basis_data() -> bool:
 
 @pytest.fixture(scope="module")
 def server_admin():
-    """API dan halaman admin di http://localhost:<porta>.
-
-    Ber-scope MODUL, bukan sesi. Dengan satu server dipakai bersama seluruh
-    berkas uji peramban, berkas yang jalan belakangan gagal seluruhnya
-    sementara berkas yang sama lolos kalau dijalankan sendirian.
-
-    **Sebabnya sudah ketemu pada 18 September 2026: pipa stdout yang penuh.**
-    Server ini dijalankan dengan `stdout=PIPE`, dan backend mencatat SETIAP
-    permintaan sebagai satu baris JSON ke stdout. Pipanya hanya dibaca kalau
-    prosesnya mati lebih awal, jadi selama ia hidup tidak ada yang
-    mengosongkannya. Begitu penyangga pipa milik sistem penuh, tulisan
-    berikutnya memblokir, dan yang memblokir adalah proses servernya sendiri:
-    ia berhenti menjawab tanpa mati, tanpa galat, dan tanpa satu baris pun di
-    mana pun. Persis gejala yang dulu tidak terjelaskan.
-
-    Ketahuan lewat uji unggahan: menambah pratinjau yang memanggil server tiap
-    setengah detik membuat pipanya penuh jauh lebih cepat, dan hasilnya
-    unggahan yang menggantung selamanya di tengah jalan.
-
-    Sekarang pipanya dikuras utas latar terus menerus ke dalam deque
-    berbatas, jadi ia tidak pernah penuh dan seribu baris terakhirnya tetap
-    ada untuk pesan galat. Scope modul dipertahankan: ia murah, dan servernya
-    memang lebih sehat kalau tidak dipakai lintas berkas.
-
-    Namanya WAJIB localhost, bukan 127.0.0.1. WebAuthn menuntut rp_id berupa
-    nama domain, dan alamat IP bukan nama domain, jadi seluruh uji passkey
-    lewat peramban hanya mungkin di alamat bernama. WEBAUTHN_ASAL harus
-    menyebut porta acaknya juga, sebab asal dibandingkan lengkap dengan
-    portanya.
-
-    Dijalankan sebagai subproses lewat `backend/jalan.py`, bukan di dalam
-    utas, sebab berkas itulah yang tahu cara menghindari ProactorEventLoop
-    yang ditolak psycopg di Windows.
-    """
     if not _ada_basis_data():
         pytest.skip("tidak ada basis data. cd infrastructure && docker compose up -d")
 
@@ -539,8 +327,6 @@ def server_admin():
     lingkungan = dict(os.environ)
     lingkungan["WEBAUTHN_RP_ID"] = "localhost"
     lingkungan["WEBAUTHN_ASAL"] = f'["{asal}"]'
-    # Tanpa HTTPS, cookie ber-Secure tidak pernah tersimpan, dan sesi yang
-    # tidak tersimpan terlihat persis seperti masuk yang gagal.
     lingkungan["COOKIE_AMAN"] = "false"
 
     proses = subprocess.Popen(
@@ -549,8 +335,6 @@ def server_admin():
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
     )
 
-    # Pipanya dikuras terus menerus, bukan dibaca saat dibutuhkan saja.
-    # Alasannya di docstring di atas: pipa yang penuh memblokir servernya.
     catatan: collections.deque[str] = collections.deque(maxlen=1000)
 
     def kuras() -> None:
@@ -595,18 +379,6 @@ def server_admin():
 
 
 def tab_dengan_otentikator(peramban):
-    """Satu konteks baru dengan authenticator maya Chrome sudah terpasang.
-
-    Memakai fixture `peramban` yang sudah ada, bukan membuka Playwright kedua.
-    Versi pertama membuka instans sendiri, dan akibatnya seluruh uji peramban
-    lama gagal saat dijalankan bersama sama: "It looks like you are using
-    Playwright Sync API inside the asyncio loop". Satu proses hanya boleh
-    memegang satu Playwright sinkron.
-
-    Ia membuat pasangan kunci sungguhan dan menandatangani sungguhan; yang
-    tidak sungguhan cuma sensornya. Tanda tangannya tetap diverifikasi
-    pustaka `webauthn` yang sama dengan yang dipakai produksi.
-    """
     konteks = peramban.new_context(viewport={"width": 1280, "height": 900})
     tab = konteks.new_page()
 
@@ -614,9 +386,6 @@ def tab_dengan_otentikator(peramban):
     cdp.send("WebAuthn.enable")
     hasil = cdp.send("WebAuthn.addVirtualAuthenticator", {
         "options": {
-            # "internal" adalah sensor yang menempel pada perangkatnya, yaitu
-            # yang orang sebut sidik jari. Itu yang dituntut halaman admin
-            # lewat AuthenticatorAttachment.PLATFORM.
             "protocol": "ctap2",
             "transport": "internal",
             "hasResidentKey": True,
@@ -632,7 +401,6 @@ def tab_dengan_otentikator(peramban):
 
 
 def masuk_admin(tab, asal):
-    """Masuk dengan sandi ke halaman admin, lalu menunggu dashboardnya siap."""
     tab.goto(f"{asal}/admin", wait_until="domcontentloaded")
     tab.wait_for_selector("#tombol-masuk")
     tab.fill("#email", EMAIL_UJI)

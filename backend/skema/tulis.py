@@ -1,9 +1,3 @@
-"""Bentuk data yang masuk lewat jalur admin.
-
-Dipisah dari skema baca karena yang masuk dan yang keluar memang berbeda:
-yang masuk boleh separuh jadi (draf), yang keluar tidak pernah.
-"""
-
 from __future__ import annotations
 
 import datetime as dt
@@ -14,22 +8,11 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
 
-# Batas panjang, ditambahkan 26 September 2026. Sebelumnya isi dan paragraf
-# pembuka tidak punya batas sama sekali, dan yang menahannya hanya
-# client_max_body_size di nginx. Dua ratus ribu karakter kira kira tiga puluh
-# ribu kata, jauh di atas tulisan terpanjang di situs ini.
 PANJANG_ISI = 200_000
 PANJANG_LEDE = 2_000
 
 
 class TulisanMasuk(BaseModel):
-    """Satu tulisan, dua bahasa, keduanya wajib.
-
-    Panjang maksimalnya mencerminkan lebar kolom di basis data. Kalau tidak
-    dibatasi di sini, yang menolak adalah PostgreSQL, dan galatnya sampai ke
-    penulis sebagai 500 yang tidak menjelaskan apa apa.
-    """
-
     slug: str = Field(min_length=3, max_length=150)
     tanggal: dt.date
 
@@ -61,12 +44,6 @@ class TulisanMasuk(BaseModel):
 
     @model_validator(mode="after")
     def dua_bahasa_sebangun(self) -> "TulisanMasuk":
-        """Aturan yang sama dengan yang dijaga pembangkit situs statis.
-
-        Satu bahasa kehilangan satu paragraf adalah kegagalan yang diam:
-        halamannya tetap terbit, hanya isinya berbeda tergantung bahasa yang
-        sedang dipilih pembaca.
-        """
         import pathlib
         import sys
 
@@ -92,8 +69,6 @@ class TulisanMasuk(BaseModel):
 
 
 class TulisanUbah(BaseModel):
-    """Sunting sebagian. Yang tidak disebut tidak diubah."""
-
     judul_en: str | None = Field(default=None, min_length=1, max_length=200)
     judul_id: str | None = Field(default=None, min_length=1, max_length=200)
     ringkas_en: str | None = Field(default=None, min_length=1, max_length=300)

@@ -1,39 +1,3 @@
-"""Markdown ke HTML, hanya sebatas yang dipakai blog ini.
-
-Kenapa bukan pustaka Markdown yang sudah ada: situs ini tidak punya satu pun
-dependensi runtime, dan langkah build-nya berjalan di mesin Cloudflare yang
-tidak dijamin punya pip. Menambah satu paket demi empat bentuk markup adalah
-kompleksitas yang dilarang bab 15.1.
-
-Kenapa tidak berbahaya: pengurai ini **menolak** apa pun yang tidak dikenalnya
-dengan galat yang menyebut nomor barisnya. Pengurai setengah jadi yang diam
-diam menghasilkan HTML salah jauh lebih berbahaya daripada pengurai kecil yang
-berhenti dan mengadu.
-
-Yang didukung:
-
-    ## Judul bagian              -> <h2>
-    Paragraf biasa               -> <p>
-    > Kutipan                    -> <blockquote><p>
-    - butir                      -> <ul><li>
-    1. butir                     -> <ol><li>
-    ![keterangan](/unggahan/x)   -> <figure><img>
-    !video[keterangan](/ung/x)   -> <figure><video>
-    **tebal**  *miring*          -> <strong> <em>
-    `kode`                       -> <code>
-    [teks](alamat)               -> <a href>
-
-Yang ditolak dengan galat: heading selain ##, tabel, blok kode berpagar,
-HTML mentah, dan tautan referensi.
-
-Daftar, gambar, dan video ditambahkan 18 September 2026, bersama bilah
-format di dashboard admin. Sampai hari itu ketiganya ditolak, dan itu
-memang benar selama tidak ada satu pun cara mengunggah berkas: gambar yang
-menunjuk ke mana saja adalah gambar yang menunjuk ke server orang lain.
-Sekarang alamatnya dibatasi ke berkas yang memang diunggah ke sini, dan
-pembatasan itu ditegakkan di sini, di pengurai, bukan di antarmukanya.
-"""
-
 from __future__ import annotations
 
 import html
@@ -42,24 +6,11 @@ from dataclasses import dataclass
 
 
 class MarkahSalah(ValueError):
-    """Sintaks yang tidak didukung, disertai nomor baris."""
+    pass
 
 
 @dataclass(frozen=True)
 class Blok:
-    """Satu blok tingkat atas.
-
-    `jenis` salah satu dari h2, p, quote, ul, ol, gambar, video.
-
-    `teks` isi bloknya. Untuk gambar dan video ia keterangannya, dan boleh
-    kosong. Untuk ul dan ol ia selalu kosong; butirnya di `butir`.
-
-    `alamat` hanya terisi untuk gambar dan video. `butir` hanya terisi untuk
-    ul dan ol. Keduanya sengaja bukan subkelas terpisah: yang membaca Blok
-    ada tiga tempat, dan tiga tempat yang harus tahu tujuh kelas lebih mudah
-    tertinggal daripada tiga tempat yang membaca satu kelas.
-    """
-
     jenis: str
     teks: str
     baris: int
@@ -80,30 +31,10 @@ VIDEO = re.compile(r"^!video\[(?P<teks>[^\]]*)\]\((?P<alamat>[^)\s]+)\)$")
 BUTIR_UL = re.compile(r"^\s{0,3}[-*+]\s+(?P<teks>.+)$")
 BUTIR_OL = re.compile(r"^\s{0,3}\d{1,3}\.\s+(?P<teks>.+)$")
 
-# Berkas yang boleh disebut gambar dan video, dan dari mana saja.
-#
-# Hanya berkas yang memang diunggah ke situs ini. Gambar dari server orang
-# lain terdengar praktis dan tidak: tiap pembaca yang membuka tulisannya
-# mengirimkan alamat IP-nya ke server itu tanpa pernah memintanya, gambarnya
-# hilang pada hari pemiliknya merapikan berkasnya, dan Content-Security-Policy
-# situs ini memang sudah menolaknya, jadi yang terbit adalah kotak kosong.
-# Ditolak di sini berarti penulisnya tahu sebelum menekan Simpan.
 AWALAN_MEDIA = ("/unggahan/", "/assets/img/")
 AKHIRAN_GAMBAR = (".webp", ".avif", ".png", ".jpg", ".jpeg", ".gif")
 AKHIRAN_VIDEO = (".mp4", ".webm")
 
-# Ukuran gambar dititipkan di nama berkasnya, misalnya
-# "9f3c1a7b2d4e5f60-1600x900.webp".
-#
-# Kenapa di nama berkas dan bukan di markahnya: yang menuliskannya mesin
-# pengunggah, bukan orang, jadi ia tidak pernah salah ketik dan tidak pernah
-# lupa. Kenapa tidak dibaca dari berkasnya saat membangun: pembangkit situs
-# statis dan validator API berjalan di dua mesin yang berbeda, dan yang satu
-# tidak punya berkasnya.
-#
-# Tanpa ukuran, peramban baru tahu tinggi gambarnya sesudah mengunduhnya, dan
-# tulisan di bawahnya melompat. Itu bukan soal rapi: pembaca yang sedang
-# membaca kalimat kehilangan tempatnya.
 UKURAN = re.compile(r"-(\d{1,5})x(\d{1,5})\.[a-z0-9]+$")
 
 SEBARIS = re.compile(
@@ -115,7 +46,6 @@ SEBARIS = re.compile(
 
 
 def periksa_media(alamat: str, jenis: str) -> None:
-    """Menolak alamat gambar dan video yang tidak berasal dari situs ini."""
     if not alamat.startswith(AWALAN_MEDIA):
         raise MarkahSalah(
             f"alamat {jenis} harus berkas yang diunggah ke situs ini, "
@@ -134,7 +64,6 @@ def periksa_media(alamat: str, jenis: str) -> None:
 
 
 def ukuran(alamat: str) -> tuple[int, int] | None:
-    """Lebar dan tinggi yang dititipkan di nama berkasnya, kalau ada."""
     cocok = UKURAN.search(alamat)
     if cocok is None:
         return None
@@ -142,7 +71,6 @@ def ukuran(alamat: str) -> tuple[int, int] | None:
 
 
 def blok(sumber: str) -> list[Blok]:
-    """Memecah Markdown jadi blok tingkat atas, atau melempar MarkahSalah."""
     hasil: list[Blok] = []
     kumpul: list[str] = []
     butir: list[str] = []
@@ -171,13 +99,6 @@ def blok(sumber: str) -> list[Blok]:
             hasil.append(Blok("h2", isi.lstrip()[3:].strip(), nomor))
             continue
 
-        # Gambar dan video berdiri sendiri satu baris penuh.
-        #
-        # Yang diperiksa lebih dulu bentuknya, dan yang bentuknya hampir benar
-        # ditolak dengan galat, bukan dibiarkan turun jadi paragraf. Sebuah
-        # "![peta](/unggahan/a b.webp)" yang lolos jadi paragraf akan terbit
-        # sebagai tanda seru dan kurung siku di tengah tulisan, dan penulisnya
-        # baru tahu sesudah membaca halaman yang sudah terbit.
         telanjang = isi.lstrip()
         if telanjang.startswith("!"):
             for pola, ini in ((VIDEO, "video"), (GAMBAR, "gambar")):
@@ -210,10 +131,6 @@ def blok(sumber: str) -> list[Blok]:
             kumpul.append(telanjang[1:].strip())
             continue
 
-        # Daftar. Satu baris satu butir; butir yang dilanjutkan ke baris
-        # berikutnya belum didukung, dan tidak didukung diam diam: baris
-        # lanjutan tanpa tanda butir menutup daftarnya dan mulai jadi
-        # paragraf, persis seperti yang terlihat di layar.
         for pola, ini in ((BUTIR_UL, "ul"), (BUTIR_OL, "ol")):
             cocok = pola.match(isi)
             if cocok is None:
@@ -235,14 +152,6 @@ def blok(sumber: str) -> list[Blok]:
             kumpul.append(isi.strip())
 
     tutup()
-    # Tautan diperiksa di sini, bukan hanya saat HTML-nya dibangkitkan.
-    #
-    # Bedanya penting. Yang memanggil blok() adalah dua pihak: pembangkit
-    # situs statis, dan validator skema yang menjaga jalur tulis API. Kalau
-    # pemeriksaannya hanya ada di sebaris(), tulisan bertautan javascript:
-    # akan diterima API dengan tenang, tersimpan di basis data, dan baru
-    # meledak berhari hari kemudian saat situsnya dibangun ulang, jauh dari
-    # orang yang menulisnya dan dari sebabnya.
     for b in hasil:
         for potong in (b.teks, *b.butir):
             try:
@@ -253,32 +162,12 @@ def blok(sumber: str) -> list[Blok]:
     return hasil
 
 
-# Skema yang boleh muncul di dalam href.
-#
-# Escape saja tidak cukup, dan itu ditemukan lewat penyisiran, bukan lewat
-# membaca kode. `[klik](javascript:alert(1))` lolos sempurna: alamatnya
-# di-escape dengan benar, lalu dipasang apa adanya ke dalam href, dan
-# hasilnya tautan yang menjalankan JavaScript begitu diklik. Sama untuk
-# `data:text/html`, yang membuka halaman karangan penulisnya di atas asal
-# situs ini.
-#
-# Penulisnya memang hanya pemilik situs, dan itu justru alasan kenapa ini
-# diperbaiki, bukan alasan membiarkannya: "hanya admin yang bisa" adalah
-# anggapan yang gugur pada hari ada penulis kedua atau ada akun yang diambil
-# orang.
 SKEMA_BOLEH = ("https:", "http:", "mailto:")
 
 
 def periksa_alamat(alamat: str) -> None:
-    """Menolak, bukan membersihkan diam diam.
-
-    Alamat yang dibersihkan tanpa sepengetahuan penulisnya akan terbit jadi
-    tautan yang menuju tempat lain daripada yang dimaksudnya, dan itu lebih
-    membingungkan daripada pesan galat.
-    """
     bersih = alamat.strip()
 
-    # Relatif: jangkar, akar, atau tetangga. Tidak punya skema sama sekali.
     if bersih.startswith(("#", "/", "./", "../")):
         return
 
@@ -286,7 +175,6 @@ def periksa_alamat(alamat: str) -> None:
     if kecil.startswith(SKEMA_BOLEH):
         return
 
-    # Tanpa titik dua berarti relatif juga, misalnya "tentang.html".
     if ":" not in kecil.split("/")[0]:
         return
 
@@ -297,7 +185,6 @@ def periksa_alamat(alamat: str) -> None:
 
 
 def sebaris(teks: str) -> str:
-    """Markup sebaris jadi HTML. Selain itu di-escape."""
     keluar: list[str] = []
     posisi = 0
 
@@ -326,24 +213,11 @@ def sebaris(teks: str) -> str:
 
 
 def polos(teks: str) -> str:
-    """Teks tanpa markup, aman untuk atribut biasa. Tanda kutipnya di-escape."""
     bersih = SEBARIS.sub(_telanjangi, teks)
     return html.escape(bersih, quote=True)
 
 
 def untuk_ind(teks: str) -> str:
-    """Teks tanpa markup untuk atribut data-ind, di-escape DUA kali.
-
-    Satu kali tidak cukup, dan itu ditemukan audit 26 September 2026.
-    Peramban membuka satu lapis escape saat atribut dibaca, lalu
-    assets/js/app.js memasang nilainya lewat innerHTML. Dengan satu lapis,
-    `&lt;a href=...&gt;` di atribut kembali jadi tag sungguhan di halaman
-    berbahasa Indonesia. Dengan dua lapis, yang sampai ke innerHTML masih
-    `&lt;`, dan yang tergambar tanda kurang dari, bukan tag.
-
-    Untuk data-ind-alt dan atribut lain yang dipasang lewat setAttribute,
-    pakai polos(): di sana tidak ada innerHTML yang membuka lapis kedua.
-    """
     return html.escape(polos(teks), quote=True)
 
 

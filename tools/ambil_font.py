@@ -61,8 +61,6 @@ ALAMAT = (
     "?family=Poppins:wght@400;500;600;700&display=swap"
 )
 
-# Tanpa User-Agent sebuah peramban modern, Google menyajikan @font-face
-# berformat ttf demi peramban tua, dan berkasnya tiga kali lebih besar.
 PERAMBAN = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
@@ -76,9 +74,6 @@ class Gagal(Exception):
     pass
 
 
-# ------------------------------------------------------------------ jaringan ---
-
-
 def _ambil(alamat: str) -> bytes:
     permintaan = urllib.request.Request(alamat, headers={"User-Agent": PERAMBAN})
     with urllib.request.urlopen(permintaan, timeout=30) as jawab:
@@ -86,7 +81,6 @@ def _ambil(alamat: str) -> bytes:
 
 
 def dari_google() -> list[dict]:
-    """Membaca css2 Google lalu mengembalikan satu entri per berkas woff2."""
     css = _ambil(ALAMAT).decode("utf-8")
     blok = re.findall(r"/\* (\S+) \*/\s*@font-face \{(.*?)\}", css, re.S)
 
@@ -117,9 +111,6 @@ def dari_google() -> list[dict]:
 
     hasil.sort(key=lambda e: (e["tebal"], e["subset"]))
     return hasil
-
-
-# ------------------------------------------------------------------- berkas ---
 
 
 def _sidik(data: bytes) -> str:
@@ -164,9 +155,6 @@ def baca_catatan() -> list[dict]:
     return json.loads(CATATAN.read_text(encoding="utf-8"))["berkas"]
 
 
-# ---------------------------------------------------------------------- css ---
-
-
 def blok_css(entri: list[dict]) -> str:
     baris = [
         MULAI,
@@ -193,12 +181,7 @@ def gaya_dengan(blok: str) -> str:
         mulai = teks.index(MULAI)
         akhir = teks.index(SELESAI) + len(SELESAI)
         return teks[:mulai] + blok + teks[akhir:]
-    # Pertama kali: diletakkan paling atas supaya peramban menemukan fontnya
-    # pada bita pertama stylesheet, bukan sesudah empat puluh kilobyte aturan.
     return blok + "\n\n" + teks
-
-
-# ------------------------------------------------------------------ periksa ---
 
 
 def periksa(daring: bool) -> int:
@@ -231,7 +214,7 @@ def periksa(daring: bool) -> int:
     if daring:
         try:
             baru = dari_google()
-        except Exception as g:  # noqa: BLE001 - jaringan, apa pun sebabnya
+        except Exception as g:  # noqa: BLE001 
             print(f"  lewat: pemeriksaan daring tidak bisa dijalankan, {g}")
         else:
             versi_lokal = {e["versi"] for e in entri}
@@ -251,9 +234,6 @@ def periksa(daring: bool) -> int:
     total = sum(e["bita"] for e in entri if e["subset"] == "latin")
     print(f"cocok: {len(entri)} berkas font, subset latin berjumlah {total / 1024:.1f} KB")
     return 0
-
-
-# -------------------------------------------------------------------- utama ---
 
 
 def main() -> int:

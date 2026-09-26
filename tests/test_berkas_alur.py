@@ -1,11 +1,3 @@
-"""Unggah, sisipkan, terbitkan, hapus. Lewat API sungguhan dan basis data.
-
-Dilewati kalau tidak ada basis data. Yang diuji di sini bukan lagi pembacaan
-kepala berkas, melainkan apa yang terjadi di antara lapisan: berkas yang
-tertulis ke cakram, baris yang tertulis ke basis data, dan yang tidak boleh
-terjadi kalau salah satunya gagal.
-"""
-
 from __future__ import annotations
 
 import os
@@ -63,7 +55,6 @@ def kepala(klien) -> dict:
 
 @pytest.fixture
 def bersih(klien, kepala):
-    """Menghapus tiap berkas yang dibuat uji ini, lewat API-nya sendiri."""
     dibuat: list[str] = []
     yield dibuat
     for nama in dibuat:
@@ -76,9 +67,6 @@ def unggah(klien, kepala, data: bytes, nama: str, tipe: str = "application/octet
         headers=kepala,
         files={"berkas": (nama, data, tipe)},
     )
-
-
-# ------------------------------------------------------------------ alur ---
 
 
 def test_foto_masuk_lalu_muncul_di_daftar(klien, kepala, bersih):
@@ -106,15 +94,11 @@ def test_berkas_benar_benar_bisa_diambil_dari_alamatnya(klien, kepala, bersih):
     ambil = klien.get(hasil["alamat"])
     assert ambil.status_code == 200
     assert ambil.headers["content-type"] == "image/png"
-    # nosniff dipasang aplikasi sendiri, bukan diserahkan ke nginx: jalur ini
-    # juga hidup saat dikembangkan tanpa nginx sama sekali.
     assert ambil.headers["x-content-type-options"] == "nosniff"
     assert "immutable" in ambil.headers["cache-control"]
 
 
 def test_ukuran_gambar_ikut_ke_dalam_nama_berkasnya(klien, kepala, bersih):
-    """Supaya pembangkit halaman tahu lebar dan tingginya tanpa membuka
-    berkasnya dan tanpa bertanya ke basis data."""
     j = unggah(klien, kepala, jpeg(800, 450), "foto.jpg")
     hasil = j.json()
     bersih.append(hasil["nama"])
@@ -127,8 +111,6 @@ def test_ukuran_gambar_ikut_ke_dalam_nama_berkasnya(klien, kepala, bersih):
 
 
 def test_markah_yang_dijawab_memang_diterima_pengurainya(klien, kepala, bersih):
-    """Jawaban unggahan membawa baris markah siap tempel. Kalau baris itu
-    ditolak pengurai, tombol Sisipkan adalah tombol yang menghasilkan galat."""
     sys.path.insert(0, str(AKAR / "tools"))
     import markah
 
@@ -141,8 +123,6 @@ def test_markah_yang_dijawab_memang_diterima_pengurainya(klien, kepala, bersih):
 
 
 def test_video_tidak_diukur(klien, kepala, bersih):
-    """Mengukurnya menuntut ffmpeg, dan menebaknya berarti menuliskan angka
-    yang tidak pernah diukur."""
     hasil = unggah(klien, kepala, mp4(), "jalan.mp4").json()
     bersih.append(hasil["nama"])
     assert hasil["jenis"] == "video"
@@ -150,7 +130,6 @@ def test_video_tidak_diukur(klien, kepala, bersih):
 
 
 def test_berkas_yang_sama_tidak_digandakan(klien, kepala, bersih):
-    """Satu foto yang dipakai di tiga tulisan tetap satu berkas di cakram."""
     data = gif(120, 90)
     satu = unggah(klien, kepala, data, "sama.gif").json()
     bersih.append(satu["nama"])
@@ -160,20 +139,13 @@ def test_berkas_yang_sama_tidak_digandakan(klien, kepala, bersih):
     assert dua["sudah_ada"] is True
 
 
-# ---------------------------------------------------------------- tolakan ---
-
-
 def test_html_bernama_foto_png_tetap_ditolak(klien, kepala):
-    """Nama dan Content-Type keduanya datang dari pengirim. Berkas yang lolos
-    akan disajikan lagi dari alamat situs ini."""
     j = unggah(klien, kepala, b"<html><script>alert(1)</script>", "foto.png", "image/png")
     assert j.status_code == 415
     assert "bukan foto atau video" in j.text
 
 
 def test_nama_kiriman_yang_menjelajah_folder_tidak_membentuk_jalur(klien, kepala, bersih):
-    """Namanya dicatat apa adanya untuk dilihat orang, dan nama di cakram
-    tetap buatan server sendiri."""
     j = unggah(klien, kepala, png(20, 20), "../../etc/passwd.png")
     assert j.status_code == 201
     hasil = j.json()
@@ -184,13 +156,7 @@ def test_nama_kiriman_yang_menjelajah_folder_tidak_membentuk_jalur(klien, kepala
     assert hasil["nama_asal"] == "passwd.png"
 
 
-# ---------------------------------------------------------------- hapus ---
-
-
 def test_berkas_yang_masih_dipakai_tulisan_tidak_bisa_dihapus(klien, kepala, bersih):
-    """Menghapusnya adalah kegagalan yang tidak bersuara: tulisannya tetap
-    terbit, hanya gambarnya jadi kotak kosong, dan yang menyadarinya
-    pembaca."""
     hasil = unggah(klien, kepala, png(400, 300), "dipakai.png").json()
     bersih.append(hasil["nama"])
 
@@ -237,9 +203,6 @@ def test_hapus_berkas_yang_tidak_ada_menjawab_404(klien, kepala):
     assert j.status_code == 404
 
 
-# ------------------------------------------------------------- pratinjau ---
-
-
 def test_pratinjau_memakai_pembangkit_yang_sama_dengan_situsnya(klien, kepala, bersih):
     hasil = unggah(klien, kepala, png(1200, 800), "pratinjau.png").json()
     bersih.append(hasil["nama"])
@@ -262,8 +225,6 @@ def test_pratinjau_memakai_pembangkit_yang_sama_dengan_situsnya(klien, kepala, b
 
 
 def test_pratinjau_menolak_dengan_alasan_yang_sama_dengan_simpan(klien, kepala):
-    """Pratinjau yang menerima apa yang Simpan tolak adalah pratinjau yang
-    berbohong."""
     jahat = "![peta](https://contoh.example/a.png)"
     j = klien.post("/api/v1/admin/pratinjau", headers=kepala,
                    json={"isi_en": jahat, "isi_id": jahat})
@@ -281,10 +242,6 @@ def test_pratinjau_menghitung_kata_tanpa_tanda_markahnya(klien, kepala):
 
 
 def test_systemexit_dari_pembangkit_tidak_menjatuhkan_pekerjanya(klien, kepala):
-    """badan() adalah alat baris perintah yang berhenti dengan SystemExit
-    ketika dua bahasanya tidak sebangun. SystemExit bukan turunan Exception:
-    kalau ia naik dari dalam sebuah permintaan, yang berhenti bukan
-    permintaannya melainkan pekerjanya."""
     j = klien.post(
         "/api/v1/admin/pratinjau",
         headers=kepala,
@@ -292,20 +249,10 @@ def test_systemexit_dari_pembangkit_tidak_menjatuhkan_pekerjanya(klien, kepala):
     )
     assert j.status_code == 422
     assert "blok" in j.text
-    # Dan prosesnya masih melayani permintaan berikutnya.
     assert klien.get("/api/v1/admin/berkas", headers=kepala).status_code == 200
 
 
-# ---------------------------------------------------- buang metadata foto ---
-
-
 def test_koordinat_di_dalam_foto_benar_benar_hilang(klien, kepala, bersih):
-    """Lewat API sungguhan, bukan cuma lewat fungsinya.
-
-    Yang diperiksa bukan jawabannya melainkan bita yang benar benar tersimpan
-    dan disajikan lagi. Pembuang yang bekerja di memori lalu menyimpan yang
-    asli adalah pembuang yang tidak membuang apa apa.
-    """
     from test_metadata import JEJAK, jpeg_ber_exif
 
     asli = jpeg_ber_exif()
@@ -323,14 +270,10 @@ def test_koordinat_di_dalam_foto_benar_benar_hilang(klien, kepala, bersih):
 
     tersimpan = klien.get(isi["alamat"]).content
     assert JEJAK not in tersimpan, "koordinatnya masih ada di berkas yang disajikan"
-    # Ukurannya tetap terbaca, jadi halamannya tidak akan melompat.
     assert (isi["lebar"], isi["tinggi"]) == (160, 90)
 
 
 def test_tanpa_diminta_metadatanya_dibiarkan(klien, kepala, bersih):
-    """Kotaknya mati secara bawaan, dan bawaannya harus benar benar begitu.
-    Membuang diam diam berarti memutuskan untuk pemiliknya, dan sebagian foto
-    memang justru perlu lokasinya."""
     from test_metadata import JEJAK, jpeg_ber_exif
 
     hasil = klien.post(
@@ -345,8 +288,6 @@ def test_tanpa_diminta_metadatanya_dibiarkan(klien, kepala, bersih):
 
 
 def test_jenis_yang_metadatanya_tidak_bisa_dibuang_ditolak(klien, kepala):
-    """GIF dan AVIF. Menerimanya lalu membiarkan metadatanya utuh akan
-    membuat pemiliknya mengira koordinat rumahnya sudah hilang."""
     hasil = klien.post(
         "/api/v1/admin/berkas",
         headers=kepala,
@@ -368,12 +309,7 @@ def test_video_tidak_berpura_pura_bisa_dibersihkan(klien, kepala):
     assert "video" in hasil.text
 
 
-# ------------------------------------------------------------- kuotanya ---
-
-
 def test_unggahan_ditolak_saat_jumlahnya_sudah_penuh(klien, kepala, monkeypatch):
-    """Batas per berkas tidak menjaga apa apa terhadap yang mengunggah seribu
-    berkas, dan cakram yang penuh mematikan PostgreSQL."""
     from backend.core.konfigurasi import pengaturan
 
     monkeypatch.setenv("UNGGAHAN_JUMLAH_MAKS", "0")
@@ -408,8 +344,6 @@ def test_unggahan_ditolak_saat_ruangnya_habis(klien, kepala, monkeypatch):
 
 
 def test_unggahan_ditolak_saat_sehari_sudah_terlalu_banyak(klien, kepala, monkeypatch):
-    """Menahan akun yang sudah diambil orang memakai situs ini sebagai tempat
-    penitipan berkas dalam satu malam."""
     from backend.core.konfigurasi import pengaturan
 
     monkeypatch.setenv("UNGGAHAN_PER_HARI_MAKS", "0")
@@ -427,8 +361,6 @@ def test_unggahan_ditolak_saat_sehari_sudah_terlalu_banyak(klien, kepala, monkey
 
 
 def test_kuota_diperiksa_sebelum_berkasnya_ditulis(klien, kepala, monkeypatch):
-    """Menulis dulu lalu menghapus kalau ternyata melewati batas berarti ada
-    saat cakramnya memang sudah penuh."""
     from backend.core.konfigurasi import pengaturan
     from backend.layanan import berkas as layanan
 

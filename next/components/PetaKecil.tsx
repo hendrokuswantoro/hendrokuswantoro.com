@@ -3,9 +3,6 @@
 import { HOME } from "@/content/home";
 import { useLang } from "./LanguageProvider";
 
-/* Tujuh titik untuk tujuh karya di peta halaman Proyek. Hiasan, jadi
-   aria-hidden: yang dikatakannya sudah dikatakan teks di sebelahnya. Sama
-   persis dengan gambar di index.html. */
 const TITIK: Array<[number, number]> = [
   [72, 318], [160, 214], [250, 250], [318, 118], [410, 140], [500, 262], [570, 150],
 ];

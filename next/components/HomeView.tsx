@@ -52,7 +52,7 @@ export function HomeView() {
       </section>
 
 
-      {/* decorative, every name appears elsewhere as a real tag */}
+      {}
       <div className="pita-alat" aria-hidden="true">
         <div className="pita-alat__jalur">
           {[...TOOLS, ...TOOLS].map((tool, index) => (

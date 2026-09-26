@@ -1,14 +1,4 @@
 #!/bin/sh
-# Chapter 24 of the engineering standards: everything that has to pass before
-# a task may be called finished. One command, so there is no excuse to skip a
-# step by forgetting it.
-#
-#   sh tools/verifikasi.sh
-#
-# Exits non zero on the first failure and says which step it was. Steps that
-# need a tool this machine does not have are reported as skipped rather than
-# silently passed, because a check that quietly does nothing is worse than a
-# check that is absent.
 
 set -eu
 
@@ -31,14 +21,6 @@ lewat() {
   printf '   skipped, %s\n' "$1"
 }
 
-# Node memang terpasang, hanya tidak ada di PATH milik Git Bash.
-#
-# Akibatnya dua langkah melaporkan "node is not installed on this machine",
-# dan laporan itu tidak benar. Yang dilewati bukan hanya `node --check`,
-# melainkan seluruh Type Check dan Build port Next.js, jadi selama ini satu
-# satunya yang pernah membangunnya adalah CI. Berkas ini berhak melewatkan
-# langkah yang memang tidak bisa dijalankan; ia tidak berhak mengatakan
-# sesuatu tidak terpasang padahal terpasang.
 if ! command -v node >/dev/null 2>&1; then
   for DIR in "/c/Program Files/nodejs" "/c/Program Files (x86)/nodejs"; do
     if [ -x "$DIR/node.exe" ]; then
@@ -64,17 +46,9 @@ langkah "Lint, JavaScript has no syntax error"
 if command -v node >/dev/null 2>&1; then
   node --check assets/js/app.js
   node --check assets/js/peta.js
-  # Skrip dashboard admin, empat berkas sejak 26 September 2026. Sebelumnya
-  # langkah ini hanya memeriksa <script> sebaris di index.html, yang sudah
-  # kosong sejak skripnya dipindah keluar, jadi satu salah ketik di sana
-  # lolos sampai ada yang membuka halamannya.
   for berkas in backend/admin/*.js; do
     node --check "$berkas"
   done
-  # Dashboard admin membawa skripnya sendiri di dalam <script>, dan satu salah
-  # ketik di sana membuat seluruh halamannya diam tanpa satu pun pesan di mana
-  # pun. vm.Script MENGOMPILASI tanpa menjalankan, jadi yang diperiksa memang
-  # sintaksnya dan tidak ada satu baris pun yang ikut jalan.
   node -e "const fs=require('fs'),vm=require('vm');const t=fs.readFileSync('backend/admin/index.html','utf8');const s=[...t.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]).join('\n');new vm.Script(s);"
   lulus
 else
@@ -105,15 +79,10 @@ langkah "Lint, the vendored font matches its record"
 python tools/ambil_font.py --periksa >/dev/null
 lulus
 
-# /assets/* dijanjikan immutable selama setahun, dan janji itu hanya sah kalau
-# alamatnya berganti tiap kali isinya berganti.
 langkah "Lint, asset versions match their contents"
 python tools/versi_aset.py --periksa >/dev/null
 lulus
 
-# Model pengenalan wajah 37 MB dan tidak ikut di git. Tanpa model, verifikasi
-# wajah tidak ditawarkan saat masuk, dan itu keadaan yang sah; yang tidak sah
-# adalah catatan yang mengatakan modelnya ada padahal berkasnya sudah berubah.
 langkah "Lint, the face model matches its record"
 if [ -f assets/model/sumber.json ]; then
   python tools/ambil_model.py --periksa >/dev/null
@@ -122,9 +91,6 @@ else
   lewat "model wajah belum diunduh, python tools/ambil_model.py"
 fi
 
-# Alur kerjanya sendiri tidak pernah diperiksa sebelum dijalankan di GitHub,
-# dan satu "\n" harfiah di dalamnya membuat health check gagal tiap malam
-# sambil melaporkan situsnya mati.
 langkah "Lint, the GitHub workflows parse"
 if python -c "import yaml" 2>/dev/null; then
   python tools/periksa_alur.py >/dev/null
@@ -134,15 +100,6 @@ else
 fi
 
 langkah "Reverse proxy, the nginx config is valid"
-# `command -v docker` cuma membuktikan PERINTAHNYA ada, bukan bahwa mesinnya
-# menjawab. Di mesin ini keduanya berbeda: docker.exe terpasang, sedangkan
-# daemon-nya mati, sehingga langkah ini GAGAL padahal seharusnya DILEWATI.
-# Pesan lewatnya pun sudah berbunyi "docker is not running", jadi maksudnya
-# memang begitu sejak awal; yang salah cuma cara memeriksanya.
-#
-# Bedanya penting. Berkas ini boleh melewatkan langkah yang tidak bisa
-# dijalankan, tetapi kegagalan yang sebabnya di luar kode akan mengajari
-# siapa pun yang menjalankannya untuk mengabaikan warna merah.
 if ! command -v docker >/dev/null 2>&1; then
   lewat "docker is not installed, CI checks this instead"
 elif ! docker info >/dev/null 2>&1; then
@@ -161,11 +118,6 @@ python -m pytest
 lulus
 
 langkah "E2E Test, Chromium"
-# dijalankan terpisah: lihat alasannya di pytest.ini
-#
-# Yang ditanyakan perambannya bisa dinyalakan, bukan paketnya terpasang.
-# Dengan pertanyaan yang lama, 44 dari 48 uji dilewati diam diam sementara
-# langkah ini tetap melaporkan ok. Lihat tools/peramban_siap.py.
 if ! python -c "import playwright" 2>/dev/null; then
   lewat "playwright belum terpasang"
 elif ! python tools/peramban_siap.py; then
@@ -184,10 +136,6 @@ if git grep -nIE "$POLA" -- . ':!tests/test_peta.py' ':!tools/verifikasi.sh' ':!
 fi
 lulus
 
-# DSN yang tertulis di .env tidak sama dengan basis data yang menjawab.
-# Sebelumnya langkah ini cuma menanyakan yang pertama, lalu gagal dengan
-# "gagal: docker exec" setiap kali Docker Desktop sedang mati. Lihat
-# tools/basis_data_hidup.py.
 langkah "Backup, an encrypted backup can be restored"
 if [ -z "${DSN:-}" ] && ! grep -q '^DSN=.' .env 2>/dev/null; then
   lewat "no database configured on this machine"
@@ -218,8 +166,6 @@ if [ "$JUMLAH" -lt 30 ]; then
   printf '   FAIL, dist/ holds only %s files\n' "$JUMLAH"
   exit 1
 fi
-# bangun_situs.sh rewrites the token file from the environment, which on a
-# developer machine means wiping the real token. Put it back.
 if [ -n "$SIMPAN" ]; then
   printf '%s' "$SIMPAN" > assets/js/konfigurasi.js
 fi

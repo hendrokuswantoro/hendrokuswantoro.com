@@ -1,9 +1,3 @@
-"""Satu kueri, sependek mungkin, untuk membuktikan basis datanya menjawab.
-
-Ada di lapisan repositori karena isinya SQL, dan aturannya tanpa pengecualian:
-SQL hanya hidup di sini. Daftar pengecualian selalu bertambah.
-"""
-
 from __future__ import annotations
 
 from backend.core.basis_data import koneksi

@@ -1,15 +1,3 @@
-"""Pembatas laju per IP, memakai Redis. Bab 15.11.
-
-Alamat IP tidak pernah disimpan apa adanya. Yang jadi kunci adalah ringkasan
-SHA-256 dari alamat itu ditambah garam acak per proses, jadi isi Redis tidak
-bisa dibaca balik jadi daftar pengunjung. Pola yang sama dipakai proyek
-Parkir Jogja, dengan alasan yang sama.
-
-Kalau Redis tidak ada, permintaan diteruskan. Pembatas laju yang mematikan
-situs saat cache-nya mati adalah kerugian yang lebih besar daripada yang
-dicegahnya.
-"""
-
 from __future__ import annotations
 
 import hashlib
@@ -49,8 +37,6 @@ class BatasiLaju(BaseHTTPMiddleware):
         alamat = permintaan.client.host if permintaan.client else ""
 
         if not alamat:
-            # alamat tidak diketahui tetap diizinkan: menolaknya akan
-            # memblokir pengguna sah di belakang perantara
             return await lanjut(permintaan)
 
         r = await klien()
@@ -63,7 +49,6 @@ class BatasiLaju(BaseHTTPMiddleware):
             if jumlah == 1:
                 await r.expire(kunci, atur.laju_jendela_detik)
         except Exception:
-            # Redis mati bukan alasan menutup situs
             return await lanjut(permintaan)
 
         if jumlah > atur.laju_jumlah:

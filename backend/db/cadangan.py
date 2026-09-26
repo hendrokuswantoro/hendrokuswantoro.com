@@ -58,7 +58,6 @@ from backend.db import enkripsi  # noqa: E402
 CADANGAN = AKAR / "cadangan"
 WADAH = "hk_db"
 
-# Bab 15.18 menuntut retensi disebut, bukan dibiarkan tumbuh selamanya.
 SIMPAN_TERAKHIR = 14
 
 
@@ -74,7 +73,6 @@ def bagian_dsn() -> dict[str, str]:
 
 
 def punya_klien() -> bool:
-    """Runner CI sudah membawa klien PostgreSQL, mesin pengembangan belum."""
     return shutil.which("pg_dump") is not None and shutil.which("psql") is not None
 
 
@@ -91,12 +89,6 @@ def _dsn_untuk(basis: str) -> str:
 
 
 def di_wadah(perintah: list[str], masukan: bytes | None = None) -> bytes:
-    """Menjalankan pg_dump atau psql, di mana pun ia tersedia.
-
-    Kalau kliennya ada di mesin ini, dipakai langsung lewat DSN. Kalau tidak,
-    dijalankan di dalam kontainer basis datanya sendiri, sehingga tidak perlu
-    memasang klien PostgreSQL dan versi klien dijamin sama dengan servernya.
-    """
     if punya_klien():
         bersih, lewati = [perintah[0]], False
         for bagian in perintah[1:]:
@@ -126,8 +118,6 @@ def buat() -> pathlib.Path:
     isi = di_wadah(["pg_dump", "-U", d["pengguna"], "-d", d["basis"], "--clean", "--if-exists"])
     padat = gzip.compress(isi, 6)
 
-    # Dipadatkan dulu, baru dikunci. Urutan sebaliknya tidak salah, hanya
-    # sia sia: keluaran AES tidak bisa dipadatkan sama sekali.
     kunci = enkripsi.kunci_dari_env(wajib=False)
     if kunci is None:
         tujuan = CADANGAN / f"hk-{cap}.sql.gz"
@@ -148,8 +138,6 @@ def buat() -> pathlib.Path:
 
 
 def semua_cadangan() -> list[pathlib.Path]:
-    """Kedua akhiran, diurutkan menurut nama, yang berarti menurut waktunya
-    karena capnya tahun-bulan-hari-jam."""
     if not CADANGAN.exists():
         return []
     return sorted(
@@ -186,12 +174,6 @@ def daftar() -> None:
 
 
 def _isi_polos(berkas: pathlib.Path) -> bytes:
-    """Mengenali sendiri berkas mana yang terkunci, dari penandanya.
-
-    Bukan dari akhiran namanya. Nama berkas bisa diganti siapa saja; penanda
-    di awal isinya tidak, dan ia satu satunya yang benar benar menyatakan
-    apa isinya.
-    """
     mentah = berkas.read_bytes()
     if not enkripsi.terenkripsi(mentah):
         return gzip.decompress(mentah)
@@ -238,11 +220,6 @@ def hitung(basis: str) -> dict[str, int]:
 
 
 def uji_pulih() -> int:
-    """Membuktikan cadangan terbaru benar benar bisa dipulihkan.
-
-    Dipulihkan ke basis data sementara, bukan ke yang asli. Uji pemulihan
-    yang menimpa data sungguhan bukan uji, itu taruhan.
-    """
     d = bagian_dsn()
     semua = semua_cadangan()
     if not semua:

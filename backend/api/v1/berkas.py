@@ -1,12 +1,3 @@
-"""Unggah foto dan video. Seluruhnya di belakang butuh_admin.
-
-Ia terpisah dari `admin.py` karena bentuk permintaannya berbeda dari seluruh
-jalur admin lain: multipart, bukan JSON, dan yang memvalidasinya pembacaan
-bita berkasnya, bukan Pydantic. Menaruhnya di berkas yang sama akan membuat
-satu satunya rute yang tidak berskema masuk tersembunyi di tengah sembilan
-rute yang berskema.
-"""
-
 from __future__ import annotations
 
 from typing import Annotated
@@ -18,8 +9,6 @@ from backend.api.tergantung import butuh_admin_kuat
 from backend.layanan import berkas as layanan
 from backend.skema.berkas import BerkasBaru, DaftarBerkas
 
-# butuh_admin_kuat: mengunggah berkas yang akan disajikan lagi dari alamat
-# situs ini adalah perubahan isi, bukan pembacaan.
 rute = APIRouter(
     prefix="/admin/berkas", tags=["berkas"], dependencies=[Depends(butuh_admin_kuat)]
 )
@@ -44,13 +33,6 @@ async def unggah(
     berkas: Annotated[UploadFile, File()],
     buang_metadata: Annotated[bool, Form()] = False,
 ) -> dict:
-    """Jenisnya ditentukan dari isi berkasnya, bukan dari yang dikatakan
-    pengirimnya.
-
-    `berkas.content_type` dan `berkas.filename` keduanya datang dari
-    pengirim, jadi keduanya bisa berbunyi apa saja, dan tidak satu pun dipakai
-    memutuskan apa apa di sini.
-    """
     try:
         return await layanan.terima(
             berkas.file,
@@ -75,9 +57,6 @@ async def hapus(nama: str) -> None:
             status_code=status.HTTP_404_NOT_FOUND, detail="berkas tidak ada"
         ) from galat
     except layanan.MasihDipakai as galat:
-        # 409, bukan 204 diam diam. Menghapus berkas yang masih dipakai adalah
-        # kegagalan yang tidak bersuara: tulisannya tetap terbit, hanya
-        # gambarnya jadi kotak kosong, dan yang menyadarinya pembaca.
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="berkas ini masih dipakai tulisan: " + ", ".join(galat.slug),

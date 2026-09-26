@@ -13,9 +13,6 @@ import {
 import { BilahFormat, terapkan } from "./BilahFormat";
 import { PanelBerkas } from "./PanelBerkas";
 
-/** Persis kolom yang diterima TulisanMasuk di backend/skema/tulis.py. Kalau
- *  daftar ini dan daftar di sana berbeda, yang ketahuan lebih dulu adalah 422
- *  yang menyebut kolom mana, bukan halaman yang diam. */
 const KOLOM = [
   "slug", "tanggal",
   "judul_en", "judul_id",
@@ -32,13 +29,6 @@ type Isi = Record<Kolom, string>;
 
 const KOSONG: Isi = KOLOM.reduce((k, nama) => ({ ...k, [nama]: "" }), {} as Isi);
 
-/** Hitungan blok, sekadar untuk memberi tahu lebih awal.
- *
- *  Aturan sebenarnya ditegakkan server lewat tools/markah.py, dan itu memang
- *  tempatnya: aturan yang hanya ada di peramban adalah aturan yang hilang
- *  begitu seseorang memanggil API-nya langsung. Yang di sini hanya supaya
- *  penulisnya tidak menunggu sampai menekan Simpan untuk tahu jumlah
- *  paragrafnya tidak sama. */
 function blok(teks: string): number {
   return teks
     .split(/\n{2,}/)
@@ -67,8 +57,6 @@ export function PenyuntingTulisan({
 
   const kotakEn = useRef<HTMLTextAreaElement>(null);
   const kotakId = useRef<HTMLTextAreaElement>(null);
-  /* Kotak yang terakhir disentuh. Tombol bilah format bekerja pada yang ini,
-     supaya satu bilah bisa melayani dua bahasa tanpa menggandakannya. */
   const terakhir = useRef<"en" | "id">("en");
 
   const muat = useCallback(async () => {
@@ -97,14 +85,6 @@ export function PenyuntingTulisan({
     [isi.isi_en, isi.isi_id],
   );
 
-  /* Pratinjau dibangun server, oleh pembangkit yang sama dengan yang
-     membangun halaman blog yang sudah terbit. Jadi yang terlihat di sini
-     memang yang akan terbit, dan markah yang ditolak di sini adalah markah
-     yang akan ditolak Simpan, dengan kalimat yang sama.
-
-     Ditunda 500 ms sesudah ketikan terakhir. Tanpa penundaan, tiap huruf
-     mengirim satu permintaan, dan yang sampai duluan belum tentu yang
-     terakhir diketik. */
   useEffect(() => {
     if (!lihat) return;
     if (!isi.isi_en && !isi.isi_id) {
@@ -135,23 +115,11 @@ export function PenyuntingTulisan({
     setIsi((s) => ({ ...s, [nama]: nilai }));
   }
 
-  /** Membaca kembali nilai kotak sesudah bilah format menulis ke dalamnya.
-   *
-   *  Bilah itu menyisipkan lewat execCommand supaya tumpukan urung peramban
-   *  tetap utuh, dan execCommand tidak lewat React. Jadi nilainya disalin
-   *  balik ke state di sini, sesudahnya. */
   const serap = useCallback(() => {
     if (kotakEn.current) ubah("isi_en", kotakEn.current.value);
     if (kotakId.current) ubah("isi_id", kotakId.current.value);
   }, []);
 
-  /** Menyisipkan gambar atau video ke KEDUA bahasa sekaligus.
-   *
-   *  Bukan kenyamanan: dua bahasa wajib sebangun blok demi blok, jadi gambar
-   *  yang hanya masuk ke satu bahasa langsung membuat tulisannya ditolak.
-   *  Keterangannya dikosongkan supaya penulisnya mengisinya sendiri di tiap
-   *  bahasa, dan gambar tanpa keterangan tetap sah: ia terbit dengan alt
-   *  kosong, yaitu pernyataan "ini hiasan". */
   function sisipBerkas(berkas: Berkas) {
     const tanda = berkas.jenis === "video" ? "!video[](" : "![](";
     const baris = `${tanda}${berkas.alamat})`;
@@ -359,16 +327,6 @@ export function PenyuntingTulisan({
             {galatMarkah}
           </p>
         ) : (
-          /* dangerouslySetInnerHTML dengan sengaja, dan aman justru karena
-             sumbernya.
-
-             HTML ini tidak datang dari orang dan tidak datang dari peramban.
-             Ia dibangun tools/markah.py di server, yaitu pengurai yang
-             meng-escape seluruh teks, menolak HTML mentah dengan galat, dan
-             menolak skema tautan selain http, https, dan mailto. Tidak ada
-             satu jalur pun yang membuat markah berubah jadi tag yang tidak
-             ada di daftar itu. Membersihkannya lagi di sini berarti dua
-             aturan untuk satu hal, dan dua aturan akan berpisah. */
           <div
             className={`${gaya.pratinjau} article`}
             dangerouslySetInnerHTML={{ __html: pratinjau?.html ?? "" }}

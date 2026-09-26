@@ -1,15 +1,3 @@
-"""Proyek: satu sumber kebenaran, dijaga supaya tidak bercabang.
-
-content/proyek/*.md sekarang memegang datanya. Sampai project.html dan
-peta.js ikut dibangkitkan, keduanya masih ditulis tangan, jadi ada tiga
-salinan data yang sama. Uji di berkas ini yang menahan ketiganya tetap
-identik.
-
-Tanpa uji ini, menyunting judul di satu tempat dan lupa di dua tempat lain
-adalah kesalahan yang tidak akan pernah terlihat sampai seseorang
-membandingkan halaman dengan petanya sendiri.
-"""
-
 from __future__ import annotations
 
 import html
@@ -97,7 +85,6 @@ def test_titik_peta_sama_dengan_isi(p):
 
 
 def test_tidak_ada_proyek_yatim():
-    """Kartu di halaman yang tidak punya berkas isinya, atau sebaliknya."""
     di_halaman = set(re.findall(r'id="karya-([a-z0-9-]+)"', HTML))
     di_isi = {p.slug for p in PROYEK}
     assert di_halaman == di_isi, (
@@ -105,13 +92,6 @@ def test_tidak_ada_proyek_yatim():
         f"hanya di isi    : {sorted(di_isi - di_halaman)}"
     )
 
-
-# ------------------------------------------------ studi kasus di dua port ---
-
-# Halaman studi kasus lahir hanya di port statis, dan port Next tidak punya
-# jejaknya sama sekali selama dua sesi. Ketiadaan itu tidak menimbulkan galat
-# apa pun: tidak ada yang merah, tidak ada tautan yang putus, halamannya
-# sekadar tidak ada di sana. Uji di bawah yang membuatnya berbunyi.
 
 STUDI_HTML = (AKAR / "parkir-jogja.html").read_text(encoding="utf-8")
 STUDI_TS = (AKAR / "next" / "content" / "parkir-jogja.ts").read_text(encoding="utf-8")
@@ -134,20 +114,15 @@ def test_studi_kasus_masuk_sitemap_kedua_port():
     re.findall(r'<h2 data-ind="([^"]*)">(.*?)</h2>', STUDI_HTML, re.S),
 )
 def test_tiap_bagian_studi_kasus_ada_di_kedua_port(ind, en):
-    """Satu bagian yang hanya ada di satu port adalah cara paling sunyi
-    keduanya berpisah: halamannya tetap terbuka, isinya saja yang beda."""
     assert rapikan(en) in STUDI_TS, f"port Next tidak punya bagian {rapikan(en)!r}"
     assert html.unescape(ind) in STUDI_TS, f"terjemahan {html.unescape(ind)!r} hilang"
 
 
 def test_angka_studi_kasus_sama_di_kedua_port():
-    """Angkanya dibaca dari dokumen proyek parkirnya sendiri. Satu port yang
-    menyebut angka lain berarti salah satunya mengarang."""
     angka = re.findall(r'<span class="stat__num"[^>]*>([^<]+)</span>', STUDI_HTML)
     assert angka == ["495", "14,272", "594", "0"], f"angka di halaman berubah: {angka}"
     for satu in angka:
         assert f'en: "{satu}"' in STUDI_TS, f"{satu} tidak ada di port Next"
-    # 14.272 dengan titik, bentuk Indonesianya
     assert 'id: "14.272"' in STUDI_TS
 
 

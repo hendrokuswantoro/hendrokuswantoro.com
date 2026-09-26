@@ -1,21 +1,3 @@
-"""Passkey, WebAuthn. Bab 15.8.
-
-Yang diuji di sini bukan "bisa masuk pakai passkey". Itu bagian yang mudah
-dan akan ketahuan sendiri hari pertama dipakai. Yang diuji adalah **yang
-seharusnya ditolak benar benar ditolak**: tantangan bekas pakai, tantangan
-kedaluwarsa, tanda tangan dari kunci lain, kredensial yang penghitungnya
-mundur, pendaftaran tanpa masuk lebih dulu, dan pencabutan kunci milik orang
-lain.
-
-Ujinya memakai authenticator tiruan di `tests/otentikator.py` yang benar
-benar membuat pasangan kunci P-256 dan benar benar menandatangani. Tanda
-tangannya diverifikasi pustaka `webauthn` yang sama dengan yang dipakai
-produksi, jadi yang lolos di sini adalah tanda tangan yang juga akan lolos
-di server sungguhan.
-
-Dilewati kalau tidak ada basis data.
-"""
-
 from __future__ import annotations
 
 import datetime as dt
@@ -34,10 +16,6 @@ from muat_env import muat  # noqa: E402
 RP_ID = "testserver"
 ASAL = "http://testserver"
 
-# Disetel **sebelum** .env dibaca, sebab muat() sengaja tidak menimpa yang
-# sudah ada di environment. TestClient memakai host "testserver", sedangkan
-# .env di mesin pengembangan menyebut localhost, dan rp_id yang tidak sama
-# dengan host pemanggilnya akan ditolak, betul betul ditolak.
 os.environ["WEBAUTHN_RP_ID"] = RP_ID
 os.environ["WEBAUTHN_ASAL"] = f'["{ASAL}"]'
 
@@ -66,12 +44,6 @@ pytestmark = pytest.mark.skipif(not ada_basis_data(DSN), reason="tidak ada basis
 
 
 def _sejak() -> object:
-    """Jam basis data saat rangkaian ini dimuat, dipakai membatasi pembersihan.
-
-    Diambil dari basis datanya, bukan dari Python, sebab keduanya bisa
-    berselisih beberapa detik dan selisih itu persis yang menentukan satu
-    baris ikut terhapus atau tertinggal.
-    """
     try:
         with psycopg.connect(DSN, connect_timeout=3) as s, s.cursor() as k:
             k.execute("SELECT now()")
@@ -85,20 +57,6 @@ SEJAK = _sejak()
 
 @pytest.fixture(autouse=True)
 def bersihkan():
-    """Membersihkan yang dibuat uji ini, bukan mengosongkan tabelnya.
-
-    Sebelumnya baris pertamanya `DELETE FROM kredensial`, tanpa WHERE. Di
-    basis data pengembangan tabel itu berisi passkey SUNGGUHAN milik
-    pemiliknya, jadi sekali rangkaian uji dijalankan, setiap perangkat yang
-    pernah didaftarkan lenyap. Tidak ada galat, tidak ada peringatan; yang
-    terjadi cuma tombol sidik jari yang tiba tiba tidak mengenali siapa pun
-    lagi. Itu benar benar terjadi pada 14 September 2026.
-
-    Sekarang yang dihapus hanya baris yang lahir sesudah rangkaian ini
-    dimulai. `tantangan` dan `gagal_masuk` tetap dikosongkan seluruhnya, dan
-    itu memang aman: keduanya berumur pendek dan tidak memuat apa pun yang
-    perlu dipegang.
-    """
     yield
     with psycopg.connect(DSN) as s, s.cursor() as k:
         if SEJAK is None:
@@ -125,8 +83,6 @@ def klien():
 
 @pytest.fixture
 def masuk(klien):
-    """Token admin, lewat sandi. Passkey didaftarkan oleh orang yang sudah
-    masuk, bukan oleh siapa pun yang menemukan alamatnya."""
     j = klien.post("/api/v1/auth/login", json={"email": EMAIL, "sandi": SANDI})
     assert j.status_code == 200, j.text
     return {"Authorization": f"Bearer {j.json()['akses']}"}
@@ -161,9 +117,6 @@ def masuk_dengan(klien, perangkat, **kwargs):
     )
 
 
-# ------------------------------------------------------------ alur wajar ---
-
-
 def test_daftar_lalu_masuk(klien, masuk, perangkat):
     hasil = daftarkan(klien, masuk, perangkat)
     assert hasil["nama"] == "Laptop uji"
@@ -174,9 +127,6 @@ def test_daftar_lalu_masuk(klien, masuk, perangkat):
 
 
 def test_masuk_passkey_memberi_sesi_yang_sama_dengan_sandi(klien, masuk, perangkat):
-    """Passkey mengganti cara membuktikan siapa, bukan cara sesinya dikelola.
-    Kalau jalur ini menerbitkan sesi dengan aturan sendiri, satu dari dua
-    jalur akan tertinggal tiap kali aturan sesinya berubah."""
     daftarkan(klien, masuk, perangkat)
     j = masuk_dengan(klien, perangkat)
 
@@ -188,8 +138,6 @@ def test_masuk_passkey_memberi_sesi_yang_sama_dengan_sandi(klien, masuk, perangk
 
 
 def test_kunci_publik_yang_tersimpan_memang_kunci_publik(klien, masuk, perangkat):
-    """Tabel kredensial tidak boleh menyimpan satu pun rahasia. Basis data
-    yang bocor seluruhnya tidak boleh memberi siapa pun cara masuk."""
     daftarkan(klien, masuk, perangkat)
     with psycopg.connect(DSN) as s, s.cursor() as k:
         k.execute("SELECT kunci_publik FROM kredensial")
@@ -212,12 +160,7 @@ def test_penghitung_ikut_naik(klien, masuk, perangkat):
     assert dipakai is not None
 
 
-# ------------------------------------------------------ yang harus ditolak ---
-
-
 def test_tantangan_hanya_boleh_sekali(klien, masuk, perangkat):
-    """Tantangan yang bisa dipakai dua kali membuat jawaban yang direkam
-    bisa diputar ulang, dan itu menghapus seluruh gunanya tantangan."""
     daftarkan(klien, masuk, perangkat)
 
     mulai = klien.post("/api/v1/auth/passkey/masuk/mulai")
@@ -238,9 +181,6 @@ def test_tantangan_kedaluwarsa_ditolak(klien, masuk, perangkat):
     mulai = klien.post("/api/v1/auth/passkey/masuk/mulai")
     tantangan = tantangan_dari(mulai.json()["pilihan"])
 
-    # Keduanya digeser mundur, bukan hanya kadaluarsa: batasan
-    # kadaluarsa_sesudah_dibuat menolak baris yang mati sebelum ia lahir,
-    # dan uji yang melanggarnya sedang menguji basis datanya, bukan kodenya.
     sekarang = dt.datetime.now(dt.timezone.utc)
     with psycopg.connect(DSN) as s, s.cursor() as k:
         k.execute(
@@ -255,8 +195,6 @@ def test_tantangan_kedaluwarsa_ditolak(klien, masuk, perangkat):
 
 
 def test_tantangan_karangan_sendiri_ditolak(klien, masuk, perangkat):
-    """Tantangan lahir di server. Yang datang dari luar tidak pernah ada di
-    tabel, jadi tidak pernah cocok."""
     daftarkan(klien, masuk, perangkat)
     j = klien.post("/api/v1/auth/passkey/masuk/selesai",
                    json={"jawaban": perangkat.masuk(b"tantangan-karangan-sendiri-32-bita!!", ASAL)})
@@ -264,15 +202,12 @@ def test_tantangan_karangan_sendiri_ditolak(klien, masuk, perangkat):
 
 
 def test_tanda_tangan_dari_kunci_lain_ditolak(klien, masuk, perangkat):
-    """Bentuknya sempurna, tanda tangannya bukan milik kredensial ini."""
     daftarkan(klien, masuk, perangkat)
     j = masuk_dengan(klien, perangkat, tanda_tangan_palsu=True)
     assert j.status_code == 401
 
 
 def test_asal_yang_salah_ditolak(klien, masuk, perangkat):
-    """Inti dari passkey. Halaman palsu boleh meniru tampilannya, tetapi
-    tidak bisa meniru alamatnya, dan alamat itu ikut ditandatangani."""
     daftarkan(klien, masuk, perangkat)
 
     mulai = klien.post("/api/v1/auth/passkey/masuk/mulai")
@@ -286,7 +221,6 @@ def test_asal_yang_salah_ditolak(klien, masuk, perangkat):
 
 
 def test_penghitung_yang_mundur_ditolak(klien, masuk, perangkat):
-    """Penghitung yang tidak naik menandakan kredensialnya disalin."""
     daftarkan(klien, masuk, perangkat)
     assert masuk_dengan(klien, perangkat).status_code == 200
 
@@ -296,14 +230,12 @@ def test_penghitung_yang_mundur_ditolak(klien, masuk, perangkat):
 
 
 def test_kredensial_tidak_dikenal_ditolak(klien, masuk):
-    """Perangkat yang belum pernah didaftarkan, tanda tangannya sah sendiri."""
     asing = Otentikator(RP_ID)
     j = masuk_dengan(klien, asing)
     assert j.status_code == 401
 
 
 def test_mendaftar_menuntut_sudah_masuk(klien, perangkat):
-    """Titik akhir pendaftaran yang terbuka adalah pintu belakang."""
     assert klien.post("/api/v1/auth/passkey/daftar/mulai").status_code == 401
     assert klien.post(
         "/api/v1/auth/passkey/daftar/selesai",
@@ -312,8 +244,6 @@ def test_mendaftar_menuntut_sudah_masuk(klien, perangkat):
 
 
 def test_tantangan_daftar_tidak_bisa_dipakai_untuk_masuk(klien, masuk, perangkat):
-    """Tujuan tantangan ikut disimpan. Tanpa itu, tantangan pendaftaran yang
-    lebih mudah didapat bisa dipakai menyelesaikan proses masuk."""
     daftarkan(klien, masuk, perangkat)
 
     mulai = klien.post("/api/v1/auth/passkey/daftar/mulai", headers=masuk)
@@ -330,22 +260,11 @@ def test_jawaban_yang_bukan_webauthn_ditolak_tanpa_500(klien, masuk):
         assert j.status_code in (401, 422), f"{badan} menjawab {j.status_code}"
 
 
-# --------------------------------------------------------------- kelola ---
-
-
 def test_daftar_dan_cabut(klien, masuk, perangkat):
     hasil = daftarkan(klien, masuk, perangkat)
 
     daftar = klien.get("/api/v1/auth/passkey", headers=masuk)
     assert daftar.status_code == 200
-    # Yang diperiksa kunci YANG DIBUAT UJI INI, bukan seluruh isi tabelnya.
-    #
-    # Versi sebelumnya menuntut daftarnya berisi tepat satu nama, dan itu
-    # hanya benar selama pembersih uji mengosongkan tabel `kredensial`
-    # seluruhnya. Pembersih itu ternyata ikut menghapus passkey SUNGGUHAN
-    # milik pemilik situs ini, jadi ia dipersempit, dan uji ini ikut berubah
-    # bersamanya. Uji yang benar hanya karena data orang lain dihapus bukan
-    # uji yang benar.
     nama = [k["nama"] for k in daftar.json()["daftar"]]
     assert "Laptop uji" in nama, f"kunci yang baru didaftarkan tidak ada di daftar: {nama}"
 
@@ -357,8 +276,6 @@ def test_daftar_dan_cabut(klien, masuk, perangkat):
 
 
 def test_mencabut_kunci_orang_lain_menjawab_404(klien, masuk, perangkat):
-    """404, bukan 403. Membedakan keduanya memberi tahu penanya bahwa
-    kredensial itu ada dan milik orang lain."""
     hasil = daftarkan(klien, masuk, perangkat)
 
     from backend.core import keamanan
@@ -370,18 +287,11 @@ def test_mencabut_kunci_orang_lain_menjawab_404(klien, masuk, perangkat):
 
 
 def test_perangkat_yang_sama_tidak_ditawarkan_dua_kali(klien, masuk, perangkat):
-    """exclude_credentials membuat peramban menolak mendaftarkan ulang
-    perangkat yang sama, supaya daftarnya tidak penuh kunci kembar yang tidak
-    bisa dibedakan pemiliknya."""
     daftarkan(klien, masuk, perangkat)
     mulai = klien.post("/api/v1/auth/passkey/daftar/mulai", headers=masuk)
     import json
 
     pilihan = json.loads(mulai.json()["pilihan"])
-    # Setiap kunci yang sudah terdaftar wajib ikut dikecualikan, termasuk
-    # kunci sungguhan milik pemiliknya yang kebetulan ada di basis data
-    # pengembangan. Jadi yang dibandingkan jumlah kunci yang benar benar ada,
-    # bukan angka satu yang hanya benar di tabel yang kosong.
     terdaftar = klien.get("/api/v1/auth/passkey", headers=masuk).json()["daftar"]
     assert len(pilihan.get("excludeCredentials") or []) == len(terdaftar), (
         f"{len(terdaftar)} kunci terdaftar tetapi "
@@ -395,12 +305,7 @@ def test_nama_kosong_diberi_nama_bawaan(klien, masuk, perangkat):
     assert hasil["nama"] == "Perangkat tanpa nama"
 
 
-# ------------------------------------------------------------ konfigurasi ---
-
-
 def test_tanpa_konfigurasi_menjawab_503_bukan_menebak(klien):
-    """rp_id yang ditebak dari header Host berarti penyerang boleh memilih
-    rp_id sendiri, dan verifikasi asal berhenti berarti apa apa."""
     from backend.core.konfigurasi import pengaturan
 
     asli = os.environ.get("WEBAUTHN_RP_ID")

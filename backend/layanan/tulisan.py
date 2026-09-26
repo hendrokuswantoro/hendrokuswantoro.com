@@ -1,10 +1,3 @@
-"""Aturan bisnis untuk tulisan. Lapisan ini tidak tahu SQL dan tidak tahu HTTP.
-
-Yang dikerjakan di sini cuma satu hal yang tidak layak ada di repositori
-maupun di router: mengubah baris basis data yang datar jadi bentuk
-berpasangan dua bahasa yang dipakai seluruh situs.
-"""
-
 from __future__ import annotations
 
 from typing import Any

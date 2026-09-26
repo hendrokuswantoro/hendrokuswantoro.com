@@ -1,12 +1,3 @@
-"""Satu satunya lapisan yang tahu SQL untuk tulisan.
-
-Bab 15.4 memisahkan Router, Service, dan Repository. Pemisahan itu baru ada
-artinya kalau SQL tidak pernah bocor ke luar berkas ini: begitu satu kueri
-ditulis di lapisan layanan, seluruh pemisahannya jadi hiasan.
-
-Semua kueri memakai parameter, tanpa pengecualian. Bab 15.11.
-"""
-
 from __future__ import annotations
 
 import datetime as dt

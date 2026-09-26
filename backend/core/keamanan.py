@@ -1,10 +1,3 @@
-"""Sandi, token, dan ringkasan. Bab 15.8, 15.10, 15.11.
-
-Tidak ada satu pun protokol kriptografi buatan sendiri di sini, sesuai
-larangan di bab 15.8. Yang dipakai Argon2id lewat argon2-cffi dan JWT lewat
-pyjwt, keduanya pustaka yang sudah ditelaah orang banyak.
-"""
-
 from __future__ import annotations
 
 import datetime as dt
@@ -18,7 +11,6 @@ from argon2.exceptions import InvalidHashError, VerificationError, VerifyMismatc
 
 from backend.core.konfigurasi import pengaturan
 
-# Parameter bawaan argon2-cffi mengikuti RFC 9106. Tidak diturunkan.
 _hasher = PasswordHasher()
 
 ALGORITMA = "HS256"
@@ -26,10 +18,6 @@ PENERBIT = "hendrokuswantoro.com"
 UNTUK = "hendrokuswantoro.com/admin"
 
 
-# Hash sungguhan dari nilai acak, dihitung sekali saat modul dimuat.
-# Dipakai saat penggunanya tidak ada, supaya lama jawabannya sama persis
-# dengan saat penggunanya ada tetapi sandinya salah. Selisih waktu saja
-# sudah membocorkan email mana yang terdaftar.
 HASH_UMPAN = _hasher.hash(secrets.token_urlsafe(32))
 
 
@@ -45,8 +33,6 @@ def sandi_cocok(sandi: str, hash_tersimpan: str) -> bool:
 
 
 def perlu_dihash_ulang(hash_tersimpan: str) -> bool:
-    """Parameter Argon2 naik seiring waktu. Hash lama diperbarui diam diam
-    saat pemiliknya masuk, bukan dibiarkan selamanya pakai parameter lama."""
     try:
         return _hasher.check_needs_rehash(hash_tersimpan)
     except InvalidHashError:
@@ -54,11 +40,6 @@ def perlu_dihash_ulang(hash_tersimpan: str) -> bool:
 
 
 def ringkas(nilai: str) -> str:
-    """SHA-256, dipakai untuk refresh token dan alamat IP.
-
-    Refresh token tidak pernah disimpan apa adanya: basis data yang bocor
-    tidak boleh memberi siapa pun kunci masuk.
-    """
     return hashlib.sha256(nilai.encode("utf-8")).hexdigest()
 
 
@@ -72,19 +53,6 @@ def buat_access_token(
     sesi_id: str | None = None,
     faktor_kedua: bool = False,
 ) -> tuple[str, int]:
-    """Umurnya pendek dengan sengaja. Bab 15.10.
-
-    Umur pendek dulu satu satunya pembatas kerusakan kalau token ini bocor,
-    sebab JWT diperiksa dengan tanda tangannya sendiri dan tidak pernah
-    ditanyakan ke basis data. Sejak 19 September 2026 ada yang kedua: `sid`
-    membawa id sesinya, dan tiap permintaan memeriksanya terhadap daftar
-    cabut di Redis. Lihat backend/core/cabut.py.
-
-    `f2` mencatat apakah sesi ini lahir lewat faktor kedua. Ia dibawa di
-    dalam token, bukan disimpulkan ulang tiap permintaan, sebab yang benar
-    adalah keadaan saat orangnya masuk: menyalakan TOTP sesudah masuk tidak
-    boleh diam diam menguatkan sesi yang sudah terbit.
-    """
     atur = pengaturan()
     sekarang = dt.datetime.now(dt.timezone.utc)
     umur = atur.akses_umur_menit
@@ -104,19 +72,8 @@ def buat_access_token(
 
 
 def baca_access_token(token: str) -> dict | None:
-    """Signature, issuer, audience, dan kedaluwarsa semuanya diperiksa.
-
-    Melewatkan salah satunya adalah cacat yang klasik: token sah dari sistem
-    lain, atau token kedaluwarsa, diterima seolah masih berlaku.
-    """
     atur = pengaturan()
 
-    # Rahasia yang sedang berlaku lebih dulu, lalu yang lama kalau memang
-    # sedang ada rotasi berjalan. Urutannya begitu supaya keadaan biasa, yaitu
-    # tanpa rotasi, tidak membayar satu percobaan tambahan.
-    #
-    # Yang lama HANYA dipakai memeriksa. Tidak ada satu pun jalur yang
-    # menandatangani dengannya, jadi rotasi selalu bergerak satu arah.
     for rahasia in (atur.jwt_rahasia, atur.jwt_rahasia_lama):
         if not rahasia:
             continue
@@ -133,22 +90,6 @@ def baca_access_token(token: str) -> dict | None:
             continue
     return None
 
-
-# ------------------------------------------------- tiket faktor kedua ---
-
-# Antara "sandinya benar" dan "sesinya terbit" ada satu keadaan yang harus
-# dibawa entah di mana: penggunanya sudah membuktikan faktor pertama dan belum
-# membuktikan yang kedua.
-#
-# Cara yang buruk dan biasa: menerbitkan sesi lalu menandainya "belum lengkap".
-# Sesi itu sudah berupa kunci; apa pun yang lupa memeriksa tandanya akan
-# menerimanya. Cara yang dipakai di sini: tiket terpisah, umurnya lima menit,
-# dan satu satunya pintu yang menerimanya adalah pintu faktor kedua.
-#
-# Tiketnya JWT yang sama algoritmanya, hanya audiensnya berbeda. Audiens yang
-# berbeda berarti `baca_access_token` menolaknya, dan `baca_tiket` menolak
-# access token: keduanya tidak bisa tertukar, dan itu diperiksa pustakanya
-# sendiri, bukan oleh satu baris if yang bisa terlupa.
 
 UNTUK_TIKET = "hk-faktor-kedua"
 TIKET_UMUR_MENIT = 5

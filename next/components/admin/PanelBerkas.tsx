@@ -10,23 +10,6 @@ import {
   type BerkasBaru,
 } from "@/lib/api";
 
-/**
- * Pustaka foto dan video, sekaligus tempat mengunggahnya.
- *
- * Yang perlu diketahui sebelum membaca kodenya:
- *
- * - Jenis berkas ditentukan server dari bita pertamanya, bukan dari nama atau
- *   dari `file.type`. Penyaringan di sini hanya supaya penolakannya terasa
- *   lebih cepat, dan ia tidak menjaga apa apa sendirian.
- * - Metadata EXIF dibuang hanya kalau diminta. Foto dari ponsel bisa membawa
- *   koordinat tempat pemotretannya, dan itu akan ikut terbit. Kotak
- *   centangnya mati secara bawaan, sebab yang tahu apakah tempatnya boleh
- *   diketahui umum adalah pemiliknya, bukan layar ini. Kalimatnya tertulis di
- *   layar, bukan hanya di dokumentasi: yang mengunggah foto anaknya di rumah
- *   tidak akan membuka dokumentasi lebih dulu.
- * - Berkas dengan isi yang sama persis tidak digandakan. Server mengembalikan
- *   yang lama, dan layar ini mengatakannya.
- */
 
 function ukuranTerbaca(bita: number): string {
   if (bita < 1024) return `${bita} B`;
@@ -68,9 +51,6 @@ export function PanelBerkas({
     if (!berkas || berkas.length === 0) return;
     setKabar(null);
 
-    // Satu per satu, bukan sekaligus. Enam video delapan puluh megabita yang
-    // berangkat bersamaan akan saling berebut sambungan yang sama dan tidak
-    // ada satu pun yang selesai lebih cepat karenanya.
     for (const satu of Array.from(berkas)) {
       setPersen(0);
       try {

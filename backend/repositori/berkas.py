@@ -1,9 +1,3 @@
-"""SQL untuk catatan foto dan video yang diunggah.
-
-Berkasnya sendiri tidak lewat sini. Yang menulis dan menghapusnya di cakram
-`layanan/berkas.py`; yang di sini hanya catatannya.
-"""
-
 from __future__ import annotations
 
 from typing import Any
@@ -33,12 +27,6 @@ async def simpan(nilai: dict[str, Any], pengunggah_id: str | None) -> dict[str, 
 
 
 async def lewat_sidik(sidik: str) -> dict[str, Any] | None:
-    """Berkas dengan isi yang sama persis, kalau sudah pernah diunggah.
-
-    Dipakai supaya satu foto yang dipakai di tiga tulisan tetap satu berkas
-    di cakram, dan supaya mengunggah ulang berkas yang sama tidak diam diam
-    meninggalkan salinan yatim yang tidak pernah ada yang menghapusnya.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(f"SELECT {KOLOM} FROM berkas WHERE sidik = %s", (sidik,))
         return await k.fetchone()
@@ -67,13 +55,6 @@ async def jumlah() -> int:
 
 
 async def pemakaian() -> dict[str, int]:
-    """Jumlah berkas, total bitanya, dan berapa yang masuk hari ini.
-
-    Ketiganya dibaca dalam satu kueri. Tiga kueri berurutan bisa menjawab tiga
-    keadaan yang berbeda kalau ada unggahan lain yang masuk di antaranya, dan
-    batas yang dihitung dari keadaan yang tidak pernah ada bersamaan adalah
-    batas yang salah.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             "SELECT count(*) AS jumlah, "
@@ -97,12 +78,6 @@ async def hapus(nama: str) -> bool:
 
 
 async def dipakai_tulisan(alamat: str) -> list[str]:
-    """Slug tulisan mana saja yang masih menyebut alamat ini.
-
-    Dipanggil sebelum menghapus. Menghapus berkas yang masih dipakai adalah
-    kegagalan yang diam: tulisannya tetap terbit, hanya gambarnya jadi kotak
-    kosong, dan yang menyadarinya pembaca, bukan penulisnya.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             "SELECT slug FROM blog_posts "

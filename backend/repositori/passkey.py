@@ -1,19 +1,9 @@
-"""SQL untuk passkey dan tantangannya.
-
-Tidak ada satu pun keputusan di berkas ini, hanya baca dan tulis. Aturan
-siapa boleh apa dan tantangan mana yang masih berlaku ada di
-`layanan/passkey.py`.
-"""
-
 from __future__ import annotations
 
 import datetime as dt
 from typing import Any
 
 from backend.core.basis_data import koneksi
-
-
-# ------------------------------------------------------------- tantangan ---
 
 
 async def simpan_tantangan(
@@ -29,14 +19,6 @@ async def simpan_tantangan(
 
 
 async def pakai_tantangan(tujuan: str, nilai: bytes) -> dict[str, Any] | None:
-    """Menandai terpakai dan mengembalikan barisnya, dalam satu pernyataan.
-
-    Satu pernyataan dengan sengaja. Membaca dulu lalu menandai belakangan
-    membuka celah antara keduanya: dua permintaan yang datang bersamaan
-    dengan tantangan sama akan sama sama lolos. UPDATE ... RETURNING menutup
-    itu tanpa kunci tambahan, karena baris yang sudah terisi `dipakai_pada`
-    tidak lagi cocok dengan syaratnya.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             """
@@ -48,9 +30,6 @@ async def pakai_tantangan(tujuan: str, nilai: bytes) -> dict[str, Any] | None:
             (nilai, tujuan),
         )
         return await k.fetchone()
-
-
-# ------------------------------------------------------------ kredensial ---
 
 
 async def simpan(
@@ -113,12 +92,6 @@ async def perbarui_pemakaian(kredensial_id: bytes, penghitung: int) -> None:
 
 
 async def hapus(pengguna_id: str, kredensial_uuid: str) -> bool:
-    """Pemilik disebut di WHERE, bukan diperiksa lebih dulu di layanan.
-
-    Memeriksa lebih dulu lalu menghapus berdasarkan id saja berarti ada
-    jendela di antara keduanya, dan jendela semacam itu adalah cara klasik
-    menghapus kredensial milik orang lain.
-    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             "DELETE FROM kredensial WHERE id = %s AND pengguna_id = %s",

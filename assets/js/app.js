@@ -1,11 +1,3 @@
-/*!
- * hendrokuswantoro.com - site behaviour
- * No dependencies. Progressive enhancement only: every page is fully
- * readable (in English) with JavaScript disabled.
- *
- * Bilingual model: the English copy lives in the HTML so crawlers see real
- * text; the Indonesian copy rides along in a data-ind attribute next to it.
- */
 (function () {
   "use strict";
 
@@ -22,10 +14,9 @@
   }
 
   function writeStore(key, value) {
-    try { window.localStorage.setItem(key, value); } catch (e) { /* private mode */ }
+    try { window.localStorage.setItem(key, value); } catch (e) {  }
   }
 
-  /* ---------------------------------------------------------------- language */
 
   function cacheEnglish() {
     each(doc.querySelectorAll("[data-ind]"), function (el) {
@@ -103,21 +94,7 @@
     });
   }
 
-  /* -------------------------------------------------------------------- tema */
 
-  /* Tema dipilih pembaca, bukan sistem operasinya.
-   *
-   * Dulu palet gelap menempel pada @media (prefers-color-scheme: dark).
-   * Akibatnya pembaca yang laptopnya gelap tidak pernah melihat palet terang
-   * sama sekali, dan tidak punya cara memintanya. Sekarang bawaannya terang
-   * dan gelap adalah pilihan, seperti aplikasi Uber.
-   *
-   * Yang mencegah kedipan bukan fungsi ini melainkan skrip sebaris di <head>:
-   * app.js dimuat dengan defer, jadi kalau atribut data-theme baru dipasang
-   * di sini, pembaca yang memilih gelap akan melihat satu bingkai putih lebih
-   * dulu. Skrip sebaris itu diizinkan CSP lewat hash sha256, bukan lewat
-   * 'unsafe-inline', supaya seluruh skrip lain tetap tertutup.
-   */
   function applyTema(tema) {
     var gelap = tema === "dark";
     doc.documentElement.setAttribute("data-theme", gelap ? "dark" : "light");
@@ -141,7 +118,6 @@
     });
   }
 
-  /* ------------------------------------------------------------------ header */
 
   function initHeader() {
     var header = doc.querySelector(".header");
@@ -153,26 +129,6 @@
     window.addEventListener("scroll", onScroll, { passive: true });
   }
 
-  /* -------------------------------------------------------- perlindungan isi */
-
-  /* Yang bisa dan tidak bisa dikerjakan bagian ini, disebut di muka supaya
-   * tidak ada yang mengira ia lebih kuat daripada yang sebenarnya.
-   *
-   * BISA  : menghentikan penyalinan sambil lalu. Blok teks, Ctrl+C, klik
-   *         kanan, seret teks keluar, dan cetak ke PDF.
-   * TIDAK : menghentikan Lihat Sumber, JavaScript yang dimatikan, mode baca,
-   *         curl, atau umpan RSS-nya sendiri. Teksnya memang ada di HTML,
-   *         sebab di situlah mesin pencari dan pembaca layar membacanya.
-   * TIDAK : menghentikan tangkapan layar. Tidak ada satu pun cara di web
-   *         untuk itu, dan trik yang beredar, seperti mengaburkan halaman
-   *         saat jendelanya kehilangan fokus, hanya merusak halaman bagi
-   *         pembaca yang jujur sambil tidak menghalangi siapa pun yang
-   *         menekan tombol Print Screen.
-   *
-   * Isi yang benar benar tidak boleh disalin adalah isi yang tidak
-   * diterbitkan. Yang ini menaikkan ongkosnya, bukan menutup pintunya, dan
-   * itu memang sejauh yang bisa dijanjikan.
-   */
 
   var CATATAN = {
     en: "This text is © Hendro Kuswantoro. Write to kuswantoro.hendro01@gmail.com to reuse it.",
@@ -186,8 +142,6 @@
     if (!catatanEl) {
       catatanEl = doc.createElement("div");
       catatanEl.className = "salin-catatan";
-      /* role=status, bukan alert: ini keterangan, bukan bahaya, dan alert
-         memotong apa pun yang sedang dibacakan pembaca layar. */
       catatanEl.setAttribute("role", "status");
       doc.body.appendChild(catatanEl);
     }
@@ -202,8 +156,6 @@
   }
 
   function bolehSalin(node) {
-    /* Kolom isian dan elemen yang bisa disunting tetap normal. Tanpa ini,
-       setiap formulir dan halaman admin jadi tidak bisa dipakai. */
     if (!node || !node.closest) return false;
     return Boolean(node.closest("input, textarea, select, [contenteditable='true'], .boleh-salin"));
   }
@@ -212,8 +164,6 @@
     doc.addEventListener("copy", function (event) {
       if (bolehSalin(event.target)) return;
       event.preventDefault();
-      /* Papan tempel tidak dibiarkan berisi potongan yang kebetulan
-         tersalin sebelum ini: ia diisi ulang dengan barisnya sendiri. */
       if (event.clipboardData) {
         event.clipboardData.setData(
           "text/plain",
@@ -241,8 +191,6 @@
       event.preventDefault();
     });
 
-    /* Ctrl+P dan Cmd+P. Cetakannya sendiri sudah dijaga @media print, jadi
-       ini hanya menjelaskan kenapa yang keluar bukan isinya. */
     doc.addEventListener("keydown", function (event) {
       var perintah = event.ctrlKey || event.metaKey;
       if (perintah && (event.key === "p" || event.key === "P")) beriTahu();
@@ -253,35 +201,9 @@
     });
   }
 
-  /* -------------------------------------------------------------- kehidupan */
-
-  /* Tiga hal kecil yang membuat halaman terasa ada yang menghuni, dan satu
-   * aturan yang mengikat ketiganya: tidak ada satu pun yang mengarang data.
-   *
-   * Jam Yogyakarta memang jam Yogyakarta, dihitung dari zona waktunya sendiri
-   * lewat Intl, bukan dari jam perangkat pembaca yang bisa di mana saja.
-   * Angka yang berdetak tetapi tidak berarti apa apa lebih buruk daripada
-   * halaman yang diam.
-   */
 
   var WIB = "Asia/Jakarta";
 
-  /* Tanggal dan jam di kepala halaman.
-   *
-   * Yang tertulis di layar tidak menyebut "Yogyakarta"; yang menyebut
-   * tempatnya "WIB" di sebelahnya dan aria-label pada jamnya, supaya pembaca
-   * layar tetap mendengar jam siapa yang sedang dibacakan. Angkanya tetap
-   * dihitung dari zona waktu Yogyakarta lewat Intl, bukan dari jam perangkat
-   * pembaca yang bisa berada di mana saja.
-   *
-   * Tanggalnya ditulis pendek, "Sat, 19 Sept 2026", bukan panjang. Kepala
-   * halaman punya satu baris untuk semuanya, dan nama hari penuh beserta nama
-   * bulan penuh menghabiskan dua ratus piksel yang tidak ada.
-   *
-   * Barisnya berangkat dengan atribut hidden dan baru dibuka setelah terisi.
-   * Tanpa JavaScript tidak ada tanggal dan tidak ada jam sama sekali, dan itu
-   * memang yang benar: garis strip yang berpura pura jam lebih buruk daripada
-   * baris yang tidak muncul. */
   function initJam() {
     var jamnya = doc.querySelectorAll("[data-jam]");
     var tanggalnya = doc.querySelectorAll("[data-tanggal]");
@@ -305,17 +227,11 @@
         timeZone: WIB, weekday: "short", day: "numeric", month: "short", year: "numeric"
       });
     } catch (e) {
-      /* Intl tanpa basis data zona waktu. Lebih baik tidak menampilkan jam
-         sama sekali daripada menampilkan jam yang salah dan meyakinkan. */
       each(jamnya, buang);
       each(tanggalnya, buang);
       return;
     }
 
-    /* Intl tidak mengadu kalau locale yang diminta tidak ada; ia diam diam
-       menjawab dengan locale bawaan. Kalau id-ID tidak terpasang, yang keluar
-       nama hari Inggris di halaman yang sedang berbahasa Indonesia. Lebih
-       jujur memakai satu bentuk yang sama untuk kedua bahasa. */
     if (bentukTanggal.id.resolvedOptions().locale.indexOf("id") !== 0) {
       bentukTanggal.id = bentukTanggal.en;
     }
@@ -339,17 +255,11 @@
     }
 
     tulis();
-    /* Sekali per detik, bukan per menit: yang berdenyut titik dua di
-       antaranya, dan denyutnya harus sejalan dengan detik yang sebenarnya. */
     window.setInterval(tulis, 1000);
-    /* Nama harinya ikut berganti bahasa saat pembaca menekan EN atau ID. */
     doc.addEventListener("hk:lang", tulis);
   }
 
   function initTumpuk() {
-    /* Memberi tiap anak di dalam .reveal nomor urutnya, supaya CSS bisa
-       menundanya berurutan. Dibatasi sepuluh: baris kesebelas yang menunggu
-       hampir satu detik bukan lagi rapi, ia lambat. */
     each(doc.querySelectorAll(".reveal"), function (induk) {
       each(induk.children, function (anak, i) {
         anak.style.setProperty("--i", Math.min(i, 9));
@@ -358,21 +268,12 @@
   }
 
   function initKilau() {
-    /* Kilau yang mengikuti kursor. Tidak dipasang sama sekali pada perangkat
-       sentuh: di sana tidak ada kursor untuk diikuti, dan pendengar
-       pointermove hanya jadi pekerjaan yang dibuang percuma. */
     if (!window.matchMedia) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
 
     var menunggu = null;
 
-    /* mousemove, bukan pointermove. Keduanya sama saja di peramban
-       sungguhan, tetapi Chromium yang dijalankan Playwright lewat CDP tidak
-       membangkitkan pointermove sama sekali, sehingga fiturnya tidak akan
-       pernah bisa diuji. Fitur yang tidak bisa diuji akan rusak diam diam,
-       dan itu harga yang lebih mahal daripada nama peristiwa yang lebih
-       baru. Perangkat sentuh sudah disaring media query di atas. */
     doc.addEventListener("mousemove", function (event) {
       if (menunggu) return;
       menunggu = window.requestAnimationFrame(function () {
@@ -386,7 +287,6 @@
     }, { passive: true });
   }
 
-  /* ------------------------------------------------------------------ reveal */
 
   function initReveal() {
     var items = doc.querySelectorAll(".reveal");
@@ -409,7 +309,6 @@
     each(items, function (el) { io.observe(el); });
   }
 
-  /* ----------------------------------------------------------------- filters */
 
   function initFilters() {
     var buttons = doc.querySelectorAll("[data-filter]");
@@ -437,7 +336,6 @@
     run("all");
   }
 
-  /* --------------------------------------------------------------- work map */
 
   function loadOnce(kind, url) {
     return new Promise(function (resolve, reject) {
@@ -469,20 +367,15 @@
       if (started) return;
       started = true;
 
-      /* MapLibre 6 ships as an ES module only. There is no UMD bundle to drop
-         in with a script tag, so it is imported and its namespace is put on
-         window for peta.js to read, exactly where the old global used to be.
-         The import is same origin, which script-src 'self' already allows. */
       Promise.all([
         loadOnce("css", "/assets/vendor/maplibre/6.9.0/maplibre-gl.css"),
         import("/assets/vendor/maplibre/6.9.0/maplibre-gl.mjs").then(function (mod) {
           window.maplibregl = mod;
           return mod;
         }),
-        /* optional, the map falls back to key free sources when it is absent */
         loadOnce("js", "/assets/js/konfigurasi.js").catch(function () { return null; })
       ])
-        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=ef3f62ab84"); })
+        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=d33d4596ea"); })
         .then(function () {
           wrap.classList.add("is-live");
           window.HK_PETA_MAP = window.HK_PETA.build(canvas);
@@ -492,20 +385,6 @@
         });
     }
 
-    /* Tautan "Lihat di peta" di tiap kartu. Arahnya kebalikan dari tautan
-       di dalam popup penanda, yang membawa pembaca dari peta ke kartu.
-
-       Yang dikerjakan tiga hal berurutan: menyalakan peta kalau ia belum
-       dimuat, menggulir ke petanya, lalu menyuruh petanya memusatkan karya
-       itu. Alamatnya ikut berubah, ditulis peta.js, jadi yang tersalin dari
-       bilah alamat sesudah ini membuka peta di titik yang sama.
-
-       Yang TIDAK dipakai: menyetel window.location.hash. Alamat #peta-<id>
-       tidak menunjuk elemen mana pun, dan peramban menjawab fragmen yang
-       tidak ditemukan dengan menggulir ke awal dokumen. Gulirannya beradu
-       dengan gulir halus yang baru saja diminta, dan petanya berhenti 196
-       piksel dari tempat yang dimaksud. Terukur, dan itu sebabnya alamatnya
-       ditulis dengan replaceState. */
     each(doc.querySelectorAll("[data-peta-buka]"), function (tautan) {
       tautan.addEventListener("click", function (event) {
         var id = tautan.getAttribute("data-peta-buka");
@@ -513,8 +392,6 @@
         event.preventDefault();
         start();
 
-        /* wrap adalah .peta, dan .peta punya scroll-margin-top setinggi
-           header, jadi petanya tidak berhenti di balik header yang lengket */
         function gulirKePeta() {
           var halus = !(window.matchMedia
             && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -522,34 +399,19 @@
         }
 
         if (window.HK_PETA_STATE) {
-          /* petanya sudah berdiri, jadi ia disuruh langsung. Alamatnya
-             ditulis peta.js sendiri begitu kameranya berangkat. */
           window.HK_PETA_STATE.buka(id);
-          /* Gulirnya menyusul satu bingkai kemudian, dan urutannya penting.
-             Popup MapLibre memindahkan fokus ke dalam dirinya begitu terbuka,
-             focusAfterOpen, dan pemindahan fokus itu ikut menggulir halaman.
-             Kalau gulir kita berangkat lebih dulu, ia diadu dengan gulir itu
-             dan kalah: terukur berhenti di 197 piksel, 196 piksel dari tempat
-             yang dimaksud. Satu bingkai kemudian ia menang, dan fokusnya
-             tetap di dalam popup, tempat yang benar bagi pembaca papan
-             ketik. */
           window.requestAnimationFrame(gulirKePeta);
         } else {
-          /* petanya baru dimuat, jadi belum ada popup yang berebut gulir.
-             Alamatnya ditulis sekarang, dan peta.js membacanya sendiri
-             begitu selesai. */
           gulirKePeta();
           if (window.history && window.history.replaceState) {
             try {
               window.history.replaceState(null, "", "#peta-" + id);
-            } catch (galat) { /* alamat file:// */ }
+            } catch (galat) {  }
           }
         }
       });
     });
 
-    /* the library is heavier than the rest of the site, so it waits until the
-       section is about to be looked at, then loads without being asked */
     if (!("IntersectionObserver" in window)) { start(); return; }
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
@@ -561,7 +423,6 @@
     io.observe(wrap);
   }
 
-  /* ------------------------------------------------------- reading progress */
 
   function initProgress() {
     var bar = doc.querySelector("[data-progres]");
@@ -588,12 +449,6 @@
     window.addEventListener("resize", onScroll);
   }
 
-  /* ------------------------------------------------------ article contents */
-
-  /* Builds the rail from the headings already in the article, so a post only
-     has to be written once. Every link carries both languages the same way
-     the rest of the page does, which means the language switch retitles the
-     contents list without this code listening for anything. */
 
   function slug(text) {
     return text
@@ -637,7 +492,6 @@
       list.appendChild(item);
       links.push({ link: link, head: head });
 
-      /* the heading becomes linkable itself, quietly */
       var mark = doc.createElement("a");
       mark.className = "anchor";
       mark.href = "#" + head.id;
@@ -648,8 +502,6 @@
 
     rail.hidden = false;
 
-    /* the entry you are reading is marked, recomputed on a frame so the
-       scroll handler stays cheap */
     var frame = 0;
     function mark() {
       frame = 0;
@@ -672,14 +524,12 @@
     window.addEventListener("resize", onScroll);
   }
 
-  /* -------------------------------------------------------------- copyright */
 
   function initYear() {
     var year = String(new Date().getFullYear());
     each(doc.querySelectorAll("[data-year]"), function (el) { el.textContent = year; });
   }
 
-  /* -------------------------------------------------------------------- boot */
 
   function boot() {
     initLang();
@@ -696,15 +546,6 @@
     initToc();
     initYear();
 
-    /* A readiness flag, and the reason it exists.
-       The browser tests used to wait for "networkidle" before touching the
-       page. On every page but one that is the same thing as waiting for this
-       line. On /project it is not: the map keeps asking for tiles for as long
-       as it is on screen, so the network never falls idle for the 500 ms
-       Playwright wants, and the wait ran to its timeout instead. It passed
-       locally only because the Mapbox token is restricted by URL and every
-       tile came back 403 in under a second. A page that is declared ready by
-       the code that finishes setting it up cannot go wrong that way. */
     doc.documentElement.setAttribute("data-siap", "1");
   }
 

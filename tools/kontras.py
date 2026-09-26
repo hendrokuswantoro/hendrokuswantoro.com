@@ -1,20 +1,3 @@
-"""Menghitung rasio kontras seluruh warna teks terhadap seluruh warna latar.
-
-    python tools/kontras.py
-
-Angkanya dibaca langsung dari `assets/css/style.css`, bukan diketik ulang di
-sini. Palet yang berubah tanpa angkanya ikut berubah adalah cara paling
-mudah membuat komentar di kepala berkas CSS itu berbohong.
-
-Ambangnya WCAG 2.1: 4,5:1 untuk teks biasa, 3,0:1 untuk teks besar dan untuk
-grafis. `--line` dan `--line-strong` sengaja tidak diuji terhadap ambang teks:
-keduanya garis pemisah, bukan pembawa makna, dan garis yang cukup gelap untuk
-lolos 3:1 di atas latar seterang #f6f6f6 akan terlihat seperti pagar.
-
-Dipakai `tests/test_gaya.py`, jadi angka yang melorot akan menggagalkan uji,
-bukan hanya mencetak peringatan yang tidak dibaca siapa pun.
-"""
-
 from __future__ import annotations
 
 import pathlib
@@ -27,7 +10,6 @@ GAYA = AKAR / "assets" / "css" / "style.css"
 TEKS = ("ink", "ink-2", "ink-3", "accent")
 LATAR = ("bg", "card", "surface", "surface-2")
 
-# Ambang per peran. --ink-3 dan --accent membawa teks biasa, jadi 4,5:1.
 AMBANG = 4.5
 
 
@@ -56,7 +38,6 @@ def _blok(teks: str, pembuka: str) -> str:
 
 
 def token(tema: str) -> dict[str, str]:
-    """Membaca --nama: #rrggbb dari blok :root yang diminta."""
     teks = GAYA.read_text(encoding="utf-8")
     pembuka = ':root[data-theme="dark"] {' if tema == "gelap" else "\n:root {"
     return {

@@ -1,23 +1,8 @@
-/*!
- * Work map. MapLibre GL JS.
- *
- * The module is fetched only when the map section is about to enter the
- * screen, then the map builds itself. No button, nothing to press.
- *
- * One basemap, hand written over the Mapbox Streets vector tiles, with a 2D
- * or 3D view over real terrain. Without a token it falls back to OpenFreeMap
- * and keeps working, minus the buildings, boundaries and names that only the
- * vector tiles carry. The points are label positions, not study areas:
- * each marks roughly where the work was done, close enough to find on a map
- * of Indonesia and never presented as a survey coordinate.
- */
 (function () {
   "use strict";
 
   var TOKEN = (window.HK_KONFIG && window.HK_KONFIG.mapboxToken) || "";
 
-  /* Elevation for the relief. Mapbox ships a proper DEM, and without a token
-     the free terrarium tiles stand in. */
   var DEM = TOKEN
     ? {
         type: "raster-dem",
@@ -39,26 +24,12 @@
     '&copy; <a href="https://www.mapbox.com/about/maps/" target="_blank" rel="noopener">Mapbox</a> ' +
     '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
 
-  /* One basemap, drawn here rather than pulled from a Mapbox style URL.
-     Mapbox styles address their sources with mapbox:// URLs that MapLibre
-     cannot resolve, and the raster version of the same style carries no
-     building heights, which is why the 3D buildings never appeared. Reading
-     the vector tiles directly fixes both. */
-  /* Labels follow the language switch: Indonesian shows the local name, and
-     English falls back to the international one. */
   function labelField() {
     return isId()
       ? ["coalesce", ["get", "name"], ["get", "name_en"]]
       : ["coalesce", ["get", "name_en"], ["get", "name"]];
   }
 
-  /* Province names are missing from the Mapbox place_label layer for
-     Indonesia: its "state" class covers other countries but returns nothing
-     here, checked at zoom 4 through 9. The thirty eight names below are
-     carried by the site itself so the provinces can be read at island zoom.
-     Each coordinate is a spot to hang the label on, inside the province but
-     not its centroid and never a boundary. The boundary lines themselves
-     still come from the Mapbox admin layer. */
   var PROVINSI_ID = {
     type: "FeatureCollection",
     features: [
@@ -109,9 +80,6 @@
     })
   };
 
-  /* One colour per family of place. They stay muted on purpose: the map is
-     a backdrop for the work markers, and a hospital dot must never compete
-     with the point it sits behind. */
   var KELOMPOK_POI = ["match", ["get", "class"],
     "park_like", "#6f9a63",
     "medical", "#b2626a",
@@ -127,8 +95,6 @@
     var miring = ["DIN Pro Italic", "Arial Unicode MS Regular"];
     var nama = labelField();
 
-    /* road classes grouped the way a driver reads them: toll roads and trunks
-       first, then the arteries, then the streets you actually turn into */
     var TOL = ["motorway", "motorway_link", "trunk", "trunk_link"];
     var ARTERI = ["primary", "primary_link", "secondary", "secondary_link"];
     var SEDANG = ["tertiary", "tertiary_link"];
@@ -158,8 +124,6 @@
         { id: "sungai", type: "line", source: "jalan", "source-layer": "waterway",
           paint: { "line-color": "#c3d7e8", "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.6, 16, 2.4] } },
 
-        /* administrative boundaries, smallest unit first so the larger ones
-           draw over it: kabupaten, then provinsi, then negara */
         { id: "batas-kabupaten", type: "line", source: "jalan", "source-layer": "admin", minzoom: 5,
           filter: ["all", ["==", ["get", "admin_level"], 2], ["!=", ["get", "maritime"], "true"]],
           paint: {
@@ -182,9 +146,6 @@
             "line-width": ["interpolate", ["linear"], ["zoom"], 2, 0.8, 8, 2, 14, 3.4]
           } },
 
-        /* Four tiers, casings first and bodies on top, so the network reads
-           as a route map: amber for the toll roads and trunks, a warm cream
-           for the arteries, white for everything you turn into. */
         { id: "jalan-kecil-tepi", type: "line", source: "jalan", "source-layer": "road", minzoom: 12,
           filter: isClass(JALAN), layout: { "line-cap": "round", "line-join": "round" },
           paint: { "line-color": "#c2ccd9", "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 12, 1.5, 18, 14] } },
@@ -211,8 +172,6 @@
           filter: isClass(TOL), layout: { "line-cap": "round", "line-join": "round" },
           paint: { "line-color": "#ffd27f", "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 4, 1, 10, 4.4, 18, 20] } },
 
-        /* railways, drawn the way an atlas draws them: a solid line with a
-           white hatch laid over it */
         { id: "apron", type: "fill", source: "jalan", "source-layer": "aeroway", minzoom: 11,
           filter: ["in", ["get", "type"], ["literal", ["apron", "helipad"]]],
           paint: { "fill-color": "#dfe4eb" } },
@@ -238,8 +197,6 @@
           filter: ["!=", ["get", "underground"], true],
           paint: { "fill-color": "#dde2e9", "fill-outline-color": "#c7cfd9" } },
 
-        /* which way the traffic runs. The arrows are told to ignore the
-           collision grid, so they never take a slot a street name wanted. */
         { id: "panah-searah", type: "symbol", source: "jalan", "source-layer": "road", minzoom: 15,
           filter: ["all", ["==", ["get", "oneway"], "true"], isClass(TOL.concat(ARTERI, SEDANG, JALAN))],
           layout: {
@@ -256,9 +213,6 @@
           },
           paint: { "text-color": "#9fadbb", "text-halo-color": "#ffffff", "text-halo-width": 1 } },
 
-        /* the places a rider actually looks for, once the street is close
-           enough to matter. Ranked by Mapbox's own filterrank, so a hospital
-           arrives before a warung. */
         { id: "titik-poi", type: "circle", source: "jalan", "source-layer": "poi_label", minzoom: 15.5,
           filter: ["<=", ["to-number", ["get", "filterrank"], 5], ["step", ["zoom"], 1, 16, 2, 17, 3]],
           paint: {
@@ -280,9 +234,6 @@
           },
           paint: { "text-color": "#5d6a77", "text-halo-color": "#ffffff", "text-halo-width": 1.4 } },
 
-        /* Labels, ordered small to large. MapLibre places symbols from the
-           top of the stack downwards, so the last layer here wins a clash:
-           a country name is never pushed off the map by a village. */
         { id: "nama-alam", type: "symbol", source: "jalan", "source-layer": "natural_label", minzoom: 3,
           filter: ["in", ["get", "class"], ["literal", ["sea", "ocean", "bay", "water", "landform"]]],
           layout: {
@@ -293,7 +244,6 @@
           },
           paint: { "text-color": "#7593aa", "text-halo-color": "#ffffff", "text-halo-width": 1 } },
 
-        /* place names, from the village up to the country */
         { id: "nama-kelurahan", type: "symbol", source: "jalan", "source-layer": "place_label", minzoom: 12,
           filter: ["==", ["get", "class"], "settlement_subdivision"],
           layout: {
@@ -305,8 +255,6 @@
           },
           paint: { "text-color": "#68757f", "text-halo-color": "#ffffff", "text-halo-width": 1.2 } },
 
-        /* settlements thin out as you pull back: filterrank 1 is a capital,
-           5 is a hamlet, so low zoom keeps only the ranks that fit */
         { id: "nama-kota", type: "symbol", source: "jalan", "source-layer": "place_label", minzoom: 3,
           filter: ["all",
             ["==", ["get", "class"], "settlement"],
@@ -320,7 +268,6 @@
             "symbol-sort-key": ["to-number", ["get", "symbolrank"], 20]
           },
           paint: { "text-color": "#2f3b46", "text-halo-color": "#ffffff", "text-halo-width": 1.5 } },
-        /* road names ride along the line, the way a driver map shows them */
         { id: "nama-jalan", type: "symbol", source: "jalan", "source-layer": "road", minzoom: 13,
           filter: ["all", ["has", "name"], isClass(TOL.concat(ARTERI, SEDANG, JALAN))],
           layout: {
@@ -371,8 +318,6 @@
     };
   }
 
-  /* every layer that carries a name, kept here so the language switch can
-     retitle them without rebuilding the whole style */
   var LAYER_NAMA = [
     "nama-jalan", "nama-kelurahan", "nama-kota", "nama-provinsi", "nama-provinsi-id",
     "nama-negara", "nama-alam", "nama-poi"
@@ -383,7 +328,7 @@
     LAYER_NAMA.forEach(function (id) {
       try {
         if (map.getLayer(id)) map.setLayoutProperty(id, "text-field", field);
-      } catch (e) { /* style not ready, the next switch will catch it */ }
+      } catch (e) {  }
     });
   }
 
@@ -393,7 +338,6 @@
     return TOKEN ? mapboxStyle() : FALLBACK_STYLE;
   }
 
-  /* one colour per kind of work, all four readable on every basemap */
   var KIND = {
     app: { colour: "#276ef1", en: "Map app", ind: "Aplikasi peta" },
     analysis: { colour: "#0b0b0b", en: "Map analysis", ind: "Analisis peta" },
@@ -418,12 +362,6 @@
       en: "Mining and Forest Loss, Mimika", ind: "Tambang dan Hutan Hilang, Mimika" }
   ];
 
-  /* Satu tampilan peta bisa dibagikan.
-     Alamat #peta-<id> membuka petanya tepat di karya itu, dan tiap kali peta
-     terbang ke satu titik alamatnya ditulis ulang, jadi yang tersalin dari
-     bilah alamat selalu yang sedang dilihat. Ditulis dengan replaceState,
-     bukan dengan location.hash, supaya menggeser peta tidak menumpuk riwayat
-     dan tombol kembali tetap membawa pembaca keluar dari halaman ini. */
   var AWALAN_HASH = "#peta-";
 
   function idDariHash() {
@@ -443,7 +381,7 @@
     var alamat = id ? AWALAN_HASH + id : window.location.pathname + window.location.search;
     try {
       window.history.replaceState(null, "", alamat);
-    } catch (e) { /* alamat file://, tidak ada riwayat untuk ditulisi */ }
+    } catch (e) {  }
   }
 
   var TEXT = {
@@ -460,15 +398,11 @@
     of: { en: "of", ind: "dari" },
     none: { en: "Nothing in view", ind: "Tidak ada yang terlihat" },
     more: { en: "and %n more", ind: "dan %n lainnya" },
-    /* Dibacakan pembaca layar, tidak pernah tampil di layar. Angka di legenda
-       berubah tanpa suara, jadi penyaringan dan pemusatan diumumkan sendiri. */
     filterOn: { en: "%k. %n of %t works shown.", ind: "%k. %n dari %t karya ditampilkan." },
     filterOff: { en: "Filter off. All %t works shown.", ind: "Saringan mati. Semua %t karya ditampilkan." },
     focus: { en: "%w, centred on the map.", ind: "%w, dipusatkan di peta." }
   };
 
-  /* Layar sentuh tanpa kursor. Dipakai memutuskan siapa yang butuh
-     cooperativeGestures, bukan untuk menebak lebar layar. */
   function sentuh() {
     return Boolean(window.matchMedia
       && window.matchMedia("(hover: none) and (pointer: coarse)").matches);
@@ -490,11 +424,7 @@
     return isId() ? entry.ind : entry.en;
   }
 
-  /* ----------------------------------------------------------- basemap tone */
 
-  /* Positron is already quiet. These nudges pull it the rest of the way
-     towards the site palette. Every change is guarded, a missing layer must
-     never break the map. */
   function tuneBasemap(map) {
     var tweaks = [
       ["water", "fill-color", "#dbe3ea"],
@@ -508,19 +438,12 @@
     tweaks.forEach(function (item) {
       try {
         if (map.getLayer(item[0])) map.setPaintProperty(item[0], item[1], item[2]);
-      } catch (e) { /* style changed upstream, leave that layer alone */ }
+      } catch (e) {  }
     });
   }
 
-  /* ------------------------------------------------------------ 2D and 3D */
 
-  /* Terrain rides on its own source, so it survives a basemap change: the
-     source is added again after every style load. Buildings are only raised
-     where the style actually carries them, which is the vector basemap. */
   function applyRelief(map, three) {
-    /* Trying and retrying beats asking first. isStyleLoaded() stays false for
-       as long as tiles keep arriving, so waiting on it meant the relief was
-       never applied on a slow connection. */
     function run() {
       try {
         if (!map.getSource("dem")) map.addSource("dem", DEM);
@@ -528,19 +451,6 @@
         if (three) {
           map.setTerrain({ source: "dem", exaggeration: 1.3 });
 
-          /* Mapbox Streets carries a height on every building, so the
-             extrusion is real rather than a flat guess. The 2D footprints
-             step aside to stop the two fighting over the same pixels.
-
-             Disisipkan SEBELUM "panah-searah", bukan ditambahkan di ujung.
-             addLayer tanpa beforeId menaruh lapisannya paling atas, di atas
-             seluruh lapisan nama, jadi gedung 3D menutupi nama jalan, nama
-             POI, dan nama tempat. Di tampilan miring akibatnya nama nama itu
-             terpotong badan gedung dan terbaca seperti saling tumpang tindih.
-             Terlihat pada 14 September 2026 di Malioboro: "Grand Inna
-             Malioboro" separuh hilang di balik satu gedung. Tempatnya
-             sekarang persis tempat "gedung" yang datar, yaitu tepat sebelum
-             lapisan simbol pertama. */
           if (map.getSource("jalan") && !map.getLayer("gedung3d")) {
             map.addLayer({
               id: "gedung3d",
@@ -552,14 +462,6 @@
                 ["==", ["get", "extrude"], "true"],
                 ["!=", ["get", "underground"], "true"]],
               paint: {
-                /* Tangga warnanya mengikuti tinggi yang sebenarnya ada di
-                   sini, bukan tinggi kota lain. Diukur dari 17.956 bangunan
-                   yang termuat di Yogyakarta: median 3 m, persentil 90 6,2 m,
-                   persentil 99 14 m, tertinggi 75 m. Tangga lama membentang
-                   0 sampai 140, jadi sembilan puluh sembilan persen bangunan
-                   jatuh di sepersepuluh pertamanya dan semuanya keluar
-                   dengan warna yang nyaris sama. Itu sebabnya kota ini
-                   tampak seperti hamparan rata, bukan seperti bangunan. */
                 "fill-extrusion-color": ["interpolate", ["linear"], ["get", "height"],
                   0, "#e9edf2", 3, "#dbe1e9", 6, "#cdd5e0", 14, "#b9c3d1", 40, "#a5b0c0"],
                 "fill-extrusion-height": ["coalesce", ["get", "height"], 6],
@@ -586,7 +488,6 @@
     map.once("idle", run);
   }
 
-  /* ------------------------------------------------------- home control */
 
   function HomeControl(onClick) {
     this._click = onClick;
@@ -622,7 +523,6 @@
     if (this._wrap && this._wrap.parentNode) this._wrap.parentNode.removeChild(this._wrap);
   };
 
-  /* ---------------------------------------------------------------- markers */
 
   function markerElement(item) {
     var el = document.createElement("button");
@@ -643,7 +543,6 @@
     );
   }
 
-  /* ------------------------------------------------------------------ panel */
 
   function chip(text, pressed) {
     var el = document.createElement("button");
@@ -661,14 +560,13 @@
   }
 
   function writePanelState(collapsed) {
-    try { window.localStorage.setItem(PANEL_KEY, collapsed ? "tutup" : "buka"); } catch (e) { /* private mode */ }
+    try { window.localStorage.setItem(PANEL_KEY, collapsed ? "tutup" : "buka"); } catch (e) {  }
   }
 
   function buildPanel(map, markers, bounds, state) {
     var box = document.createElement("div");
     box.className = "peta__legenda";
 
-    /* the panel can be folded away, and it remembers that between visits */
     var header = document.createElement("div");
     header.className = "peta__kepala";
     var heading = document.createElement("span");
@@ -712,7 +610,6 @@
       return wrap;
     }
 
-    /* 2D or 3D, and the guided tour */
     var viewWrap = group("view");
     var viewRow = document.createElement("div");
     viewRow.className = "peta__chips";
@@ -727,7 +624,6 @@
     viewRow.appendChild(relief);
     viewRow.appendChild(tour);
 
-    /* legend */
     var legendWrap = group("legend");
 
     var summary = document.createElement("p");
@@ -764,8 +660,6 @@
       });
     }
 
-    /* the numbers answer one question only: what is on screen right now, and
-       they are recomputed while the map is still moving, not after it stops */
     function count() {
       var view = map.getBounds();
       var seen = { app: 0, analysis: 0, satellite: 0, design: 0 };
@@ -841,7 +735,6 @@
     };
   }
 
-  /* ------------------------------------------------------------------ build */
 
   function build(container) {
     var bounds = new maplibregl.LngLatBounds();
@@ -856,44 +749,11 @@
       maxZoom: 17,
       maxPitch: 75,
       attributionControl: false,
-      /* Hanya di perangkat sentuh. Lihat catatan di bawah. */
       cooperativeGestures: sentuh(),
-      /* Roda tetikus TIDAK memperbesar peta. Lihat catatan di bawah. */
       scrollZoom: sentuh()
     });
 
-    /* Kenapa tulisan "Use Ctrl + scroll to zoom the map" tidak ada lagi.
-       Tulisan itu datang dari cooperativeGestures, dan ia muncul tiap kali
-       pembaca menggulir halaman sambil kursornya kebetulan lewat di atas
-       peta. Halaman ini panjang, petanya lebar, jadi lewat di atasnya itu
-       hal biasa, bukan niat memperbesar.
 
-       Yang perlu diingat: tulisan itu ada SEBABNYA. Tanpa dia, roda tetikus
-       di atas peta memperbesar peta, bukan menggulir halaman, dan pembaca
-       terjebak di tengah halaman sambil petanya makin dekat. Menghapus
-       tulisannya saja berarti mengembalikan jebakan itu.
-
-       Jadi yang dihapus bukan tulisannya, melainkan sebabnya. Di tetikus,
-       roda sekarang menggulir halaman, titik. Memperbesar peta lewat tombol
-       + dan -, klik dua kali, atau papan ketik.
-
-       Di layar sentuh ceritanya lain, dan di sana cooperativeGestures tetap
-       hidup: tanpa dia, satu jari yang menyentuh peta menggeser peta dan
-       halamannya berhenti bisa digulir sama sekali. Itu jebakan yang jauh
-       lebih parah daripada satu baris tulisan. */
-
-    /* Putaran adalah kejutan paling sering di peta web, dan ini yang bikin
-       petanya terasa "berputar putar ketika di-zoom".
-
-       Bawaan MapLibre: cubitan dua jari **memutar sekaligus memperbesar**,
-       dan seret dengan tombol kanan juga memutar. Pembaca yang cuma ingin
-       memperbesar berakhir dengan peta miring beberapa derajat, lalu
-       memperbaikinya dengan mencubit lagi, dan memiringkannya lagi. Di
-       trackpad hampir mustahil mencubit tanpa memutar sedikit.
-
-       Jadi: cubitan hanya memperbesar. Seret-putar hanya hidup pada mode 3D,
-       tempat sudut pandang memang jadi maksudnya; lihat state.setThree. Peta
-       datar tidak punya alasan untuk miring. */
     map.touchZoomRotate.disableRotation();
     map.dragRotate.disable();
 
@@ -901,7 +761,6 @@
     map.addControl(new HomeControl(function () { state.home(); }), "top-right");
     map.addControl(new maplibregl.ScaleControl({ maxWidth: 110, unit: "metric" }), "bottom-left");
     map.addControl(new maplibregl.FullscreenControl(), "top-right");
-    /* every style ships its own credit line, adding ours would repeat it */
     map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
 
     var markers = WORK.map(function (item) {
@@ -922,17 +781,11 @@
     var panel;
     var sudahDipusatkan = false;
 
-    /* Angka di legenda berubah di layar tanpa bunyi apa pun. Wilayah ini
-       yang mengucapkannya. Ia duduk di luar .peta__legenda dengan sengaja:
-       panel yang dilipat menyembunyikan .peta__grup dengan display:none, dan
-       aria-live di dalam elemen yang tersembunyi tidak pernah dibacakan. */
     var kabar = document.createElement("p");
     kabar.className = "peta__kabar visually-hidden";
     kabar.setAttribute("aria-live", "polite");
 
     function umumkan(teks) {
-      /* dikosongkan lebih dulu supaya pesan yang sama persis, misalnya
-         menyaring jenis yang sama dua kali, tetap terbaca sebagai perubahan */
       kabar.textContent = "";
       window.setTimeout(function () { kabar.textContent = teks; }, 60);
     }
@@ -949,7 +802,6 @@
       applyRelief(map, current.three);
     }
 
-    /* close enough to read the streets, tilted enough to see the buildings */
     function flyToWork(entry, openPopup) {
       map.flyTo({
         center: [entry.item.lng, entry.item.lat],
@@ -960,8 +812,6 @@
         curve: 1.5,
         duration: ms(2600)
       });
-      /* a click on the marker has already opened its popup, only the tour
-         needs to open one itself */
       if (openPopup && !entry.popup.isOpen()) entry.marker.togglePopup();
       tulisHash(entry.item.id);
     }
@@ -972,10 +822,7 @@
         current.three = three;
         panel.markView(three);
         applyRelief(map, three);
-        /* seret-putar hanya masuk akal kalau ada sudut pandang */
         if (three) { map.dragRotate.enable(); } else { map.dragRotate.disable(); }
-        /* switching terrain on rebuilds the camera transform, which cancels
-           any move started in the same tick. The tilt waits one frame. */
         window.requestAnimationFrame(function () {
           map.easeTo({
             pitch: three ? 58 : 0,
@@ -1010,24 +857,16 @@
               .replace("%t", markers.length)
           : say(TEXT.filterOff).replace("%t", markers.length));
       },
-      /* Dipanggil dari luar: tautan "Lihat di peta" di tiap kartu, dan
-         alamat #peta-<id> yang dibuka langsung atau dibagikan. */
       buka: function (id) {
         var entry = cari(id);
         if (!entry) return false;
-        /* Sesudah ini kamera punya tujuan sendiri, dan siap() tidak boleh
-           menariknya kembali ke tampilan awal. Bisa terjadi: penataan awal
-           dipicu peristiwa, dan tautan di kartu bisa ditekan lebih dulu. */
         sudahDipusatkan = true;
         state.stopTour();
-        /* karya yang sedang tersaring keluar harus dikembalikan dulu, kalau
-           tidak petanya terbang ke penanda yang tidak tergambar */
         if (current.filter && entry.item.kind !== current.filter) state.filter(current.filter);
         flyToWork(entry, true);
         umumkan(say(TEXT.focus).replace("%w", say(entry.item)));
         return true;
       },
-      /* one work at a time, close in, until someone touches the map */
       toggleTour: function () {
         if (current.tour) { state.stopTour(); return; }
         current.tourAt = 0;
@@ -1078,35 +917,8 @@
     section.insertBefore(panel.node, section.querySelector(".peta__ket"));
     section.insertBefore(kabar, section.querySelector(".peta__ket"));
 
-    /* Only a map that never starts counts as a failure. A single tile that
-       404s, or a style layer the renderer skips, must not replace a working
-       map with an error message. */
     var booted = false;
 
-    /* Seluruh penataan sesudah peta berdiri, dan ia TIDAK menumpang pada
-       peristiwa "load" saja.
-
-       "load" tidak selalu datang. Diukur di mesin ini, dengan glyph dan ubin
-       Mapbox yang dijawab 403 karena alamat pengembangan belum ada di
-       pembatasan token, "load" tidak menyala satu kali pun dalam tujuh detik,
-       padahal petanya tergambar dan map.loaded() menjawab true. Akibatnya
-       relief tidak pernah dipasang, .peta__frame tidak pernah ditandai siap,
-       ringkasan legenda tinggal kosong sampai ada yang menggeser petanya, dan
-       peta dianggap tidak pernah berdiri oleh penangan galat di bawah. Sebab
-       yang sama mengenai pembaca dengan sambungan lambat, bukan hanya mesin
-       ini.
-
-       Diukur juga: pada saat "styledata" tiba, map.isStyleLoaded() masih
-       menjawab false, dan ia berubah jadi true belakangan tanpa satu pun
-       peristiwa yang mengabarkannya. Jadi "gaya sudah lengkap" tidak bisa
-       dipakai sebagai syarat.
-
-       Yang dipakai: yang pertama tiba di antara "load", "styledata", dan
-       "idle", ditambah satu jaring pengaman berwaktu, dan isinya dijalankan
-       sekali saja. Tidak ada di dalamnya yang menuntut satu ubin pun. Menata
-       kamera, menghitung penanda, dan memasang relief semuanya bekerja di atas
-       gaya yang baru terbaca, dan applyRelief sudah mencoba ulang sendiri
-       kalau lapisannya belum ada. */
     var sudahSiap = false;
 
     function siap() {
@@ -1117,8 +929,6 @@
       if (!sudahDipusatkan) map.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: 0 });
       container.parentNode.classList.add("is-ready");
 
-      /* fitBounds di atas berdurasi nol, jadi tidak ada gerakan yang bisa
-         dibatalkan oleh terbang yang menyusul satu bingkai kemudian */
       window.requestAnimationFrame(function () {
         panel.count();
         var id = idDariHash();
@@ -1131,65 +941,17 @@
     map.on("idle", siap);
     window.setTimeout(siap, 4000);
 
-    /* Petanya dianggap berdiri begitu gayanya terbaca, bukan begitu "load"
-       datang. "load" menuntut seluruh sumbernya selesai, dan satu sumber yang
-       ditolak membuatnya tidak pernah datang, yang berarti peta yang tergambar
-       dengan baik akan diberi tulisan gagal. */
     map.on("styledata", function () { booted = true; });
 
-    /* alamat yang berganti tanpa memuat ulang halaman: tautan "Lihat di peta"
-       di kartu, dan tombol maju mundur peramban */
     window.addEventListener("hashchange", function () {
       var id = idDariHash();
       if (id) state.buka(id);
     });
 
-    /* Jelajah itu tawaran, bukan tumpangan: begitu ada tangan di peta, ia
-       berhenti.
-
-       Dulu yang didengarkan hanya dragstart, wheel, dan touchstart pada
-       petanya. Ketiganya tidak pernah menyala saat pembaca menekan tombol
-       + dan - , sebab tombol itu menggerakkan kamera lewat easeTo, yang
-       bagi MapLibre tidak berbeda dengan gerakan yang dimulai Jelajah
-       sendiri. Akibatnya: pembaca memperbesar, lalu tujuh detik kemudian
-       petanya terbang ke kota lain, lalu ia memperbesar lagi. Persis rasa
-       "berputar putar dan tidak stabil" itu.
-
-       Sekarang yang didengarkan pointerdown pada wadahnya, di fase capture,
-       jadi tiap tombol kendali, tiap penanda, dan tiap sentuhan terhitung
-       satu jalan yang sama. */
     function tanganDiPeta() {
-      /* Yang dikerjakan di sini cuma satu: menghentikan Jelajah.
-
-         Dulu ia juga memanggil map.stop() pada dragstart, pada wheel, dan
-         pada klik tombol kendali, dengan maksud menghentikan penerbangan yang
-         sedang berjalan. Itu MEMATAHKAN seretannya sendiri.
-
-         Camera.stop() di MapLibre tidak hanya membatalkan animasi. Ia
-         memanggil handlers.stop(), yang menyetel ulang seluruh penanganan
-         gerak, termasuk DragPan yang baru saja dimulai peristiwa dragstart
-         itu juga. Akibatnya tiap seretan disetel ulang di awal dan peta cuma
-         bergeser sedikit, lalu berhenti.
-
-         Terukur pada 14 September 2026, di zoom 15,2: menyeret 320 piksel
-         menggeser peta 0,000149 derajat bujur, sekitar 16 meter. Seharusnya
-         sekitar 1.500 meter. Seratus kali lebih berat daripada mestinya, dan
-         itu persis keluhan "susah digeser ke kiri dan ke kanan".
-
-         map.stop() memang tidak diperlukan. Penanganan gerak MapLibre sudah
-         mengambil alih animasi yang sedang berjalan dengan sendirinya, dan
-         tombol + dan - memanggil easeTo yang menggantikan animasi itu juga. */
       state.stopTour();
     }
 
-    /* Roda tetikus: menggulir saja menggulir halaman, menggulir sambil menahan
-       Ctrl atau Cmd memperbesar peta.
-
-       Dipasang di fase capture supaya keputusannya sudah diambil sebelum
-       MapLibre membaca peristiwa yang sama. Inilah yang dikerjakan
-       cooperativeGestures, dikurangi tulisan yang berkelebat di atas peta.
-       Di layar sentuh tidak dipasang: di sana cooperativeGestures yang
-       bekerja, dan dua jari sudah punya artinya sendiri. */
     if (!sentuh()) {
       container.addEventListener("wheel", function (event) {
         if (event.ctrlKey || event.metaKey) {
@@ -1205,9 +967,6 @@
     container.addEventListener("keydown", tanganDiPeta, true);
     map.on("dragstart", tanganDiPeta);
 
-    /* Peta datar harus tetap menghadap utara. Kalau suatu hari ada jalur yang
-       menggeser bearing di mode 2D, ini yang mengembalikannya, sekali, tanpa
-       animasi yang ikut terasa sebagai putaran. */
     map.on("rotateend", function () {
       if (!current.three && Math.abs(map.getBearing()) > 0.01) map.setBearing(0);
     });
@@ -1222,11 +981,7 @@
       if (note.source) return;
       section.classList.add("is-failed");
     });
-    /* no blanket timeout here: a slow connection is not a failure, and a
-       reader on a weak signal should get the map late rather than a notice
-       saying it broke */
 
-    /* exposed for the browser console, handy when checking the map by hand */
     window.HK_PETA_STATE = state;
 
     return map;

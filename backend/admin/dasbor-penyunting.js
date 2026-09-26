@@ -1,10 +1,3 @@
-/* Dashboard admin, bagian 3 dari 4: penyunting tulisan.
-
-   Kolom tulisan, bilah format, pustaka foto dan video, dan pratinjau yang
-   dirakit server. Memakai dasbor-inti.js dan dasbor-panel.js. */
-
-/* --- penyunting ----------------------------------------------------- */
-
 function kosongkan() {
   for (const k of KOLOM) if ($(k)) $(k).value = "";
   $("tanggal").value = new Date().toISOString().slice(0, 10);
@@ -107,15 +100,7 @@ async function hapus() {
   await muatDaftar();
 }
 
-/* --- penghitung blok, bilah format, pustaka berkas, pratinjau -------- */
 
-/* Penghitung blok di bawah: kasar, dan memang cuma itu tugasnya.
-   Ia menghitung paragraf sambil diketik supaya peringatan "jumlah bloknya
-   tidak sama" muncul sebelum ada yang menekan Simpan. Ia TIDAK membangun
-   HTML, dan itu disengaja: yang membangun HTML satu pengurai saja, di server,
-   yaitu yang sama dengan yang dipakai Simpan dan yang membangun halaman blog
-   yang sudah terbit. Dua pengurai untuk satu bahasa markah akan berpisah, dan
-   yang berpisah membuat layar pratinjau berbohong. */
 function blok(teks) {
   const hasil = [];
   let kumpul = [], jenis = "p";
@@ -140,12 +125,6 @@ function blok(teks) {
   return hasil;
 }
 
-/* Menulis ke dalam textarea lewat execCommand, bukan lewat value.
-   execCommand sudah ditandai usang, dan tetap dipakai karena satu hal yang
-   belum ada penggantinya: ia menyisipkan ke dalam tumpukan urung peramban.
-   Menyetel value langsung membuang tumpukan itu, sehingga Ctrl+Z sesudah
-   menekan Tebal membatalkan bukan penebalannya melainkan seluruh paragraf
-   yang baru diketik. */
 function sisipkan(kotak, teks) {
   kotak.focus();
   let berhasil = false;
@@ -177,8 +156,6 @@ function terapkanBaris(kotak, depan, contoh) {
 
   kotak.selectionStart = mulai;
   kotak.selectionEnd = akhir;
-  /* Menekan tombol yang sama dua kali mencabut tandanya lagi, seperti tombol
-     tebal di pengolah kata. */
   if (baris.startsWith(depan)) sisipkan(kotak, baris.slice(depan.length));
   else sisipkan(kotak, depan + (baris || contoh));
 }
@@ -197,8 +174,6 @@ for (const tombol of document.querySelectorAll(".bilah button[data-sisip], .bila
   });
 }
 
-/* Pintasan dipasang pada kotaknya, bukan pada dokumen: Ctrl+B di kolom judul
-   tidak boleh diam diam menulis bintang. */
 for (const nama of ["isi_en", "isi_id"]) {
   const kotak = $(nama);
   kotak.addEventListener("focus", () => { KOTAK_TERAKHIR = nama; });
@@ -212,7 +187,6 @@ for (const nama of ["isi_en", "isi_id"]) {
   });
 }
 
-/* --- pustaka foto dan video ----------------------------------------- */
 
 function ukuranTerbaca(bita) {
   if (bita < 1024) return bita + " B";
@@ -279,9 +253,6 @@ async function muatBerkas() {
   }
 }
 
-/* Disisipkan ke KEDUA bahasa sekaligus. Bukan kenyamanan: dua bahasa wajib
-   sebangun blok demi blok, jadi gambar yang hanya masuk ke satu bahasa
-   langsung membuat tulisannya ditolak. */
 function sisipBerkas(b) {
   const baris = (b.jenis === "video" ? "!video[](" : "![](") + b.alamat + ")";
   for (const nama of ["isi_en", "isi_id"]) {
@@ -306,14 +277,6 @@ async function hapusBerkas(b) {
   await muatBerkas();
 }
 
-/* Memakai XMLHttpRequest, bukan fetch, dan itu satu satunya alasannya: fetch
-   belum bisa melaporkan berapa bita yang sudah terkirim. Untuk video delapan
-   puluh megabita di sambungan rumahan, bilah yang bergerak adalah beda antara
-   menunggu dan mengira aplikasinya menggantung.
-
-   Content-Type sengaja tidak dipasang. Peramban menuliskannya sendiri beserta
-   boundary multipart-nya, dan boundary yang ditulis tangan hampir selalu
-   salah. */
 function unggahSatu(berkas) {
   return new Promise((selesai, gagal) => {
     const bentuk = new FormData();
@@ -346,9 +309,6 @@ function unggahSatu(berkas) {
 
 async function kirimBerkas(daftar) {
   if (!daftar || !daftar.length) return;
-  /* Satu per satu, bukan sekaligus: enam video yang berangkat bersamaan
-     berebut sambungan yang sama dan tidak ada satu pun yang selesai lebih
-     cepat karenanya. */
   for (const satu of Array.from(daftar)) {
     try {
       const hasil = await unggahSatu(satu);
@@ -390,7 +350,6 @@ JATUH.addEventListener("drop", async (e) => {
   await kirimBerkas(e.dataTransfer.files);
 });
 
-/* --- pratinjau ------------------------------------------------------ */
 
 let TUNDA_PRATINJAU = null;
 
@@ -415,14 +374,6 @@ function perbarui() {
     }
   }
 
-  /* Pratinjaunya dibangun server, oleh pembangkit yang sama dengan yang
-     membangun halaman blog yang sudah terbit. Jadi yang terlihat di sini
-     memang yang akan terbit, dan markah yang ditolak di sini adalah markah
-     yang akan ditolak Simpan, dengan kalimat yang sama.
-
-     Ditunda 500 ms sesudah ketikan terakhir. Tanpa penundaan, tiap huruf
-     mengirim satu permintaan, dan yang sampai duluan belum tentu yang
-     terakhir diketik. */
   if (TUNDA_PRATINJAU) clearTimeout(TUNDA_PRATINJAU);
   TUNDA_PRATINJAU = setTimeout(mintaPratinjau, 500);
 }
@@ -439,8 +390,6 @@ async function mintaPratinjau() {
   const hasil = await jawaban.json().catch(() => null);
 
   if (!jawaban.ok) {
-    /* Alasannya ditulis sebagai teks, bukan sebagai HTML: ia memuat potongan
-       baris yang baru saja diketik orangnya. */
     p.replaceChildren();
     const galat = document.createElement("p");
     galat.className = "kabar salah";
@@ -450,17 +399,6 @@ async function mintaPratinjau() {
     return;
   }
 
-  /* innerHTML dengan sengaja, dan aman justru karena sumbernya.
-
-     HTML ini tidak datang dari orang dan tidak datang dari peramban. Ia
-     dibangun tools/markah.py di server, yaitu pengurai yang meng-escape
-     seluruh teks, menolak HTML mentah dengan galat, dan menolak skema tautan
-     selain http, https, dan mailto. Membersihkannya lagi di sini berarti dua
-     aturan untuk satu hal, dan dua aturan akan berpisah.
-
-     Sampai 18 September 2026 pratinjau ini dirakit dengan createElement dari
-     pengurai kecil di halaman ini sendiri. Yang menggantikannya bukan
-     kelonggaran melainkan penghapusan pengurai kedua itu. */
   p.innerHTML = hasil.html;
   $("hitung-kata").textContent = hasil.kata_en + " kata";
 }

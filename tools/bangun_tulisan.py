@@ -31,14 +31,11 @@ AKAR = pathlib.Path(__file__).resolve().parent.parent
 ISI = AKAR / "content"
 TEMPLATE = AKAR / "content" / "template"
 SITUS = "https://www.hendrokuswantoro.com"
-# tanggal halaman yang isinya tidak datang dari content/
 TANGGAL_SITUS = "2026-09-14"
 
 
 def versi_aset() -> tuple[str, str]:
     beranda = (AKAR / "index.html").read_text(encoding="utf-8")
-    # Nomornya sidik isi berkasnya, sepuluh heksa, bukan angka desimal.
-    # Lihat tools/versi_aset.py.
     css = re.search(r"/assets/css/style\.css\?v=([0-9a-z]+)", beranda)
     js = re.search(r"/assets/js/app\.js\?v=([0-9a-z]+)", beranda)
     if not css or not js:
@@ -47,11 +44,6 @@ def versi_aset() -> tuple[str, str]:
 
 
 def badan(mentah: str, lain: str) -> str:
-    """Markdown dua bahasa jadi HTML dengan atribut data-ind.
-
-    Bentuk keluarannya mengikuti berkas yang sudah ada persis, termasuk
-    barisnya: paragraf memecah teksnya ke baris sendiri, kutipan tidak.
-    """
     blok_en = markah.blok(mentah)
     blok_id = markah.blok(lain)
     if len(blok_en) != len(blok_id):
@@ -65,11 +57,6 @@ def badan(mentah: str, lain: str) -> str:
             raise SystemExit(
                 f"blok ke {nomor + 1} beda jenis: {en.jenis} lawan {idn.jenis}"
             )
-        # Gambar dan video wajib menunjuk berkas yang sama di kedua bahasa.
-        #
-        # Kalau tidak dijaga, pembaca Indonesia dan pembaca Inggris melihat
-        # dua foto berbeda di tempat yang sama, dan tidak ada satu pun yang
-        # mengadu. Keterangannya memang boleh, dan memang harus, berbeda.
         if en.alamat != idn.alamat:
             raise SystemExit(
                 f"blok ke {nomor + 1} menunjuk berkas berbeda: "
@@ -110,46 +97,20 @@ def badan(mentah: str, lain: str) -> str:
 
 
 def media(en: markah.Blok, idn: markah.Blok) -> list[str]:
-    """Satu gambar atau satu video, dengan keterangannya dua bahasa.
-
-    Keterangan merangkap teks alternatif, dan itu kompromi yang disebut
-    terus terang: keduanya memang berbeda tugas, satu untuk pembaca yang
-    melihat gambarnya dan satu untuk yang tidak. Menuntut penulisnya
-    menuliskan empat kalimat untuk satu foto akan berakhir dengan dua di
-    antaranya disalin dari dua lainnya.
-
-    Yang tetap dijaga: gambar tanpa keterangan keluar dengan alt kosong,
-    yaitu pernyataan "ini hiasan", bukan alt berisi nama berkasnya.
-    """
     alt = markah.polos(en.teks)
-    # data-ind-alt dipasang lewat setAttribute, data-ind keterangan lewat
-    # innerHTML, jadi escape-nya berbeda. Lihat markah.untuk_ind.
     ind_alt = markah.polos(idn.teks)
     ind = markah.untuk_ind(idn.teks)
-    # Alamatnya sudah dibatasi pengurai ke /unggahan/ dan /assets/img/, tetapi
-    # pola alamatnya menerima tanda kutip. Di-escape supaya tidak bisa keluar
-    # dari atribut src. Gambar karya disajikan immutable, jadi alamatnya
-    # membawa sidik isinya lebih dulu, dari fungsi yang sama dengan
-    # tools/versi_aset.py, supaya kedua alat tidak saling menulis ulang halaman
-    # yang sama.
     src = html.escape(cap_karya(en.alamat), quote=True)
     baris = ['        <figure class="tulisan__media">']
 
     if en.jenis == "gambar":
         ukur = markah.ukuran(en.alamat)
-        # Tanpa ukuran, peramban baru tahu tinggi gambarnya sesudah
-        # mengunduhnya, dan tulisan di bawahnya melompat. Gambar yang tidak
-        # punya ukuran di namanya tetap terbit, hanya tanpa janji itu.
         sifat = f' width="{ukur[0]}" height="{ukur[1]}"' if ukur else ""
         baris.append(
             f'          <img src="{src}" alt="{alt}" data-ind-alt="{ind_alt}"'
             f'{sifat} loading="lazy" decoding="async">'
         )
     else:
-        # preload="metadata": yang diambil lebih dulu cuma durasi dan
-        # ukurannya, bukan seluruh videonya. Video yang mengunduh dirinya
-        # sendiri di halaman yang mungkin tidak pernah digulir sampai ke sana
-        # adalah kuota pembaca yang dipakai tanpa pernah dimintai izin.
         baris.append(
             f'          <video src="{src}" controls preload="metadata"'
             ' playsinline></video>'
@@ -178,11 +139,6 @@ def halaman(t: Tulisan, semua: list[Tulisan], css: str, js: str) -> str:
     nilai = {
         "slug": t.slug,
         "tanggal": t.tanggal,
-        # Seluruh kolom teks di-escape sebelum masuk template. Sampai
-        # 26 September 2026 semuanya disisipkan apa adanya, termasuk ke dalam
-        # atribut content dan ke dalam JSON-LD, jadi satu tanda kutip di judul
-        # sudah cukup untuk keluar dari atributnya. Yang Inggris satu lapis,
-        # yang Indonesia di data-ind dua lapis, lihat markah.untuk_ind.
         "tanggal_label_en": html.escape(t.tanggal_label.en, quote=True),
         "tanggal_label_id": markah.untuk_ind(t.tanggal_label.id),
         "tag_en": html.escape(t.tag.en, quote=True),
@@ -191,8 +147,6 @@ def halaman(t: Tulisan, semua: list[Tulisan], css: str, js: str) -> str:
         "baca_id": markah.untuk_ind(t.baca.id),
         "judul_en": html.escape(t.judul.en, quote=True),
         "judul_id": markah.untuk_ind(t.judul.id),
-        # JSON di dalam <script>: tanda kutip lewat json.dumps, dan < > &
-        # jadi \u003c dan kawannya supaya "</script>" tidak menutup bloknya.
         "judul_json": json.dumps(t.judul.en, ensure_ascii=False)[1:-1]
         .replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026"),
         "keterangan_en": html.escape(t.keterangan.en, quote=True),
@@ -214,12 +168,6 @@ def halaman(t: Tulisan, semua: list[Tulisan], css: str, js: str) -> str:
 
 
 def kartu(t: Tulisan) -> str:
-    """Satu kartu di halaman Blog.
-
-    Ditulis sebagai daftar baris, bukan satu f-string panjang: bentuk
-    keluarannya harus sama persis dengan berkas tulis tangan, dan indentasi
-    yang salah satu spasi pun akan terlihat di pembandingan.
-    """
     baris = [
         '        <a class="post" href="/blog/%s">' % t.slug,
         '          <span class="post__meta">',
@@ -262,12 +210,6 @@ TETAP = [
 
 
 def sitemap(semua: list[Tulisan]) -> str:
-    """Sitemap dibangkitkan, bukan disunting tangan.
-
-    Tulisan yang tidak terdaftar di sitemap adalah tulisan yang tidak akan
-    ditemukan siapa pun. Selama daftarnya diurus tangan, lupa satu baris
-    tidak menimbulkan galat apa pun.
-    """
     diubah = max((t.tanggal for t in semua), default="")
     baris = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
@@ -297,9 +239,6 @@ def main() -> int:
                         help="pangkal API kalau --sumber api")
     pilihan = alasan.parse_args()
 
-    # Seluruh alasan SumberIsi dibuat antarmuka sejak Fase 0 ada di dua baris
-    # ini: berpindah dari berkas ke basis data tidak menyentuh satu pun baris
-    # di bawahnya.
     sumber: SumberIsi = (
         SumberApi(pilihan.api) if pilihan.sumber == "api" else SumberBerkas(ISI)
     )

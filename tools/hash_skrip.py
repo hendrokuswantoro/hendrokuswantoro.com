@@ -1,23 +1,3 @@
-"""Menghitung ulang hash CSP untuk skrip sebaris di <head>.
-
-    python tools/hash_skrip.py
-
-Situs ini punya tepat satu skrip sebaris: tiga baris di dalam <head> yang
-memasang tema sebelum bingkai pertama digambar. Ia tidak bisa pindah ke
-app.js, sebab app.js dimuat dengan defer dan pembaca yang memilih gelap akan
-melihat satu bingkai putih lebih dulu.
-
-Yang mengizinkannya hash sha256 di `_headers`, bukan 'unsafe-inline'. Bedanya
-besar: 'unsafe-inline' membuka seluruh skrip sebaris, termasuk yang
-disuntikkan penyerang lewat XSS; hash hanya mengizinkan byte yang persis itu.
-Harganya, tiap kali skripnya berubah satu byte pun hashnya wajib dihitung
-ulang, dan kalau lupa, temanya berhenti bekerja tanpa pesan apa pun di
-halaman. Karena itu ada berkas ini, dan `tests/test_gaya.py` memanggilnya.
-
-Keluar dengan kode 1 kalau hash di `_headers` tidak cocok dengan skrip yang
-benar benar ada di halaman.
-"""
-
 from __future__ import annotations
 
 import base64
@@ -34,8 +14,6 @@ SEBARIS = re.compile(r"<script>(?!</script>)(.*?)</script>", re.DOTALL)
 
 
 def skrip_sebaris(berkas: pathlib.Path) -> list[str]:
-    """Hanya <script> tanpa atribut sama sekali, yaitu yang benar benar sebaris.
-    <script defer src=...> punya atribut, jadi tidak ikut terjaring."""
     return SEBARIS.findall(berkas.read_text(encoding="utf-8"))
 
 

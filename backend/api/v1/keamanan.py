@@ -1,11 +1,3 @@
-"""Halaman keamanan akun: verifikasi email, TOTP, kode pemulihan, jejak.
-
-Semua yang di sini menuntut sesi admin yang sudah lengkap. Menyalakan atau
-mematikan faktor kedua adalah perubahan pada jalan masuk itu sendiri, dan
-perubahan semacam itu tidak boleh bisa dilakukan oleh tiket yang baru
-melewati faktor pertama.
-"""
-
 from __future__ import annotations
 
 from typing import Annotated
@@ -30,16 +22,6 @@ rute = APIRouter(prefix="/keamanan", tags=["keamanan"])
 
 
 def _asal(permintaan: Request) -> str:
-    """Alamat situs untuk ditaruh di dalam surat.
-
-    Diambil dari daftar asal yang diizinkan, BUKAN dari header Origin
-    permintaannya. Header itu datang dari peramban, jadi memercayainya berarti
-    membiarkan penyerang memilih sendiri alamat tautan verifikasi yang
-    dikirimkan ke kotak surat pemilik akun.
-    """
-    # Yang pertama berawalan https dan bukan mesin sendiri, bukan yang
-    # terakhir di daftar. Memilih menurut urutan berarti satu baris .env yang
-    # ditulis dengan urutan lain membuat tautan di surat menunjuk localhost.
     for asal in pengaturan().asal_diizinkan:
         if asal.startswith("https://") and "localhost" not in asal and "127.0.0.1" not in asal:
             return asal
@@ -47,12 +29,6 @@ def _asal(permintaan: Request) -> str:
 
 
 async def _pengguna_penuh(pengguna: dict) -> dict:
-    """Baris pengguna lengkap untuk sesi ini, atau 404 kalau sudah tidak ada.
-
-    Dipakai tiga rute yang memang menjawab 404 untuk keadaan itu. Tiga rute
-    lain membaca penggunanya tanpa pemeriksaan ini, dan sengaja dibiarkan
-    begitu supaya perilakunya tidak berubah diam diam.
-    """
     penuh = await lapis.pengguna(pengguna["id"])
     if not penuh:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="tidak ada")
@@ -73,27 +49,14 @@ async def keadaan(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
         "punya_sandi": baris["punya_sandi"],
         "passkey": baris["passkey"],
         "pemulihan_sisa": baris["pemulihan_sisa"],
-        # Dua keadaan lingkungan yang jujur disebut, bukan disembunyikan.
-        # Tombol yang selalu ada lalu selalu gagal lebih buruk daripada
-        # tombol yang menjelaskan kenapa ia belum bisa dipakai.
         "wajah_terdaftar": baris["wajah_didaftar_pada"] is not None,
         "surat_siap": surat.siap(),
         "kunci_kolom_siap": rahasia.siap(),
         "wajah_siap": wajah_modul.siap(),
-        # Apakah sesi ini sendiri lahir lewat faktor kedua, dan apakah jalur
-        # tulis memang menuntutnya. Dipakai dashboard untuk menjelaskan
-        # kenapa tombol Simpan menolak, alih alih membiarkan orang menebak.
         "faktor_kedua_wajib": pengaturan().faktor_kedua_wajib,
         "sesi_kuat": bool(pengguna.get("faktor_kedua")),
-        # Tanpa Redis, mencabut sesi hanya mematikan refresh token-nya, dan
-        # token aksesnya tetap sah sampai lima belas menit berikutnya.
-        # Disebutkan, bukan didiamkan: tombol "keluarkan perangkat lain"
-        # ditekan justru saat orangnya curiga.
         "pencabutan_segera_siap": daftar_cabut.siap(),
     }
-
-
-# ------------------------------------------------------- verifikasi email ---
 
 
 @rute.post("/email/kirim", summary="Kirim ulang tautan verifikasi email")
@@ -121,15 +84,6 @@ async def konfirmasi(
     isian: Tautan,
     alamat: Annotated[str, Depends(alamat_teringkas)],
 ) -> dict:
-    """Sengaja TIDAK menuntut sesi.
-
-    Tautan verifikasi dibuka dari kotak surat, sering di perangkat lain yang
-    belum pernah masuk. Menuntut sesi di sini berarti menuntut orang masuk
-    lebih dulu untuk membuktikan email yang justru dipakai memulihkan akses.
-
-    Yang menjaganya token itu sendiri: 32 bita dari `secrets`, sekali pakai,
-    hidup 24 jam, dan yang tersimpan hanya sha256-nya.
-    """
     try:
         pengguna = await lapis.selesaikan_verifikasi_email(isian.token, alamat)
     except lapis.Ditolak as ditolak:
@@ -137,9 +91,6 @@ async def konfirmasi(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(ditolak)
         ) from ditolak
     return {"email": pengguna["email"], "terverifikasi": True}
-
-
-# ------------------------------------------------------------------ TOTP ---
 
 
 @rute.post("/totp/mulai", summary="Buat rahasia TOTP baru")
@@ -195,15 +146,8 @@ async def totp_matikan(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(ditolak)
         ) from ditolak
 
-    # Mematikan faktor kedua adalah yang pertama dikerjakan orang yang baru
-    # saja mengambil sebuah akun: ia menutup jalan pulang pemiliknya. Kabar
-    # yang datang sendiri adalah satu satunya yang sampai kepada orang yang
-    # sedang tidak membuka halaman jejaknya.
     await kabar.kabari_perubahan_keamanan(penuh, "authenticator dimatikan")
     return {"aktif": False}
-
-
-# --------------------------------------------------------------- peristiwa --
 
 
 @rute.get("/peristiwa", summary="Aktivitas keamanan terakhir")
@@ -211,11 +155,7 @@ async def peristiwa(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
     return {"peristiwa": await lapis.jejak(pengguna["id"])}
 
 
-# ------------------------------------------------------------------ wajah ---
-
-
 class BingkaiWajah(BaseModel):
-    # Tiga bingkai base64, masing masing dibatasi lagi di lapisan wajah.
     bingkai: list[str] = Field(min_length=2, max_length=5)
 
 
@@ -225,12 +165,6 @@ async def wajah_daftar(
     pengguna: Annotated[dict, Depends(butuh_admin_pendaftar)],
     alamat: Annotated[str, Depends(alamat_teringkas)],
 ) -> dict:
-    """Fotonya TIDAK disimpan. Yang tersimpan 128 angka, dan itu pun tersandi.
-
-    Batas lapisan ini ditulis di backend/layanan/wajah.py dan diulang di layar
-    tempat ia dinyalakan: ia menaikkan ongkos masuk, ia tidak membuktikan
-    kehadiran, dan ia bukan pengganti passkey.
-    """
     penuh = await _pengguna_penuh(pengguna)
     try:
         return await lapis.daftarkan_wajah(penuh, isian.bingkai, alamat)
@@ -249,10 +183,6 @@ async def wajah_hapus(
     pengguna: Annotated[dict, Depends(butuh_admin_kuat)],
     alamat: Annotated[str, Depends(alamat_teringkas)],
 ) -> dict:
-    """Menghapus barisnya, bukan menandainya nonaktif.
-
-    Data biometrik yang dinonaktifkan tetap data biometrik yang tersimpan.
-    """
     penuh = await lapis.pengguna(pengguna["id"])
     await lapis.hapus_wajah(penuh, alamat)
     return {"terdaftar": False}

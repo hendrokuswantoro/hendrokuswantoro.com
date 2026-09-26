@@ -1,12 +1,3 @@
-"""Log terstruktur JSON. Bab 15.17.
-
-Satu baris JSON per permintaan: waktu, metode, jalur, status, lama.
-
-Yang tidak pernah ikut: kata sandi, token, kunci API, rahasia, dan data
-pribadi. Karena itu yang dicatat hanya jalur tanpa query string. Query string
-adalah tempat rahasia paling sering bocor ke log tanpa ada yang berniat.
-"""
-
 from __future__ import annotations
 
 import json
@@ -55,7 +46,6 @@ class CatatPermintaan(BaseHTTPMiddleware):
             "permintaan",
             extra={"tambahan": {
                 "metode": permintaan.method,
-                # tanpa query string, di situlah rahasia paling sering bocor
                 "jalur": permintaan.url.path,
                 "status": jawaban.status_code,
                 "lama_ms": lama_ms,

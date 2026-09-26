@@ -11,10 +11,6 @@
 
 <div class="kerangka">
 
-  <!-- Menu. Tiap tautan menunjuk panel lewat #id-nya, jadi tanpa JavaScript
-       pun ia tetap sauh biasa. dasbor.js hanya menambahkan dua hal: kembali
-       dari penyunting kalau panelnya sedang tertutup, dan menandai panel
-       yang sedang terlihat. -->
   <aside class="sisi" aria-label="Menu dasbor">
     <a class="merek" href="#layar-ringkasan">
       <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
@@ -67,7 +63,6 @@
     <main class="isi-utama">
       <div id="kabar" class="kabar sembunyi"></div>
 
-      <!-- masuk -->
       <section id="layar-masuk" class="kartu masuk">
         <svg class="masuk__lambang" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
           <rect width="48" height="48" rx="14" fill="#000000"></rect>
@@ -82,8 +77,6 @@
         </div>
         <div class="jarak-bawah-16">
           <label for="sandi">Sandi</label>
-          <!-- Tombolnya di DALAM bidang isian, dan isiannya diberi ruang kanan
-               supaya teks yang panjang tidak pernah tersembunyi di baliknya. -->
           <div class="sandi-bidang">
             <input id="sandi" type="password" autocomplete="current-password">
             <button id="lihat-sandi" type="button" class="lihat"
@@ -99,10 +92,6 @@
         </div>
         <button id="tombol-masuk" class="utama isian--lebar">Masuk</button>
 
-        <!-- Passkey ditawarkan di atas sandi begitu jalurnya hidup, sebab ia
-             yang tahan halaman palsu. Sandi tetap ada sebagai jalan pulang:
-             perangkat bisa hilang, dan akun yang satu satunya kunci ikut hilang
-             bersama perangkatnya adalah akun yang terkunci selamanya. -->
         <div id="blok-passkey" class="sembunyi jarak-atas-14">
           <div class="baris-berjajar-tengah">
             <hr class="garis-pisah">
@@ -110,16 +99,10 @@
             <hr class="garis-pisah">
           </div>
           <button id="tombol-passkey" class="isian--lebar">Masuk dengan passkey</button>
-          <!-- Diisi kendalaPasskey() kalau alamat halaman ini memang tidak bisa
-               dipakai. Kosong berarti tidak ada yang menghalangi. -->
           <p id="kendala-passkey" class="sembunyi ket-bawah"></p>
         </div>
       </section>
 
-      <!-- ringkasan
-           Angkanya semuanya dibaca dari API, tidak satu pun ditulis di sini.
-           Kalau sebuah angka belum bisa dibaca, yang tampil tanda tanya dan
-           keterangannya, bukan nol. Nol adalah bacaan; ketiadaan data bukan. -->
       <section id="layar-ringkasan" class="kartu sembunyi">
         <div class="kepala-panel">
           <h2>Ringkasan</h2>
@@ -164,7 +147,6 @@
         </div>
       </section>
 
-      <!-- passkey -->
       <section id="layar-kunci" class="kartu sembunyi">
         <div class="baris-rapat">
           <h2 class="kartu__judul">Passkey</h2>
@@ -184,7 +166,6 @@
         </div>
       </section>
 
-      <!-- perangkat yang sedang masuk -->
       <section id="layar-perangkat" class="kartu sembunyi">
         <div class="kepala-panel">
           <h2>Perangkat yang sedang masuk</h2>
@@ -203,7 +184,6 @@
         </div>
       </section>
 
-      <!-- jejak keamanan -->
       <section id="layar-jejak" class="kartu sembunyi">
         <h2 class="kartu__judul rapat-bawah-4">Aktivitas keamanan</h2>
         <p class="ket">
@@ -218,7 +198,6 @@
         </div>
       </section>
 
-      <!-- penyunting -->
       <section id="layar-sunting" class="sembunyi">
         <div class="kartu">
           <div class="baris-berjajar">
@@ -264,10 +243,6 @@
         </div>
 
         <div class="kartu">
-          <!-- Bilah format. Yang disunting tetap teks markah, bukan HTML: yang
-               disimpan HTML dari peramban harus dibersihkan lagi sebelum boleh
-               terbit, sedangkan markah dibaca satu pengurai yang menolak apa pun
-               yang tidak dikenalnya. Bilah ini cuma menuliskan tandanya. -->
           <div class="bilah" role="toolbar" aria-label="Format tulisan">
             <button type="button" data-sisip="**|**|tebal" title="Tebal (Ctrl B)">B</button>
             <button type="button" data-sisip="*|*|miring" title="Miring (Ctrl I)"><em>I</em></button>
@@ -318,9 +293,6 @@
               <input type="checkbox" id="buang-metadata">
               <span>Buang lokasi dan keterangan kamera dari foto</span>
             </label>
-            <!-- Peringatan ini di layar, bukan hanya di dokumentasi: yang
-                 mengunggah foto anaknya di rumah tidak akan membuka dokumentasi
-                 lebih dulu. -->
             <p class="petunjuk">
               Kalau kotak itu tidak dicentang, metadata foto tidak dibuang. Foto
               dari ponsel bisa membawa koordinat tempat pemotretannya, dan
@@ -345,8 +317,6 @@
   </div>
 </div>
 
-<!-- Empat berkas, dimuat berurutan. defer menjaga urutannya, dan dasbor.js
-     wajib paling akhir: ia memasang tombol dengan fungsi dari ketiganya. -->
 <script src="/admin/dasbor-inti.js" defer></script>
 <script src="/admin/dasbor-panel.js" defer></script>
 <script src="/admin/dasbor-penyunting.js" defer></script>

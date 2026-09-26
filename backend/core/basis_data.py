@@ -1,10 +1,3 @@
-"""Satu kolam koneksi untuk seluruh proses.
-
-Membuka koneksi per permintaan adalah cara paling gampang membuat API yang
-cepat jadi lambat: sambungan TCP plus autentikasi tiap kali, dan basis data
-kehabisan slot begitu ada sedikit lalu lintas.
-"""
-
 from __future__ import annotations
 
 from contextlib import asynccontextmanager

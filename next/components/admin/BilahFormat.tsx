@@ -3,29 +3,11 @@
 import { useCallback, useEffect } from "react";
 import gaya from "@/app/admin/admin.module.css";
 
-/**
- * Bilah format di atas kotak tulisan, seperti di pengolah kata.
- *
- * Yang disunting tetap teks markah, bukan HTML. Itu keputusan, bukan
- * keterbatasan. Penyunting WYSIWYG menyimpan HTML, dan HTML yang datang dari
- * peramban harus dibersihkan lagi sebelum boleh terbit, sebab ia bisa memuat
- * apa saja yang sempat tertempel ke dalamnya. Markah yang disimpan di sini
- * dibaca satu pengurai yang menolak apa pun yang tidak dikenalnya, dan
- * pengurai itu juga yang membangun pratinjaunya. Jadi yang terlihat di
- * pratinjau memang yang akan terbit.
- *
- * Yang dikerjakan bilah ini: menuliskan tanda markahnya untuk penulisnya,
- * supaya tidak ada yang perlu menghafal bahwa tebal itu dua bintang.
- */
 
 export type Sisip = {
-  /* Ditempel di depan pilihan. */
   depan: string;
-  /* Ditempel di belakangnya. Kosong berarti tanda ini hanya di depan. */
   belakang?: string;
-  /* Tanda ini milik satu baris penuh, bukan sepotong kata. */
   baris?: boolean;
-  /* Yang ditulis kalau tidak ada yang sedang dipilih. */
   contoh?: string;
 };
 
@@ -45,19 +27,6 @@ const TOMBOL: {
   { nama: "\u{1F517}", judul: "Tautan", pintasan: "Ctrl K", sisip: { depan: "[", belakang: "](/blog/)", contoh: "teks" } },
 ];
 
-/**
- * Menulis ke dalam textarea lewat execCommand, bukan lewat setState.
- *
- * execCommand sudah ditandai usang, dan tetap dipakai di sini karena satu
- * hal yang belum ada penggantinya: ia menyisipkan teks ke dalam tumpukan
- * urung milik peramban. Menyetel `value` langsung membuang tumpukan itu,
- * sehingga Ctrl+Z sesudah menekan tombol Tebal akan membatalkan bukan
- * penebalannya melainkan seluruh paragraf yang baru diketik. Urung yang
- * membatalkan hal yang salah lebih buruk daripada tidak ada urung.
- *
- * Kalau ia tidak ada atau gagal, yang dipakai jalur biasa, dan yang hilang
- * cuma satu langkah urung.
- */
 function sisipkan(kotak: HTMLTextAreaElement, teks: string, sesudah: () => void) {
   kotak.focus();
   let berhasil = false;
@@ -74,7 +43,6 @@ function sisipkan(kotak: HTMLTextAreaElement, teks: string, sesudah: () => void)
   sesudah();
 }
 
-/** Awal baris tempat kursor berada. */
 function awalBaris(nilai: string, posisi: number): number {
   const sebelum = nilai.lastIndexOf("\n", Math.max(0, posisi - 1));
   return sebelum === -1 ? 0 : sebelum + 1;
@@ -86,8 +54,6 @@ export function terapkan(kotak: HTMLTextAreaElement, sisip: Sisip, sesudah: () =
   let akhir = kotak.selectionEnd;
 
   if (sisip.baris) {
-    // Tanda milik baris penuh selalu ditempel di awal barisnya, di mana pun
-    // kursornya sedang berada di dalam baris itu.
     mulai = awalBaris(value, mulai);
     const habis = value.indexOf("\n", akhir);
     akhir = habis === -1 ? value.length : habis;
@@ -96,8 +62,6 @@ export function terapkan(kotak: HTMLTextAreaElement, sisip: Sisip, sesudah: () =
     kotak.selectionStart = mulai;
     kotak.selectionEnd = akhir;
 
-    // Menekan tombol yang sama dua kali mencabut tandanya lagi, seperti
-    // tombol tebal di pengolah kata.
     if (baris.startsWith(sisip.depan)) {
       sisipkan(kotak, baris.slice(sisip.depan.length), sesudah);
       return;
@@ -110,9 +74,6 @@ export function terapkan(kotak: HTMLTextAreaElement, sisip: Sisip, sesudah: () =
   const dipilih = value.slice(mulai, akhir) || (sisip.contoh ?? "");
   sisipkan(kotak, sisip.depan + dipilih + (sisip.belakang ?? ""), sesudah);
 
-  // Kalau tidak ada yang dipilih, contohnya disorot supaya tinggal diketik
-  // menimpanya. Kursor yang mendarat di sesudah "**" dan menuntut orangnya
-  // menghapus kata contoh sendiri adalah tombol yang menambah pekerjaan.
   if (kotak.selectionStart === kotak.selectionEnd && dipilih) {
     const ujung = kotak.selectionEnd - (sisip.belakang ?? "").length;
     kotak.selectionStart = ujung - dipilih.length;
@@ -139,9 +100,6 @@ export function BilahFormat({
     [kotak, onUbah],
   );
 
-  /* Pintasan papan tik yang sama dengan yang sudah dihafal orang dari
-     pengolah kata. Dipasang pada kotaknya sendiri, bukan pada dokumen, supaya
-     Ctrl+B di kolom judul tidak diam diam menulis bintang. */
   useEffect(() => {
     const el = kotak();
     if (!el) return;
@@ -192,8 +150,7 @@ export function BilahFormat({
         Foto / video
       </button>
 
-      {/* Hitungan kata dibaca dari markah yang sudah ditanggalkan tandanya,
-          dihitung server, bukan dari jumlah spasi di kotak ini. */}
+      {}
       <span className={gaya.bilahKata}>{kata} kata</span>
     </div>
   );

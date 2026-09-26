@@ -32,14 +32,6 @@ const DEM = TOKEN
       attribution: "Elevation: Mapzen, AWS Open Data",
     };
 
-/**
- * Province names are missing from the Mapbox place_label layer for Indonesia:
- * its "state" class covers other countries but returns nothing here, checked
- * at zoom 4 through 9. The thirty eight names below are carried by the site
- * itself so the provinces can be read at island zoom. Each coordinate is a
- * spot to hang the label on, inside the province but not its centroid and
- * never a boundary. The boundary lines still come from the Mapbox admin layer.
- */
 const PROVINSI_ID = {
   type: "FeatureCollection" as const,
   features: (
@@ -90,16 +82,12 @@ const PROVINSI_ID = {
   })),
 };
 
-/* Labels follow the language switch: Indonesian shows the local name, English
-   falls back to the international one. */
 function labelField(lang: Lang) {
   return lang === "id"
     ? ["coalesce", ["get", "name"], ["get", "name_en"]]
     : ["coalesce", ["get", "name_en"], ["get", "name"]];
 }
 
-/* every layer that carries a name, kept here so the language switch can
-   retitle them without rebuilding the whole style */
 const LAYER_NAMA = [
   "nama-jalan", "nama-kelurahan", "nama-kota", "nama-provinsi", "nama-provinsi-id",
   "nama-negara", "nama-alam", "nama-poi",
@@ -111,14 +99,10 @@ function retitleLabels(instance: MapLibreMap, lang: Lang) {
     try {
       if (instance.getLayer(id)) instance.setLayoutProperty(id, "text-field", field as never);
     } catch {
-      /* style not ready, the next switch will catch it */
     }
   });
 }
 
-/* One colour per family of place. They stay muted on purpose: the map is a
-   backdrop for the work markers, and a hospital dot must never compete with
-   the point it sits behind. */
 const KELOMPOK_POI = ["match", ["get", "class"],
   "park_like", "#6f9a63",
   "medical", "#b2626a",
@@ -127,13 +111,6 @@ const KELOMPOK_POI = ["match", ["get", "class"],
   "religion", "#8c7aa6",
   "#8c99a6"];
 
-/**
- * One basemap, drawn here rather than pulled from a Mapbox style URL. Mapbox
- * styles address their sources with mapbox:// URLs that MapLibre cannot
- * resolve, and the raster version of the same style carries no building
- * heights, so the 3D buildings never appeared. Reading the vector tiles
- * directly fixes both.
- */
 function mapboxStyle(lang: Lang): StyleSpecification {
   const source = `https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?access_token=${TOKEN}`;
   const reguler = ["DIN Pro Regular", "Arial Unicode MS Regular"];
@@ -141,8 +118,6 @@ function mapboxStyle(lang: Lang): StyleSpecification {
   const miring = ["DIN Pro Italic", "Arial Unicode MS Regular"];
   const nama = labelField(lang);
 
-  /* road classes grouped the way a driver reads them: toll roads and trunks
-     first, then the arteries, then the streets you actually turn into */
   const TOL = ["motorway", "motorway_link", "trunk", "trunk_link"];
   const ARTERI = ["primary", "primary_link", "secondary", "secondary_link"];
   const SEDANG = ["tertiary", "tertiary_link"];
@@ -175,8 +150,6 @@ function mapboxStyle(lang: Lang): StyleSpecification {
         paint: { "line-color": "#c3d7e8", "line-width": ["interpolate", ["linear"], ["zoom"], 8, 0.6, 16, 2.4] },
       },
 
-      /* administrative boundaries, smallest unit first so the larger ones
-         draw over it: kabupaten, then provinsi, then negara */
       {
         id: "batas-kabupaten", type: "line", source: "jalan", "source-layer": "admin", minzoom: 5,
         filter: ["all", ["==", ["get", "admin_level"], 2], ["!=", ["get", "maritime"], "true"]],
@@ -202,9 +175,6 @@ function mapboxStyle(lang: Lang): StyleSpecification {
         },
       },
 
-      /* Four tiers, casings first and bodies on top, so the network reads as
-         a route map: amber for the toll roads and trunks, a warm cream for
-         the arteries, white for everything you turn into. */
       {
         id: "jalan-kecil-tepi", type: "line", source: "jalan", "source-layer": "road", minzoom: 12,
         filter: isClass(JALAN), layout: { "line-cap": "round", "line-join": "round" },
@@ -245,8 +215,6 @@ function mapboxStyle(lang: Lang): StyleSpecification {
         filter: isClass(TOL), layout: { "line-cap": "round", "line-join": "round" },
         paint: { "line-color": "#ffd27f", "line-width": ["interpolate", ["exponential", 1.5], ["zoom"], 4, 1, 10, 4.4, 18, 20] },
       },
-      /* runways, aprons and the railway, drawn the way an atlas draws them:
-         a solid line with a white hatch laid over it */
       {
         id: "apron", type: "fill", source: "jalan", "source-layer": "aeroway", minzoom: 11,
         filter: ["in", ["get", "type"], ["literal", ["apron", "helipad"]]],
@@ -281,8 +249,6 @@ function mapboxStyle(lang: Lang): StyleSpecification {
         paint: { "fill-color": "#dde2e9", "fill-outline-color": "#c7cfd9" },
       },
 
-      /* which way the traffic runs. The arrows ignore the collision grid, so
-         they never take a slot a street name wanted. */
       {
         id: "panah-searah", type: "symbol", source: "jalan", "source-layer": "road", minzoom: 15,
         filter: ["all", ["==", ["get", "oneway"], "true"], isClass(TOL.concat(ARTERI, SEDANG, JALAN))],
@@ -296,9 +262,6 @@ function mapboxStyle(lang: Lang): StyleSpecification {
         paint: { "text-color": "#9fadbb", "text-halo-color": "#ffffff", "text-halo-width": 1 },
       },
 
-      /* the places a rider actually looks for, once the street is close
-         enough to matter. Ranked by Mapbox's own filterrank, so a hospital
-         arrives before a warung. */
       {
         id: "titik-poi", type: "circle", source: "jalan", "source-layer": "poi_label", minzoom: 15.5,
         filter: ["<=", ["to-number", ["get", "filterrank"], 5], ["step", ["zoom"], 1, 16, 2, 17, 3]],
@@ -319,9 +282,6 @@ function mapboxStyle(lang: Lang): StyleSpecification {
         },
         paint: { "text-color": "#5d6a77", "text-halo-color": "#ffffff", "text-halo-width": 1.4 },
       },
-      /* Labels, ordered small to large. MapLibre places symbols from the top
-         of the stack downwards, so the last layer here wins a clash: a country
-         name is never pushed off the map by a village. */
       {
         id: "nama-alam", type: "symbol", source: "jalan", "source-layer": "natural_label", minzoom: 3,
         filter: ["in", ["get", "class"], ["literal", ["sea", "ocean", "bay", "water", "landform"]]],
@@ -341,8 +301,6 @@ function mapboxStyle(lang: Lang): StyleSpecification {
         paint: { "text-color": "#68757f", "text-halo-color": "#ffffff", "text-halo-width": 1.2 },
       },
 
-      /* settlements thin out as you pull back: filterrank 1 is a capital, 5 is
-         a hamlet, so low zoom keeps only the ranks that fit */
       {
         id: "nama-kota", type: "symbol", source: "jalan", "source-layer": "place_label", minzoom: 3,
         filter: ["all",
@@ -356,7 +314,6 @@ function mapboxStyle(lang: Lang): StyleSpecification {
         paint: { "text-color": "#2f3b46", "text-halo-color": "#ffffff", "text-halo-width": 1.5 },
       },
 
-      /* road names ride along the line, the way a driver map shows them */
       {
         id: "nama-jalan", type: "symbol", source: "jalan", "source-layer": "road", minzoom: 13,
         filter: ["all", ["has", "name"], isClass(TOL.concat(ARTERI, SEDANG, JALAN))],
@@ -425,10 +382,6 @@ function kindOf(categories: Category[]): Category {
   return (KINDS.find((entry) => categories.includes(entry.key))?.key ?? "analysis") as Category;
 }
 
-/* Satu tampilan peta bisa dibagikan. Sama persis dengan assets/js/peta.js:
-   alamat #peta-<id> membuka petanya tepat di karya itu, dan tiap terbang
-   menuliskannya kembali dengan replaceState, bukan dengan location.hash,
-   supaya menggeser peta tidak menumpuk riwayat. */
 const AWALAN_HASH = "#peta-";
 
 function idDariHash(): string | null {
@@ -447,12 +400,9 @@ function tulisHash(id: string | null) {
   try {
     window.history.replaceState(null, "", alamat);
   } catch {
-    /* alamat file://, tidak ada riwayat untuk ditulisi */
   }
 }
 
-/* Layar sentuh tanpa kursor. Dipakai memutuskan siapa yang butuh
-   cooperativeGestures, bukan untuk menebak lebar layar. */
 function sentuh(): boolean {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(hover: none) and (pointer: coarse)").matches;
@@ -486,15 +436,9 @@ export function WorkMap() {
   const [counts, setCounts] = useState<Record<Category, number>>({ app: 0, analysis: 0, satellite: 0, design: 0 });
   const [seen, setSeen] = useState<string[]>([]);
   const [folded, setFolded] = useState(false);
-  /* Angka di legenda berubah di layar tanpa bunyi apa pun. Wilayah aria-live
-     ini yang mengucapkannya, dan ia duduk di luar panel yang bisa dilipat:
-     .peta__legenda.is-collapsed menyembunyikan .peta__grup dengan
-     display:none, dan aria-live di dalam elemen tersembunyi tidak dibacakan. */
   const [kabar, setKabar] = useState("");
 
   function umumkan(teks: string) {
-    /* dikosongkan lebih dulu supaya pesan yang sama persis tetap terbaca
-       sebagai perubahan */
     setKabar("");
     window.setTimeout(() => setKabar(teks), 60);
   }
@@ -507,7 +451,6 @@ export function WorkMap() {
     return reduced() ? 0 : value;
   }
 
-  /* the numbers answer one question only: what is on screen right now */
   function recount() {
     const instance = map.current;
     if (!instance) return;
@@ -524,7 +467,6 @@ export function WorkMap() {
     setSeen(names);
   }
 
-  /* close enough to read the streets, tilted enough to see the buildings */
   function flyTo(entry: Entry, openPopup: boolean) {
     const instance = map.current;
     if (!instance) return;
@@ -541,17 +483,11 @@ export function WorkMap() {
     tulisHash(entry.project.id);
   }
 
-  /* Dipanggil dari luar: tautan "Lihat di peta" di tiap kartu, dan alamat
-     #peta-<id> yang dibuka langsung atau dibagikan. */
   function buka(id: string): boolean {
     const entry = entries.current.find((item) => item.project.id === id);
     if (!entry) return false;
-    /* Sesudah ini kamera punya tujuan sendiri, dan siap() tidak boleh
-       menariknya kembali ke tampilan awal. */
     dipusatkan.current = true;
     stopTour();
-    /* karya yang sedang tersaring keluar harus dikembalikan dulu, kalau tidak
-       petanya terbang ke penanda yang tidak tergambar */
     if (active && entry.kind !== active) filter(active);
     flyTo(entry, true);
     umumkan(say(PROJECT_PAGE.mapFocus).replace("%w", entry.project.title[lang]));
@@ -564,15 +500,6 @@ export function WorkMap() {
         if (on) {
           instance.setTerrain({ source: "dem", exaggeration: 1.3 });
           if (instance.getSource("jalan") && !instance.getLayer("gedung3d")) {
-            /* Disisipkan SEBELUM "panah-searah", bukan ditambahkan di ujung.
-               addLayer tanpa beforeId menaruh lapisannya paling atas, di atas
-               seluruh lapisan nama, jadi gedung 3D menutupi nama jalan dan
-               nama tempat. Lihat applyRelief di assets/js/peta.js.
-
-               Tangga warnanya mengikuti tinggi yang sebenarnya ada: diukur
-               dari 17.956 bangunan yang termuat di Yogyakarta, median 3 m,
-               persentil 99 14 m. Tangga lama membentang sampai 140 m, jadi
-               hampir semua bangunan keluar dengan warna yang sama. */
             instance.addLayer({
               id: "gedung3d",
               type: "fill-extrusion",
@@ -683,8 +610,6 @@ export function WorkMap() {
     if (!instance || on === three) return;
     setThree(on);
     applyRelief(instance, on);
-    /* switching terrain on rebuilds the camera transform, which cancels any
-       move started in the same tick, so the tilt waits one frame */
     window.requestAnimationFrame(() => {
       instance.easeTo({ pitch: on ? 58 : 0, bearing: on ? -18 : 0, duration: ms(900) });
     });
@@ -717,19 +642,6 @@ export function WorkMap() {
         maxZoom: 17,
         maxPitch: 75,
         attributionControl: false,
-        /* Kenapa tulisan "Use Ctrl + scroll to zoom the map" tidak ada lagi.
-
-           Tulisan itu datang dari cooperativeGestures, dan ia muncul tiap kali
-           pembaca menggulir halaman sambil kursornya kebetulan lewat di atas
-           peta. Tetapi tulisan itu ada sebabnya: tanpa dia, roda tetikus di
-           atas peta memperbesar peta, bukan menggulir halaman, dan pembaca
-           terjebak di tengah halaman. Jadi yang dihapus bukan tulisannya,
-           melainkan sebabnya. Di tetikus, roda menggulir halaman, dan peta
-           diperbesar lewat tombol + dan -, klik dua kali, atau papan ketik.
-
-           Di layar sentuh keduanya tetap hidup: tanpa cooperativeGestures,
-           satu jari di atas peta menggeser peta dan halamannya berhenti bisa
-           digulir sama sekali. */
         cooperativeGestures: sentuh(),
         scrollZoom: sentuh(),
       });
@@ -762,16 +674,6 @@ export function WorkMap() {
         return entry;
       });
 
-      /* Penataan sesudah peta berdiri, dan ia TIDAK menumpang pada "load"
-         saja. Diukur di port statis, yang kodenya sama: dengan ubin Mapbox
-         yang dijawab 403, "load" dan "idle" tidak menyala satu kali pun dalam
-         tujuh detik, padahal petanya tergambar dan loaded() menjawab true.
-         Akibatnya relief tidak terpasang, ringkasan legenda tinggal kosong,
-         dan alamat yang dibagikan tidak pernah dibuka. Sebab yang sama
-         mengenai pembaca dengan sambungan lambat.
-         Jadi yang dipakai yang pertama tiba di antara ketiga peristiwa itu,
-         ditambah satu jaring pengaman berwaktu. Isinya dijalankan sekali, dan
-         tidak ada di dalamnya yang menuntut satu ubin pun. */
       let sudahSiap = false;
       const siap = () => {
         if (sudahSiap || cancelled) return;
@@ -782,8 +684,6 @@ export function WorkMap() {
           instance.fitBounds(bounds, { padding: 56, maxZoom: 6, duration: 0 });
         }
         setReady(true);
-        /* fitBounds di atas berdurasi nol, jadi tidak ada gerakan yang bisa
-           dibatalkan oleh terbang yang menyusul satu bingkai kemudian */
         window.requestAnimationFrame(() => {
           recount();
           const id = idDariHash();
@@ -797,23 +697,11 @@ export function WorkMap() {
       window.setTimeout(siap, 4000);
       instance.on("move", recount);
       instance.on("zoom", recount);
-      /* Jelajah itu tawaran, bukan tumpangan: begitu ada tangan di peta, ia
-         berhenti. Yang dikerjakan cuma itu, dan TIDAK memanggil map.stop().
-
-         Camera.stop() di MapLibre tidak hanya membatalkan animasi, ia juga
-         memanggil handlers.stop(), yang menyetel ulang DragPan yang baru saja
-         dimulai peristiwa dragstart itu juga. Di port statis itu membuat
-         seretan 320 piksel cuma menggeser peta 2,5 persen dari semestinya.
-         Lihat tanganDiPeta di assets/js/peta.js. */
       (["dragstart", "wheel", "touchstart"] as const).forEach((kind) => instance.on(kind, stopTour));
 
-      /* alamat yang berganti tanpa memuat ulang halaman: tautan "Lihat di
-         peta" di kartu, dan tombol maju mundur peramban */
       window.addEventListener("hashchange", dengarAlamat);
 
       map.current = instance;
-      /* dipakai tautan di kartu ketika alamatnya sudah benar, jadi hashchange
-         tidak akan menyala lagi. Sama dengan port statis. */
       (window as unknown as { HK_PETA_STATE?: { buka: (id: string) => boolean } }).HK_PETA_STATE = { buka };
     }
 

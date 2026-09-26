@@ -1,9 +1,3 @@
-"""Dependensi yang dipakai router. Termasuk penjaga otorisasi.
-
-Bab 15.9: otorisasi wajib diverifikasi di backend. Tidak ada satu pun
-keputusan akses yang dipercayakan ke peramban.
-"""
-
 from __future__ import annotations
 
 from typing import Annotated
@@ -16,7 +10,6 @@ from backend.core.konfigurasi import pengaturan
 
 
 def alamat_teringkas(permintaan: Request) -> str:
-    """IP tidak pernah disimpan apa adanya, bahkan di tabel percobaan gagal."""
     alamat = permintaan.client.host if permintaan.client else "tidak-diketahui"
     return keamanan.ringkas(alamat)
 
@@ -45,9 +38,6 @@ async def pengguna_kini(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Sesi yang sudah dicabut mematikan tokennya sekarang, bukan lima belas
-    # menit lagi. Menjawab False saat Redis tidak ada, dan halaman keamanan
-    # menyebutkan kalau pemendekan itu sedang tidak berlaku.
     if await daftar_cabut.sudah_dicabut(muatan.get("sid")):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -66,11 +56,6 @@ async def pengguna_kini(
 async def butuh_admin(
     pengguna: Annotated[dict, Depends(pengguna_kini)],
 ) -> dict:
-    """Bab 15.9: bedakan autentikasi dan otorisasi.
-
-    Token yang sah belum tentu token yang berhak. 403 dan 401 juga berbeda
-    artinya: yang satu belum masuk, yang satu sudah masuk tetapi tidak boleh.
-    """
     if pengguna["peran"] != "admin":
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="bukan admin")
     return pengguna
@@ -79,25 +64,6 @@ async def butuh_admin(
 async def butuh_admin_kuat(
     pengguna: Annotated[dict, Depends(butuh_admin)],
 ) -> dict:
-    """Admin yang sesinya lahir lewat faktor kedua.
-
-    Dipakai jalur yang mengubah isi situs: menulis, menerbitkan, mengunggah,
-    menghapus. Sandi saja membuka permukaan itu sampai 19 September 2026, dan
-    satu rahasia yang bisa ditebak, dipakai ulang, atau dipancing lewat
-    halaman palsu bukan penjaga yang pantas untuknya.
-
-    Yang TIDAK memakainya: halaman keamanan. Kalau ia ikut ditutup, pemilik
-    yang belum memasang TOTP tidak akan pernah bisa memasangnya, dan aturan
-    ini berubah jadi pintu yang dikunci dari dalam. Jadi jalan masuknya tetap
-    terbuka, dan yang tertutup cuma jalan menulisnya.
-
-    Passkey dihitung faktor kedua dengan sendirinya: ia menandatangani dengan
-    kunci yang tidak pernah meninggalkan perangkat dan terikat pada alamat
-    situs ini.
-
-    403, bukan 401. Tokennya sah; yang kurang buktinya, dan menjawab 401 akan
-    membuat peramban mengira sesinya habis lalu memutar refresh selamanya.
-    """
     if not pengaturan().faktor_kedua_wajib:
         return pengguna
     if pengguna.get("faktor_kedua"):
@@ -114,21 +80,6 @@ async def butuh_admin_kuat(
 async def butuh_admin_pendaftar(
     pengguna: Annotated[dict, Depends(butuh_admin)],
 ) -> dict:
-    """Untuk MENDAFTARKAN faktor kedua: passkey, TOTP, wajah.
-
-    Sesi yang lahir dari sandi saja boleh memasang faktor pertama, sebab
-    tanpa itu pemilik yang belum punya faktor apa pun tidak akan pernah bisa
-    memasangnya. Sesi yang sama TIDAK boleh memasang faktor tambahan pada akun
-    yang sudah punya.
-
-    Sampai 26 September 2026 keduanya boleh, dan akibatnya sandi saja cukup
-    untuk mengambil alih akun berpasskey: masuk dengan sandi, daftarkan
-    passkey milik sendiri, lalu masuk lewat passkey itu dengan sesi kuat.
-
-    Yang tersisa dan tidak bisa ditutup di sini: akun yang belum punya faktor
-    sama sekali tetap bisa dipasangi faktor pertama oleh siapa pun yang tahu
-    sandinya. Yang menutupnya hanya pemilik yang memasang faktornya lebih dulu.
-    """
     if not pengaturan().faktor_kedua_wajib:
         return pengguna
     if pengguna.get("faktor_kedua"):

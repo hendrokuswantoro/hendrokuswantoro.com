@@ -1,12 +1,3 @@
-"""Autentikasi dan otorisasi. Bab 15.8 sampai 15.11.
-
-Yang diuji bukan "bisa masuk", melainkan **yang seharusnya ditolak benar
-benar ditolak**: token bekas pakai, sesi yang sudah dicabut, token tanpa
-peran admin, dan tebakan sandi berulang.
-
-Dilewati kalau tidak ada basis data.
-"""
-
 from __future__ import annotations
 
 import os
@@ -48,8 +39,6 @@ pytestmark = pytest.mark.skipif(not ada_basis_data(DSN), reason="tidak ada basis
 
 @pytest.fixture(autouse=True)
 def bersihkan_kunci():
-    """Uji penguncian meninggalkan catatan gagal. Dibersihkan supaya uji
-    berikutnya tidak ikut terkunci."""
     yield
     with psycopg.connect(DSN) as s, s.cursor() as k:
         k.execute("DELETE FROM gagal_masuk")
@@ -71,12 +60,7 @@ def masuk(klien) -> str:
     return j.json()["akses"]
 
 
-# ----------------------------------------------------------------- sandi ---
-
-
 def test_sandi_disimpan_sebagai_argon2id():
-    """Bab 15.8. Sandi apa adanya di basis data adalah kebocoran yang sudah
-    terjadi, tinggal menunggu ketahuan."""
     with psycopg.connect(DSN) as s, s.cursor() as k:
         k.execute("SELECT sandi_hash FROM users WHERE lower(email)=lower(%s)", (EMAIL,))
         h = k.fetchone()[0]
@@ -85,7 +69,6 @@ def test_sandi_disimpan_sebagai_argon2id():
 
 
 def test_hash_yang_sama_tidak_pernah_sama_dua_kali():
-    """Garam acak. Tanpa itu, dua orang bersandi sama punya hash sama."""
     assert keamanan.hash_sandi("kata-sandi-uji") != keamanan.hash_sandi("kata-sandi-uji")
 
 
@@ -96,11 +79,7 @@ def test_verifikasi_sandi():
     assert not keamanan.sandi_cocok("benar-sekali-panjang", "bukan-hash")
 
 
-# ----------------------------------------------------------------- token ---
-
-
 def test_token_memeriksa_penerbit_dan_audience():
-    """Melewatkan salah satunya berarti token sah dari sistem lain diterima."""
     import jwt
 
     from backend.core.konfigurasi import pengaturan
@@ -143,9 +122,6 @@ def test_token_dengan_rahasia_lain_ditolak():
     assert keamanan.baca_access_token(token) is None
 
 
-# ------------------------------------------------------------------ alur ---
-
-
 def test_masuk_dan_identitas(klien):
     akses = masuk(klien)
     j = klien.get("/api/v1/auth/saya", headers={"Authorization": f"Bearer {akses}"})
@@ -162,8 +138,6 @@ def test_refresh_ada_di_cookie_httponly(klien):
 
 
 def test_refresh_diputar_dan_yang_lama_mati(klien):
-    """Bab 15.10. Token yang sudah diputar lalu muncul lagi berarti
-    salinannya ada di tangan orang lain."""
     masuk(klien)
     lama = klien.cookies.get("hk_refresh")
 
@@ -183,22 +157,18 @@ def test_keluar_mencabut_sesi(klien):
 
 
 def test_tanpa_token_401_bukan_403(klien):
-    """401 berarti belum masuk, 403 berarti sudah masuk tetapi tidak boleh.
-    Menukar keduanya membuat pesan galat menyesatkan."""
     j = klien.get("/api/v1/auth/saya")
     assert j.status_code == 401
     assert "bearer" in j.headers.get("www-authenticate", "").lower()
 
 
 def test_peran_bukan_admin_ditolak_403(klien):
-    """Bab 15.9: token yang sah belum tentu token yang berhak."""
     token, _ = keamanan.buat_access_token("00000000-0000-0000-0000-000000000002", "visitor")
     j = klien.get("/api/v1/auth/saya", headers={"Authorization": f"Bearer {token}"})
     assert j.status_code == 403
 
 
 def test_sandi_salah_dan_email_asing_dijawab_sama(klien):
-    """Jawaban yang berbeda memberi tahu penebak bahwa emailnya benar ada."""
     a = klien.post("/api/v1/auth/login", json={"email": EMAIL, "sandi": "salah-sekali-panjang"})
     b = klien.post("/api/v1/auth/login",
                    json={"email": "bukan-siapa-siapa@contoh.id", "sandi": "salah-sekali-panjang"})

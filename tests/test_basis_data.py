@@ -1,14 +1,3 @@
-"""Basis data: skema, batasan, dan isinya.
-
-Dilewati kalau tidak ada basis data yang bisa dihubungi, supaya rangkaian uji
-tetap bisa dijalankan tanpa Docker. Di CI basis datanya disediakan sebagai
-service container, jadi di sana uji ini benar benar berjalan.
-
-Yang diuji bukan "barisnya ada", melainkan **basis datanya menolak yang harus
-ditolak**. Batasan yang tidak pernah diuji adalah batasan yang mungkin saja
-tidak pernah menyala.
-"""
-
 from __future__ import annotations
 
 import os
@@ -58,7 +47,6 @@ def test_migrasi_tercatat(sambung):
 
 
 def test_indeks_spasial_ada(sambung):
-    """Tanpa GIST, tiap kueri spasial memindai seluruh tabel."""
     with sambung.cursor() as k:
         k.execute(
             "SELECT tablename FROM pg_indexes "
@@ -69,8 +57,6 @@ def test_indeks_spasial_ada(sambung):
 
 
 def test_isi_basis_data_sama_dengan_content(sambung):
-    """Basis data yang isinya berbeda dari situs yang terbit adalah jenis
-    kesalahan yang paling lama tidak ketahuan."""
     sumber = SumberBerkas(AKAR / "content")
     with sambung.cursor() as k:
         k.execute("SELECT slug FROM blog_posts ORDER BY slug")
@@ -94,8 +80,6 @@ def test_geojson_keluar_dari_postgis(sambung):
 
 
 def test_kueri_jarak_memakai_geography(sambung):
-    """Jarak dalam derajat tidak ada artinya. Uji ini memastikan jalur meter
-    benar benar bekerja, bukan sekadar tidak melempar galat."""
     with sambung.cursor() as k:
         k.execute(
             """
@@ -124,7 +108,6 @@ def test_titik_di_luar_indonesia_ditolak(sambung):
 
 
 def test_terbit_tanpa_tanggal_ditolak(sambung):
-    """Merusak urutan umpan RSS tanpa galat apa pun, kalau dibiarkan lolos."""
     with pytest.raises(psycopg.errors.CheckViolation):
         with sambung.transaction(), sambung.cursor() as k:
             k.execute(
@@ -162,7 +145,6 @@ def test_urut_proyek_tidak_boleh_kembar(sambung):
 
 
 def test_pemuat_bisa_dijalankan_berulang(sambung):
-    """Menjalankan pemuat dua kali tidak boleh menggandakan isinya."""
     import subprocess
 
     with sambung.cursor() as k:

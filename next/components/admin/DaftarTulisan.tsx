@@ -13,13 +13,6 @@ export type Ringkas = {
   judul_id: string;
 };
 
-/**
- * Daftar tulisan, termasuk draf.
- *
- * Keadaan kosongnya disebut, bukan dibiarkan jadi tabel tanpa baris. Tabel
- * kosong tidak bisa dibedakan dari tabel yang gagal dimuat, dan pembacanya
- * akan menunggu sesuatu yang tidak akan datang.
- */
 export function DaftarTulisan({
   onSunting,
   onBaru,
