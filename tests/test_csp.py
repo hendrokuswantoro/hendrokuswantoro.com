@@ -210,6 +210,13 @@ def dasbor_bertajuk():
     shutil.copy(sumber / "index.html", tmp / "admin" / "index.html")
     shutil.copy(sumber / "dasbor.css", tmp / "admin" / "dasbor.css")
     shutil.copy(sumber / "dasbor.js", tmp / "admin" / "dasbor.js")
+    # Huruf yang dilayani backend di /admin/, supaya font-src ikut diuji
+    # dengan berkas yang benar benar dimuat, bukan dengan 404.
+    for tebal in ("400", "600", "700"):
+        shutil.copy(
+            AKAR / "assets" / "fonts" / f"poppins-v24-{tebal}-latin.woff2",
+            tmp / "admin" / f"poppins-{tebal}.woff2",
+        )
 
     srv = _server(tmp, tajuk_nginx("location ^~ /admin"), 8132)
     threading.Thread(target=srv.serve_forever, daemon=True).start()

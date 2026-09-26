@@ -45,6 +45,7 @@ export const HOME = {
     id: "Klik satu titik untuk melihat karyanya.",
   } as Copy,
   mapOpen: { en: "Open the map", id: "Buka petanya" } as Copy,
+  mapPins: { en: "Works on the map", id: "Karya di peta" } as Copy,
 
   howEyebrow: { en: "How I work", id: "Cara kerja saya" } as Copy,
   howTitle: { en: "Just three steps", id: "Tiga langkah saja" } as Copy,

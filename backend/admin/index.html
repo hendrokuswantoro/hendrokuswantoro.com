@@ -9,279 +9,341 @@
 </head>
 <body>
 
-<header>
-  <h1>Tulis</h1>
-  <div class="isi">
-    <span id="siapa" class="bahasa"></span>
-    <button id="keluar" class="sembunyi">Keluar</button>
+<div class="kerangka">
+
+  <!-- Menu. Tiap tautan menunjuk panel lewat #id-nya, jadi tanpa JavaScript
+       pun ia tetap sauh biasa. dasbor.js hanya menambahkan dua hal: kembali
+       dari penyunting kalau panelnya sedang tertutup, dan menandai panel
+       yang sedang terlihat. -->
+  <aside class="sisi" aria-label="Menu dasbor">
+    <a class="merek" href="#layar-ringkasan">
+      <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+        <rect width="48" height="48" rx="14" fill="#ffffff"></rect>
+        <path d="M15 33V15h4.6v6.7h8.8V15H33v18h-4.6v-7.2h-8.8V33z" fill="#000000"></path>
+        <circle cx="37.5" cy="11.5" r="3.5" fill="#276ef1"></circle>
+      </svg>
+      <span><b>Dasbor</b><small>hendrokuswantoro.com</small></span>
+    </a>
+    <nav class="menu" aria-label="Panel">
+      <a class="menu__tautan" href="#layar-ringkasan">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="2"></rect><rect x="14" y="3" width="7" height="5" rx="2"></rect><rect x="14" y="12" width="7" height="9" rx="2"></rect><rect x="3" y="16" width="7" height="5" rx="2"></rect></svg>
+        Ringkasan
+      </a>
+      <a class="menu__tautan" href="#layar-daftar">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"></path><path d="M14 3v6h6M9 14h7M9 18h5"></path></svg>
+        Tulisan
+      </a>
+      <a class="menu__tautan" href="#layar-kunci">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="m10.8 12.2 8.7-8.7M17 6l3 3M15 8l2 2"></path></svg>
+        Passkey
+      </a>
+      <a class="menu__tautan" href="#layar-perangkat">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="2"></rect><path d="M6 18h6M9 14v4"></path><rect x="17" y="8" width="5" height="12" rx="1.5"></rect></svg>
+        Perangkat
+      </a>
+      <a class="menu__tautan" href="#layar-jejak">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 4.5 3.4 8.3 8 9 4.6-.7 8-4.5 8-9V6Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+        Aktivitas
+      </a>
+    </nav>
+    <a class="menu__tautan menu__luar" href="/" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path></svg>
+      Lihat situs
+    </a>
+  </aside>
+
+  <div class="panggung">
+    <header class="atas">
+      <div>
+        <h1>Tulis</h1>
+        <p class="atas__sub">Tulisan, foto, dan keamanan akun</p>
+      </div>
+      <div class="isi">
+        <span id="siapa" class="pengguna"></span>
+        <button id="keluar" class="sembunyi">Keluar</button>
+      </div>
+    </header>
+
+    <main class="isi-utama">
+      <div id="kabar" class="kabar sembunyi"></div>
+
+      <!-- masuk -->
+      <section id="layar-masuk" class="kartu masuk">
+        <svg class="masuk__lambang" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+          <rect width="48" height="48" rx="14" fill="#000000"></rect>
+          <path d="M15 33V15h4.6v6.7h8.8V15H33v18h-4.6v-7.2h-8.8V33z" fill="#ffffff"></path>
+          <circle cx="37.5" cy="11.5" r="3.5" fill="#276ef1"></circle>
+        </svg>
+        <h2 class="tanpa-jarak-atas">Masuk</h2>
+        <p class="masuk__sub">Dasbor hendrokuswantoro.com</p>
+        <div class="jarak-bawah-12">
+          <label for="email">Email</label>
+          <input id="email" type="email" autocomplete="username">
+        </div>
+        <div class="jarak-bawah-16">
+          <label for="sandi">Sandi</label>
+          <!-- Tombolnya di DALAM bidang isian, dan isiannya diberi ruang kanan
+               supaya teks yang panjang tidak pernah tersembunyi di baliknya. -->
+          <div class="sandi-bidang">
+            <input id="sandi" type="password" autocomplete="current-password">
+            <button id="lihat-sandi" type="button" class="lihat"
+                    aria-controls="sandi" aria-pressed="false" aria-label="Tampilkan sandi"
+                    title="Tampilkan sandi">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path class="mata" d="M1.8 12S5.4 5.5 12 5.5 22.2 12 22.2 12 18.6 18.5 12 18.5 1.8 12 1.8 12z"></path>
+                <circle class="mata" cx="12" cy="12" r="3.2"></circle>
+                <path class="coret" d="M4 20 20 4"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <button id="tombol-masuk" class="utama isian--lebar">Masuk</button>
+
+        <!-- Passkey ditawarkan di atas sandi begitu jalurnya hidup, sebab ia
+             yang tahan halaman palsu. Sandi tetap ada sebagai jalan pulang:
+             perangkat bisa hilang, dan akun yang satu satunya kunci ikut hilang
+             bersama perangkatnya adalah akun yang terkunci selamanya. -->
+        <div id="blok-passkey" class="sembunyi jarak-atas-14">
+          <div class="baris-berjajar-tengah">
+            <hr class="garis-pisah">
+            <span class="ket-kecil">atau</span>
+            <hr class="garis-pisah">
+          </div>
+          <button id="tombol-passkey" class="isian--lebar">Masuk dengan passkey</button>
+          <!-- Diisi kendalaPasskey() kalau alamat halaman ini memang tidak bisa
+               dipakai. Kosong berarti tidak ada yang menghalangi. -->
+          <p id="kendala-passkey" class="sembunyi ket-bawah"></p>
+        </div>
+      </section>
+
+      <!-- ringkasan
+           Angkanya semuanya dibaca dari API, tidak satu pun ditulis di sini.
+           Kalau sebuah angka belum bisa dibaca, yang tampil tanda tanya dan
+           keterangannya, bukan nol. Nol adalah bacaan; ketiadaan data bukan. -->
+      <section id="layar-ringkasan" class="kartu sembunyi">
+        <div class="kepala-panel">
+          <h2>Ringkasan</h2>
+          <span id="waktu-segar" class="bahasa"></span>
+          <button id="tombol-segarkan" type="button">Segarkan</button>
+        </div>
+        <div class="ubin">
+          <div class="satu-ubin">
+            <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"></path><path d="m9 15 2 2 4-4"></path></svg></span>
+            <span class="angka" id="ubin-terbit">?</span>
+            <span class="nama">Tulisan terbit</span>
+          </div>
+          <div class="satu-ubin">
+            <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></span>
+            <span class="angka" id="ubin-draf">?</span>
+            <span class="nama">Draf</span>
+          </div>
+          <div class="satu-ubin">
+            <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="m10.8 12.2 8.7-8.7M17 6l3 3M15 8l2 2"></path></svg></span>
+            <span class="angka" id="ubin-passkey">?</span>
+            <span class="nama">Passkey</span>
+          </div>
+          <div class="satu-ubin">
+            <span class="ikon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="4" width="14" height="10" rx="2"></rect><path d="M6 18h6M9 14v4"></path><rect x="17" y="8" width="5" height="12" rx="1.5"></rect></svg></span>
+            <span class="angka" id="ubin-sesi">?</span>
+            <span class="nama">Perangkat masuk</span>
+          </div>
+        </div>
+        <div id="keadaan-sistem" class="keadaan"></div>
+      </section>
+
+      <section id="layar-daftar" class="kartu sembunyi">
+        <div class="baris-rapat">
+          <h2 class="kartu__judul">Tulisan</h2>
+          <button id="tombol-baru" class="utama ke-kanan">Tulisan baru</button>
+        </div>
+        <div class="gulung">
+          <table>
+            <thead><tr><th>Judul</th><th>Status</th><th>Tanggal</th><th></th></tr></thead>
+            <tbody id="daftar"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- passkey -->
+      <section id="layar-kunci" class="kartu sembunyi">
+        <div class="baris-rapat">
+          <h2 class="kartu__judul">Passkey</h2>
+          <button id="tombol-daftar-kunci" class="ke-kanan">Daftarkan perangkat ini</button>
+        </div>
+        <p class="ket-atas">
+          Kunci privatnya tidak pernah meninggalkan perangkat, dan tanda tangannya
+          terikat pada alamat situs ini, jadi halaman palsu tidak bisa memintanya.
+          Daftarkan lebih dari satu perangkat: kunci tunggal yang ikut hilang
+          bersama ponselnya akan mengunci akun ini.
+        </p>
+        <div class="tabel-bungkus">
+          <table>
+            <thead><tr><th>Nama</th><th>Jenis</th><th>Terakhir dipakai</th><th></th></tr></thead>
+            <tbody id="daftar-kunci"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- perangkat yang sedang masuk -->
+      <section id="layar-perangkat" class="kartu sembunyi">
+        <div class="kepala-panel">
+          <h2>Perangkat yang sedang masuk</h2>
+          <button id="tombol-cabut-lain" type="button" class="bahaya">Keluarkan yang lain</button>
+        </div>
+        <p class="ket">
+          Nama perangkat dan alamat IP tidak ditampilkan sebab memang tidak
+          disimpan. Yang bisa Anda periksa jumlahnya. Kalau lebih banyak daripada
+          perangkat yang Anda ingat, keluarkan yang lain lalu ganti sandi.
+        </p>
+        <div class="gulung">
+          <table>
+            <thead><tr><th>Mulai</th><th>Berlaku sampai</th><th></th></tr></thead>
+            <tbody id="daftar-sesi"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- jejak keamanan -->
+      <section id="layar-jejak" class="kartu sembunyi">
+        <h2 class="kartu__judul rapat-bawah-4">Aktivitas keamanan</h2>
+        <p class="ket">
+          Yang gagal ikut tercatat, dan justru itu bagian yang berguna. Masuk yang
+          berhasil cuma memberi tahu Anda apa yang sudah Anda lakukan sendiri.
+        </p>
+        <div class="gulung">
+          <table>
+            <thead><tr><th>Waktu</th><th>Peristiwa</th><th>Hasil</th></tr></thead>
+            <tbody id="daftar-jejak"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- penyunting -->
+      <section id="layar-sunting" class="sembunyi">
+        <div class="kartu">
+          <div class="baris-berjajar">
+            <h2 class="kartu__judul" id="judul-sunting">Tulisan baru</h2>
+            <span id="tanda-status" class="tanda"></span>
+            <div class="ke-kanan-berjajar">
+              <button id="tombol-kembali">Kembali</button>
+              <button id="tombol-simpan" class="utama">Simpan</button>
+              <button id="tombol-terbit" class="sembunyi">Terbitkan</button>
+              <button id="tombol-hapus" class="bahaya sembunyi">Hapus</button>
+            </div>
+          </div>
+
+          <div class="baris">
+            <div><label for="slug">Slug, jadi alamatnya</label><input id="slug" placeholder="kenapa-proyeksi-penting"></div>
+            <div><label for="tanggal">Tanggal</label><input id="tanggal" type="date"></div>
+          </div>
+
+          <div class="baris">
+            <div><label for="judul_en">Judul <span class="bahasa">Inggris</span></label><input id="judul_en"></div>
+            <div><label for="judul_id">Judul <span class="bahasa">Indonesia</span></label><input id="judul_id"></div>
+          </div>
+          <div class="baris">
+            <div><label for="ringkas_en">Ringkasan kartu <span class="bahasa">EN</span></label><textarea id="ringkas_en" rows="2"></textarea></div>
+            <div><label for="ringkas_id">Ringkasan kartu <span class="bahasa">ID</span></label><textarea id="ringkas_id" rows="2"></textarea></div>
+          </div>
+          <div class="baris">
+            <div><label for="keterangan_en">Keterangan mesin pencari <span class="bahasa">EN</span></label><textarea id="keterangan_en" rows="2"></textarea></div>
+            <div><label for="keterangan_id">Keterangan mesin pencari <span class="bahasa">ID</span></label><textarea id="keterangan_id" rows="2"></textarea></div>
+          </div>
+          <div class="baris">
+            <div><label for="lede_en">Paragraf pembuka <span class="bahasa">EN</span></label><textarea id="lede_en" rows="2"></textarea></div>
+            <div><label for="lede_id">Paragraf pembuka <span class="bahasa">ID</span></label><textarea id="lede_id" rows="2"></textarea></div>
+          </div>
+          <div class="baris">
+            <div><label for="tag_en">Tag <span class="bahasa">EN</span></label><input id="tag_en"></div>
+            <div><label for="tag_id">Tag <span class="bahasa">ID</span></label><input id="tag_id"></div>
+          </div>
+          <div class="baris">
+            <div><label for="baca_en">Lama baca <span class="bahasa">EN</span></label><input id="baca_en" placeholder="4 min read"></div>
+            <div><label for="baca_id">Lama baca <span class="bahasa">ID</span></label><input id="baca_id" placeholder="4 menit baca"></div>
+          </div>
+        </div>
+
+        <div class="kartu">
+          <!-- Bilah format. Yang disunting tetap teks markah, bukan HTML: yang
+               disimpan HTML dari peramban harus dibersihkan lagi sebelum boleh
+               terbit, sedangkan markah dibaca satu pengurai yang menolak apa pun
+               yang tidak dikenalnya. Bilah ini cuma menuliskan tandanya. -->
+          <div class="bilah" role="toolbar" aria-label="Format tulisan">
+            <button type="button" data-sisip="**|**|tebal" title="Tebal (Ctrl B)">B</button>
+            <button type="button" data-sisip="*|*|miring" title="Miring (Ctrl I)"><em>I</em></button>
+            <button type="button" data-baris="## |Judul bagian" title="Judul bagian">H2</button>
+            <button type="button" data-baris="&gt; |Kutipan" title="Kutipan">&#8220;&#8221;</button>
+            <button type="button" data-baris="- |butir" title="Daftar butir">&#8226;</button>
+            <button type="button" data-baris="1. |langkah" title="Daftar bernomor">1.</button>
+            <button type="button" data-sisip="`|`|kode" title="Kode">&#9000;</button>
+            <button type="button" data-sisip="[|](/blog/)|teks" title="Tautan (Ctrl K)">&#128279;</button>
+            <span class="pisah" aria-hidden="true"></span>
+            <button type="button" id="buka-berkas" title="Sisipkan foto atau video">Foto / video</button>
+            <span class="kata" id="hitung-kata"></span>
+          </div>
+
+          <div class="baris">
+            <div>
+              <label for="isi_en">Isi <span class="bahasa">Inggris, Markdown</span></label>
+              <textarea id="isi_en" class="isi"></textarea>
+              <p class="petunjuk" id="hitung_en"></p>
+            </div>
+            <div>
+              <label for="isi_id">Isi <span class="bahasa">Indonesia, Markdown</span></label>
+              <textarea id="isi_id" class="isi"></textarea>
+              <p class="petunjuk" id="hitung_id"></p>
+            </div>
+          </div>
+          <p class="petunjuk">
+            Didukung: <code>## judul</code>, paragraf, <code>&gt; kutipan</code>,
+            <code>- butir</code>, <code>1. butir</code>, <code>**tebal**</code>,
+            <code>*miring*</code>, <code>`kode`</code>, <code>[teks](/alamat)</code>,
+            <code>![keterangan](/unggahan/berkas.webp)</code>, dan
+            <code>!video[keterangan](/unggahan/berkas.mp4)</code>.
+            Selain itu ditolak dengan nomor barisnya.
+          </p>
+          <div id="cocok" class="kabar sembunyi"></div>
+        </div>
+
+        <div class="kartu sembunyi" id="kartu-berkas">
+          <label>Foto dan video</label>
+          <div class="jatuh" id="jatuh">
+            <p class="petunjuk rapat-bawah-10">Seret berkasnya ke sini, atau pilih dari komputer.</p>
+            <button type="button" class="utama" id="pilih-berkas">Pilih berkas</button>
+            <input type="file" id="berkas-masuk" multiple hidden
+                   accept="image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm">
+            <div class="laju sembunyi" id="laju" role="progressbar" aria-valuemin="0" aria-valuemax="100"><span></span></div>
+            <p class="petunjuk">Foto sampai 10 MB, video sampai 80 MB.</p>
+            <label class="baris-berjajar-tengah" for="buang-metadata">
+              <input type="checkbox" id="buang-metadata">
+              <span>Buang lokasi dan keterangan kamera dari foto</span>
+            </label>
+            <!-- Peringatan ini di layar, bukan hanya di dokumentasi: yang
+                 mengunggah foto anaknya di rumah tidak akan membuka dokumentasi
+                 lebih dulu. -->
+            <p class="petunjuk">
+              Kalau kotak itu tidak dicentang, metadata foto tidak dibuang. Foto
+              dari ponsel bisa membawa koordinat tempat pemotretannya, dan
+              koordinat itu ikut terbit.
+            </p>
+            <p class="petunjuk">
+              Yang bisa dibuang JPEG, PNG, dan WebP. GIF dan AVIF ditolak kalau
+              kotaknya dicentang, sebab membuang setengah lalu mengaku sudah
+              bersih lebih berbahaya daripada tidak membuang sama sekali.
+            </p>
+          </div>
+          <div id="kabar-berkas" class="kabar sembunyi"></div>
+          <ul class="petak" id="petak-berkas"></ul>
+        </div>
+
+        <div class="kartu">
+          <label>Pratinjau, Inggris</label>
+          <div id="pratinjau" class="pratinjau"></div>
+        </div>
+      </section>
+    </main>
   </div>
-</header>
-
-<main>
-  <div id="kabar" class="kabar sembunyi"></div>
-
-  <!-- masuk -->
-  <section id="layar-masuk" class="kartu masuk">
-    <h2 class="tanpa-jarak-atas">Masuk</h2>
-    <div class="jarak-bawah-12">
-      <label for="email">Email</label>
-      <input id="email" type="email" autocomplete="username">
-    </div>
-    <div class="jarak-bawah-16">
-      <label for="sandi">Sandi</label>
-      <!-- Tombolnya di DALAM bidang isian, dan isiannya diberi ruang kanan
-           supaya teks yang panjang tidak pernah tersembunyi di baliknya. -->
-      <div class="sandi-bidang">
-        <input id="sandi" type="password" autocomplete="current-password">
-        <button id="lihat-sandi" type="button" class="lihat"
-                aria-controls="sandi" aria-pressed="false" aria-label="Tampilkan sandi"
-                title="Tampilkan sandi">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path class="mata" d="M1.8 12S5.4 5.5 12 5.5 22.2 12 22.2 12 18.6 18.5 12 18.5 1.8 12 1.8 12z"></path>
-            <circle class="mata" cx="12" cy="12" r="3.2"></circle>
-            <path class="coret" d="M4 20 20 4"></path>
-          </svg>
-        </button>
-      </div>
-    </div>
-    <button id="tombol-masuk" class="utama isian--lebar">Masuk</button>
-
-    <!-- Passkey ditawarkan di atas sandi begitu jalurnya hidup, sebab ia
-         yang tahan halaman palsu. Sandi tetap ada sebagai jalan pulang:
-         perangkat bisa hilang, dan akun yang satu satunya kunci ikut hilang
-         bersama perangkatnya adalah akun yang terkunci selamanya. -->
-    <div id="blok-passkey" class="sembunyi jarak-atas-14">
-      <div class="baris-berjajar-tengah">
-        <hr class="garis-pisah">
-        <span class="ket-kecil">atau</span>
-        <hr class="garis-pisah">
-      </div>
-      <button id="tombol-passkey" class="isian--lebar">Masuk dengan passkey</button>
-      <!-- Diisi kendalaPasskey() kalau alamat halaman ini memang tidak bisa
-           dipakai. Kosong berarti tidak ada yang menghalangi. -->
-      <p id="kendala-passkey" class="sembunyi ket-bawah"></p>
-    </div>
-  </section>
-
-  <!-- daftar -->
-  <!-- ringkasan
-       Angkanya semuanya dibaca dari API, tidak satu pun ditulis di sini.
-       Kalau sebuah angka belum bisa dibaca, yang tampil tanda tanya dan
-       keterangannya, bukan nol. Nol adalah bacaan; ketiadaan data bukan. -->
-  <section id="layar-ringkasan" class="kartu sembunyi">
-    <div class="kepala-panel">
-      <h2>Ringkasan</h2>
-      <span id="waktu-segar" class="bahasa"></span>
-      <button id="tombol-segarkan" type="button">Segarkan</button>
-    </div>
-    <div class="ubin">
-      <div class="satu-ubin">
-        <span class="angka" id="ubin-terbit">?</span>
-        <span class="nama">Tulisan terbit</span>
-      </div>
-      <div class="satu-ubin">
-        <span class="angka" id="ubin-draf">?</span>
-        <span class="nama">Draf</span>
-      </div>
-      <div class="satu-ubin">
-        <span class="angka" id="ubin-passkey">?</span>
-        <span class="nama">Passkey</span>
-      </div>
-      <div class="satu-ubin">
-        <span class="angka" id="ubin-sesi">?</span>
-        <span class="nama">Perangkat masuk</span>
-      </div>
-    </div>
-    <div id="keadaan-sistem" class="keadaan"></div>
-  </section>
-
-  <section id="layar-daftar" class="kartu sembunyi">
-    <div class="baris-rapat">
-      <h2 class="kartu__judul">Tulisan</h2>
-      <button id="tombol-baru" class="utama ke-kanan">Tulisan baru</button>
-    </div>
-    <div class="gulung">
-    <div class="gulung">
-    <table>
-      <thead><tr><th>Judul</th><th>Status</th><th>Tanggal</th><th></th></tr></thead>
-      <tbody id="daftar"></tbody>
-    </table>
-  </section>
-
-  <!-- passkey -->
-  <section id="layar-kunci" class="kartu sembunyi">
-    <div class="baris-rapat">
-      <h2 class="kartu__judul">Passkey</h2>
-      <button id="tombol-daftar-kunci" class="ke-kanan">Daftarkan perangkat ini</button>
-    </div>
-    <p class="ket-atas">
-      Kunci privatnya tidak pernah meninggalkan perangkat, dan tanda tangannya
-      terikat pada alamat situs ini, jadi halaman palsu tidak bisa memintanya.
-      Daftarkan lebih dari satu perangkat: kunci tunggal yang ikut hilang
-      bersama ponselnya akan mengunci akun ini.
-    </p>
-    <table>
-      <thead><tr><th>Nama</th><th>Jenis</th><th>Terakhir dipakai</th><th></th></tr></thead>
-      <tbody id="daftar-kunci"></tbody>
-    </table>
-  </section>
-
-  <!-- penyunting -->
-  <!-- perangkat yang sedang masuk -->
-  <section id="layar-perangkat" class="kartu sembunyi">
-    <div class="kepala-panel">
-      <h2>Perangkat yang sedang masuk</h2>
-      <button id="tombol-cabut-lain" type="button" class="bahaya">Keluarkan yang lain</button>
-    </div>
-    <p class="ket">
-      Nama perangkat dan alamat IP tidak ditampilkan sebab memang tidak
-      disimpan. Yang bisa Anda periksa jumlahnya. Kalau lebih banyak daripada
-      perangkat yang Anda ingat, keluarkan yang lain lalu ganti sandi.
-    </p>
-    <table>
-      <thead><tr><th>Mulai</th><th>Berlaku sampai</th><th></th></tr></thead>
-      <tbody id="daftar-sesi"></tbody>
-    </table>
-    </div>
-  </section>
-
-  <!-- jejak keamanan -->
-  <section id="layar-jejak" class="kartu sembunyi">
-    <h2 class="rapat-bawah-4">Aktivitas keamanan</h2>
-    <p class="ket">
-      Yang gagal ikut tercatat, dan justru itu bagian yang berguna. Masuk yang
-      berhasil cuma memberi tahu Anda apa yang sudah Anda lakukan sendiri.
-    </p>
-    <table>
-      <thead><tr><th>Waktu</th><th>Peristiwa</th><th>Hasil</th></tr></thead>
-      <tbody id="daftar-jejak"></tbody>
-    </table>
-    </div>
-  </section>
-
-  <section id="layar-sunting" class="sembunyi">
-    <div class="kartu">
-      <div class="baris-berjajar">
-        <h2 class="kartu__judul" id="judul-sunting">Tulisan baru</h2>
-        <span id="tanda-status" class="tanda"></span>
-        <div class="ke-kanan-berjajar">
-          <button id="tombol-kembali">Kembali</button>
-          <button id="tombol-simpan" class="utama">Simpan</button>
-          <button id="tombol-terbit" class="sembunyi">Terbitkan</button>
-          <button id="tombol-hapus" class="bahaya sembunyi">Hapus</button>
-        </div>
-      </div>
-
-      <div class="baris">
-        <div><label for="slug">Slug, jadi alamatnya</label><input id="slug" placeholder="kenapa-proyeksi-penting"></div>
-        <div><label for="tanggal">Tanggal</label><input id="tanggal" type="date"></div>
-      </div>
-
-      <div class="baris">
-        <div><label for="judul_en">Judul <span class="bahasa">Inggris</span></label><input id="judul_en"></div>
-        <div><label for="judul_id">Judul <span class="bahasa">Indonesia</span></label><input id="judul_id"></div>
-      </div>
-      <div class="baris">
-        <div><label for="ringkas_en">Ringkasan kartu <span class="bahasa">EN</span></label><textarea id="ringkas_en" rows="2"></textarea></div>
-        <div><label for="ringkas_id">Ringkasan kartu <span class="bahasa">ID</span></label><textarea id="ringkas_id" rows="2"></textarea></div>
-      </div>
-      <div class="baris">
-        <div><label for="keterangan_en">Keterangan mesin pencari <span class="bahasa">EN</span></label><textarea id="keterangan_en" rows="2"></textarea></div>
-        <div><label for="keterangan_id">Keterangan mesin pencari <span class="bahasa">ID</span></label><textarea id="keterangan_id" rows="2"></textarea></div>
-      </div>
-      <div class="baris">
-        <div><label for="lede_en">Paragraf pembuka <span class="bahasa">EN</span></label><textarea id="lede_en" rows="2"></textarea></div>
-        <div><label for="lede_id">Paragraf pembuka <span class="bahasa">ID</span></label><textarea id="lede_id" rows="2"></textarea></div>
-      </div>
-      <div class="baris">
-        <div><label for="tag_en">Tag <span class="bahasa">EN</span></label><input id="tag_en"></div>
-        <div><label for="tag_id">Tag <span class="bahasa">ID</span></label><input id="tag_id"></div>
-      </div>
-      <div class="baris">
-        <div><label for="baca_en">Lama baca <span class="bahasa">EN</span></label><input id="baca_en" placeholder="4 min read"></div>
-        <div><label for="baca_id">Lama baca <span class="bahasa">ID</span></label><input id="baca_id" placeholder="4 menit baca"></div>
-      </div>
-    </div>
-
-    <div class="kartu">
-      <!-- Bilah format. Yang disunting tetap teks markah, bukan HTML: yang
-           disimpan HTML dari peramban harus dibersihkan lagi sebelum boleh
-           terbit, sedangkan markah dibaca satu pengurai yang menolak apa pun
-           yang tidak dikenalnya. Bilah ini cuma menuliskan tandanya. -->
-      <div class="bilah" role="toolbar" aria-label="Format tulisan">
-        <button type="button" data-sisip="**|**|tebal" title="Tebal (Ctrl B)">B</button>
-        <button type="button" data-sisip="*|*|miring" title="Miring (Ctrl I)"><em>I</em></button>
-        <button type="button" data-baris="## |Judul bagian" title="Judul bagian">H2</button>
-        <button type="button" data-baris="&gt; |Kutipan" title="Kutipan">&#8220;&#8221;</button>
-        <button type="button" data-baris="- |butir" title="Daftar butir">&#8226;</button>
-        <button type="button" data-baris="1. |langkah" title="Daftar bernomor">1.</button>
-        <button type="button" data-sisip="`|`|kode" title="Kode">&#9000;</button>
-        <button type="button" data-sisip="[|](/blog/)|teks" title="Tautan (Ctrl K)">&#128279;</button>
-        <span class="pisah" aria-hidden="true"></span>
-        <button type="button" id="buka-berkas" title="Sisipkan foto atau video">Foto / video</button>
-        <span class="kata" id="hitung-kata"></span>
-      </div>
-
-      <div class="baris">
-        <div>
-          <label for="isi_en">Isi <span class="bahasa">Inggris, Markdown</span></label>
-          <textarea id="isi_en" class="isi"></textarea>
-          <p class="petunjuk" id="hitung_en"></p>
-        </div>
-        <div>
-          <label for="isi_id">Isi <span class="bahasa">Indonesia, Markdown</span></label>
-          <textarea id="isi_id" class="isi"></textarea>
-          <p class="petunjuk" id="hitung_id"></p>
-        </div>
-      </div>
-      <p class="petunjuk">
-        Didukung: <code>## judul</code>, paragraf, <code>&gt; kutipan</code>,
-        <code>- butir</code>, <code>1. butir</code>, <code>**tebal**</code>,
-        <code>*miring*</code>, <code>`kode`</code>, <code>[teks](/alamat)</code>,
-        <code>![keterangan](/unggahan/berkas.webp)</code>, dan
-        <code>!video[keterangan](/unggahan/berkas.mp4)</code>.
-        Selain itu ditolak dengan nomor barisnya.
-      </p>
-      <div id="cocok" class="kabar sembunyi"></div>
-    </div>
-
-    <div class="kartu sembunyi" id="kartu-berkas">
-      <label>Foto dan video</label>
-      <div class="jatuh" id="jatuh">
-        <p class="petunjuk rapat-bawah-10">Seret berkasnya ke sini, atau pilih dari komputer.</p>
-        <button type="button" class="utama" id="pilih-berkas">Pilih berkas</button>
-        <input type="file" id="berkas-masuk" multiple hidden
-               accept="image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm">
-        <div class="laju sembunyi" id="laju" role="progressbar" aria-valuemin="0" aria-valuemax="100"><span></span></div>
-        <p class="petunjuk">Foto sampai 10 MB, video sampai 80 MB.</p>
-        <label class="baris-berjajar-tengah" for="buang-metadata">
-          <input type="checkbox" id="buang-metadata">
-          <span>Buang lokasi dan keterangan kamera dari foto</span>
-        </label>
-        <!-- Peringatan ini di layar, bukan hanya di dokumentasi: yang
-             mengunggah foto anaknya di rumah tidak akan membuka dokumentasi
-             lebih dulu. -->
-        <p class="petunjuk">
-          Kalau kotak itu tidak dicentang, metadata foto tidak dibuang. Foto
-          dari ponsel bisa membawa koordinat tempat pemotretannya, dan
-          koordinat itu ikut terbit.
-        </p>
-        <p class="petunjuk">
-          Yang bisa dibuang JPEG, PNG, dan WebP. GIF dan AVIF ditolak kalau
-          kotaknya dicentang, sebab membuang setengah lalu mengaku sudah
-          bersih lebih berbahaya daripada tidak membuang sama sekali.
-        </p>
-      </div>
-      <div id="kabar-berkas" class="kabar sembunyi"></div>
-      <ul class="petak" id="petak-berkas"></ul>
-    </div>
-
-    <div class="kartu">
-      <label>Pratinjau, Inggris</label>
-      <div id="pratinjau" class="pratinjau"></div>
-    </div>
-  </section>
-</main>
+</div>
 
 <script src="/admin/dasbor.js" defer></script>
 </body>

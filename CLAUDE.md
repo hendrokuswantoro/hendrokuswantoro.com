@@ -350,6 +350,13 @@ pun. Inilah yang selama ini tercatat di `test_dasbor_peramban.py` sebagai
 sebab yang belum ketemu. Sekarang pipanya dikuras utas latar ke `deque`
 berbatas.
 
+**Halaman web tidak bisa mencegah tangkapan layar**, dengan cara apa pun.
+Tangkapannya diambil sistem operasi, di luar jangkauan halaman. Yang
+dikerjakan sejak 26 September 2026 adalah kebalikannya: tiap gambar karya
+membawa nama situsnya di pojok kanan bawah, digambar `tools/build_work_images.py`,
+jadi gambar yang tertangkap tetap menyebut asalnya. Jangan menambahkan skrip
+yang mengaku menghalangi tangkapan layar.
+
 Uji perubahan CSP dengan menyajikan situs **beserta tajuknya**, bukan dengan
 `python -m http.server` saja: galat CSP tidak muncul tanpa tajuk aslinya.
 

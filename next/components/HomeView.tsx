@@ -7,6 +7,7 @@ import { COMMON } from "@/content/nav";
 import { PROJECTS } from "@/content/projects";
 import { useLang } from "./LanguageProvider";
 import { HeroCard } from "./HeroCard";
+import { PetaKecil } from "./PetaKecil";
 import { ProjectCard } from "./ProjectCard";
 import { ChartIcon, DatabaseIcon, GlobeIcon, MapIcon, SatelliteIcon, SurveyIcon } from "./Icons";
 
@@ -102,18 +103,21 @@ export function HomeView() {
       </section>
 
       <section className="section">
-        <div className="wrap">
-          <div className="peta__intro">
-            <span className="eyebrow">{say(HOME.mapEyebrow)}</span>
-            <h2>{say(HOME.mapTitle)}</h2>
-            <p>{say(HOME.mapBody)}</p>
-            <p>{say(HOME.mapBodySamping)}</p>
+        <div className="wrap ajak-peta">
+          <div>
+            <div className="peta__intro">
+              <span className="eyebrow">{say(HOME.mapEyebrow)}</span>
+              <h2>{say(HOME.mapTitle)}</h2>
+              <p>{say(HOME.mapBody)}</p>
+              <p>{say(HOME.mapBodySamping)}</p>
+            </div>
+            <p>
+              <Link className="btn btn--primary" href="/project/">
+                {say(HOME.mapOpen)}
+              </Link>
+            </p>
           </div>
-          <p>
-            <Link className="btn btn--primary" href="/project/">
-              {say(HOME.mapOpen)}
-            </Link>
-          </p>
+          <PetaKecil />
         </div>
       </section>
 
@@ -124,7 +128,7 @@ export function HomeView() {
             <h2>{say(HOME.howTitle)}</h2>
           </div>
 
-          <div className="grid reveal">
+          <div className="grid langkah reveal">
             {HOME.steps.map((step) => (
               <article className="card" key={step.number}>
                 <div className="card__body">

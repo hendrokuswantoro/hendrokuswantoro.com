@@ -28,7 +28,7 @@
 <link rel="preload" href="/assets/fonts/poppins-v24-600-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/poppins-v24-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="alternate" type="application/rss+xml" title="hendrokuswantoro.com" href="/feed.xml">
-<link rel="stylesheet" href="/assets/css/style.css?v=c5e9439fdf">
+<link rel="stylesheet" href="/assets/css/style.css?v=956fc343d0">
 <script defer src="/assets/js/app.js?v=c6d150a39a"></script>
 <script type="application/ld+json">
 {
@@ -288,14 +288,47 @@
 
   <!-- ============================ peta ============================ -->
   <section class="section">
-    <div class="wrap">
-      <div class="peta__intro">
-        <span class="eyebrow" data-ind="Peta karya">The work map</span>
-        <h2 data-ind="Lihat karyanya di peta">See the work on a map</h2>
-        <p data-ind="Halaman Proyek membuka peta berisi tujuh karya.">The Project page opens a map with all seven works on it.</p>
-        <p data-ind="Klik satu titik untuk melihat karyanya.">Click a point to see the work.</p>
+    <div class="wrap ajak-peta">
+      <div>
+        <div class="peta__intro">
+          <span class="eyebrow" data-ind="Peta karya">The work map</span>
+          <h2 data-ind="Lihat karyanya di peta">See the work on a map</h2>
+          <p data-ind="Halaman Proyek membuka peta berisi tujuh karya.">The Project page opens a map with all seven works on it.</p>
+          <p data-ind="Klik satu titik untuk melihat karyanya.">Click a point to see the work.</p>
+        </div>
+        <p><a class="btn btn--primary" href="/project" data-ind="Buka petanya">Open the map</a></p>
       </div>
-      <p><a class="btn btn--primary" href="/project" data-ind="Buka petanya">Open the map</a></p>
+
+      <!-- decorative: seven pins for the seven works, the text beside it says the same -->
+      <figure class="ajak-peta__gambar reveal" aria-hidden="true">
+        <svg viewBox="0 0 640 400" focusable="false">
+          <rect width="640" height="400" fill="#111111"></rect>
+          <g fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="1.2">
+            <path d="M40 300c60-70 150-90 230-60s150 40 230-20 110-60 140-50"></path>
+            <path d="M20 250c70-60 160-80 250-50s140 30 220-30 120-70 160-60"></path>
+            <path d="M30 200c80-50 170-60 250-40s130 20 210-40 110-60 150-60"></path>
+            <path d="M60 150c70-40 150-50 230-30s120 10 190-40 100-50 140-50"></path>
+            <path d="M110 100c60-30 130-40 190-20s110 10 170-30 90-40 120-40"></path>
+            <path d="M40 350c70-50 160-60 240-40s160 40 240-10 90-40 120-40"></path>
+          </g>
+          <path d="M72 318C150 260 190 300 250 250s80-120 160-110 120 60 160 10" fill="none" stroke="#276ef1" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 12"></path>
+          <circle class="gelombang" cx="410" cy="140" r="12" fill="none" stroke="#276ef1" stroke-width="2"></circle>
+          <g fill="#ffffff">
+            <g transform="translate(72 318)"><path class="titik" d="M0 0s-11-10-11-18a11 11 0 0 1 22 0c0 8-11 18-11 18z"></path></g>
+            <g transform="translate(160 214)"><path class="titik" d="M0 0s-11-10-11-18a11 11 0 0 1 22 0c0 8-11 18-11 18z"></path></g>
+            <g transform="translate(250 250)"><path class="titik" d="M0 0s-11-10-11-18a11 11 0 0 1 22 0c0 8-11 18-11 18z"></path></g>
+            <g transform="translate(318 118)"><path class="titik" d="M0 0s-11-10-11-18a11 11 0 0 1 22 0c0 8-11 18-11 18z"></path></g>
+            <g transform="translate(410 140)"><path class="titik" fill="#276ef1" d="M0 0s-11-10-11-18a11 11 0 0 1 22 0c0 8-11 18-11 18z"></path></g>
+            <g transform="translate(500 262)"><path class="titik" d="M0 0s-11-10-11-18a11 11 0 0 1 22 0c0 8-11 18-11 18z"></path></g>
+            <g transform="translate(570 150)"><path class="titik" d="M0 0s-11-10-11-18a11 11 0 0 1 22 0c0 8-11 18-11 18z"></path></g>
+          </g>
+          <g transform="translate(28 28)">
+            <rect width="148" height="64" rx="12" fill="#ffffff"></rect>
+            <text x="16" y="26" font-family="Poppins, sans-serif" font-size="12" font-weight="500" fill="#6b6b6b" data-ind="Karya di peta">Works on the map</text>
+            <text x="16" y="50" font-family="Poppins, sans-serif" font-size="20" font-weight="700" fill="#000000">7</text>
+          </g>
+        </svg>
+      </figure>
     </div>
   </section>
 
@@ -307,7 +340,7 @@
         <h2 data-ind="Tiga langkah saja">Just three steps</h2>
       </div>
 
-      <div class="grid reveal">
+      <div class="grid langkah reveal">
         <article class="card">
           <div class="card__body">
             <span class="stat__num">01</span>

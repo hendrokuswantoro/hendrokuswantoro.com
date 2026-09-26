@@ -174,15 +174,28 @@ def buat() -> FastAPI:
     # sebab /admin sendiri harus tetap menjawab dokumen HTML-nya. Daftarnya
     # tertutup: dua nama, dipetakan tangan, jadi tidak ada satu pun jalur yang
     # datang dari pemanggil.
+    #
+    # Tiga huruf Poppins ikut di daftar yang sama sejak 26 September 2026,
+    # diambil dari assets/fonts milik situs. Di balik nginx /assets memang
+    # sudah ada, tetapi backend yang dijalankan sendiri saat mengembangkan
+    # tidak menyajikannya, dan dashboard yang hurufnya berganti tergantung
+    # cara menjalankannya tampak seperti dua aplikasi.
+    HURUF = HTML_ADMIN.parent.parent.parent / "assets" / "fonts"
     ASET_ADMIN = {
         "dasbor.css": (HTML_ADMIN.parent / "dasbor.css", "text/css; charset=utf-8"),
         "dasbor.js": (HTML_ADMIN.parent / "dasbor.js", "application/javascript; charset=utf-8"),
+        "poppins-400.woff2": (HURUF / "poppins-v24-400-latin.woff2", "font/woff2"),
+        "poppins-600.woff2": (HURUF / "poppins-v24-600-latin.woff2", "font/woff2"),
+        "poppins-700.woff2": (HURUF / "poppins-v24-700-latin.woff2", "font/woff2"),
     }
 
     @app.get("/admin/{nama}", include_in_schema=False)
     async def aset_dashboard(nama: str):
         pilihan = ASET_ADMIN.get(nama)
-        if pilihan is None:
+        # Berkas yang tidak ada di cakram dijawab 404, bukan 500. Mesin yang
+        # hanya membawa backend tanpa assets/ tetap punya dashboard yang
+        # jalan, dengan huruf sistem.
+        if pilihan is None or not pilihan[0].is_file():
             raise HTTPException(status_code=404, detail="tidak ada")
         berkas, tipe = pilihan
         return FileResponse(

@@ -85,6 +85,11 @@ async function sesudahMasuk(isi) {
   AKSES = isi.akses;
   sembunyikanSandiLagi();
   $("siapa").textContent = isi.nama;
+  // Huruf depan untuk lingkaran di bilah atas. Ditulis ke atribut, lalu CSS
+  // yang menggambarnya lewat attr(), jadi tidak ada gaya yang ditulis dari
+  // sini.
+  $("siapa").dataset.awal = String(isi.nama || "?").trim().charAt(0).toUpperCase() || "?";
+  document.body.classList.add("sudah-masuk");
   $("keluar").classList.remove("sembunyi");
   $("layar-masuk").classList.add("sembunyi");
   for (const id of ("layar-ringkasan layar-perangkat layar-jejak").split(" ")) {
@@ -657,6 +662,7 @@ function bukaBaru() {
   $("layar-kunci").classList.add("sembunyi");
   $("layar-sunting").classList.remove("sembunyi");
   perbarui();
+  window.scrollTo({ top: 0 });
 }
 
 async function bukaSunting(slug) {
@@ -687,6 +693,7 @@ async function bukaSunting(slug) {
   $("layar-kunci").classList.add("sembunyi");
   $("layar-sunting").classList.remove("sembunyi");
   perbarui();
+  window.scrollTo({ top: 0 });
 }
 
 function kumpulkan() {
@@ -1156,6 +1163,45 @@ $("sandi").onkeydown = (e) => { if (e.key === "Enter") masuk(); };
 $("keluar").onclick = keluar;
 $("tombol-baru").onclick = bukaBaru;
 $("tombol-kembali").onclick = muatDaftar;
+
+/* --- menu samping ---------------------------------------------------- */
+
+/* Tautannya sauh biasa ke #id panelnya, dan tanpa berkas ini pun ia tetap
+   bekerja. Yang ditambahkan di sini hanya dua hal yang tidak bisa dikerjakan
+   sauh sendirian. */
+const MENU = [...document.querySelectorAll(".menu .menu__tautan")];
+
+/* Satu: daftar tulisan dan passkey ditutup selama penyunting terbuka, dan
+   sauh ke panel yang tertutup tidak membawa ke mana mana. Menunya menutup
+   penyunting lewat jalan yang sama dengan tombol Kembali. */
+for (const tautan of MENU) {
+  tautan.addEventListener("click", async (e) => {
+    const sasaran = $(tautan.hash.slice(1));
+    if (!sasaran || !sasaran.classList.contains("sembunyi")) return;
+    if ($("layar-sunting").classList.contains("sembunyi")) return;
+    e.preventDefault();
+    await muatDaftar();
+    sasaran.scrollIntoView({ block: "start" });
+  });
+}
+
+/* Dua: menandai panel yang sedang di layar. Pita pengamatannya sempit di
+   sepertiga atas layar, supaya yang ditandai panel yang sedang dibaca, bukan
+   panel yang baru mengintip di bawah. */
+if ("IntersectionObserver" in window) {
+  const pengamat = new IntersectionObserver((catatan) => {
+    for (const c of catatan) {
+      if (!c.isIntersecting) continue;
+      for (const t of MENU) {
+        t.setAttribute("aria-current", t.hash === "#" + c.target.id ? "true" : "false");
+      }
+    }
+  }, { rootMargin: "-15% 0px -70% 0px" });
+  for (const t of MENU) {
+    const panel = $(t.hash.slice(1));
+    if (panel) pengamat.observe(panel);
+  }
+}
 $("tombol-simpan").onclick = simpan;
 $("tombol-terbit").onclick = terbitkan;
 $("tombol-hapus").onclick = hapus;

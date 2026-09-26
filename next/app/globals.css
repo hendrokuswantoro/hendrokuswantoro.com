@@ -300,6 +300,15 @@ ul { margin: 0; padding: 0; list-style: none; }
   border-bottom: 1px solid transparent;
   transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
 }
+@supports (animation-timeline: scroll()) {
+  .header::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+    background: var(--accent); transform-origin: 0 50%; transform: scaleX(0);
+    animation: kemajuanBaca linear both; animation-duration: auto;
+    animation-timeline: scroll(root block);
+  }
+  @keyframes kemajuanBaca { to { transform: scaleX(1); } }
+}
 .header.is-stuck { border-bottom-color: var(--line); box-shadow: 0 4px 20px rgba(11, 18, 32, .05); }
 .header .wrap { display: flex; align-items: center; gap: 16px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); font-weight: 700; letter-spacing: -.02em; min-width: 0; }
@@ -344,18 +353,21 @@ ul { margin: 0; padding: 0; list-style: none; }
    display: none jadi bawaannya, lalu dihidupkan di layar yang muat. Ditulis
    begitu, bukan sebaliknya, supaya atribut hidden tetap berarti: barisnya
    memang tidak boleh muncul sebelum ada angka yang benar di dalamnya. */
+/* Tebal sejak 26 September 2026, garisnya juga: garis rambut abu abu
+   setebal satu piksel hampir tidak terlihat di sebelah nama yang tebal, dan
+   tanpa garis itu tanggalnya terbaca sebagai sambungan nama. */
 .kini {
   display: none; margin: 0; align-items: baseline; gap: .5em;
-  padding-left: 16px; border-left: 1px solid var(--line);
-  font-size: var(--fs-sm); font-variant-numeric: tabular-nums;
+  padding-left: 16px; border-left: 2px solid var(--ink);
+  font-size: var(--fs-sm); font-weight: 600; font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 @media (min-width: 1080px) {
   .kini:not([hidden]) { display: flex; }
 }
-.kini__tanggal { color: var(--ink-3); }
-.kini .jam { color: var(--ink); font-weight: 600; }
-.kini__zona { color: var(--ink-3); font-size: var(--fs-xs); letter-spacing: .06em; }
+.kini__tanggal { color: var(--ink); font-weight: 600; }
+.kini .jam { color: var(--ink); font-weight: 700; }
+.kini__zona { color: var(--ink-2); font-size: var(--fs-xs); font-weight: 700; letter-spacing: .06em; }
 
 .nav { margin-left: auto; }
 .nav__list { display: flex; align-items: center; gap: 4px; }
@@ -404,7 +416,16 @@ ul { margin: 0; padding: 0; list-style: none; }
   background: linear-gradient(180deg, var(--surface) 0%, var(--surface) 62%, transparent 100%);
   pointer-events: none;
 }
-.hero .wrap { position: relative; }
+.hero::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: var(--ink); opacity: .07;
+  -webkit-mask: url("/assets/img/kontur.svg") center / cover no-repeat;
+  mask: url("/assets/img/kontur.svg") center / cover no-repeat;
+  -webkit-mask-image: url("/assets/img/kontur.svg"), linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+  mask-image: url("/assets/img/kontur.svg"), linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+  -webkit-mask-composite: source-in; mask-composite: intersect;
+}
+.hero .wrap { position: relative; z-index: 1; }
 .hero__grid {
   display: grid; gap: clamp(28px, 4vw, 56px); align-items: center;
   grid-template-columns: 1fr; padding: clamp(36px, 5vw, 72px) 0 clamp(32px, 4vw, 56px);
@@ -438,6 +459,8 @@ ul { margin: 0; padding: 0; list-style: none; }
 .tile:hover { transform: translateY(-4px); box-shadow: var(--sh-2); border-color: var(--line-strong); text-decoration: none; }
 .tile__icon { width: 46px; height: 46px; border-radius: var(--r-sm); flex: none; display: grid; place-items: center; background: var(--surface-2); color: var(--brand-ink); }
 .tile__icon svg { width: 24px; height: 24px; }
+.tile__icon { transition: background-color .2s var(--ease), color .2s var(--ease), transform .2s var(--ease); }
+.tile:hover .tile__icon { background: var(--brand-btn); color: var(--on-brand); transform: scale(1.06); }
 .tile__label { font-size: .875rem; font-weight: 600; color: var(--ink); line-height: 1.35; }
 
 /* ---------- cards ---------- */
@@ -449,7 +472,9 @@ ul { margin: 0; padding: 0; list-style: none; }
   transition: transform .2s var(--ease), box-shadow .2s var(--ease), border-color .2s var(--ease);
 }
 .card:hover { transform: translateY(-4px); box-shadow: var(--sh-2); border-color: var(--line-strong); }
-.card__cover { position: relative; aspect-ratio: 16 / 9; background: var(--surface-2); }
+.card__cover { position: relative; aspect-ratio: 16 / 9; background: var(--surface-2); overflow: hidden; }
+.card__cover img { transition: transform .6s var(--ease); }
+.card:hover .card__cover img { transform: scale(1.04); }
 .card__cover img, .card__cover svg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .card__badge {
   position: absolute; left: 14px; top: 14px; z-index: 2;
@@ -493,6 +518,13 @@ ul { margin: 0; padding: 0; list-style: none; }
   border-radius: 50%; background: rgba(255, 255, 255, .07);
   pointer-events: none;
 }
+.panel::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: #ffffff; opacity: .09;
+  -webkit-mask: url("/assets/img/kontur.svg") right center / cover no-repeat;
+  mask: url("/assets/img/kontur.svg") right center / cover no-repeat;
+}
+.panel > * { position: relative; }
 .panel h2, .panel h3 { color: var(--panel-ink); font-size: clamp(1.25rem, 1.1rem + .7vw, 1.6rem); margin-bottom: .35em; }
 .panel p { color: rgba(255, 255, 255, .92); max-width: 62ch; font-size: var(--fs-md); margin-bottom: 0; }
 .panel__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; position: relative; z-index: 1; }
@@ -774,6 +806,60 @@ ul { margin: 0; padding: 0; list-style: none; }
    peta.js untuk kepala legendanya sendiri, jadi memakainya lagi di sini
    membuat aturan ini ikut kena ke dalam legenda. */
 .peta__intro { max-width: 68ch; margin-bottom: 24px; }
+
+/* Ajakan ke peta di beranda. Tujuh titiknya tujuh karya yang memang ada di
+   peta halaman Proyek, bukan angka hiasan. Gambarnya aria-hidden: yang
+   dikatakannya sudah dikatakan teks di sebelahnya. */
+.ajak-peta {
+  display: grid; gap: clamp(24px, 4vw, 56px); align-items: center;
+  grid-template-columns: 1fr;
+}
+.ajak-peta > * { min-width: 0; }
+/* Dua kolom baru mulai 1240px, dan gambarnya dibatasi 400px. Pemilik proyek
+   meminta dua kalimat pengantarnya sebaris, dan di kolom selebar setengah
+   halaman kalimat kedua jatuh ke baris berikutnya. Uji
+   test_pengantar_peta_dua_kalimat_sebaris_dan_rapat yang menahannya. */
+@media (min-width: 1240px) { .ajak-peta { grid-template-columns: minmax(0, 1fr) minmax(0, 400px); } }
+.ajak-peta .peta__intro { margin-bottom: 20px; }
+.ajak-peta__gambar {
+  margin: 0; max-width: 560px; border-radius: var(--r-lg); overflow: hidden;
+  border: 1px solid var(--line); box-shadow: var(--sh-2); background: #111111;
+}
+.ajak-peta__gambar svg { display: block; width: 100%; height: auto; }
+.ajak-peta__gambar .titik { transform-box: fill-box; transform-origin: 50% 100%;
+  animation: titikJatuh .7s var(--ease) both; animation-delay: .2s; }
+/* Jatuh bergiliran. Jedanya ditulis per titik, bukan lewat --i di atribut
+   style: CSP situs ini menolak atribut style, dan itu disengaja. */
+.ajak-peta__gambar g > g:nth-child(2) .titik { animation-delay: .31s; }
+.ajak-peta__gambar g > g:nth-child(3) .titik { animation-delay: .42s; }
+.ajak-peta__gambar g > g:nth-child(4) .titik { animation-delay: .53s; }
+.ajak-peta__gambar g > g:nth-child(5) .titik { animation-delay: .64s; }
+.ajak-peta__gambar g > g:nth-child(6) .titik { animation-delay: .75s; }
+.ajak-peta__gambar g > g:nth-child(7) .titik { animation-delay: .86s; }
+/* Titiknya baru jatuh ketika gambarnya masuk layar, bukan saat halaman
+   dimuat jauh di atasnya. */
+.ajak-peta__gambar.reveal:not(.is-in) .titik { animation-play-state: paused; }
+.ajak-peta__gambar .gelombang { transform-box: fill-box; transform-origin: center;
+  animation: gelombang 2.4s var(--ease) infinite; }
+@keyframes titikJatuh { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+@keyframes gelombang { 0% { opacity: .7; transform: scale(.6); } 100% { opacity: 0; transform: scale(2.4); } }
+
+/* Tiga langkah dihubungkan satu rute putus putus, seperti jalur di peta.
+   Garisnya di belakang kartu, jadi yang terlihat hanya potongannya di
+   celah antarkartu. Hanya saat ketiganya sebaris. */
+.langkah { position: relative; }
+.langkah .stat__num {
+  display: inline-grid; place-items: center; width: 52px; height: 52px; border-radius: 50%;
+  background: var(--brand-btn); color: var(--on-brand);
+  font-size: 1.125rem; letter-spacing: 0; margin-bottom: 6px;
+}
+@media (min-width: 1000px) {
+  .langkah::before {
+    content: ""; position: absolute; left: 8%; right: 8%; top: 48px; z-index: 0;
+    border-top: 2px dashed var(--line-strong);
+  }
+  .langkah > .card { z-index: 1; }
+}
 .peta__intro h2 { font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.25rem); margin-bottom: .3em; }
 .peta__intro p { color: var(--ink-3); font-size: 1.0625rem; margin: 0 0 .35em; }
 
