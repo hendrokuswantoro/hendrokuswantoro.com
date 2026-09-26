@@ -14,7 +14,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Shell scripts parse
         run: |
@@ -23,7 +23,7 @@ jobs:
             echo "ok $berkas"
           done
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -94,10 +94,10 @@ jobs:
       run:
         working-directory: next
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
 
       - run: npm ci --no-audit --no-fund
 
@@ -116,8 +116,8 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - run: pip install -r tests/requirements.txt
@@ -127,7 +127,7 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: No secret may enter the repository
         run: |
@@ -147,9 +147,9 @@ jobs:
           grep -q 'assets/js/konfigurasi.js' .gitignore
           echo "ignored, as it should be"
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Dependency audit, enforced
         working-directory: next
@@ -188,8 +188,8 @@ jobs:
     env:
       DSN: postgresql://hendro:uji@127.0.0.1:5432/hendrokuswantoro
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - run: pip install -r backend/requirements.txt -r tests/requirements.txt
@@ -285,8 +285,8 @@ jobs:
     name: Browser and Performance
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - run: pip install -r tests/requirements.txt
@@ -346,7 +346,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, test, keamanan, basisdata, peramban]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Build the folder Cloudflare serves
         env:
@@ -363,7 +363,7 @@ jobs:
           done
           echo "dist/ holds $(find dist -type f | wc -l) files"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: situs
           path: dist

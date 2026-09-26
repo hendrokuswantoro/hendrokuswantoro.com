@@ -131,7 +131,7 @@ jobs:
 
       - name: Open an issue when the site is down
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const judul = "Health check gagal";
@@ -162,7 +162,7 @@ jobs:
 
       - name: Close the issue once the site is healthy again
         if: success()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const { data: terbuka } = await github.rest.issues.listForRepo({
