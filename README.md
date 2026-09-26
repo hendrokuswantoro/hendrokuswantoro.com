@@ -380,6 +380,14 @@ lembar peta tetap terlihat utuh. Tidak ada yang dipotong, sebab peta yang
 legendanya terpotong sudah jadi dokumen lain. Kalau ada karya baru, tambahkan
 satu baris di kamus `WORK` dalam berkas itu.
 
+Gambarnya ditulis ulang di alamat yang sama, sedangkan `/assets/img/*`
+disajikan immutable selama setahun. Karena itu tiap sebutannya membawa
+`?v=` dari sidik berkasnya. Sesudah membangkitkan gambar, jalankan:
+
+```bash
+python tools/versi_aset.py
+```
+
 ### Gambar dan ikon
 
 Gambar pratayang media sosial dan ikon aplikasi dibangkitkan dari kode:

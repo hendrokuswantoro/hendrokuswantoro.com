@@ -78,7 +78,7 @@ dipakai CI, jadi menyunting hasilnya akan ketahuan, tetapi baru di CI.
 | `blog/*.html`, `blog/index.html` | `tools/bangun_tulisan.py` |
 | `feed.xml`, baris blog di `sitemap.xml` | `tools/build_feed.py` |
 | `next/app/globals.css` | `tools/gaya_next.py` |
-| nomor `?v=` di seluruh HTML dan `app.js` | `tools/versi_aset.py` |
+| nomor `?v=` di seluruh HTML, `app.js`, dan gambar karya di port Next | `tools/versi_aset.py` |
 | `assets/img/og-cover.png`, ikon | `tools/build_og.py`, `tools/build_icons.py` |
 | `assets/img/work/*.webp` | `tools/build_work_images.py` |
 | `@font-face` di `style.css` | `tools/ambil_font.py` |
