@@ -55,7 +55,7 @@ export function ProjectView() {
             ))}
           </div>
 
-          <div className="grid">
+          <div className="grid grid--tiga">
             {shown.map((project) => (
               <ProjectCard key={project.id} project={project} withMeta />
             ))}

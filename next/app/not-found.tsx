@@ -12,18 +12,18 @@ export default function NotFound() {
     <KerangkaSitus>
       <main id="main">
       <section className="section">
-        <div className="wrap center" style={{ maxWidth: 640 }}>
+        <div className="wrap wrap--narrow center">
           <span className="eyebrow">Error 404</span>
           <h1>This point is off the map.</h1>
           <p>The page you were looking for is not here. The link may have changed, or the address has a typo.</p>
-          <p className="mt-24">
+          <div className="hero__actions hero__actions--tengah">
             <Link className="btn btn--primary" href="/">
               Go home
-            </Link>{" "}
+            </Link>
             <Link className="btn btn--ghost" href="/project/">
               See my work
             </Link>
-          </p>
+          </div>
         </div>
         </section>
       </main>

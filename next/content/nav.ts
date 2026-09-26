@@ -27,6 +27,12 @@ export const COMMON = {
   mobileNav: { en: "Mobile", id: "Menu ponsel" } as Copy,
   language: { en: "Language", id: "Bahasa" } as Copy,
   darkTheme: { en: "Dark theme", id: "Tema gelap" } as Copy,
+  footerTagline: {
+    en: "Maps and map apps, made in Yogyakarta.",
+    id: "Peta dan aplikasi peta, dibuat di Yogyakarta.",
+  } as Copy,
+  footerNav: { en: "Footer", id: "Kaki halaman" } as Copy,
+  backToTop: { en: "Back to top", id: "Kembali ke atas" } as Copy,
   rights: {
     en: "Hendro Kuswantoro. All rights reserved.",
     id: "Hendro Kuswantoro. Hak cipta dilindungi.",

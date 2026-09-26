@@ -31,9 +31,10 @@ export function ParkirJogjaView() {
 
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              className="article__gambar"
               src={PARKIR.image}
               srcSet="/assets/img/work/parking-400.webp?v=52d7f76f31 400w, /assets/img/work/parking-600.webp?v=6232295625 600w, /assets/img/work/parking.webp?v=8e000f92a9 800w"
-              sizes="(min-width: 900px) 780px, 92vw"
+              sizes="(min-width: 1080px) 840px, 92vw"
               alt={say(PARKIR.alt)}
               width={800}
               height={450}

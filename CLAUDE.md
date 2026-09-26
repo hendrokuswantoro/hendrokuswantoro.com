@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 867, tanpa peramban, hitungan detik
+python -m pytest                 # 875, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 85, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
@@ -62,7 +62,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    952 uji
+tests/                    960 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -478,6 +478,11 @@ duduk di sisi KIRI, dan `arah_hadap()` membaca arah menurut gambar. Uji lama
 tidak menangkapnya karena ia hanya memeriksa kode terhadap dirinya sendiri.
 Sesudah diperbaiki, kemiripan pemilik terukur 0,75 dan 0,80, jauh di atas
 ambang 0,363.
+
+Sesi uji mengosongkan `SMTP_HOST`, `SMTP_PENGGUNA`, `SMTP_SANDI`, dan
+`SURAT_DARI` di `tests/conftest.py` sebelum `.env` dibaca. Sampai 27 September
+2026 tidak, dan sejak SMTP diisi tiap putaran uji yang memasang TOTP atau masuk
+lewat kode email mengirim surat sungguhan ke kotak masuk pemilik.
 
 SMTP di `.env` mesin ini memakai Gmail dengan sandi aplikasi sejak 26
 September 2026, dan surat uji pertamanya terkirim. `SURAT_WAJIB` sengaja

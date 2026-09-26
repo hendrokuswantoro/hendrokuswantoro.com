@@ -28,7 +28,7 @@ export function AboutView() {
             <h2>{say(ABOUT.skillsTitle)}</h2>
           </div>
 
-          <div className="grid reveal">
+          <div className="grid grid--tiga reveal">
             {ABOUT.skills.map((skill) => (
               <article className="card" key={skill.title.en}>
                 <div className="card__body">
