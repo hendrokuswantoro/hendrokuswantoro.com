@@ -28,8 +28,8 @@ export const COMMON = {
   language: { en: "Language", id: "Bahasa" } as Copy,
   darkTheme: { en: "Dark theme", id: "Tema gelap" } as Copy,
   footerTagline: {
-    en: "Maps and map apps, made in Yogyakarta.",
-    id: "Peta dan aplikasi peta, dibuat di Yogyakarta.",
+    en: "Spatial analysis, satellite data and web maps that people actually use.",
+    id: "Analisis spasial, data satelit, dan peta web yang benar-benar dipakai orang.",
   } as Copy,
   footerNav: { en: "Footer", id: "Kaki halaman" } as Copy,
   backToTop: { en: "Back to top", id: "Kembali ke atas" } as Copy,

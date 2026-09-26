@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
     <title>Hendro Kuswantoro</title>
     <link>https://www.hendrokuswantoro.com/blog/</link>
@@ -11,21 +11,30 @@
       <title>When a map should say I do not know</title>
       <link>https://www.hendrokuswantoro.com/blog/kapan-peta-diam</link>
       <guid isPermaLink="true">https://www.hendrokuswantoro.com/blog/kapan-peta-diam</guid>
+      <dc:creator>Hendro Kuswantoro</dc:creator>
+      <category>How I work</category>
       <description>My parking map does not answer outside Yogyakarta. Here is why.</description>
+      <content:encoded><![CDATA[<p>My parking map covers Yogyakarta city only. Outside it there is no zone and no fee. That is on purpose.</p><h2>The rule only lives in one city</h2><p>The fee follows a Yogyakarta city rule. That rule does not apply in Purworejo, in Bandung, or out at sea. A map that still shows a number there is making up a rule.</p><p>The first version did that. Every point far from a zoned street became Zone III, one thousand rupiah, anywhere in the world. It looked tidy. It was wrong.</p><h2>What the app does now</h2><p>Now the app carries a boundary, drawn from the roads it really has. Inside it you get a zone and a fee. Outside it both stay empty, and the screen says the point is out of range.</p><blockquote><p>Zero is a reading. Missing data is not. The two must never look the same.</p></blockquote><h2>Why bother</h2><p>Saying nothing feels weak. But a wrong number gets copied, argued over, and printed. It lives much longer than a moment of disappointment.</p><p>People notice which app admits it does not know. That is the app they believe when it answers.</p>]]></content:encoded>
       <pubDate>Wed, 02 Sep 2026 00:00:00 +0000</pubDate>
     </item>
     <item>
       <title>A hotspot is not a fire</title>
       <link>https://www.hendrokuswantoro.com/blog/titik-panas-bukan-kebakaran</link>
       <guid isPermaLink="true">https://www.hendrokuswantoro.com/blog/titik-panas-bukan-kebakaran</guid>
+      <dc:creator>Hendro Kuswantoro</dc:creator>
+      <category>Satellite data</category>
       <description>A satellite sees heat, not flames. Small difference, big effect.</description>
+      <content:encoded><![CDATA[<p>Every dry season the hotspot maps come around. One red dot is read as one fire. But a satellite sees heat, not flames.</p><h2>What the satellite sees</h2><p>The sensor compares one patch of ground with the ground around it. If the patch is much hotter, it gets flagged. The patch is about 375 metres across. So one dot is a hot patch of land, not one flame.</p><p>Heat is not always a land fire. A factory chimney, a furnace, a brick kiln, even a metal roof at noon can be flagged.</p><h2>No dots does not mean safe</h2><p>This side is missed more often. The satellite passes a few times a day and clouds block the view. A fire under thick cloud never shows up.</p><blockquote><p>A hotspot map answers one question. Where the satellite saw heat, at the hour it passed.</p></blockquote><h2>How I use them</h2><p>I group the dots first. Dots close in place and time become one event, with a start, a direction and an end.</p><p>Then every map says which sensor, which date and hour, and how sure the reading is. A reader can judge it, not just trust the red.</p>]]></content:encoded>
       <pubDate>Mon, 24 Aug 2026 00:00:00 +0000</pubDate>
     </item>
     <item>
       <title>Why the source always goes in the corner</title>
       <link>https://www.hendrokuswantoro.com/blog/sumber-di-pojok-peta</link>
       <guid isPermaLink="true">https://www.hendrokuswantoro.com/blog/sumber-di-pojok-peta</guid>
+      <dc:creator>Hendro Kuswantoro</dc:creator>
+      <category>Map design</category>
       <description>The small text in the corner decides if a map can be trusted. It holds three things.</description>
+      <content:encoded><![CDATA[<p>A map is often judged by its colours. What decides if it can be used is the small text in the corner.</p><h2>Three things that must be there</h2><p>Where the data came from, named by agency or by file, not the word internet. When it was taken, because land cover last year and this year can differ a lot. The coordinate system and the scale, so people know if distances may be measured.</p><p>If there is room I add one more, who made the map and when. So there is someone to ask when something looks odd.</p><blockquote><p>A map with no source note is not a map. It is a picture shaped like an island.</p></blockquote><h2>Why it matters</h2><p>A printed map lives long. It goes on a wall, gets photographed, gets sent to a group, then used a year later by someone who was not in the meeting. All they have is that corner.</p><p>So I write that part first, before the colours. If the source is not clear, the map is not ready.</p>]]></content:encoded>
       <pubDate>Wed, 12 Aug 2026 00:00:00 +0000</pubDate>
     </item>
   </channel>

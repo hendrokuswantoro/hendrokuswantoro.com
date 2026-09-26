@@ -35,7 +35,7 @@ export function Footer() {
                 {say(item.label)}
               </Link>
             ))}
-            <a href="/feed.xml">RSS</a>
+            <Link href="/blog/#rss">RSS</Link>
           </nav>
         </div>
         <div className="footer__bottom">

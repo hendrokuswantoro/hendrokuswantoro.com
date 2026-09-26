@@ -586,6 +586,23 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 .post__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: var(--fs-sm); color: var(--ink-3); }
 .post__more { display: inline-block; margin-top: 14px; font-size: var(--fs-md); font-weight: 600; color: var(--accent); }
 
+.langganan {
+  display: grid; gap: 18px 36px; align-items: center; margin-top: 36px; padding: 26px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-lg);
+  scroll-margin-top: calc(var(--header-h) + 20px);
+}
+.langganan h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; font-size: var(--fs-lg); }
+.langganan__ikon { width: 22px; height: 22px; flex: none; fill: var(--accent); }
+.langganan__teks p { margin: 0; color: var(--ink-2); line-height: 1.7; }
+.langganan__alamat { display: flex; flex-wrap: wrap; gap: 10px; }
+.langganan__isian {
+  flex: 1 1 220px; min-width: 0; padding: 11px 14px; font: inherit; font-size: var(--fs-sm);
+  color: var(--ink); background: var(--card); border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+}
+.langganan__isian:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.langganan__kabar { flex-basis: 100%; min-height: 1.5em; margin: 0; font-size: var(--fs-sm); color: var(--ink-2); }
+@media (min-width: 860px) { .langganan { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+
 .article { max-width: 78ch; margin-inline: auto; }
 .article__head { margin-bottom: 28px; }
 .article__head h1 { font-size: clamp(1.75rem, 1.3rem + 2vw, 2.75rem); }

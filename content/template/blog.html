@@ -91,6 +91,21 @@
 {{daftar}}
 
       </div>
+
+      <div class="langganan reveal" id="rss" data-langganan>
+        <div class="langganan__teks">
+          <h2>
+            <svg class="langganan__ikon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 17a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM3 10.5a10.5 10.5 0 0 1 10.5 10.5h-3A7.5 7.5 0 0 0 3 13.5zM3 4a17 17 0 0 1 17 17h-3A14 14 0 0 0 3 7z"></path></svg>
+            <span data-ind="Ikuti lewat RSS">Follow by RSS</span>
+          </h2>
+          <p data-ind="Tempel alamat ini di aplikasi pembaca RSS seperti Feedly atau Inoreader. Tulisan baru datang sendiri, tanpa email dan tanpa akun.">Paste this address into an RSS reader such as Feedly or Inoreader. New posts arrive on their own, with no email and no account.</p>
+        </div>
+        <div class="langganan__alamat">
+          <input class="langganan__isian" type="text" value="/feed.xml" readonly spellcheck="false" aria-label="RSS feed address" data-ind-label="Alamat feed RSS">
+          <button class="btn btn--primary" type="button" data-ind="Salin">Copy</button>
+          <p class="langganan__kabar" role="status"></p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -108,14 +123,14 @@
           </svg>
           <span class="brand__name">hendro<span>kuswantoro</span></span>
         </a>
-        <p data-ind="Peta dan aplikasi peta, dibuat di Yogyakarta.">Maps and map apps, made in Yogyakarta.</p>
+        <p data-ind="Analisis spasial, data satelit, dan peta web yang benar-benar dipakai orang.">Spatial analysis, satellite data and web maps that people actually use.</p>
       </div>
       <nav class="footer__nav" aria-label="Footer" data-ind-label="Kaki halaman">
         <a href="/" data-ind="Beranda">Home</a>
         <a href="/about" data-ind="Tentang">About</a>
         <a href="/project" data-ind="Proyek">Project</a>
         <a href="/blog/" data-ind="Blog">Blog</a>
-        <a href="/feed.xml">RSS</a>
+        <a href="/blog/#rss">RSS</a>
       </nav>
     </div>
     <div class="footer__bottom">

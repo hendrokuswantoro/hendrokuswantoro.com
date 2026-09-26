@@ -24,6 +24,18 @@ export type Post = {
 export const BLOG = {
   eyebrow: { en: "Blog", id: "Blog" } as Copy,
   title: { en: "Short notes about maps.", id: "Catatan pendek soal peta." } as Copy,
+  rssTitle: { en: "Follow by RSS", id: "Ikuti lewat RSS" } as Copy,
+  rssText: {
+    en: "Paste this address into an RSS reader such as Feedly or Inoreader. New posts arrive on their own, with no email and no account.",
+    id: "Tempel alamat ini di aplikasi pembaca RSS seperti Feedly atau Inoreader. Tulisan baru datang sendiri, tanpa email dan tanpa akun.",
+  } as Copy,
+  rssLabel: { en: "RSS feed address", id: "Alamat feed RSS" } as Copy,
+  rssCopy: { en: "Copy", id: "Salin" } as Copy,
+  rssOk: { en: "Copied. Paste it into your RSS reader.", id: "Tersalin. Tempel di aplikasi pembaca RSS Anda." } as Copy,
+  rssFail: {
+    en: "The address is selected. Copy it with Ctrl+C.",
+    id: "Alamatnya sudah terpilih. Salin dengan Ctrl+C.",
+  } as Copy,
 };
 
 export const POSTS: Post[] = [
