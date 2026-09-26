@@ -46,6 +46,19 @@ def _asal(permintaan: Request) -> str:
     return "https://www.hendrokuswantoro.com"
 
 
+async def _pengguna_penuh(pengguna: dict) -> dict:
+    """Baris pengguna lengkap untuk sesi ini, atau 404 kalau sudah tidak ada.
+
+    Dipakai tiga rute yang memang menjawab 404 untuk keadaan itu. Tiga rute
+    lain membaca penggunanya tanpa pemeriksaan ini, dan sengaja dibiarkan
+    begitu supaya perilakunya tidak berubah diam diam.
+    """
+    penuh = await lapis.pengguna(pengguna["id"])
+    if not penuh:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="tidak ada")
+    return penuh
+
+
 @rute.get("", summary="Keadaan keamanan akun")
 async def keadaan(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
     baris = await lapis.keadaan_akun(pengguna["id"])
@@ -89,9 +102,7 @@ async def kirim_verifikasi(
     pengguna: Annotated[dict, Depends(butuh_admin)],
     alamat: Annotated[str, Depends(alamat_teringkas)],
 ) -> dict:
-    penuh = await lapis.pengguna(pengguna["id"])
-    if not penuh:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="tidak ada")
+    penuh = await _pengguna_penuh(pengguna)
     try:
         hasil = await lapis.kirim_verifikasi_email(penuh, _asal(permintaan), alamat)
     except lapis.Ditolak as ditolak:
@@ -133,9 +144,7 @@ async def konfirmasi(
 
 @rute.post("/totp/mulai", summary="Buat rahasia TOTP baru")
 async def totp_mulai(pengguna: Annotated[dict, Depends(butuh_admin_pendaftar)]) -> dict:
-    penuh = await lapis.pengguna(pengguna["id"])
-    if not penuh:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="tidak ada")
+    penuh = await _pengguna_penuh(pengguna)
     try:
         return await lapis.mulai_totp(penuh)
     except lapis.BelumSiap as belum:
@@ -222,9 +231,7 @@ async def wajah_daftar(
     tempat ia dinyalakan: ia menaikkan ongkos masuk, ia tidak membuktikan
     kehadiran, dan ia bukan pengganti passkey.
     """
-    penuh = await lapis.pengguna(pengguna["id"])
-    if not penuh:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="tidak ada")
+    penuh = await _pengguna_penuh(pengguna)
     try:
         return await lapis.daftarkan_wajah(penuh, isian.bingkai, alamat)
     except lapis.BelumSiap as belum:

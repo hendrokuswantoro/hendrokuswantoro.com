@@ -110,13 +110,13 @@ def kenali(awal: bytes) -> tuple[str, str]:
     Melempar Ditolak untuk apa pun yang tidak dikenali, termasuk berkas yang
     terlalu pendek untuk dikenali sama sekali.
     """
-    if awal.startswith(b"\x89PNG\r\n\x1a\n"):
+    if awal.startswith(metadata.TANDA_PNG):
         return "gambar", "image/png"
     if awal.startswith(b"\xff\xd8\xff"):
         return "gambar", "image/jpeg"
     if awal.startswith((b"GIF87a", b"GIF89a")):
         return "gambar", "image/gif"
-    if awal.startswith(b"RIFF") and awal[8:12] == b"WEBP":
+    if metadata.adalah_webp(awal):
         return "gambar", "image/webp"
     if awal.startswith(b"\x1a\x45\xdf\xa3"):
         return "video", "video/webm"

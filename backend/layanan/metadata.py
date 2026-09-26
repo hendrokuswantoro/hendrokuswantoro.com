@@ -25,6 +25,15 @@ from __future__ import annotations
 
 import struct
 
+# Tanda tangan berkas, dipakai juga backend/layanan/berkas.py saat mengenali
+# jenis unggahan. Satu tempat, supaya pengenal jenis dan pembuang metadata
+# tidak pernah berbeda pendapat tentang apa itu PNG atau WebP.
+TANDA_PNG = b"\x89PNG\r\n\x1a\n"
+
+
+def adalah_webp(data: bytes) -> bool:
+    return data.startswith(b"RIFF") and data[8:12] == b"WEBP"
+
 # Jenis yang metadatanya benar benar bisa dibuang di sini.
 BISA_DIBUANG = ("image/jpeg", "image/png", "image/webp")
 
@@ -107,7 +116,7 @@ _PNG_DIBUANG = {b"eXIf", b"tEXt", b"iTXt", b"zTXt", b"tIME"}
 
 
 def _png(data: bytes) -> bytes:
-    if not data.startswith(b"\x89PNG\r\n\x1a\n"):
+    if not data.startswith(TANDA_PNG):
         raise TidakBisa("bukan PNG")
 
     keluar = [data[:8]]
@@ -135,7 +144,7 @@ def _png(data: bytes) -> bytes:
 
 
 def _webp(data: bytes) -> bytes:
-    if not (data.startswith(b"RIFF") and data[8:12] == b"WEBP"):
+    if not adalah_webp(data):
         raise TidakBisa("bukan WebP")
 
     # Bentuk sederhana, VP8 atau VP8L tanpa pembungkus VP8X, tidak punya
