@@ -75,14 +75,6 @@ export type Peristiwa = {
   pada: string;
 };
 
-export function simpanAkses(nilai: string | null): void {
-  AKSES = nilai;
-}
-
-export function adaAkses(): boolean {
-  return AKSES !== null;
-}
-
 export class GagalApi extends Error {
   readonly status: number;
 

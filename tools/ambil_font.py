@@ -45,7 +45,6 @@ import hashlib
 import json
 import pathlib
 import re
-import sys
 import urllib.request
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent

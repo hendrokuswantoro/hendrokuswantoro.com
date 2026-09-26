@@ -121,17 +121,6 @@ async def periksa_sandi(email: str, sandi: str, alamat_hash: str) -> dict:
     return pengguna
 
 
-async def masuk(email: str, sandi: str, alamat_hash: str) -> Masuk:
-    """Sandi benar lalu langsung terbit sesi, tanpa faktor kedua.
-
-    Tetap ada karena dipakai jalur yang memang tidak punya faktor kedua, dan
-    karena uji yang sudah ada memanggilnya. Jalur masuk lewat HTTP TIDAK
-    memakainya lagi: router memanggil `periksa_sandi` lalu memutuskan sendiri
-    apakah masih ada langkah berikutnya.
-    """
-    return await terbitkan(await periksa_sandi(email, sandi, alamat_hash))
-
-
 async def perpanjang(refresh: str) -> Masuk:
     ringkas = keamanan.ringkas(refresh)
     sesi = await repo.sesi_hidup(ringkas)

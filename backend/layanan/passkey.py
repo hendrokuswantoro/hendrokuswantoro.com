@@ -36,7 +36,7 @@ import secrets
 from dataclasses import dataclass
 
 import webauthn
-from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
+from webauthn.helpers import base64url_to_bytes
 from webauthn.helpers.exceptions import InvalidAuthenticationResponse, InvalidRegistrationResponse
 from webauthn.helpers.structs import (
     AuthenticatorAttachment,
@@ -313,6 +313,3 @@ def _transportasi(jawaban: dict) -> list[str]:
         return []
     return [t for t in nilai if isinstance(t, str) and t in dikenal]
 
-
-def sebagai_base64url(nilai: bytes) -> str:
-    return bytes_to_base64url(nilai)

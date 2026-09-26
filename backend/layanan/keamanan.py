@@ -28,7 +28,6 @@ Dua hal yang dijaga ketat di seluruh berkas ini:
 from __future__ import annotations
 
 import datetime as dt
-import hmac
 import secrets
 from dataclasses import dataclass
 
@@ -371,10 +370,6 @@ async def punya_faktor(pengguna_id: str) -> bool:
     """
     b = await repo.keadaan(pengguna_id)
     return bool(b and (b["totp_aktif_pada"] or b["passkey"] or b["wajah_didaftar_pada"]))
-
-
-def cocok_aman(a: str, b: str) -> bool:
-    return hmac.compare_digest(a, b)
 
 
 # ------------------------------------------- pintu untuk lapisan router ---

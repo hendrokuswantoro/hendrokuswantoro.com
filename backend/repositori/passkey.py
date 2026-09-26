@@ -50,12 +50,6 @@ async def pakai_tantangan(tujuan: str, nilai: bytes) -> dict[str, Any] | None:
         return await k.fetchone()
 
 
-async def bersihkan_tantangan() -> int:
-    async with koneksi() as s, s.cursor() as k:
-        await k.execute("DELETE FROM tantangan WHERE kadaluarsa < now() - interval '1 day'")
-        return k.rowcount
-
-
 # ------------------------------------------------------------ kredensial ---
 
 

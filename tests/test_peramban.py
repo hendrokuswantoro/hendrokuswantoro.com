@@ -21,7 +21,6 @@ import time
 
 import pytest
 
-from konftes import AKAR
 
 pytest.importorskip("playwright", reason="playwright belum terpasang")
 

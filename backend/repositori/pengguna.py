@@ -133,12 +133,6 @@ async def cabut_semua(pengguna_id: str) -> list[str]:
         return [str(b["id"]) for b in await k.fetchall()]
 
 
-async def bersihkan_kadaluarsa() -> int:
-    async with koneksi() as s, s.cursor() as k:
-        await k.execute("DELETE FROM sesi WHERE kadaluarsa < now() - interval '30 days'")
-        return k.rowcount
-
-
 # ------------------------------------------------------- percobaan gagal ---
 
 
