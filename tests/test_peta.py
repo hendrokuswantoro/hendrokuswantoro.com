@@ -5,7 +5,11 @@ import re
 from konftes import AKAR
 
 PETA = (AKAR / "assets" / "js" / "peta.js").read_text(encoding="utf-8")
-PORT = (AKAR / "next" / "components" / "WorkMap.tsx").read_text(encoding="utf-8")
+GAYA_NEXT = (AKAR / "next" / "components" / "peta" / "gaya.ts").read_text(encoding="utf-8")
+PORT = "\n".join(
+    (AKAR / "next" / "components" / nama).read_text(encoding="utf-8")
+    for nama in ("WorkMap.tsx", "peta/bangun.ts", "peta/gaya.ts")
+)
 
 
 def lapisan(sumber: str, awal: str, akhir: str) -> list[str]:
@@ -14,8 +18,8 @@ def lapisan(sumber: str, awal: str, akhir: str) -> list[str]:
     return re.findall(r'id: "([a-z0-9-]+)"', sumber[i:j])
 
 
-STATIS = lapisan(PETA, "      layers: [", "\n      ]\n    };\n  }")
-NEXTJS = lapisan(PORT, "    layers: [", "  } as StyleSpecification;")
+STATIS = lapisan(PETA, "      layers: [", "\n      ]\n    });\n  }")
+NEXTJS = lapisan(GAYA_NEXT, "    layers: [", "\n    ]\n  });\n}")
 
 
 def test_jumlah_lapisan_masuk_akal():
@@ -189,12 +193,44 @@ def test_saringan_legenda_diumumkan():
         )
 
 
-def test_wilayah_kabar_di_luar_panel_yang_bisa_dilipat():
-    gaya = (AKAR / "assets" / "css" / "style.css").read_text(encoding="utf-8")
-    assert ".peta__legenda.is-collapsed .peta__grup { display: none; }" in gaya
-    assert "section.insertBefore(kabar" in PETA, (
-        "wilayah kabar tidak lagi disisipkan ke bagian petanya"
-    )
+def test_wilayah_kabar_di_luar_bingkai_peta():
+    for nama, sumber in (("peta.js", PETA), ("bangun.ts", PORT)):
+        assert "section.insertBefore(kabar" in sumber, (
+            f"{nama}: wilayah kabar tidak lagi disisipkan ke bagian petanya, di luar "
+            "bingkai yang dipotong overflow dan yang dibawa ke layar penuh"
+        )
+
+
+def _blok(sumber: str, awal: str, penutup: str) -> str:
+    i = sumber.index(awal)
+    j = sumber.index(penutup, i)
+    isi = sumber[i:j]
+    return re.sub(r"\s+", " ", isi[isi.index("{"):])
+
+
+def test_palet_sama_di_kedua_port():
+    for awal in ("PALET = {", "PALET_CITRA", "POI"):
+        statis = _blok(PETA, f"var {awal}", "\n  };")
+        nextjs = _blok(GAYA_NEXT, f"const {awal}", "\n};")
+        assert statis == nextjs, f"{awal} berbeda antara peta.js dan gaya.ts"
+
+
+def test_lapisan_nama_sama_di_kedua_port():
+    def daftar(sumber: str) -> list[str]:
+        blok = re.search(r"LAYER_NAMA = \[(.*?)\];", sumber, re.S)
+        return re.findall(r'"([a-z0-9-]+)"', blok.group(1))
+
+    assert daftar(PETA) == daftar(GAYA_NEXT)
+
+
+def test_tiap_mode_diterapkan_lewat_gaya_bukan_tambal_lapisan():
+    for nama, sumber in (("peta.js", PETA), ("bangun.ts", PORT)):
+        assert "setStyle(mapboxStyle(pilihanGaya()), { diff: true })" in sumber, (
+            f"{nama}: satelit, medan, 3D, tema, dan bahasa harus lewat satu pembangun gaya"
+        )
+        assert "addLayer" not in sumber, (
+            f"{nama}: lapisan ditambal di luar pembangun gaya, dan diff berikutnya akan membuangnya"
+        )
 
 
 def test_kedua_port_sama_sama_membaca_alamat():

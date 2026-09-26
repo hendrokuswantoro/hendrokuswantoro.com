@@ -171,7 +171,6 @@ export const PROJECT_PAGE = {
     en: "Marker points, not study area boundaries. Map tiles from Mapbox and OpenStreetMap.",
     id: "Titik penanda, bukan batas wilayah kajian. Ubin peta dari Mapbox dan OpenStreetMap.",
   } as Copy,
-  seeProject: { en: "See the project", id: "Lihat proyek" } as Copy,
   showOnMap: { en: "Show on map", id: "Lihat di peta" } as Copy,
   readCaseStudy: { en: "Read the case study", id: "Baca studi kasusnya" } as Copy,
   mapEyebrow: { en: "The work map", id: "Peta karya" } as Copy,
@@ -184,13 +183,4 @@ export const PROJECT_PAGE = {
     en: "Click a point to see the work.",
     id: "Klik satu titik untuk melihat karyanya.",
   } as Copy,
-  filterOn: {
-    en: "%k. %n of %t works shown.",
-    id: "%k. %n dari %t karya ditampilkan.",
-  } as Copy,
-  filterOff: {
-    en: "Filter off. All %t works shown.",
-    id: "Saringan mati. Semua %t karya ditampilkan.",
-  } as Copy,
-  mapFocus: { en: "%w, centred on the map.", id: "%w, dipusatkan di peta." } as Copy,
 };
