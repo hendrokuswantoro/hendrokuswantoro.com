@@ -9,6 +9,12 @@ const JUDUL: Record<string, string> = {
   kanan: "Toleh ke kanan",
 };
 
+const PANAH: Record<string, string> = {
+  tengah: "",
+  kiri: "←",
+  kanan: "→",
+};
+
 export function KameraWajah({
   gerakan,
   selesai,
@@ -22,6 +28,7 @@ export function KameraWajah({
 }) {
   const video = useRef<HTMLVideoElement | null>(null);
   const arus = useRef<MediaStream | null>(null);
+  const tombolAmbil = useRef<HTMLButtonElement | null>(null);
   const [galat, setGalat] = useState("");
   const [hidup, setHidup] = useState(false);
   const [diambil, setDiambil] = useState<string[]>([]);
@@ -59,7 +66,7 @@ export function KameraWajah({
         const nama = (e as { name?: string })?.name;
         setGalat(
           nama === "NotAllowedError"
-            ? "Kamera belum diizinkan. Izinkan di peramban Anda, lalu coba lagi."
+            ? "Kamera belum diizinkan. Izinkan dulu di peramban, lalu coba lagi."
             : nama === "NotFoundError"
               ? "Tidak ada kamera di perangkat ini."
               : "Kamera tidak bisa dinyalakan.",
@@ -96,45 +103,75 @@ export function KameraWajah({
 
   const sekarang = gerakan[diambil.length];
 
+  const tutup = useCallback(() => {
+    matikan();
+    batal();
+  }, [matikan, batal]);
+
+  useEffect(() => {
+    function tekan(e: KeyboardEvent) {
+      if (e.key === "Escape") tutup();
+    }
+    window.addEventListener("keydown", tekan);
+    return () => window.removeEventListener("keydown", tekan);
+  }, [tutup]);
+
+  useEffect(() => {
+    if (hidup) tombolAmbil.current?.focus();
+  }, [hidup]);
+
   return (
-    <div className={gaya.kamera}>
-      {galat ? (
-        <p className={`${gaya.kabar} ${gaya.salah}`} role="alert">
-          {galat}
+    <div className={gaya.kameraLapis}>
+      <div
+        className={gaya.kameraKotak}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="kamera-judul"
+      >
+        <p id="kamera-judul" className={gaya.kameraJudul} aria-live="polite">
+          {sekarang ? (
+            <>
+              {JUDUL[sekarang] ?? sekarang} <span aria-hidden="true">{PANAH[sekarang]}</span>
+            </>
+          ) : (
+            "Sebentar..."
+          )}
         </p>
-      ) : null}
+        <ol className={gaya.kameraLangkah} aria-label={`foto ${diambil.length + 1} dari ${gerakan.length}`}>
+          {gerakan.map((g, i) => (
+            <li key={`${g}-${i}`} className={i < diambil.length ? gaya.selesai : i === diambil.length ? gaya.kini : ""} />
+          ))}
+        </ol>
 
-      <div className={gaya.kameraBingkai}>
-        <video ref={video} muted playsInline className={gaya.kameraVideo} />
-        {sekarang ? (
-          <div className={gaya.kameraArah}>
-            <span>{JUDUL[sekarang] ?? sekarang}</span>
-            <small>
-              foto {diambil.length + 1} dari {gerakan.length}
-            </small>
-          </div>
+        {galat ? (
+          <p className={`${gaya.kabar} ${gaya.salah}`} role="alert">
+            {galat}
+          </p>
         ) : null}
-      </div>
 
-      <div className={gaya.aksi}>
-        <button
-          type="button"
-          className={`${gaya.tombol} ${gaya.utama}`}
-          onClick={ambil}
-          disabled={!hidup || sibuk || !sekarang}
-        >
-          {sibuk ? "Sebentar..." : "Ambil foto"}
-        </button>
-        <button
-          type="button"
-          className={gaya.tombol}
-          onClick={() => {
-            matikan();
-            batal();
-          }}
-        >
-          Batal
-        </button>
+        <div className={gaya.kameraBingkai}>
+          <video ref={video} muted playsInline className={gaya.kameraVideo} />
+          <div className={gaya.kameraOval} aria-hidden="true" />
+        </div>
+
+        <p className={gaya.kameraKet}>
+          Taruh wajah di dalam oval. Pastikan terang, dan cuma ada wajah kamu.
+        </p>
+
+        <div className={gaya.kameraAksi}>
+          <button
+            ref={tombolAmbil}
+            type="button"
+            className={`${gaya.tombol} ${gaya.utama}`}
+            onClick={ambil}
+            disabled={!hidup || sibuk || !sekarang}
+          >
+            {sibuk ? "Sebentar..." : "Ambil foto"}
+          </button>
+          <button type="button" className={gaya.tombol} onClick={tutup}>
+            Batal
+          </button>
+        </div>
       </div>
     </div>
   );

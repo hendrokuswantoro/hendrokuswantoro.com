@@ -436,10 +436,7 @@ memberi situs ini dua tuan.
    lima pemeriksaan lain. Situsnya sendiri sehat di alamat `.workers.dev`.
    Pemiliknya memutuskan pada 26 September 2026 bahwa pendaftaran domain
    dikerjakan paling akhir, jadi merahnya langkah itu bukan kabar baru.
-2. Model pengenalan wajah 37 MB, tidak ikut git, diambil dengan
-   `python tools/ambil_model.py`. **Verifikasi wajah belum pernah dijalankan
-   dengan kamera sungguhan.**
-3. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
+2. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
    dashboard, serta konfigurasi nginx belum pernah berjalan di server
    sungguhan. Langkahnya ada di `docs/vps.md`. Basis data di sana mulai dari
    nol, jadi akun adminnya lahir TANPA faktor kedua, dan selama itu siapa pun
@@ -460,6 +457,15 @@ tidak akan ikut berganti.
 
 Akun admin di basis data laptop memakai TOTP sejak 27 September 2026, dan
 kode pemulihannya disimpan pemilik di brankas yang sama dengan kuncinya.
+
+Verifikasi wajah dijalankan dengan kamera sungguhan untuk pertama kalinya pada
+27 September 2026. Model 37 MB-nya tidak ikut git; ambil dengan
+`python tools/ambil_model.py` di mesin baru. Percobaan pertama menolak
+pemiliknya dua kali: YuNet memberi mata KANAN orangnya, yang di gambar kamera
+duduk di sisi KIRI, dan `arah_hadap()` membaca arah menurut gambar. Uji lama
+tidak menangkapnya karena ia hanya memeriksa kode terhadap dirinya sendiri.
+Sesudah diperbaiki, kemiripan pemilik terukur 0,75 dan 0,80, jauh di atas
+ambang 0,363.
 
 SMTP di `.env` mesin ini memakai Gmail dengan sandi aplikasi sejak 26
 September 2026, dan surat uji pertamanya terkirim. `SURAT_WAJIB` sengaja

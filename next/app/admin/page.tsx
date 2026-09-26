@@ -6,7 +6,6 @@ import { BrandMark } from "@/components/Icons";
 import { DaftarTulisan } from "@/components/admin/DaftarTulisan";
 import { MasukView } from "@/components/admin/MasukView";
 import { PanelKeamanan } from "@/components/admin/PanelKeamanan";
-import { PanelPasskey } from "@/components/admin/PanelPasskey";
 import { PenyuntingTulisan } from "@/components/admin/PenyuntingTulisan";
 import { keluar as keluarApi, sesiYangMasihHidup, type Sesi } from "@/lib/api";
 
@@ -90,7 +89,6 @@ export default function Admin() {
               onBaru={() => setSunting({ aktif: true, slug: null })}
               onSunting={(slug) => setSunting({ aktif: true, slug })}
             />
-            <PanelPasskey />
             <PanelKeamanan />
           </>
         )}

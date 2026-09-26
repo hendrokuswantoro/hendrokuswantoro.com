@@ -24,10 +24,10 @@ const NAMA_CARA: Record<CaraFaktorKedua, string> = {
 };
 
 const PETUNJUK: Record<CaraFaktorKedua, string> = {
-  totp: "Buka aplikasi authenticator, lalu ketik enam angka yang tampil.",
-  email: "Enam angka sudah dikirim ke email Anda. Berlaku sepuluh menit.",
-  pemulihan: "Pakai salah satu kode yang Anda simpan dulu. Sekali pakai.",
-  wajah: "Kamera minta tiga foto. Ikuti gerakan yang diminta. Fotonya tidak disimpan.",
+  totp: "Buka aplikasi authenticator, lalu ketik 6 angka yang muncul.",
+  email: "Kami sudah kirim 6 angka ke email kamu. Berlaku 10 menit.",
+  pemulihan: "Pakai salah satu kode cadangan yang kamu simpan. Tiap kode sekali pakai.",
+  wajah: "Kamera ambil 3 foto sambil kamu menoleh. Fotonya tidak disimpan.",
 };
 
 export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
@@ -217,7 +217,7 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
         {pesan}
 
         <p className={gaya.penjelasan}>
-          Sandi Anda benar. Tinggal satu langkah lagi, dan waktunya lima menit.
+          Sandi kamu benar. Tinggal satu langkah lagi, waktunya 5 menit.
         </p>
 
         {tiket.cara.length > 1 ? (
@@ -353,14 +353,13 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
               {halangan.pesan}{" "}
               {halangan.saran ? (
                 <>
-                  Buka <a href={halangan.saran}>{halangan.saran}</a>. Mesinnya sama, cuma
-                  namanya yang berbeda.
+                  Buka <a href={halangan.saran}>{halangan.saran}</a>.
                 </>
               ) : null}
             </p>
           ) : (
             <p className={gaya.penjelasan} style={{ marginTop: 10 }}>
-              Perangkat Anda yang meminta sidik jari, wajah, atau PIN. Sidik jari Anda tidak
+              Perangkat kamu yang minta sidik jari, wajah, atau PIN. Sidik jari kamu tidak
               dikirim ke mana pun.
             </p>
           )}

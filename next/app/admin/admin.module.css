@@ -118,10 +118,13 @@
 
 .utama { background: var(--brand-btn); color: var(--on-brand); border-color: var(--brand-btn); }
 .bahaya { color: #b4232a; border-color: #e6b9bc; background: transparent; }
+.kecil { font-size: var(--fs-sm); padding: 6px 13px; }
 
 .lebar { width: 100%; }
 
 .kabar {
+  text-align: justify;
+  text-align-last: left;
   margin: 0 0 14px;
   padding: 11px 14px;
   border-radius: var(--r-sm);
@@ -152,6 +155,7 @@
 
 .ket,
 .penjelasan,
+.kameraKet,
 .pratinjau :global(p),
 .pratinjau :global(li) {
   text-align: justify;
@@ -316,31 +320,6 @@
   white-space: nowrap;
 }
 
-.subjudul {
-  margin: 26px 0 8px;
-  font-size: var(--fs-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-3);
-}
-
-.daftarKeadaan {
-  list-style: none;
-  margin: 0 0 8px;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-.daftarKeadaan li {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  font-size: var(--fs-md);
-}
-.daftarKeadaan li > span:last-child { min-width: 0; overflow-wrap: anywhere; }
-
 .gagal { background: #fdecee; color: #8f1c22; }
 
 .kodeIsian {
@@ -389,41 +368,6 @@
   user-select: all;
 }
 
-.kamera { margin: 4px 0 14px; }
-
-.kameraBingkai {
-  position: relative;
-  width: min(420px, 100%);
-  aspect-ratio: 4 / 3;
-  overflow: hidden;
-  border-radius: var(--r-sm);
-  border: 1px solid var(--line);
-  background: #000000;
-  margin-bottom: 12px;
-}
-
-.kameraVideo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scaleX(-1);
-  display: block;
-}
-
-.kameraArah {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 10px 12px;
-  background: linear-gradient(transparent, rgba(0, 0, 0, .72));
-  color: #ffffff;
-  display: grid;
-  gap: 2px;
-}
-.kameraArah span { font-size: var(--fs-md); font-weight: 600; }
-.kameraArah small { font-size: var(--fs-xs); opacity: .8; }
-
 .sandiBidang {
   position: relative;
 }
@@ -469,4 +413,174 @@
 
 .lihat[aria-pressed="true"] .coret {
   opacity: 1;
+}
+
+.setelan {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.setelan > li + li { border-top: 1px solid var(--line); }
+
+.setelanBaris > summary {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+.setelanBaris > summary::-webkit-details-marker { display: none; }
+.setelanBaris > summary:hover { background: var(--surface-2); }
+.setelanBaris > summary:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; }
+.setelanBaris[open] > summary { padding-bottom: 6px; }
+
+.setelanTeks { display: grid; gap: 1px; min-width: 0; }
+.setelanTeks strong { font-size: var(--fs-md); font-weight: 600; color: var(--ink); }
+.setelanTeks small {
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ikon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.ikon svg,
+.panah {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.panah { color: var(--ink-3); transition: transform 0.18s var(--ease); }
+.setelanBaris[open] .panah { transform: rotate(90deg); }
+
+.setelanIsi {
+  padding: 0 14px 16px 60px;
+}
+.setelanIsi .penjelasan { font-size: var(--fs-sm); line-height: 1.65; margin-bottom: 10px; }
+.setelanIsi .kabar { font-size: var(--fs-sm); }
+
+.barisSebaris { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.barisSebaris .isian { width: 150px; padding: 7px 10px; }
+
+.daftarRingkas {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.daftarRingkas li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+}
+.daftarRingkas li > span:first-child { display: grid; gap: 1px; min-width: 0; }
+.daftarRingkas strong { font-size: var(--fs-sm); font-weight: 600; color: var(--ink); }
+.daftarRingkas small { font-size: var(--fs-xs); color: var(--ink-3); overflow-wrap: anywhere; }
+
+.kameraLapis {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.62);
+  overflow-y: auto;
+}
+.kameraKotak {
+  width: min(520px, 100%);
+  background: var(--card);
+  border-radius: var(--r-lg);
+  padding: clamp(16px, 4vw, 24px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+.kameraJudul {
+  margin: 0 0 8px;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  color: var(--ink);
+}
+.kameraLangkah {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.kameraLangkah li {
+  width: 28px;
+  height: 5px;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+}
+.kameraLangkah .selesai { background: var(--brand); }
+.kameraLangkah .kini { background: var(--ink-3); }
+
+.kameraBingkai {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: #000000;
+}
+.kameraVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  display: block;
+}
+.kameraOval {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46%;
+  height: 80%;
+  transform: translate(-50%, -50%);
+  border: 3px dashed rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+}
+.kameraKet {
+  margin: 12px 0 14px;
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+}
+.kameraAksi { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+.kameraAksi .utama { min-width: 160px; }
+
+@media (max-width: 560px) {
+  .kepala { gap: 10px; }
+  .kepala .lencana,
+  .kepala .kanan > .ket { display: none; }
+  .judul { font-size: var(--fs-md); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .setelanIsi { padding-left: 14px; }
+  .kameraBingkai { aspect-ratio: 3 / 4; }
+  .kameraOval { width: 64%; height: 70%; }
 }

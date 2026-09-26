@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import gaya from "@/app/admin/admin.module.css";
 import { ambil, panggil } from "@/lib/api";
 import * as passkey from "@/lib/passkey";
+import { BarisSetelan } from "@/components/admin/Setelan";
 
 export function PanelPasskey() {
   const [daftar, setDaftar] = useState<passkey.Kunci[] | null>(null);
@@ -43,12 +44,12 @@ export function PanelPasskey() {
       setKabar({ teks: h.saran ? `${h.pesan} Buka ${h.saran}` : h.pesan, baik: false });
       return;
     }
-    const nama = window.prompt("Beri nama perangkat ini", bawaan);
+    const nama = window.prompt("Kasih nama perangkat ini", bawaan);
     if (nama === null) return;
     setKabar(null);
     try {
       await passkey.daftarkan(nama, jenis);
-      setKabar({ teks: "Perangkat terdaftar.", baik: true });
+      setKabar({ teks: "Perangkat berhasil didaftarkan.", baik: true });
       await muat();
     } catch (e) {
       if (passkey.dibatalkan(e)) return;
@@ -68,7 +69,7 @@ export function PanelPasskey() {
   async function cabut(kunci: passkey.Kunci) {
     if (
       !window.confirm(
-        `Cabut "${kunci.nama}"? Perangkat itu tidak bisa dipakai masuk lagi.`,
+        `Cabut "${kunci.nama}"? Perangkat ini tidak bisa dipakai masuk lagi.`,
       )
     ) {
       return;
@@ -77,63 +78,41 @@ export function PanelPasskey() {
       method: "DELETE",
     });
     if (!jawaban.ok) {
-      setKabar({ teks: "gagal mencabut", baik: false });
+      setKabar({ teks: "Gagal mencabut. Coba lagi.", baik: false });
       return;
     }
-    setKabar({ teks: "passkey dicabut", baik: true });
+    setKabar({ teks: "Perangkat sudah dicabut.", baik: true });
     await muat();
   }
 
+  const jumlah = daftar?.length ?? 0;
+
   return (
-    <section className={gaya.kartu}>
-      <div className={gaya.tumpuk}>
-        <h2>Sidik jari dan passkey</h2>
-        <div className={gaya.kanan}>
-          <button
-            type="button"
-            className={`${gaya.tombol} ${gaya.utama}`}
-            onClick={() => void daftarkan("perangkat")}
-            disabled={halangan !== null}
-          >
-            Daftarkan sidik jari
-          </button>
-          <button
-            type="button"
-            className={gaya.tombol}
-            onClick={() => void daftarkan("kunci")}
-            disabled={halangan !== null}
-          >
-            Daftarkan kunci USB
-          </button>
-        </div>
-      </div>
+    <BarisSetelan
+      ikon="sidik"
+      judul="Sidik jari dan passkey"
+      sub={daftar === null ? "Memuat..." : jumlah ? `${jumlah} perangkat` : "Belum ada"}
+      tanda={jumlah ? "aktif" : "belum"}
+      baik={jumlah > 0}
+    >
+      <p className={gaya.penjelasan}>
+        Cara masuk paling aman. Sidik jari kamu tetap di perangkat, tidak dikirim ke mana
+        pun. Halaman palsu juga tidak bisa memintanya.
+      </p>
+      <p className={gaya.penjelasan}>
+        Daftarkan dua perangkat, biar kamu tetap bisa masuk kalau satu hilang.
+      </p>
 
       {halangan ? (
         <p className={gaya.penjelasan}>
           {halangan.pesan}{" "}
           {halangan.saran ? (
             <>
-              Buka <a href={halangan.saran}>{halangan.saran}</a>. Mesinnya sama, cuma
-              namanya yang berbeda.
+              Buka <a href={halangan.saran}>{halangan.saran}</a>.
             </>
           ) : null}
         </p>
       ) : null}
-
-      <p className={gaya.penjelasan}>
-        Cara masuk paling aman di sini. Kuncinya tersimpan di perangkat Anda dan terikat
-        pada alamat situs ini, jadi halaman palsu tidak bisa memintanya.
-      </p>
-
-      <p className={gaya.penjelasan}>
-        Sidik jari Anda tidak dikirim ke mana pun. Perangkat Anda yang memeriksanya. Di
-        perangkat tanpa sensor, yang diminta PIN perangkat itu.
-      </p>
-
-      <p className={gaya.penjelasan}>
-        Daftarkan lebih dari satu perangkat. Kalau cuma satu dan perangkatnya hilang, Anda
-        terkunci di luar.
-      </p>
 
       {kabar ? (
         <p className={`${gaya.kabar} ${kabar.baik ? gaya.baik : gaya.salah}`} role="status">
@@ -141,44 +120,48 @@ export function PanelPasskey() {
         </p>
       ) : null}
 
-      {daftar === null ? (
-        <p className={gaya.ket}>Memuat...</p>
-      ) : daftar.length === 0 ? (
-        <p className={gaya.ket}>
-          Belum ada. Sekarang masuk masih pakai sandi.
-        </p>
-      ) : (
-        <div className={gaya.tabelBungkus}>
-          <table>
-            <thead>
-              <tr>
-                <th>Nama</th>
-                <th>Jenis</th>
-                <th>Terakhir dipakai</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {daftar.map((k) => (
-                <tr key={k.id}>
-                  <td>{k.nama}</td>
-                  <td>{k.jenis_perangkat === "multi_device" ? "tersinkron" : "satu perangkat"}</td>
-                  <td>{k.dipakai_pada ? k.dipakai_pada.slice(0, 10) : "belum pernah"}</td>
-                  <td>
-                    <button
-                      type="button"
-                      className={`${gaya.tombol} ${gaya.bahaya}`}
-                      onClick={() => cabut(k)}
-                    >
-                      Cabut
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
+      {daftar && daftar.length ? (
+        <ul className={gaya.daftarRingkas}>
+          {daftar.map((k) => (
+            <li key={k.id}>
+              <span>
+                <strong>{k.nama}</strong>
+                <small>
+                  {k.dipakai_pada
+                    ? `Terakhir dipakai ${k.dipakai_pada.slice(0, 10)}`
+                    : "Belum pernah dipakai"}
+                </small>
+              </span>
+              <button
+                type="button"
+                className={`${gaya.tombol} ${gaya.kecil} ${gaya.bahaya}`}
+                onClick={() => cabut(k)}
+              >
+                Cabut
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      <div className={gaya.aksi}>
+        <button
+          type="button"
+          className={`${gaya.tombol} ${gaya.kecil} ${gaya.utama}`}
+          onClick={() => void daftarkan("perangkat")}
+          disabled={halangan !== null}
+        >
+          Daftarkan sidik jari
+        </button>
+        <button
+          type="button"
+          className={`${gaya.tombol} ${gaya.kecil}`}
+          onClick={() => void daftarkan("kunci")}
+          disabled={halangan !== null}
+        >
+          Pakai kunci USB
+        </button>
+      </div>
+    </BarisSetelan>
   );
 }
