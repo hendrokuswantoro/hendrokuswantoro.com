@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import gaya from "@/app/admin/admin.module.css";
 import { BrandMark } from "@/components/Icons";
+import { Kabar, baik, buruk, type IsiKabar } from "@/components/admin/Kabar";
 import { KameraWajah } from "@/components/admin/KameraWajah";
 import {
   GagalApi,
   kirimUlangKode,
   masukSandi,
+  pesanDari,
   selesaikanFaktorKedua,
   tantanganWajah,
   type CaraFaktorKedua,
@@ -19,7 +21,7 @@ import * as passkey from "@/lib/passkey";
 const NAMA_CARA: Record<CaraFaktorKedua, string> = {
   totp: "Aplikasi authenticator",
   email: "Kode yang dikirim ke email",
-  pemulihan: "Kode pemulihan",
+  pemulihan: "Kode cadangan",
   wajah: "Verifikasi wajah, akses terbatas",
 };
 
@@ -27,21 +29,36 @@ const PETUNJUK: Record<CaraFaktorKedua, string> = {
   totp: "Buka aplikasi authenticator, lalu ketik 6 angka yang muncul.",
   email: "Kami sudah kirim 6 angka ke email kamu. Berlaku 10 menit.",
   pemulihan: "Pakai salah satu kode cadangan yang kamu simpan. Tiap kode sekali pakai.",
-  wajah: "Kamera ambil 3 foto sambil kamu menoleh. Lewat wajah kamu cuma bisa melihat. Menulis dan mengubah keamanan tetap butuh authenticator.",
+  wajah:
+    "Kamera ambil 3 foto sambil kamu menoleh. Lewat wajah kamu cuma bisa melihat. Menulis dan mengubah keamanan tetap butuh authenticator.",
 };
+
+const WAJAH_GAGAL =
+  "Wajah belum bisa dipastikan. Ikuti arah toleh di layar, lalu coba lagi di tempat yang lebih terang.";
+
+type Tiket = { nilai: string; cara: CaraFaktorKedua[] };
+
+function IkonMata() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M1.8 12S5.4 5.5 12 5.5 22.2 12 22.2 12 18.6 18.5 12 18.5 1.8 12 1.8 12z" />
+      <circle cx="12" cy="12" r="3.2" />
+      <path className={gaya.coret} d="M4 20 20 4" />
+    </svg>
+  );
+}
 
 export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
   const [email, setEmail] = useState("");
   const [sandi, setSandi] = useState("");
-  const [galat, setGalat] = useState("");
-  const [kabar, setKabar] = useState("");
+  const [sandiTerlihat, setSandiTerlihat] = useState(false);
+  const [kabar, setKabar] = useState<IsiKabar>(null);
   const [sibuk, setSibuk] = useState(false);
   const [adaPasskey, setAdaPasskey] = useState(false);
-  const [sandiTerlihat, setSandiTerlihat] = useState(false);
   const [halangan, setHalangan] = useState<passkey.Kendala | null>(null);
 
-  const [tiket, setTiket] = useState<{ nilai: string; cara: CaraFaktorKedua[] } | null>(null);
-  const [caraDipakai, setCaraDipakai] = useState<CaraFaktorKedua>("totp");
+  const [tiket, setTiket] = useState<Tiket | null>(null);
+  const [cara, setCara] = useState<CaraFaktorKedua>("totp");
   const [kode, setKode] = useState("");
   const [tantangan, setTantangan] = useState<TantanganWajah | null>(null);
 
@@ -56,111 +73,92 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
     };
   }, []);
 
-  function bersihkan() {
-    setGalat("");
-    setKabar("");
-  }
-
-  async function denganSandi(event: React.FormEvent) {
-    event.preventDefault();
-    bersihkan();
+  async function jalankan(kerja: () => Promise<void>, gagal = pesanDari) {
+    setKabar(null);
     setSibuk(true);
     try {
+      await kerja();
+    } catch (e) {
+      setKabar(buruk(gagal(e)));
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  function kembali() {
+    setTiket(null);
+    setKode("");
+    setTantangan(null);
+    setKabar(null);
+  }
+
+  function gantiCara(baru: CaraFaktorKedua) {
+    setCara(baru);
+    setKode("");
+    setTantangan(null);
+    setKabar(null);
+  }
+
+  function denganSandi(event: React.FormEvent) {
+    event.preventDefault();
+    void jalankan(async () => {
       const hasil = await masukSandi(email.trim(), sandi);
-      if (hasil.tahap === "faktor2") {
-        setTiket({ nilai: hasil.tiket, cara: hasil.cara });
-        setCaraDipakai(hasil.cara[0]);
-        setSandi("");
-        setSandiTerlihat(false);
-        return;
-      }
       setSandi("");
       setSandiTerlihat(false);
+      if (hasil.tahap === "faktor2") {
+        setTiket({ nilai: hasil.tiket, cara: hasil.cara });
+        setCara(hasil.cara[0]);
+        return;
+      }
       sesudah(hasil);
-    } catch (e) {
-      setGalat(e instanceof GagalApi ? e.message : "gagal menghubungi server");
-    } finally {
-      setSibuk(false);
-    }
+    });
   }
 
-  async function denganKode(event: React.FormEvent) {
+  function denganKode(event: React.FormEvent) {
     event.preventDefault();
     if (!tiket) return;
-    bersihkan();
-    setSibuk(true);
-    try {
-      sesudah(await selesaikanFaktorKedua(tiket.nilai, caraDipakai, kode.trim()));
-    } catch (e) {
-      setKode("");
-      setGalat(e instanceof GagalApi ? e.message : "gagal menghubungi server");
-    } finally {
-      setSibuk(false);
-    }
+    void jalankan(async () => {
+      try {
+        sesudah(await selesaikanFaktorKedua(tiket.nilai, cara, kode.trim()));
+      } catch (e) {
+        setKode("");
+        throw e;
+      }
+    });
   }
 
-  async function kirimUlang() {
+  function kirimUlang() {
     if (!tiket) return;
-    bersihkan();
-    setSibuk(true);
-    try {
+    void jalankan(async () => {
       const hasil = await kirimUlangKode(tiket.nilai);
-      setKabar(hasil.terkirim ? "Kode baru sudah dikirim." : hasil.catatan);
-    } catch (e) {
-      setGalat(e instanceof GagalApi ? e.message : "gagal menghubungi server");
-    } finally {
-      setSibuk(false);
-    }
+      setKabar(hasil.terkirim ? baik("Kode baru sudah dikirim.") : buruk(hasil.catatan));
+    });
   }
 
-  async function mulaiWajah() {
+  function mulaiWajah() {
     if (!tiket) return;
-    bersihkan();
-    setSibuk(true);
-    try {
-      setTantangan(await tantanganWajah(tiket.nilai));
-    } catch (e) {
-      setGalat(e instanceof GagalApi ? e.message : "gagal menghubungi server");
-    } finally {
-      setSibuk(false);
-    }
+    void jalankan(async () => setTantangan(await tantanganWajah(tiket.nilai)));
   }
 
-  async function kirimWajah(bingkai: string[]) {
+  function kirimWajah(bingkai: string[]) {
     if (!tiket || !tantangan) return;
-    bersihkan();
-    setSibuk(true);
-    try {
-      sesudah(
-        await selesaikanFaktorKedua(tiket.nilai, "wajah", "", {
-          tantangan: tantangan.tantangan,
-          bingkai,
-        }),
-      );
-    } catch (e) {
-      setTantangan(null);
-      setGalat(
-        e instanceof GagalApi
-          ? e.status === 429
-            ? e.message
-            : "Wajah belum bisa dipastikan. Ikuti arah toleh di layar, lalu coba lagi di tempat yang lebih terang."
-          : "gagal menghubungi server",
-      );
-    } finally {
-      setSibuk(false);
-    }
+    const { tantangan: id } = tantangan;
+    setTantangan(null);
+    void jalankan(
+      async () => sesudah(await selesaikanFaktorKedua(tiket.nilai, "wajah", "", { tantangan: id, bingkai })),
+      (e) => (e instanceof GagalApi && e.status === 429 ? e.message : WAJAH_GAGAL),
+    );
   }
 
   async function denganPasskey() {
-    bersihkan();
-
-    const h = passkey.kendala();
-    if (h) {
-      setHalangan(h);
-      setGalat(h.saran ? `${h.pesan} Buka ${h.saran}` : h.pesan);
+    const kendala = passkey.kendala();
+    if (kendala) {
+      setHalangan(kendala);
+      setKabar(buruk(kendala.saran ? `${kendala.pesan} Buka ${kendala.saran}` : kendala.pesan));
       return;
     }
 
+    setKabar(null);
     setSibuk(true);
     try {
       sesudah(await passkey.masuk());
@@ -168,14 +166,16 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
       if (passkey.dibatalkan(e)) return;
       if ((e as { name?: string })?.name === "SecurityError") {
         const lagi = passkey.kendala();
-        setGalat(
-          lagi?.saran
-            ? `${lagi.pesan} Buka ${lagi.saran}`
-            : "Alamat halaman ini tidak bisa dipakai untuk sidik jari.",
+        setKabar(
+          buruk(
+            lagi?.saran
+              ? `${lagi.pesan} Buka ${lagi.saran}`
+              : "Alamat halaman ini tidak bisa dipakai untuk sidik jari.",
+          ),
         );
         return;
       }
-      setGalat(e instanceof Error ? e.message : "passkey gagal");
+      setKabar(buruk(pesanDari(e, "Masuk pakai sidik jari gagal.")));
     } finally {
       setSibuk(false);
     }
@@ -185,241 +185,199 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
     <div className={gaya.masukKepala}>
       <BrandMark size={40} />
       <div>
-        <h1 className={gaya.judul} style={{ fontSize: "1.2rem" }}>
-          {tiket ? "Satu langkah lagi" : "Masuk"}
-        </h1>
-        <p className={gaya.ket} style={{ margin: 0 }}>
-          hendrokuswantoro.com
-        </p>
+        <h1>{tiket ? "Satu langkah lagi" : "Masuk"}</h1>
+        <p>hendrokuswantoro.com</p>
       </div>
     </div>
   );
 
-  const pesan = (
-    <>
-      {galat ? (
-        <p className={`${gaya.kabar} ${gaya.salah}`} role="alert">
-          {galat}
-        </p>
-      ) : null}
-      {kabar ? (
-        <p className={`${gaya.kabar} ${gaya.baik}`} role="status">
-          {kabar}
-        </p>
-      ) : null}
-    </>
+  const kaki = (
+    // eslint-disable-next-line @next/next/no-html-link-for-pages
+    <a className={gaya.masukKaki} href="/">
+      &larr; Kembali ke situs
+    </a>
   );
 
   if (tiket) {
+    const pakaiKode = cara !== "wajah";
     return (
-      <section className={`${gaya.kartu} ${gaya.masuk}`}>
-        {kepala}
-        {pesan}
+      <div className={gaya.masukBungkus}>
+        <section className={`${gaya.kartu} ${gaya.masuk}`}>
+          {kepala}
+          <Kabar isi={kabar} />
 
-        <p className={gaya.penjelasan}>
-          Sandi kamu benar. Tinggal satu langkah lagi, waktunya 5 menit.
-        </p>
+          <p className={gaya.penjelasan}>Sandi kamu benar. Tinggal satu langkah lagi, waktunya 5 menit.</p>
 
-        {tiket.cara.length > 1 ? (
-          <div className={gaya.baris}>
-            <label htmlFor="cara">Cara</label>
-            <select
-              id="cara"
-              className={gaya.isian}
-              value={caraDipakai}
-              onChange={(e) => {
-                setCaraDipakai(e.target.value as CaraFaktorKedua);
-                setKode("");
-                setTantangan(null);
-                bersihkan();
-              }}
-            >
-              {tiket.cara.map((c) => (
-                <option key={c} value={c}>
-                  {NAMA_CARA[c]}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : null}
+          {tiket.cara.length > 1 ? (
+            <div className={gaya.baris}>
+              <label htmlFor="cara">Cara</label>
+              <select
+                id="cara"
+                className={gaya.isian}
+                value={cara}
+                onChange={(e) => gantiCara(e.target.value as CaraFaktorKedua)}
+              >
+                {tiket.cara.map((c) => (
+                  <option key={c} value={c}>
+                    {NAMA_CARA[c]}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
 
-        <p className={gaya.penjelasan}>{PETUNJUK[caraDipakai]}</p>
+          <p className={gaya.penjelasan}>{PETUNJUK[cara]}</p>
 
-        {caraDipakai === "wajah" ? (
-          <>
-            {tantangan ? (
-              <KameraWajah
-                gerakan={tantangan.gerakan}
-                sibuk={sibuk}
-                batal={() => setTantangan(null)}
-                selesai={(bingkai) => void kirimWajah(bingkai)}
-              />
-            ) : (
-              <div className={gaya.aksi}>
-                <button
-                  type="button"
-                  className={`${gaya.tombol} ${gaya.utama} ${gaya.lebar}`}
-                  onClick={() => void mulaiWajah()}
-                  disabled={sibuk}
-                >
-                  {sibuk ? "Sebentar..." : "Nyalakan kamera"}
-                </button>
+          {pakaiKode ? (
+            <form onSubmit={denganKode}>
+              <div className={gaya.baris}>
+                <label htmlFor="kode">{cara === "pemulihan" ? "Kode cadangan" : "Kode 6 angka"}</label>
+                <input
+                  id="kode"
+                  className={`${gaya.isian} ${gaya.kodeIsian}`}
+                  inputMode={cara === "pemulihan" ? "text" : "numeric"}
+                  autoComplete={cara === "pemulihan" ? "off" : "one-time-code"}
+                  autoFocus
+                  required
+                  value={kode}
+                  onChange={(e) => setKode(e.target.value)}
+                  placeholder={cara === "pemulihan" ? "XXXXX-XXXXX" : "000000"}
+                />
               </div>
-            )}
-            <div className={gaya.aksi} style={{ marginTop: 14 }}>
+              <button
+                type="submit"
+                className={`${gaya.tombol} ${gaya.utama} ${gaya.lebar}`}
+                disabled={sibuk || kode.trim().length < 4}
+              >
+                {sibuk ? "Sebentar..." : "Lanjutkan"}
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              className={`${gaya.tombol} ${gaya.utama} ${gaya.lebar}`}
+              onClick={mulaiWajah}
+              disabled={sibuk}
+            >
+              {sibuk ? "Sebentar..." : "Nyalakan kamera"}
+            </button>
+          )}
+
+          <div className={gaya.masukBawah}>
+            <button type="button" className={`${gaya.tombol} ${gaya.kecil} ${gaya.hantu}`} onClick={kembali}>
+              &larr; Kembali
+            </button>
+            {cara === "email" ? (
               <button
                 type="button"
-                className={gaya.tombol}
-                onClick={() => {
-                  setTiket(null);
-                  setTantangan(null);
-                  bersihkan();
-                }}
+                className={`${gaya.tombol} ${gaya.kecil}`}
+                onClick={kirimUlang}
+                disabled={sibuk}
               >
-                Kembali
+                Kirim ulang kode
               </button>
-            </div>
-          </>
-        ) : (
-        <>
-        <form onSubmit={denganKode}>
-          <div className={gaya.baris}>
-            <label htmlFor="kode">
-              {caraDipakai === "pemulihan" ? "Kode pemulihan" : "Kode enam angka"}
-            </label>
-            <input
-              id="kode"
-              className={`${gaya.isian} ${gaya.kodeIsian}`}
-              inputMode={caraDipakai === "pemulihan" ? "text" : "numeric"}
-              autoComplete={caraDipakai === "pemulihan" ? "off" : "one-time-code"}
-              autoFocus
-              required
-              value={kode}
-              onChange={(e) => setKode(e.target.value)}
-              placeholder={caraDipakai === "pemulihan" ? "XXXXX-XXXXX" : "000000"}
-            />
+            ) : null}
           </div>
 
-          <button
-            type="submit"
-            className={`${gaya.tombol} ${gaya.utama} ${gaya.lebar}`}
-            disabled={sibuk || kode.trim().length < 4}
-          >
-            {sibuk ? "Sebentar..." : "Lanjutkan"}
-          </button>
-        </form>
-
-        <div className={gaya.aksi} style={{ marginTop: 14 }}>
-          {caraDipakai === "email" ? (
-            <button type="button" className={gaya.tombol} onClick={kirimUlang} disabled={sibuk}>
-              Kirim ulang kode
-            </button>
+          {tantangan ? (
+            <KameraWajah
+              gerakan={tantangan.gerakan}
+              sibuk={sibuk}
+              batal={() => setTantangan(null)}
+              selesai={kirimWajah}
+            />
           ) : null}
-          <button
-            type="button"
-            className={gaya.tombol}
-            onClick={() => {
-              setTiket(null);
-              setKode("");
-              bersihkan();
-            }}
-          >
-            Kembali
-          </button>
-        </div>
-        </>
-        )}
-      </section>
+        </section>
+        {kaki}
+      </div>
     );
   }
 
   return (
-    <section className={`${gaya.kartu} ${gaya.masuk}`}>
-      {kepala}
-      {pesan}
+    <div className={gaya.masukBungkus}>
+      <section className={`${gaya.kartu} ${gaya.masuk}`}>
+        {kepala}
+        <Kabar isi={kabar} />
 
-      {adaPasskey ? (
-        <>
-          <button
-            type="button"
-            className={`${gaya.tombol} ${gaya.utama} ${gaya.lebar}`}
-            onClick={denganPasskey}
-            disabled={sibuk || halangan !== null}
-          >
-            Masuk pakai sidik jari
-          </button>
-          {halangan ? (
-            <p className={gaya.penjelasan} style={{ marginTop: 10 }}>
-              {halangan.pesan}{" "}
-              {halangan.saran ? (
-                <>
-                  Buka <a href={halangan.saran}>{halangan.saran}</a>.
-                </>
-              ) : null}
-            </p>
-          ) : (
-            <p className={gaya.penjelasan} style={{ marginTop: 10 }}>
-              Perangkat kamu yang minta sidik jari, wajah, atau PIN. Sidik jari kamu tidak
-              dikirim ke mana pun.
-            </p>
-          )}
-          <div className={gaya.pisah}>atau dengan sandi</div>
-        </>
-      ) : null}
-
-      <form onSubmit={denganSandi}>
-        <div className={gaya.baris}>
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            className={gaya.isian}
-            type="email"
-            autoComplete="username"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
-
-        <div className={gaya.baris}>
-          <label htmlFor="sandi">Sandi</label>
-          <div className={gaya.sandiBidang}>
-            <input
-              id="sandi"
-              className={gaya.isian}
-              type={sandiTerlihat ? "text" : "password"}
-              autoComplete="current-password"
-              required
-              minLength={8}
-              value={sandi}
-              onChange={(e) => setSandi(e.target.value)}
-            />
+        {adaPasskey ? (
+          <>
             <button
               type="button"
-              className={gaya.lihat}
-              aria-controls="sandi"
-              aria-pressed={sandiTerlihat}
-              aria-label={sandiTerlihat ? "Sembunyikan sandi" : "Tampilkan sandi"}
-              title={sandiTerlihat ? "Sembunyikan sandi" : "Tampilkan sandi"}
-              onClick={() => setSandiTerlihat((t) => !t)}
+              className={`${gaya.tombol} ${gaya.utama} ${gaya.lebar}`}
+              onClick={denganPasskey}
+              disabled={sibuk || halangan !== null}
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path d="M1.8 12S5.4 5.5 12 5.5 22.2 12 22.2 12 18.6 18.5 12 18.5 1.8 12 1.8 12z" />
-                <circle cx="12" cy="12" r="3.2" />
-                <path className={gaya.coret} d="M4 20 20 4" />
-              </svg>
+              Masuk pakai sidik jari
             </button>
-          </div>
-        </div>
+            <p className={`${gaya.penjelasan} ${gaya.diBawahTombol}`}>
+              {halangan ? (
+                <>
+                  {halangan.pesan}{" "}
+                  {halangan.saran ? (
+                    <>
+                      Buka <a href={halangan.saran}>{halangan.saran}</a>.
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                "Perangkat kamu yang minta sidik jari, wajah, atau PIN. Sidik jari kamu tidak dikirim ke mana pun."
+              )}
+            </p>
+            <div className={gaya.pisah}>atau dengan sandi</div>
+          </>
+        ) : null}
 
-        <button
-          type="submit"
-          className={`${gaya.tombol} ${adaPasskey ? "" : gaya.utama} ${gaya.lebar}`}
-          disabled={sibuk}
-        >
-          {sibuk ? "Sebentar..." : "Masuk"}
-        </button>
-      </form>
-    </section>
+        <form onSubmit={denganSandi}>
+          <div className={gaya.baris}>
+            <label htmlFor="email">Email</label>
+            <input
+              id="email"
+              className={gaya.isian}
+              type="email"
+              autoComplete="username"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div className={gaya.baris}>
+            <label htmlFor="sandi">Sandi</label>
+            <div className={gaya.sandiBidang}>
+              <input
+                id="sandi"
+                className={gaya.isian}
+                type={sandiTerlihat ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                minLength={8}
+                value={sandi}
+                onChange={(e) => setSandi(e.target.value)}
+              />
+              <button
+                type="button"
+                className={gaya.lihat}
+                aria-controls="sandi"
+                aria-pressed={sandiTerlihat}
+                aria-label={sandiTerlihat ? "Sembunyikan sandi" : "Tampilkan sandi"}
+                title={sandiTerlihat ? "Sembunyikan sandi" : "Tampilkan sandi"}
+                onClick={() => setSandiTerlihat((t) => !t)}
+              >
+                <IkonMata />
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className={`${gaya.tombol} ${adaPasskey ? "" : gaya.utama} ${gaya.lebar}`}
+            disabled={sibuk}
+          >
+            {sibuk ? "Sebentar..." : "Masuk"}
+          </button>
+        </form>
+      </section>
+      {kaki}
+    </div>
   );
 }

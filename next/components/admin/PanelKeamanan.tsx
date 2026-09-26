@@ -4,18 +4,19 @@ import { useCallback, useEffect, useState } from "react";
 import gaya from "@/app/admin/admin.module.css";
 import { KameraWajah } from "@/components/admin/KameraWajah";
 import { PanelPasskey } from "@/components/admin/PanelPasskey";
+import { Kabar, baik, buruk, type IsiKabar } from "@/components/admin/Kabar";
 import { BarisSetelan, Terkunci } from "@/components/admin/Setelan";
 import type { Akses } from "@/components/admin/akses";
 import {
   aktifkanTotp,
   daftarkanWajah,
-  GagalApi,
   hapusWajah,
   kirimVerifikasiEmail,
   konfirmasiEmail,
   matikanTotp,
   mulaiTotp,
   peristiwaKeamanan,
+  pesanDari,
   type KeadaanKeamanan,
   type Peristiwa,
 } from "@/lib/api";
@@ -61,8 +62,7 @@ export function PanelKeamanan({
   muatKeadaan: () => Promise<void>;
 }) {
   const [jejak, setJejak] = useState<Peristiwa[]>([]);
-  const [galat, setGalat] = useState("");
-  const [kabar, setKabar] = useState("");
+  const [kabar, setKabar] = useState<IsiKabar>(null);
   const [sibuk, setSibuk] = useState(false);
 
   const [pasang, setPasang] = useState<{ rahasia: string; qr: string; otpauth: string } | null>(null);
@@ -71,18 +71,22 @@ export function PanelKeamanan({
   const [kodeMatikan, setKodeMatikan] = useState("");
   const [kameraHidup, setKameraHidup] = useState(false);
 
-  const muat = useCallback(async () => {
+  const muatJejak = useCallback(async () => {
     try {
-      const [, p] = await Promise.all([muatKeadaan(), peristiwaKeamanan()]);
-      setJejak(p.peristiwa);
+      setJejak((await peristiwaKeamanan()).peristiwa);
     } catch (e) {
-      setGalat(e instanceof GagalApi ? e.message : "gagal memuat aktivitas");
+      setKabar(buruk(pesanDari(e, "Aktivitas gagal dimuat.")));
     }
-  }, [muatKeadaan]);
+  }, []);
+
+  const muat = useCallback(
+    () => Promise.all([muatKeadaan(), muatJejak()]).then(() => undefined),
+    [muatKeadaan, muatJejak],
+  );
 
   useEffect(() => {
-    void muat();
-  }, [muat]);
+    void muatJejak();
+  }, [muatJejak]);
 
   useEffect(() => {
     const alamat = new URL(window.location.href);
@@ -94,24 +98,19 @@ export function PanelKeamanan({
     window.history.replaceState(null, "", alamat.toString());
     konfirmasiEmail(token)
       .then(() => {
-        setKabar("Email kamu sudah terbukti.");
+        setKabar(baik("Email kamu sudah terbukti."));
         void muat();
       })
-      .catch((e) => setGalat(e instanceof GagalApi ? e.message : "tautan tidak berlaku"));
+      .catch((e) => setKabar(buruk(pesanDari(e, "Tautan tidak berlaku."))));
   }, [muat]);
 
-  function bersihkan() {
-    setGalat("");
-    setKabar("");
-  }
-
   async function jalankan(kerja: () => Promise<void>) {
-    bersihkan();
+    setKabar(null);
     setSibuk(true);
     try {
       await kerja();
     } catch (e) {
-      setGalat(e instanceof GagalApi ? e.message : "gagal menghubungi server");
+      setKabar(buruk(pesanDari(e)));
     } finally {
       setSibuk(false);
     }
@@ -120,13 +119,7 @@ export function PanelKeamanan({
   if (!keadaan) {
     return (
       <section className={gaya.kartu} id="keamanan">
-        {galatKeadaan ? (
-          <p className={`${gaya.kabar} ${gaya.salah}`} role="alert">
-            {galatKeadaan}
-          </p>
-        ) : (
-          <p className={gaya.ket}>Sebentar...</p>
-        )}
+        {galatKeadaan ? <Kabar isi={buruk(galatKeadaan)} /> : <p className={gaya.ket}>Sebentar...</p>}
       </section>
     );
   }
@@ -152,16 +145,7 @@ export function PanelKeamanan({
         </span>
       </div>
 
-      {galat ? (
-        <p className={`${gaya.kabar} ${gaya.salah}`} role="alert">
-          {galat}
-        </p>
-      ) : null}
-      {kabar ? (
-        <p className={`${gaya.kabar} ${gaya.baik}`} role="status">
-          {kabar}
-        </p>
-      ) : null}
+      <Kabar isi={kabar} />
 
       <ul className={gaya.setelan}>
         <BarisSetelan
@@ -190,7 +174,7 @@ export function PanelKeamanan({
               onClick={() =>
                 jalankan(async () => {
                   const hasil = await kirimVerifikasiEmail();
-                  setKabar(hasil.terkirim ? "Tautan sudah dikirim. Cek email kamu." : hasil.catatan);
+                  setKabar(hasil.terkirim ? baik("Tautan sudah dikirim. Cek email kamu.") : buruk(hasil.catatan));
                 })
               }
             >
@@ -264,7 +248,7 @@ export function PanelKeamanan({
                     jalankan(async () => {
                       await matikanTotp(kodeMatikan.trim());
                       setKodeMatikan("");
-                      setKabar("Authenticator dimatikan. Kode cadangan ikut terhapus.");
+                      setKabar(baik("Authenticator dimatikan. Kode cadangan ikut terhapus."));
                       await muat();
                     })
                   }
@@ -380,7 +364,7 @@ export function PanelKeamanan({
                 onClick={() =>
                   jalankan(async () => {
                     await hapusWajah();
-                    setKabar("Wajah sudah dihapus dari server.");
+                    setKabar(baik("Wajah sudah dihapus dari server."));
                     await muat();
                   })
                 }
@@ -393,7 +377,7 @@ export function PanelKeamanan({
                 className={`${gaya.tombol} ${gaya.kecil} ${gaya.utama}`}
                 disabled={sibuk || !daftar || !keadaan.wajah_siap || !keadaan.kunci_kolom_siap}
                 onClick={() => {
-                  bersihkan();
+                  setKabar(null);
                   setKameraHidup(true);
                 }}
               >
@@ -448,7 +432,7 @@ export function PanelKeamanan({
             setKameraHidup(false);
             void jalankan(async () => {
               await daftarkanWajah(bingkai);
-              setKabar("Wajah kamu terdaftar. Fotonya tidak disimpan.");
+              setKabar(baik("Wajah kamu terdaftar. Fotonya tidak disimpan."));
               await muat();
             });
           }}

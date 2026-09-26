@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 import gaya from "@/app/admin/admin.module.css";
-import { ambil, panggil, pesanGalat } from "@/lib/api";
+import { ambil, panggil, pesanDari, pesanGalat } from "@/lib/api";
 import * as passkey from "@/lib/passkey";
+import { Kabar, baik, buruk, type IsiKabar } from "@/components/admin/Kabar";
 import { BarisSetelan, Terkunci } from "@/components/admin/Setelan";
 import type { Akses } from "@/components/admin/akses";
 
@@ -15,7 +16,7 @@ export function PanelPasskey({
   onBerubah: () => Promise<void>;
 }) {
   const [daftar, setDaftar] = useState<passkey.Kunci[] | null>(null);
-  const [kabar, setKabar] = useState<{ teks: string; baik: boolean } | null>(null);
+  const [kabar, setKabar] = useState<IsiKabar>(null);
   const [bisa, setBisa] = useState<boolean | null>(null);
   const [halangan, setHalangan] = useState<passkey.Kendala | null>(null);
   const [nama, setNama] = useState("");
@@ -49,7 +50,7 @@ export function PanelPasskey({
     const h = passkey.kendala();
     if (h) {
       setHalangan(h);
-      setKabar({ teks: h.saran ? `${h.pesan} Buka ${h.saran}` : h.pesan, baik: false });
+      setKabar(buruk(h.saran ? `${h.pesan} Buka ${h.saran}` : h.pesan));
       return;
     }
     const label = nama.trim() || (jenis === "perangkat" ? "Laptop ini" : "Kunci USB");
@@ -58,20 +59,12 @@ export function PanelPasskey({
     try {
       await passkey.daftarkan(label, jenis);
       setNama("");
-      setKabar({ teks: `${label} berhasil didaftarkan.`, baik: true });
+      setKabar(baik(`${label} berhasil didaftarkan.`));
       await Promise.all([muat(), onBerubah()]);
     } catch (e) {
       if (passkey.dibatalkan(e)) return;
-      const namaGalat = (e as { name?: string })?.name;
-      setKabar({
-        teks:
-          namaGalat === "InvalidStateError"
-            ? "Perangkat ini sudah terdaftar."
-            : e instanceof Error
-              ? e.message
-              : "Pendaftaran gagal. Coba lagi.",
-        baik: false,
-      });
+      const sudahAda = (e as { name?: string })?.name === "InvalidStateError";
+      setKabar(buruk(sudahAda ? "Perangkat ini sudah terdaftar." : pesanDari(e, "Pendaftaran gagal. Coba lagi.")));
     } finally {
       setSibuk(false);
     }
@@ -87,10 +80,10 @@ export function PanelPasskey({
         method: "DELETE",
       });
       if (!jawaban.ok) {
-        setKabar({ teks: pesanGalat(await jawaban.json().catch(() => null)), baik: false });
+        setKabar(buruk(pesanGalat(await jawaban.json().catch(() => null))));
         return;
       }
-      setKabar({ teks: `${kunci.nama} sudah dicabut.`, baik: true });
+      setKabar(baik(`${kunci.nama} sudah dicabut.`));
       await Promise.all([muat(), onBerubah()]);
     } finally {
       setSibuk(false);
@@ -149,14 +142,7 @@ export function PanelPasskey({
             </p>
           ) : null}
 
-          {kabar ? (
-            <p
-              className={`${gaya.kabar} ${kabar.baik ? gaya.baik : gaya.salah}`}
-              role={kabar.baik ? "status" : "alert"}
-            >
-              {kabar.teks}
-            </p>
-          ) : null}
+          <Kabar isi={kabar} />
 
           {daftar && daftar.length ? (
             <ul className={gaya.daftarRingkas}>

@@ -78,6 +78,10 @@ export function pesanGalat(isi: unknown): string {
   return "gagal";
 }
 
+export function pesanDari(galat: unknown, cadangan = "Gagal menghubungi server. Coba lagi."): string {
+  return galat instanceof Error && galat.message ? galat.message : cadangan;
+}
+
 async function sekaliJalan(jalur: string, pilihan: RequestInit): Promise<Response> {
   const kepala: Record<string, string> = {
     "Content-Type": "application/json",

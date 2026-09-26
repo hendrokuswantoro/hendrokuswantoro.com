@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import gaya from "@/app/admin/admin.module.css";
-import { ambil } from "@/lib/api";
+import { ambil, pesanDari } from "@/lib/api";
+import { Kabar, buruk } from "./Kabar";
 
 export type Ringkas = {
   slug: string;
@@ -35,7 +36,7 @@ export function DaftarTulisan({
       const jawaban = await ambil<{ isi: Ringkas[] }>("/api/v1/admin/blog");
       setIsi(jawaban.isi);
     } catch (e) {
-      setGalat(e instanceof Error ? e.message : "gagal memuat tulisan");
+      setGalat(pesanDari(e, "Tulisan gagal dimuat."));
       setIsi([]);
     }
   }, []);
@@ -77,11 +78,7 @@ export function DaftarTulisan({
         </p>
       ) : (
         <>
-          {galat ? (
-            <p className={`${gaya.kabar} ${gaya.salah}`} role="alert">
-              {galat}
-            </p>
-          ) : null}
+          <Kabar isi={galat ? buruk(galat) : null} />
 
           {isi === null ? (
             <p className={gaya.ket}>Memuat...</p>
