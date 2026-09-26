@@ -1053,12 +1053,47 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 .peta__lapisan-opsi[aria-pressed="true"] { color: var(--peta-biru); font-weight: 500; }
 .peta__lapisan-opsi[aria-pressed="true"] .peta__lapisan-gambar { border-color: var(--peta-biru); }
 
-.peta__petunjuk {
-  position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; padding: 24px;
-  background: rgba(0, 0, 0, .45); color: #ffffff; font-size: 1.125rem; text-align: center;
-  pointer-events: none; opacity: 0; transition: opacity .3s var(--ease);
+.peta__pin-svg { animation: pinJatuh .5s var(--ease) var(--tunda, 0ms) both; }
+@keyframes pinJatuh {
+  0% { opacity: 0; transform: translateY(-18px) scale(.9); }
+  60% { opacity: 1; transform: translateY(2px) scale(1.02); }
+  100% { opacity: 1; transform: none; }
 }
-.peta__petunjuk.is-tampil { opacity: 1; }
+.peta__pin.is-aktif .peta__pin-svg { animation: none; }
+.peta__pin::before {
+  content: ""; position: absolute; left: 50%; bottom: -5px; width: 22px; height: 9px;
+  margin-left: -11px; border-radius: 50%; pointer-events: none; opacity: 0;
+  background: currentColor;
+}
+.peta__pin[data-kind="app"] { color: var(--pin-app); }
+.peta__pin[data-kind="analysis"] { color: var(--pin-analysis); }
+.peta__pin[data-kind="satellite"] { color: var(--pin-satellite); }
+.peta__pin[data-kind="design"] { color: var(--pin-design); }
+.peta__pin.is-aktif::before { animation: pinDenyut 1.8s ease-out infinite; }
+@keyframes pinDenyut {
+  0% { opacity: .45; transform: scale(.4); }
+  100% { opacity: 0; transform: scale(2.4); }
+}
+.peta__pin.is-gabung { visibility: hidden; pointer-events: none; }
+.peta__pin[data-jumlah]::after {
+  content: attr(data-jumlah); position: absolute; top: -7px; right: -9px;
+  min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
+  font-size: .6875rem; font-weight: 700; line-height: 20px; text-align: center;
+  background: var(--peta-kartu); color: var(--peta-teks); box-shadow: var(--peta-bayang-kecil);
+}
+
+.peta__popup .peta__kartu { animation: kartuMuncul .2s var(--ease) both; transform-origin: 50% 100%; }
+@keyframes kartuMuncul {
+  from { opacity: 0; transform: translateY(6px) scale(.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.peta__chip { position: relative; overflow: hidden; }
+.peta__chip[aria-pressed="true"]::after {
+  content: ""; position: absolute; left: 0; bottom: 0; height: 3px; width: 100%;
+  background: var(--peta-biru); transform-origin: left; animation: jelajahJalan 7s linear infinite;
+}
+@keyframes jelajahJalan { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
 @media (max-width: 719px) {
   .peta__atas { flex-direction: column; align-items: stretch; right: 60px; gap: 4px; }
@@ -1075,8 +1110,10 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .peta__pin-svg, .peta__pin-nama, .peta__lapisan-pilihan, .peta__petunjuk,
+  .peta__pin-svg, .peta__pin-nama, .peta__lapisan-pilihan,
   .peta__baris, .peta__chip { transition: none; }
+  .peta__pin-svg, .peta__popup .peta__kartu, .peta__pin.is-aktif::before,
+  .peta__chip[aria-pressed="true"]::after { animation: none; }
 }
 
 [id^="karya-"], #main, .peta { scroll-margin-top: calc(var(--header-h) + 16px); }

@@ -7,7 +7,7 @@ type Teks = { en: string; ind: string };
 type Dasar = "peta" | "satelit" | "medan";
 
 type Karya = Teks & { id: string; kind: Category; lng: number; lat: number; at: Teks; foto: string };
-type Entry = { item: Karya; marker: Marker; popup: Popup };
+type Entry = { item: Karya; marker: Marker; popup: Popup; anggota: Entry[] | null; klik: boolean };
 
 const TEMPAT: Record<string, Teks> = {
   parking: { en: "Yogyakarta", ind: "Yogyakarta" },
@@ -86,9 +86,9 @@ const TEXT = {
   north: { en: "Face north", ind: "Hadapkan ke utara" },
   full: { en: "Full screen", ind: "Layar penuh" },
   unfull: { en: "Exit full screen", ind: "Keluar dari layar penuh" },
-  ctrlHint: { en: "Hold ctrl and scroll to zoom the map", ind: "Tahan ctrl sambil menggulir untuk memperbesar peta" },
-  cmdHint: { en: "Hold ⌘ and scroll to zoom the map", ind: "Tahan ⌘ sambil menggulir untuk memperbesar peta" },
   touchHint: { en: "Use two fingers to move the map", ind: "Pakai dua jari untuk menggeser peta" },
+  group: { en: "%n works here. Select to zoom in.", ind: "%n karya di sini. Pilih untuk memperbesar." },
+  groupShort: { en: "%n works", ind: "%n karya" },
   layerOn: { en: "%l view.", ind: "Tampilan %l." },
   filterOn: { en: "%k. %n of %t works shown.", ind: "%k. %n dari %t karya ditampilkan." },
   filterOff: { en: "Filter off. All %t works shown.", ind: "Saringan mati. Semua %t karya ditampilkan." },
@@ -97,10 +97,6 @@ const TEXT = {
 
 function sentuh(): boolean {
   return Boolean(window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches);
-}
-
-function mac(): boolean {
-  return /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || "");
 }
 
 function ms(duration: number): number {
@@ -446,12 +442,6 @@ function buildUi(map: MapLibreMap, frame: HTMLElement, markers: Entry[], state: 
     frame.appendChild(lapisan);
   }
 
-  const petunjuk = el("div", "peta__petunjuk");
-  petunjuk.setAttribute("aria-hidden", "true");
-  const petunjukTeks = el("span");
-  petunjuk.appendChild(petunjukTeks);
-  frame.appendChild(petunjuk);
-
   let aktif = -1;
   let hasil: Entry[] = [];
 
@@ -587,14 +577,6 @@ function buildUi(map: MapLibreMap, frame: HTMLElement, markers: Entry[], state: 
     isiSaran();
   });
 
-  let jedaPetunjuk = 0;
-  function tunjukkan(teks: string) {
-    petunjukTeks.textContent = teks;
-    petunjuk.classList.add("is-tampil");
-    window.clearTimeout(jedaPetunjuk);
-    jedaPetunjuk = window.setTimeout(() => petunjuk.classList.remove("is-tampil"), 1400);
-  }
-
   function markDasar(dasar: Dasar) {
     if (!lapisan) return;
     const berikut: Dasar = dasar === "satelit" ? "peta" : "satelit";
@@ -630,7 +612,43 @@ function buildUi(map: MapLibreMap, frame: HTMLElement, markers: Entry[], state: 
     if (!saran.hidden) isiSaran();
   }
 
+  function kelompokkan() {
+    const kepala: { x: number; y: number; entry: Entry; anggota: Entry[] }[] = [];
+    markers.forEach((entry) => {
+      const pin = entry.marker.getElement();
+      entry.anggota = null;
+      pin.classList.remove("is-gabung");
+      pin.removeAttribute("data-jumlah");
+      pin.title = say(entry.item);
+      pin.setAttribute("aria-label", say(entry.item));
+      const nama = pin.querySelector(".peta__pin-nama");
+      if (nama) nama.textContent = say(entry.item);
+      if (mati(entry)) return;
+      const titik = map.project([entry.item.lng, entry.item.lat]);
+      if (!entry.popup.isOpen()) {
+        const dekat = kepala.find((k) => Math.abs(k.x - titik.x) < 26 && Math.abs(k.y - titik.y) < 32);
+        if (dekat) {
+          dekat.anggota.push(entry);
+          pin.classList.add("is-gabung");
+          return;
+        }
+      }
+      kepala.push({ x: titik.x, y: titik.y, entry, anggota: [entry] });
+    });
+    kepala.forEach((k) => {
+      if (k.anggota.length < 2) return;
+      const pin = k.entry.marker.getElement();
+      k.entry.anggota = k.anggota;
+      pin.setAttribute("data-jumlah", String(k.anggota.length));
+      pin.title = k.anggota.map((e) => say(e.item)).join(", ");
+      pin.setAttribute("aria-label", `${say(TEXT.group).replace("%n", String(k.anggota.length))} ${pin.title}`);
+      const nama = pin.querySelector(".peta__pin-nama");
+      if (nama) nama.textContent = say(TEXT.groupShort).replace("%n", String(k.anggota.length));
+    });
+  }
+
   function count() {
+    kelompokkan();
     const view = map.getBounds();
     const seen: Record<Category, number> = { app: 0, analysis: 0, satellite: 0, design: 0 };
     markers.forEach((entry) => {
@@ -664,7 +682,6 @@ function buildUi(map: MapLibreMap, frame: HTMLElement, markers: Entry[], state: 
   return {
     label,
     count,
-    tunjukkan,
     markDasar,
     markTour(running: boolean) {
       tour.setAttribute("aria-pressed", running ? "true" : "false");
@@ -720,8 +737,6 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
     scrollZoom: sentuh(),
     locale: {
       "CooperativeGesturesHandler.MobileHelpText": say(TEXT.touchHint),
-      "CooperativeGesturesHandler.WindowsHelpText": say(TEXT.ctrlHint),
-      "CooperativeGesturesHandler.MacHelpText": say(TEXT.cmdHint),
     },
   });
 
@@ -789,7 +804,14 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
     }, 60);
   }
 
-  const markers: Entry[] = WORK.map((item) => {
+  function perbesarKelompok(anggota: Entry[]) {
+    state.stopTour();
+    const kotak = new maplibregl.LngLatBounds();
+    anggota.forEach((entry) => kotak.extend([entry.item.lng, entry.item.lat]));
+    map.fitBounds(kotak, { padding: 120, maxZoom: 12.5, duration: ms(900) });
+  }
+
+  const markers: Entry[] = WORK.map((item, urutan) => {
     const popup = new maplibregl.Popup({
       anchor: "bottom",
       offset: [0, -44],
@@ -802,9 +824,17 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
       .setLngLat([item.lng, item.lat])
       .setPopup(popup)
       .addTo(map);
-    const entry: Entry = { item, marker, popup };
+    const entry: Entry = { item, marker, popup, anggota: null, klik: false };
+    marker.getElement().style.setProperty("--tunda", `${urutan * 70}ms`);
     popup.setDOMContent(kartu(entry, umumkan));
     popup.on("open", () => {
+      const lewatKlik = entry.klik;
+      entry.klik = false;
+      if (lewatKlik && entry.anggota) {
+        popup.remove();
+        perbesarKelompok(entry.anggota);
+        return;
+      }
       marker.getElement().classList.add("is-aktif");
       const foto = popup.getElement()?.querySelector<HTMLImageElement>(".peta__foto[data-src]");
       if (foto) {
@@ -813,8 +843,15 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
       }
     });
     popup.on("close", () => marker.getElement().classList.remove("is-aktif"));
+    marker.getElement().addEventListener("pointerdown", () => {
+      entry.klik = true;
+    });
+    marker.getElement().addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") entry.klik = true;
+    });
     marker.getElement().addEventListener("click", (event) => {
       const lewatPapan = event.detail === 0;
+      if (entry.anggota) return;
       window.setTimeout(() => {
         state.flyTo(entry, false);
         if (lewatPapan && popup.isOpen()) {
@@ -1009,7 +1046,6 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
         map.scrollZoom.enable();
       } else {
         map.scrollZoom.disable();
-        ui.tunjukkan(say(mac() ? TEXT.cmdHint : TEXT.ctrlHint));
       }
     }, { capture: true, passive: true });
   }
@@ -1032,14 +1068,7 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
     ui.count();
     terjemahkanKontrol();
     if (TOKEN) terapkan();
-    markers.forEach((entry) => {
-      entry.popup.setDOMContent(kartu(entry, umumkan));
-      const pin = entry.marker.getElement();
-      pin.title = say(entry.item);
-      pin.setAttribute("aria-label", say(entry.item));
-      const nama = pin.querySelector(".peta__pin-nama");
-      if (nama) nama.textContent = say(entry.item);
-    });
+    markers.forEach((entry) => entry.popup.setDOMContent(kartu(entry, umumkan)));
   }
 
   function hapus() {
@@ -1049,7 +1078,7 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
     document.removeEventListener("fullscreenchange", layarBerubah);
     tema.disconnect();
     kabar.remove();
-    frame.querySelectorAll(".peta__atas, .peta__lapisan, .peta__petunjuk").forEach((node) => node.remove());
+    frame.querySelectorAll(".peta__atas, .peta__lapisan").forEach((node) => node.remove());
     map.remove();
   }
 

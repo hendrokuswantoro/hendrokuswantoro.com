@@ -92,7 +92,7 @@
       pasir: "#f6eed2", es: "#ffffff",
       air: "#9fcbf5", sungai: "#9fcbf5",
       bayanganGelap: "#9aa3ad", bayanganTerang: "#ffffff",
-      kontur: "#c7b89f", konturTeks: "#8f7d62",
+      kontur: "#a4865c", konturTeks: "#7a6242",
       batasNegara: "#8d949b", batasProvinsi: "#aab0b6", batasKab: "#c3c7cc",
       tepiKecil: "#dcdfe3", tepiSedang: "#d3d6db", tepiSekunder: "#d0d4d9", tepiPrimer: "#e3c16a", tepiTol: "#dd9d2c",
       isiKecil: "#ffffff", isiSedang: "#ffffff", isiSekunder: "#ffffff", isiPrimer: "#fde7a4", isiTol: "#fbc95a",
@@ -112,7 +112,7 @@
       pasir: "#35311f", es: "#3a3d42",
       air: "#17314c", sungai: "#1d3a58",
       bayanganGelap: "#000000", bayanganTerang: "#4a4d52",
-      kontur: "#5a5244", konturTeks: "#a89a82",
+      kontur: "#7a6d58", konturTeks: "#b8a88c",
       batasNegara: "#80868b", batasProvinsi: "#5f6368", batasKab: "#4a4d52",
       tepiKecil: "#2b2d31", tepiSedang: "#2d2f33", tepiSekunder: "#2f3135", tepiPrimer: "#4d4432", tepiTol: "#5c4a24",
       isiKecil: "#3c3f44", isiSedang: "#45484d", isiSekunder: "#4b4e54", isiPrimer: "#6b5f40", isiTol: "#8a6c30",
@@ -343,12 +343,16 @@
               ["match", ["get", "class"], ["river", "canal"], 0.8, 0.3],
               17, ["match", ["get", "class"], ["river", "canal"], 6, 2]]
           } },
-        { id: "kontur", type: "line", source: "kontur", "source-layer": "contour", minzoom: 11,
+        { id: "kontur", type: "line", source: "kontur", "source-layer": "contour", minzoom: 10,
           layout: { visibility: tampak(o.medan && alam), "line-join": "round" },
           paint: {
             "line-color": P.kontur,
-            "line-opacity": ["match", ["get", "index"], [5, 10], 0.9, 0.55],
-            "line-width": ["match", ["get", "index"], [5, 10], 1, 0.5]
+            "line-opacity": ["interpolate", ["linear"], ["zoom"], 10,
+              ["match", ["get", "index"], [5, 10], 0.75, 0.4], 13,
+              ["match", ["get", "index"], [5, 10], 0.95, 0.7]],
+            "line-width": ["interpolate", ["linear"], ["zoom"], 10,
+              ["match", ["get", "index"], [5, 10], 1, 0.5], 15,
+              ["match", ["get", "index"], [5, 10], 1.8, 0.9]]
           } },
 
         { id: "batas-kabupaten", type: "line", source: "jalan", "source-layer": "admin", minzoom: 7,
@@ -706,9 +710,9 @@
     north: { en: "Face north", ind: "Hadapkan ke utara" },
     full: { en: "Full screen", ind: "Layar penuh" },
     unfull: { en: "Exit full screen", ind: "Keluar dari layar penuh" },
-    ctrlHint: { en: "Hold ctrl and scroll to zoom the map", ind: "Tahan ctrl sambil menggulir untuk memperbesar peta" },
-    cmdHint: { en: "Hold ⌘ and scroll to zoom the map", ind: "Tahan ⌘ sambil menggulir untuk memperbesar peta" },
     touchHint: { en: "Use two fingers to move the map", ind: "Pakai dua jari untuk menggeser peta" },
+    group: { en: "%n works here. Select to zoom in.", ind: "%n karya di sini. Pilih untuk memperbesar." },
+    groupShort: { en: "%n works", ind: "%n karya" },
     layerOn: { en: "%l view.", ind: "Tampilan %l." },
     filterOn: { en: "%k. %n of %t works shown.", ind: "%k. %n dari %t karya ditampilkan." },
     filterOff: { en: "Filter off. All %t works shown.", ind: "Saringan mati. Semua %t karya ditampilkan." },
@@ -718,10 +722,6 @@
   function sentuh() {
     return Boolean(window.matchMedia
       && window.matchMedia("(hover: none) and (pointer: coarse)").matches);
-  }
-
-  function mac() {
-    return /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || "");
   }
 
   function reducedMotion() {
@@ -1099,11 +1099,6 @@
       frame.appendChild(lapisan);
     }
 
-    var petunjuk = el("div", "peta__petunjuk");
-    petunjuk.setAttribute("aria-hidden", "true");
-    petunjuk.appendChild(el("span"));
-    frame.appendChild(petunjuk);
-
     var aktif = -1;
     var hasil = [];
 
@@ -1241,16 +1236,6 @@
       isiSaran();
     });
 
-    var jedaPetunjuk = 0;
-    function tunjukkan(teks) {
-      petunjuk.firstChild.textContent = teks;
-      petunjuk.classList.add("is-tampil");
-      window.clearTimeout(jedaPetunjuk);
-      jedaPetunjuk = window.setTimeout(function () {
-        petunjuk.classList.remove("is-tampil");
-      }, 1400);
-    }
-
     function label() {
       isian.placeholder = say(TEXT.search);
       isian.setAttribute("aria-label", say(TEXT.search));
@@ -1272,7 +1257,42 @@
       if (!saran.hidden) isiSaran();
     }
 
+    function kelompokkan() {
+      var kepala = [];
+      markers.forEach(function (entry) {
+        var pin = entry.marker.getElement();
+        entry.anggota = null;
+        pin.classList.remove("is-gabung");
+        pin.removeAttribute("data-jumlah");
+        pin.title = say(entry.item);
+        pin.setAttribute("aria-label", say(entry.item));
+        pin.querySelector(".peta__pin-nama").textContent = say(entry.item);
+        if (pin.classList.contains("is-off")) return;
+        var titik = map.project([entry.item.lng, entry.item.lat]);
+        if (!entry.popup.isOpen()) {
+          for (var i = 0; i < kepala.length; i++) {
+            if (Math.abs(kepala[i].x - titik.x) < 26 && Math.abs(kepala[i].y - titik.y) < 32) {
+              kepala[i].anggota.push(entry);
+              pin.classList.add("is-gabung");
+              return;
+            }
+          }
+        }
+        kepala.push({ x: titik.x, y: titik.y, entry: entry, anggota: [entry] });
+      });
+      kepala.forEach(function (k) {
+        if (k.anggota.length < 2) return;
+        var pin = k.entry.marker.getElement();
+        k.entry.anggota = k.anggota;
+        pin.setAttribute("data-jumlah", k.anggota.length);
+        pin.title = k.anggota.map(function (e) { return say(e.item); }).join(", ");
+        pin.setAttribute("aria-label", say(TEXT.group).replace("%n", k.anggota.length) + " " + pin.title);
+        pin.querySelector(".peta__pin-nama").textContent = say(TEXT.groupShort).replace("%n", k.anggota.length);
+      });
+    }
+
     function count() {
+      kelompokkan();
       var view = map.getBounds();
       var seen = { app: 0, analysis: 0, satellite: 0, design: 0 };
       markers.forEach(function (entry) {
@@ -1318,7 +1338,6 @@
     return {
       label: label,
       count: count,
-      tunjukkan: tunjukkan,
       markDasar: markDasar,
       markTour: function (running) {
         tour.setAttribute("aria-pressed", running ? "true" : "false");
@@ -1367,9 +1386,7 @@
       cooperativeGestures: sentuh(),
       scrollZoom: sentuh(),
       locale: {
-        "CooperativeGesturesHandler.MobileHelpText": say(TEXT.touchHint),
-        "CooperativeGesturesHandler.WindowsHelpText": say(TEXT.ctrlHint),
-        "CooperativeGesturesHandler.MacHelpText": say(TEXT.cmdHint)
+        "CooperativeGesturesHandler.MobileHelpText": say(TEXT.touchHint)
       }
     });
 
@@ -1425,7 +1442,7 @@
       }
     }
 
-    var markers = WORK.map(function (item) {
+    var markers = WORK.map(function (item, urutan) {
       var popup = new maplibregl.Popup({
         anchor: "bottom",
         offset: [0, -44],
@@ -1438,9 +1455,17 @@
         .setLngLat([item.lng, item.lat])
         .setPopup(popup)
         .addTo(map);
-      var entry = { item: item, marker: marker, popup: popup };
+      var entry = { item: item, marker: marker, popup: popup, anggota: null, klik: false };
+      marker.getElement().style.setProperty("--tunda", (urutan * 70) + "ms");
       popup.setDOMContent(kartu(entry, umumkan));
       popup.on("open", function () {
+        var lewatKlik = entry.klik;
+        entry.klik = false;
+        if (lewatKlik && entry.anggota) {
+          popup.remove();
+          perbesarKelompok(entry.anggota);
+          return;
+        }
         marker.getElement().classList.add("is-aktif");
         var foto = popup.getElement() && popup.getElement().querySelector(".peta__foto[data-src]");
         if (foto) {
@@ -1451,8 +1476,13 @@
       popup.on("close", function () {
         marker.getElement().classList.remove("is-aktif");
       });
+      marker.getElement().addEventListener("pointerdown", function () { entry.klik = true; });
+      marker.getElement().addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") entry.klik = true;
+      });
       marker.getElement().addEventListener("click", function (event) {
         var lewatPapan = event.detail === 0;
+        if (entry.anggota) return;
         window.setTimeout(function () {
           state.flyTo(entry, false);
           if (lewatPapan && popup.isOpen()) {
@@ -1466,6 +1496,13 @@
 
     var ui;
     var sudahDipusatkan = false;
+
+    function perbesarKelompok(anggota) {
+      state.stopTour();
+      var kotak = new maplibregl.LngLatBounds();
+      anggota.forEach(function (entry) { kotak.extend([entry.item.lng, entry.item.lat]); });
+      map.fitBounds(kotak, { padding: 120, maxZoom: 12.5, duration: ms(900) });
+    }
 
     var kabar = document.createElement("p");
     kabar.className = "peta__kabar visually-hidden";
@@ -1669,12 +1706,6 @@
       terjemahkanKontrol();
       if (TOKEN) terapkan();
       segarkanKartu();
-      markers.forEach(function (entry) {
-        var pin = entry.marker.getElement();
-        pin.title = say(entry.item);
-        pin.setAttribute("aria-label", say(entry.item));
-        pin.querySelector(".peta__pin-nama").textContent = say(entry.item);
-      });
     });
 
     document.addEventListener("hk:tema", function (event) {
@@ -1698,7 +1729,6 @@
           map.scrollZoom.enable();
         } else {
           map.scrollZoom.disable();
-          ui.tunjukkan(say(mac() ? TEXT.cmdHint : TEXT.ctrlHint));
         }
       }, { capture: true, passive: true });
     }

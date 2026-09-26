@@ -375,7 +375,7 @@
         }),
         loadOnce("js", "/assets/js/konfigurasi.js").catch(function () { return null; })
       ])
-        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=1dfb39807c"); })
+        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=3c7ae26a8d"); })
         .then(function () {
           wrap.classList.add("is-live");
           window.HK_PETA_MAP = window.HK_PETA.build(canvas);

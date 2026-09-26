@@ -181,8 +181,9 @@ disembunyikan supaya kartu tidak menutupi peta.
 
 **Tombol rumah** mengembalikan tampilan seperti saat peta pertama dibuka.
 
-**Menggulir tanpa Ctrl menggulir halaman**, dan peta menampilkan petunjuk
-sebentar bahwa Ctrl, atau ⌘ di Mac, yang memperbesar.
+**Pin yang bertumpuk digabung.** Di zoom jauh, dua karya Yogyakarta jatuh di
+titik yang sama; yang terlihat satu pin dengan lencana angka, dan memilihnya
+memperbesar peta sampai keduanya terpisah.
 
 Tanpa token Mapbox, peta jatuh ke OpenFreeMap tanpa kunci dan tetap jalan,
 tetapi yang hilang bukan cuma bangunan 3D: batas provinsi dan kabupaten,

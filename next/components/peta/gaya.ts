@@ -99,7 +99,7 @@ export const PALET = {
     pasir: "#f6eed2", es: "#ffffff",
     air: "#9fcbf5", sungai: "#9fcbf5",
     bayanganGelap: "#9aa3ad", bayanganTerang: "#ffffff",
-    kontur: "#c7b89f", konturTeks: "#8f7d62",
+    kontur: "#a4865c", konturTeks: "#7a6242",
     batasNegara: "#8d949b", batasProvinsi: "#aab0b6", batasKab: "#c3c7cc",
     tepiKecil: "#dcdfe3", tepiSedang: "#d3d6db", tepiSekunder: "#d0d4d9", tepiPrimer: "#e3c16a", tepiTol: "#dd9d2c",
     isiKecil: "#ffffff", isiSedang: "#ffffff", isiSekunder: "#ffffff", isiPrimer: "#fde7a4", isiTol: "#fbc95a",
@@ -119,7 +119,7 @@ export const PALET = {
     pasir: "#35311f", es: "#3a3d42",
     air: "#17314c", sungai: "#1d3a58",
     bayanganGelap: "#000000", bayanganTerang: "#4a4d52",
-    kontur: "#5a5244", konturTeks: "#a89a82",
+    kontur: "#7a6d58", konturTeks: "#b8a88c",
     batasNegara: "#80868b", batasProvinsi: "#5f6368", batasKab: "#4a4d52",
     tepiKecil: "#2b2d31", tepiSedang: "#2d2f33", tepiSekunder: "#2f3135", tepiPrimer: "#4d4432", tepiTol: "#5c4a24",
     isiKecil: "#3c3f44", isiSedang: "#45484d", isiSekunder: "#4b4e54", isiPrimer: "#6b5f40", isiTol: "#8a6c30",
@@ -354,12 +354,16 @@ export function mapboxStyle(o: OpsiGaya): StyleSpecification {
             ["match", ["get", "class"], ["river", "canal"], 0.8, 0.3],
             17, ["match", ["get", "class"], ["river", "canal"], 6, 2]]
         } },
-      { id: "kontur", type: "line", source: "kontur", "source-layer": "contour", minzoom: 11,
+      { id: "kontur", type: "line", source: "kontur", "source-layer": "contour", minzoom: 10,
         layout: { visibility: tampak(o.medan && alam), "line-join": "round" },
         paint: {
           "line-color": P.kontur,
-          "line-opacity": ["match", ["get", "index"], [5, 10], 0.9, 0.55],
-          "line-width": ["match", ["get", "index"], [5, 10], 1, 0.5]
+          "line-opacity": ["interpolate", ["linear"], ["zoom"], 10,
+            ["match", ["get", "index"], [5, 10], 0.75, 0.4], 13,
+            ["match", ["get", "index"], [5, 10], 0.95, 0.7]],
+          "line-width": ["interpolate", ["linear"], ["zoom"], 10,
+            ["match", ["get", "index"], [5, 10], 1, 0.5], 15,
+            ["match", ["get", "index"], [5, 10], 1.8, 0.9]]
         } },
 
       { id: "batas-kabupaten", type: "line", source: "jalan", "source-layer": "admin", minzoom: 7,
