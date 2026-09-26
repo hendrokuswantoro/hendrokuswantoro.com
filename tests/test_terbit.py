@@ -88,6 +88,94 @@ def test_nomor_aset_memang_sidik_isinya():
         )
 
 
+# Gambar kartu karya ditulis ulang oleh tools/build_work_images.py di alamat
+# yang sama, misalnya ketika nama situs mulai digambar di pojoknya. Janji
+# immutable berlaku juga untuknya, jadi tiap sebutannya wajib membawa sidik
+# berkasnya sendiri. Pola dan daftar berkas di sini sengaja ditulis ulang, bukan
+# diimpor dari versi_aset.py: uji yang memakai kode yang diujinya ikut buta
+# ketika kode itu salah.
+POLA_GAMBAR_KARYA = re.compile(r"/assets/img/work/([a-z0-9-]+\.webp)(?:\?v=([0-9a-z]+))?")
+WAJIB_MENYEBUT_KARYA = {
+    "index.html",
+    "project.html",
+    "parkir-jogja.html",
+    "next/content/projects.ts",
+    "next/content/parkir-jogja.ts",
+    "next/components/ParkirJogjaView.tsx",
+}
+
+
+def _penyebut_gambar_karya() -> dict[str, list[tuple[str, str | None]]]:
+    tidak = {"next", "dist", "backend", ".git", "node_modules"}
+    calon = [p for p in AKAR.rglob("*.html") if not tidak & set(p.relative_to(AKAR).parts)]
+    calon += list((AKAR / "assets" / "js").glob("*.js"))
+    for folder in ("app", "components", "content", "lib"):
+        calon += [p for p in (AKAR / "next" / folder).rglob("*") if p.suffix in {".ts", ".tsx"}]
+
+    hasil = {}
+    for p in calon:
+        sebutan = POLA_GAMBAR_KARYA.findall(p.read_text(encoding="utf-8"))
+        if sebutan:
+            hasil[p.relative_to(AKAR).as_posix()] = sebutan
+    return hasil
+
+
+def test_gambar_karya_bernomor_sidik_isinya():
+    import hashlib
+
+    penyebut = _penyebut_gambar_karya()
+    hilang = WAJIB_MENYEBUT_KARYA - set(penyebut)
+    assert not hilang, (
+        f"tidak ada gambar karya yang ditemukan di {sorted(hilang)}. "
+        "Kalau berkasnya pindah, pindahkan juga daftarnya di sini."
+    )
+
+    salah = []
+    for berkas, sebutan in penyebut.items():
+        for nama, tertulis in sebutan:
+            gambar = AKAR / "assets" / "img" / "work" / nama
+            assert gambar.exists(), f"{berkas} menyebut {nama}, berkasnya tidak ada"
+            sebenarnya = hashlib.sha256(gambar.read_bytes()).hexdigest()[:10]
+            if tertulis != sebenarnya:
+                salah.append(f"{berkas}: {nama} bernomor {tertulis or 'kosong'}, sidiknya {sebenarnya}")
+
+    assert not salah, (
+        "Gambar karya tanpa nomor yang benar. Pembaca lama tetap melihat gambar "
+        "lama selama setahun. Jalankan: python tools/versi_aset.py\n  "
+        + "\n  ".join(salah)
+    )
+
+
+def test_nomor_gambar_karya_diganti_bukan_ditumpuk():
+    import hashlib
+    import sys
+
+    sys.path.insert(0, str(AKAR / "tools"))
+    from versi_aset import cap_karya
+
+    sidik = hashlib.sha256(
+        (AKAR / "assets" / "img" / "work" / "fire.webp").read_bytes()).hexdigest()[:10]
+    for masuk in ("/assets/img/work/fire.webp 800w", "/assets/img/work/fire.webp?v=0000000000 800w"):
+        assert cap_karya(masuk) == f"/assets/img/work/fire.webp?v={sidik} 800w"
+
+
+def test_gambar_karya_di_tulisan_ikut_bernomor():
+    """Tulisan boleh memuat gambar dari /assets/img/. Pembangkit blog dan
+    versi_aset.py sama sama menulis blog/*.html, jadi keduanya harus menulis
+    nomor yang sama, atau --periksa milik salah satunya selalu merah."""
+    import hashlib
+    import sys
+
+    sys.path.insert(0, str(AKAR / "tools"))
+    import bangun_tulisan
+
+    sidik = hashlib.sha256(
+        (AKAR / "assets" / "img" / "work" / "fish.webp").read_bytes()).hexdigest()[:10]
+    keluar = bangun_tulisan.badan(
+        "![Fish](/assets/img/work/fish.webp)", "![Ikan](/assets/img/work/fish.webp)")
+    assert f'src="/assets/img/work/fish.webp?v={sidik}"' in keluar, keluar
+
+
 def test_pustaka_peta_dipanggil_dari_folder_berversi():
     """Query pada modul induk tidak menurun ke modul yang diimpornya secara
     relatif, jadi maplibre-gl-shared.mjs tidak bisa dinomori lewat ?v=.
