@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 857, tanpa peramban, hitungan detik
+python -m pytest                 # 860, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 85, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
@@ -61,7 +61,7 @@ backend/admin/            dashboard HTML, gaya dan skripnya berkas sendiri
 unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    942 uji
+tests/                    945 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -137,6 +137,17 @@ Ukurannya dibaca dari kepala berkasnya dengan pengurai kecil, bukan dengan
 pustaka gambar. Membuka gambar dengan pustaka berarti mengurai seluruh isinya
 di jalur yang menerima berkas dari luar.
 
+**Kode sumber tidak berkomentar, sejak 26 September 2026.** Alasan di balik
+tiap keputusan tinggal di berkas ini, di `docs/`, dan di pesan commit. Yang
+sengaja dipertahankan hanya yang punya fungsi: arahan alat seperti `noqa`,
+`type: ignore`, `pragma: no cover`, dan `eslint-disable`; shebang; penanda
+blok font yang dicari `ambil_font.py` dan `gaya_next.py`, beserta atribusi
+lisensi OFL di dalamnya; docstring modul di skrip yang memakai `__doc__`
+sebagai teks bantuan baris perintah; berkas migrasi SQL, yang sidiknya
+disimpan `migrasi.py`; isi heredoc yang dicetak atau ditulis ke berkas lain;
+dan sakelar `# if ($admin_boleh = 0)` di nginx, yang tanda pagarnya disuruh
+dihapus pemiliknya di `docs/keamanan.md`.
+
 **Uji CSP dengan menyajikan halamannya beserta tajuknya, dan jalankan
 skripnya.** Ini sudah tertulis di berkas ini sejak lama sebagai kalimat, dan
 tanpa uji ia cuma kalimat: sampai 19 September 2026 CSP untuk `/admin`
@@ -172,9 +183,9 @@ sendiri, lalu masuk lewat passkey itu dengan sesi kuat. Untuk alasan yang sama,
 akun yang hanya punya passkey tidak bisa masuk dengan sandi, dan wajah tidak
 pernah menerbitkan sesi kuat. `tests/test_temuan_audit.py` menahan ketiganya.
 
-`tests/conftest.py` mematikan aturan itu untuk seluruh uji lain, dengan alasan
-yang tertulis di sana. Mematikan sebuah penjaga di dalam uji hanya sah selama
-ada uji lain yang menguji penjaganya sendiri.
+`tests/conftest.py` mematikan aturan itu untuk seluruh uji lain, supaya uji
+yang masuk dengan sandi saja tetap bisa menulis. Mematikan sebuah penjaga di
+dalam uji hanya sah selama ada uji lain yang menguji penjaganya sendiri.
 
 **Yang mencabut sesi wajib mencatatnya di `backend/core/cabut.py`.** Access
 token adalah JWT dan tidak pernah ditanyakan ke basis data, jadi mencabut sesi
@@ -229,7 +240,7 @@ python tools/kontras.py
 ```
 
 Angkanya dibaca dari `style.css`, bukan diketik ulang, dan `tests/test_gaya.py`
-gagal kalau angka di komentar tidak lagi sama dengan yang dihitung. Pasangan
+gagal kalau angka yang tercatat di uji tidak lagi sama dengan yang dihitung. Pasangan
 terendah di palet terang 4,54:1, di palet gelap 5,19:1, ambang AA 4,5:1. Tidak
 ada ruang untuk menggelapkan satu nada pun tanpa memeriksa.
 
@@ -320,8 +331,7 @@ yaitu `panah-searah`.
 DragPan. Memanggilnya pada `dragstart` mematahkan seretan yang baru saja
 dimulai peristiwa itu juga. Terukur pada 14 September 2026 di zoom 15,2:
 menyeret 320 piksel menggeser peta 0,000149 derajat bujur, sekitar 16 meter,
-sedangkan semestinya sekitar 1.500 meter. Angkanya sama dengan yang tertulis
-di `assets/js/peta.js`, dan yang menahannya tetap sama adalah uji seretan di
+sedangkan semestinya sekitar 1.500 meter. Yang menahannya tetap sama adalah uji seretan di
 `tests/test_peramban.py`. Jangan panggil `map.stop()` dari pendengar peristiwa
 gerak; MapLibre sudah mengambil alih animasi dengan sendirinya.
 
@@ -365,9 +375,8 @@ Terukur 18 September 2026 di `tests/conftest.py`: server uji dijalankan dengan
 hanya dibaca kalau prosesnya mati lebih awal. Begitu penyangga pipa penuh,
 tulisan berikutnya memblokir, dan yang memblokir adalah servernya sendiri: ia
 berhenti menjawab tanpa mati, tanpa galat, dan tanpa satu baris pun di mana
-pun. Inilah yang selama ini tercatat di `test_dasbor_peramban.py` sebagai
-sebab yang belum ketemu. Sekarang pipanya dikuras utas latar ke `deque`
-berbatas.
+pun. Inilah sebab kegagalan acak di `test_dasbor_peramban.py` yang lama
+tidak ketemu. Sekarang pipanya dikuras utas latar ke `deque` berbatas.
 
 **Halaman web tidak bisa mencegah tangkapan layar**, dengan cara apa pun.
 Tangkapannya diambil sistem operasi, di luar jangkauan halaman. Yang

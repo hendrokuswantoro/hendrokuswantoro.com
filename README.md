@@ -67,8 +67,8 @@ python tools/kontras.py
 ```
 
 Angkanya dibaca langsung dari `style.css`, bukan diketik ulang, dan
-`tests/test_gaya.py` menggagalkan uji kalau angka di komentar tidak lagi sama
-dengan angka yang dihitung.
+`tests/test_gaya.py` menggagalkan uji kalau angka yang tercatat di uji tidak
+lagi sama dengan angka yang dihitung.
 
 ## Mode gelap
 
@@ -212,12 +212,12 @@ pip install -r tests/requirements.txt
 python -m pytest
 ```
 
-**942 uji.** 857 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
+**945 uji.** 860 di antaranya jalan tanpa peramban dan tanpa jaringan, selesai
 dalam hitungan detik; 48 sisanya menjalankan Chromium sungguhan dan dipisah
 lewat tanda `peramban` supaya tidak memperlambat putaran biasa.
 
 ```bash
-python -m pytest                 # 857, cepat
+python -m pytest                 # 860, cepat
 python -m pytest -m peramban     # 85, Chromium
 sh tools/verifikasi.sh           # seluruhnya, berurutan
 pip-audit -r backend/requirements.txt --strict
@@ -307,7 +307,7 @@ tools/periksa_alur.py      pemeriksa berkas .github/workflows sebelum CI menjala
 assets/fonts/              delapan woff2 Poppins plus OFL.txt dan sumber.json
 assets/js/peta.js          peta karya, 31 lapisan di atas ubin vektor Mapbox
 assets/vendor/maplibre/    MapLibre GL JS, disimpan sendiri, bukan dari CDN
-tests/                     857 uji tanpa peramban, 85 dengan Chromium
+tests/                     860 uji tanpa peramban, 85 dengan Chromium
 docs/                      arsitektur, panduan uji, pemecahan masalah
 .github/workflows/ci.yml   lint, type check, test, security scan, build
 .github/workflows/kesehatan.yml  health check terhadap situs yang sudah terbit
