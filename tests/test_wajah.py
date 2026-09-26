@@ -43,9 +43,15 @@ def test_hidung_di_tengah_berarti_menghadap_lurus():
     assert wajah.arah_hadap(_penanda(120.0)) == "tengah"
 
 
-def test_hidung_bergeser_berarti_menoleh():
-    assert wajah.arah_hadap(_penanda(132.0)) == "kanan"
-    assert wajah.arah_hadap(_penanda(108.0)) == "kiri"
+def test_arah_menurut_orangnya_bukan_menurut_gambar():
+    assert wajah.arah_hadap(_penanda(108.0)) == "kanan"
+    assert wajah.arah_hadap(_penanda(132.0)) == "kiri"
+
+
+def test_gambar_yang_dicerminkan_memberi_arah_yang_sama():
+    cermin = dict(mata_kanan_x=140.0, mata_kiri_x=100.0)
+    assert wajah.arah_hadap(_penanda(132.0, **cermin)) == "kanan"
+    assert wajah.arah_hadap(_penanda(108.0, **cermin)) == "kiri"
 
 
 def test_geseran_kecil_masih_dianggap_lurus():
@@ -153,7 +159,7 @@ class _MesinPalsu:
 def mesin_palsu(monkeypatch):
     def pasang(arah: list[str], nilai: list[float]):
         keadaan = _MesinPalsu(arah, nilai)
-        geser = {"kiri": 100.0, "tengah": 120.0, "kanan": 140.0}
+        geser = {"kanan": 100.0, "tengah": 120.0, "kiri": 140.0}
 
         monkeypatch.setattr(wajah, "_baca", lambda b: b)
         monkeypatch.setattr(

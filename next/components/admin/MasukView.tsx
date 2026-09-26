@@ -141,7 +141,9 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
       setTantangan(null);
       setGalat(
         e instanceof GagalApi
-          ? `${e.message}. Coba lagi di tempat yang lebih terang.`
+          ? e.status === 429
+            ? e.message
+            : "Wajah belum bisa dipastikan. Ikuti arah toleh di layar, lalu coba lagi di tempat yang lebih terang."
           : "gagal menghubungi server",
       );
     } finally {

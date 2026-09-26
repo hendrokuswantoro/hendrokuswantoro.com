@@ -120,15 +120,15 @@ def arah_hadap(wajah) -> str:
     hidung_x = wajah[8]
 
     tengah = (mata_kanan[0] + mata_kiri[0]) / 2
-    jarak = abs(mata_kiri[0] - mata_kanan[0])
-    if jarak < 1:
+    jarak = mata_kiri[0] - mata_kanan[0]
+    if abs(jarak) < 1:
         raise Ditolak("wajahnya terlalu kecil di dalam bingkai")
 
     geser = (hidung_x - tengah) / jarak
     if geser > AMBANG_TOLEH:
-        return "kanan"
-    if geser < -AMBANG_TOLEH:
         return "kiri"
+    if geser < -AMBANG_TOLEH:
+        return "kanan"
     return "tengah"
 
 
