@@ -376,6 +376,28 @@ async function muatRingkasan() {
       keamanan.email_terverifikasi ? "email terbukti" : "email belum terbukti",
       keamanan.email_terverifikasi ? "baik" : "belum",
     ));
+    /* Kekuatan sesi ini sendiri. Tanpa penanda ini, tombol Simpan yang
+       menolak dengan 403 terlihat seperti kerusakan, bukan seperti aturan. */
+    if (keamanan.faktor_kedua_wajib) {
+      kotak.appendChild(tandaKeadaan(
+        keamanan.sesi_kuat ? "sesi kuat" : "sesi lemah, tidak bisa menulis",
+        keamanan.sesi_kuat ? "baik" : "buruk",
+        keamanan.sesi_kuat
+          ? "Sesi ini lahir lewat faktor kedua, jadi jalur tulis terbuka."
+          : "Pasang authenticator atau passkey, lalu masuk lagi. Sampai itu, "
+            + "menulis dan mengunggah ditolak.",
+      ));
+    }
+
+    /* Pencabutan segera. Tanpa Redis, tombol keluarkan perangkat lain hanya
+       mematikan refresh token-nya, dan token aksesnya masih hidup sampai
+       lima belas menit berikutnya. Disebutkan, bukan didiamkan. */
+    if (!keamanan.pencabutan_segera_siap) {
+      kotak.appendChild(tandaKeadaan("pencabutan tertunda 15 menit", "belum",
+        "REDIS_URL belum diisi. Tanpa itu, sesi yang dicabut baru benar benar "
+        + "mati saat token aksesnya kedaluwarsa."));
+    }
+
     if (!keamanan.surat_siap) {
       kotak.appendChild(tandaKeadaan("SMTP belum diisi", "belum",
         "Isi SMTP_HOST, SMTP_PENGGUNA, SMTP_SANDI, dan SURAT_DARI di .env"));
@@ -928,6 +950,7 @@ function unggahSatu(berkas) {
   return new Promise((selesai, gagal) => {
     const bentuk = new FormData();
     bentuk.append("berkas", berkas, berkas.name);
+    bentuk.append("buang_metadata", $("buang-metadata").checked ? "true" : "false");
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/v1/admin/berkas");

@@ -18,10 +18,12 @@ import {
  * - Jenis berkas ditentukan server dari bita pertamanya, bukan dari nama atau
  *   dari `file.type`. Penyaringan di sini hanya supaya penolakannya terasa
  *   lebih cepat, dan ia tidak menjaga apa apa sendirian.
- * - Metadata EXIF tidak dibuang. Foto dari ponsel bisa membawa koordinat
- *   tempat pemotretannya, dan itu akan ikut terbit. Kalimat itu tertulis di
- *   layar ini, bukan hanya di dokumentasi, sebab yang mengunggah foto anaknya
- *   di rumah tidak akan membuka dokumentasi lebih dulu.
+ * - Metadata EXIF dibuang hanya kalau diminta. Foto dari ponsel bisa membawa
+ *   koordinat tempat pemotretannya, dan itu akan ikut terbit. Kotak
+ *   centangnya mati secara bawaan, sebab yang tahu apakah tempatnya boleh
+ *   diketahui umum adalah pemiliknya, bukan layar ini. Kalimatnya tertulis di
+ *   layar, bukan hanya di dokumentasi: yang mengunggah foto anaknya di rumah
+ *   tidak akan membuka dokumentasi lebih dulu.
  * - Berkas dengan isi yang sama persis tidak digandakan. Server mengembalikan
  *   yang lama, dan layar ini mengatakannya.
  */
@@ -44,6 +46,7 @@ export function PanelBerkas({
   const [kabar, setKabar] = useState<{ teks: string; baik: boolean } | null>(null);
   const [persen, setPersen] = useState<number | null>(null);
   const [seret, setSeret] = useState(false);
+  const [buangMetadata, setBuangMetadata] = useState(false);
   const pilih = useRef<HTMLInputElement>(null);
 
   const muat = useCallback(async () => {
@@ -71,7 +74,7 @@ export function PanelBerkas({
     for (const satu of Array.from(berkas)) {
       setPersen(0);
       try {
-        const hasil: BerkasBaru = await unggahBerkas(satu, setPersen);
+        const hasil: BerkasBaru = await unggahBerkas(satu, setPersen, buangMetadata);
         setKabar({
           teks: hasil.sudah_ada
             ? `${hasil.nama_asal} sudah pernah diunggah, yang dipakai yang lama`
@@ -164,10 +167,26 @@ export function PanelBerkas({
           Foto sampai 10 MB, video sampai 80 MB. Yang diterima PNG, JPEG, WebP,
           GIF, AVIF, MP4, dan WebM.
         </p>
+
+        <label className={gaya.centang} htmlFor="buang-metadata">
+          <input
+            id="buang-metadata"
+            type="checkbox"
+            checked={buangMetadata}
+            onChange={(e) => setBuangMetadata(e.target.checked)}
+          />
+          <span>Buang lokasi dan keterangan kamera dari foto</span>
+        </label>
+
         <p className={gaya.ket}>
-          Metadata foto tidak dibuang. Foto dari ponsel bisa membawa koordinat
-          tempat pemotretannya, dan koordinat itu ikut terbit. Buang dulu di
-          ponsel kalau tempatnya tidak untuk umum.
+          Kalau kotak itu tidak dicentang, metadata foto tidak dibuang. Foto
+          dari ponsel bisa membawa koordinat tempat pemotretannya, dan
+          koordinat itu ikut terbit.
+        </p>
+        <p className={gaya.ket}>
+          Yang bisa dibuang JPEG, PNG, dan WebP. GIF dan AVIF ditolak kalau
+          kotaknya dicentang, sebab membuang setengah lalu mengaku sudah
+          bersih lebih berbahaya daripada tidak membuang sama sekali.
         </p>
       </div>
 

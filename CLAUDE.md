@@ -18,8 +18,8 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 768, tanpa peramban, hitungan detik
-python -m pytest -m peramban     # 75, Chromium sungguhan
+python -m pytest                 # 819, tanpa peramban, hitungan detik
+python -m pytest -m peramban     # 85, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
 # backend dan dashboard admin
@@ -56,11 +56,12 @@ content/template/         template ber-{{slot}}
 backend/api/v1/           router, HTTP saja
 backend/layanan/          aturan bisnis, tidak tahu SQL
 backend/repositori/       satu satunya yang tahu SQL
-backend/db/migrations/    0001 sampai 0006, nomornya wajib unik
+backend/db/migrations/    0001 sampai 0007, nomornya wajib unik
+backend/admin/            dashboard HTML, gaya dan skripnya berkas sendiri
 unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    843 uji
+tests/                    904 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -135,6 +136,45 @@ dicatat untuk dilihat orang dan tidak pernah dipakai membentuk jalur.
 Ukurannya dibaca dari kepala berkasnya dengan pengurai kecil, bukan dengan
 pustaka gambar. Membuka gambar dengan pustaka berarti mengurai seluruh isinya
 di jalur yang menerima berkas dari luar.
+
+**Uji CSP dengan menyajikan halamannya beserta tajuknya, dan jalankan
+skripnya.** Ini sudah tertulis di berkas ini sejak lama sebagai kalimat, dan
+tanpa uji ia cuma kalimat: sampai 19 September 2026 CSP untuk `/admin`
+menolak SELURUH skrip dashboard, dan tidak ada satu pun uji yang tahu.
+Skripnya sebaris 44 KB, `script-src` di sana `'self'` ditambah satu hash milik
+skrip tema di situs publik. Dashboard mati total, tombol Masuk diam, dan
+jejaknya hanya di konsol peramban. `tests/test_csp.py` sekarang menyajikan
+tiap halaman dengan tajuk yang dibaca dari `_headers` dan dari konfigurasi
+nginx, lalu menuntut nol `securitypolicyviolation` **dan** skripnya benar
+benar jalan. Halaman yang seluruh skripnya ditolak tetap tergambar rapi.
+
+Akibatnya: **jangan menulis `<script>` atau `<style>` sebaris di
+`backend/admin/`, dan jangan memakai atribut `style=` di markupnya.** Gaya dan
+skripnya ada di `dasbor.css` dan `dasbor.js`.
+
+**Jalur tulis menuntut `butuh_admin_kuat`, bukan `butuh_admin`.** Yang
+membedakan: sesinya lahir lewat faktor kedua atau passkey. Router baru yang
+mengubah isi situs wajib memakainya di tingkat router, bukan per rute, dan
+`tests/test_faktor_kedua_wajib.py` menolak kalau lupa. Halaman keamanan
+sengaja TIDAK memakainya: kalau ia ikut ditutup, pemilik yang belum punya
+faktor kedua tidak akan pernah bisa memasangnya, dan aturannya berubah jadi
+pintu yang dikunci dari dalam.
+
+`tests/conftest.py` mematikan aturan itu untuk seluruh uji lain, dengan alasan
+yang tertulis di sana. Mematikan sebuah penjaga di dalam uji hanya sah selama
+ada uji lain yang menguji penjaganya sendiri.
+
+**Yang mencabut sesi wajib mencatatnya di `backend/core/cabut.py`.** Access
+token adalah JWT dan tidak pernah ditanyakan ke basis data, jadi mencabut sesi
+tanpa mencatatnya hanya mematikan refresh token-nya dan menyisakan token akses
+yang hidup sampai lima belas menit berikutnya. Tombol "keluarkan perangkat
+lain" ditekan justru saat orangnya curiga.
+
+**Metadata foto dibuang hanya kalau diminta, dan tidak pernah setengah.**
+`backend/layanan/metadata.py` mendukung JPEG, PNG, dan WebP. GIF dan AVIF
+DITOLAK ketika pembuangan diminta, bukan diterima diam diam: membuang setengah
+lalu mengaku sudah bersih membuat orang berhenti hati hati, dan itu lebih
+berbahaya daripada tidak membuang sama sekali.
 
 **Lapisan backend ditegakkan oleh uji, bukan oleh niat baik.**
 

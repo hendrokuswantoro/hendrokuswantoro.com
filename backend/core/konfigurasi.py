@@ -49,9 +49,40 @@ class Pengaturan(BaseSettings):
 
     # --- autentikasi ---
     jwt_rahasia: str = Field(default="", alias="JWT_SECRET")
+
+    # Rahasia lama, diterima untuk MEMERIKSA saja, tidak pernah untuk
+    # menandatangani.
+    #
+    # Mengganti JWT_SECRET adalah yang dikerjakan ketika ada rahasia yang
+    # dicurigai bocor, dan tanpa medan ini penggantinya mengeluarkan semua
+    # orang seketika. Itu benar untuk kebocoran, dan salah untuk rotasi
+    # berkala: rotasi yang mengganggu tidak akan pernah dijalankan.
+    #
+    # Caranya: pindahkan nilai lama ke sini, isi JWT_SECRET dengan yang baru,
+    # muat ulang. Token lama tetap diterima sampai umurnya habis, yaitu lima
+    # belas menit, lalu KOSONGKAN medan ini lagi. Membiarkannya terisi berarti
+    # rahasia lama tetap berlaku selamanya, dan rotasinya tidak menutup apa
+    # apa. Langkahnya di docs/keamanan.md.
+    jwt_rahasia_lama: str = Field(default="", alias="JWT_SECRET_LAMA")
     akses_umur_menit: int = Field(default=15, alias="AKSES_UMUR_MENIT")
     refresh_umur_hari: int = Field(default=14, alias="REFRESH_UMUR_HARI")
     masuk_gagal_maks: int = Field(default=5, alias="MASUK_GAGAL_MAKS")
+
+    # Jalur tulis menuntut sesi yang lahir lewat faktor kedua.
+    #
+    # Menyala secara bawaan, dan itu keputusan yang disengaja. Sandi saja
+    # membuka dashboard yang bisa menerbitkan tulisan dan mengunggah berkas,
+    # dan permukaan itu tidak pantas dijaga satu rahasia yang bisa ditebak,
+    # dipakai ulang, atau dipancing lewat halaman palsu.
+    #
+    # Yang TIDAK ikut dituntut: halaman keamanan itu sendiri. Kalau ia ikut
+    # ditutup, pemilik yang belum memasang TOTP tidak akan pernah bisa
+    # memasangnya, dan aturan ini berubah jadi pintu yang dikunci dari dalam.
+    #
+    # Bisa dimatikan lewat FAKTOR_KEDUA_WAJIB=false, dan alasan satu satunya
+    # yang masuk akal untuk itu adalah pemulihan: mesin baru, TOTP hilang, dan
+    # kode pemulihan ikut hilang. Matikan, masuk, pasang ulang, nyalakan lagi.
+    faktor_kedua_wajib: bool = Field(default=True, alias="FAKTOR_KEDUA_WAJIB")
     masuk_jendela_menit: int = Field(default=15, alias="MASUK_JENDELA_MENIT")
     cookie_aman: bool = Field(default=True, alias="COOKIE_AMAN")
 
@@ -100,6 +131,20 @@ class Pengaturan(BaseSettings):
     # ponsel, bukan cakram yang penuh.
     unggahan_gambar_maks_mb: int = Field(default=10, alias="UNGGAHAN_GAMBAR_MAKS_MB")
     unggahan_video_maks_mb: int = Field(default=80, alias="UNGGAHAN_VIDEO_MAKS_MB")
+
+    # Batas di atas batas per berkas.
+    #
+    # Batas per berkas tidak menjaga apa apa terhadap yang mengunggah seribu
+    # berkas. Cakram yang penuh mematikan PostgreSQL, dan PostgreSQL yang mati
+    # mematikan seluruh situs, jadi ruang cakram adalah urusan keamanan, bukan
+    # urusan kerapian.
+    #
+    # Batas per hari menahan hal yang berbeda: akun yang sudah diambil orang
+    # tidak bisa memakai situs ini sebagai tempat penitipan berkas dalam satu
+    # malam. Ia tidak menahan pemilik yang memang sedang menulis banyak.
+    unggahan_total_maks_mb: int = Field(default=2048, alias="UNGGAHAN_TOTAL_MAKS_MB")
+    unggahan_jumlah_maks: int = Field(default=2000, alias="UNGGAHAN_JUMLAH_MAKS")
+    unggahan_per_hari_maks: int = Field(default=100, alias="UNGGAHAN_PER_HARI_MAKS")
 
     kolam_min: int = Field(default=1, alias="KOLAM_MIN")
     kolam_maks: int = Field(default=8, alias="KOLAM_MAKS")

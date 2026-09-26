@@ -14,9 +14,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 from backend.api.tergantung import alamat_teringkas, butuh_admin
+from backend.core import cabut as daftar_cabut
 from backend.core import rahasia, surat
 from backend.layanan import wajah as wajah_modul
 from backend.core.konfigurasi import pengaturan
+from backend.layanan import kabar
 from backend.layanan import keamanan as lapis
 
 rute = APIRouter(prefix="/keamanan", tags=["keamanan"])
@@ -55,6 +57,16 @@ async def keadaan(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
         "surat_siap": surat.siap(),
         "kunci_kolom_siap": rahasia.siap(),
         "wajah_siap": wajah_modul.siap(),
+        # Apakah sesi ini sendiri lahir lewat faktor kedua, dan apakah jalur
+        # tulis memang menuntutnya. Dipakai dashboard untuk menjelaskan
+        # kenapa tombol Simpan menolak, alih alih membiarkan orang menebak.
+        "faktor_kedua_wajib": pengaturan().faktor_kedua_wajib,
+        "sesi_kuat": bool(pengguna.get("faktor_kedua")),
+        # Tanpa Redis, mencabut sesi hanya mematikan refresh token-nya, dan
+        # token aksesnya tetap sah sampai lima belas menit berikutnya.
+        # Disebutkan, bukan didiamkan: tombol "keluarkan perangkat lain"
+        # ditekan justru saat orangnya curiga.
+        "pencabutan_segera_siap": daftar_cabut.siap(),
     }
 
 
@@ -163,6 +175,12 @@ async def totp_matikan(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(ditolak)
         ) from ditolak
+
+    # Mematikan faktor kedua adalah yang pertama dikerjakan orang yang baru
+    # saja mengambil sebuah akun: ia menutup jalan pulang pemiliknya. Kabar
+    # yang datang sendiri adalah satu satunya yang sampai kepada orang yang
+    # sedang tidak membuka halaman jejaknya.
+    await kabar.kabari_perubahan_keamanan(penuh, "authenticator dimatikan")
     return {"aktif": False}
 
 

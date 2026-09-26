@@ -17,10 +17,13 @@ mengiranya ada:
   apa saja di dalamnya.
 - Tidak ada pengubahan ukuran atau pemampatan. Foto delapan megabita akan
   terbit sebagai foto delapan megabita.
-- Metadata EXIF **tidak** dibuang. Foto dari ponsel bisa membawa koordinat
-  tempat pemotretannya, dan itu akan ikut terbit. Layar unggahnya menyebutkan
-  hal ini, sebab menyebutkannya lebih jujur daripada membuangnya diam diam
-  dan membuat orang mengira semua metadata sudah hilang.
+- Metadata EXIF tidak dibuang **kecuali diminta**. Foto dari ponsel bisa
+  membawa koordinat tempat pemotretannya, dan itu akan ikut terbit. Sejak
+  19 September 2026 ada kotak centang untuk membuangnya, mati secara bawaan,
+  sebab yang tahu apakah tempatnya boleh diketahui umum adalah pemiliknya,
+  bukan berkas ini. Yang bisa dibuang cuma JPEG, PNG, dan WebP; GIF dan AVIF
+  ditolak ketika pembuangan diminta, bukan diterima diam diam. Lihat
+  backend/layanan/metadata.py.
 """
 
 from __future__ import annotations
@@ -32,6 +35,7 @@ import secrets
 from typing import Any, BinaryIO
 
 from backend.core.konfigurasi import pengaturan
+from backend.layanan import metadata
 from backend.repositori import berkas as repo
 
 
@@ -257,6 +261,45 @@ def batas(jenis: str) -> int:
     return mb * 1024 * 1024
 
 
+async def periksa_kuota(tambahan_bita: int) -> None:
+    """Batas di atas batas per berkas.
+
+    Batas per berkas tidak menjaga apa apa terhadap yang mengunggah seribu
+    berkas. Cakram yang penuh mematikan PostgreSQL, dan PostgreSQL yang mati
+    mematikan seluruh situs; ruang cakram adalah urusan keamanan, bukan
+    urusan kerapian.
+
+    Diperiksa sebelum berkasnya ditulis, bukan sesudahnya. Menulis dulu lalu
+    menghapus kalau ternyata melewati batas berarti ada saat cakramnya memang
+    sudah penuh.
+    """
+    atur = pengaturan()
+    pakai = await repo.pemakaian()
+
+    if pakai["jumlah"] >= atur.unggahan_jumlah_maks:
+        raise Ditolak(
+            f"sudah ada {pakai['jumlah']} berkas, dan batasnya "
+            f"{atur.unggahan_jumlah_maks}. Hapus yang tidak dipakai lebih dulu."
+        )
+
+    maks_bita = atur.unggahan_total_maks_mb * 1024 * 1024
+    if pakai["bita"] + tambahan_bita > maks_bita:
+        terpakai = pakai["bita"] // (1024 * 1024)
+        raise Ditolak(
+            f"ruang unggahan sudah terpakai {terpakai} MB dari "
+            f"{atur.unggahan_total_maks_mb} MB. Hapus yang tidak dipakai lebih dulu."
+        )
+
+    if pakai["hari_ini"] >= atur.unggahan_per_hari_maks:
+        # Menahan akun yang sudah diambil orang memakai situs ini sebagai
+        # tempat penitipan berkas dalam satu malam. Tidak menahan pemilik yang
+        # memang sedang menulis banyak: besok angkanya nol lagi.
+        raise Ditolak(
+            f"sudah {pakai['hari_ini']} berkas masuk dalam sehari terakhir, "
+            f"dan batasnya {atur.unggahan_per_hari_maks}. Coba lagi besok."
+        )
+
+
 def _baca(aliran: BinaryIO) -> tuple[bytes, str, str]:
     """Membaca seluruh berkas ke memori, sambil menjaga batasnya.
 
@@ -313,10 +356,24 @@ def nama_baru(jenis: str, tipe: str, ukur: tuple[int, int] | None) -> str:
 
 
 async def terima(
-    aliran: BinaryIO, nama_asal: str, pengunggah_id: str | None
+    aliran: BinaryIO,
+    nama_asal: str,
+    pengunggah_id: str | None,
+    buang_metadata: bool = False,
 ) -> dict[str, Any]:
     """Satu unggahan, dari aliran bita sampai baris di basis data."""
     data, jenis, tipe = _baca(aliran)
+
+    if buang_metadata:
+        if jenis != "gambar":
+            raise Ditolak("metadata video tidak dibuang di sini")
+        try:
+            data = metadata.buang(tipe, data)
+        except metadata.TidakBisa as galat:
+            # Ditolak, bukan diterima apa adanya. Menerima berkas yang
+            # metadatanya diminta dibuang lalu membiarkannya utuh berarti
+            # membuat orangnya mengira koordinat rumahnya sudah hilang.
+            raise Ditolak(str(galat)) from galat
 
     ukur = ukuran(tipe, data) if jenis == "gambar" else None
     sidik = hashlib.sha256(data).hexdigest()
@@ -330,6 +387,8 @@ async def terima(
         if not jalur(sudah["nama"]).exists():
             _tulis(sudah["nama"], data)
         return {**sudah, "sudah_ada": True}
+
+    await periksa_kuota(len(data))
 
     nama = nama_baru(jenis, tipe, ukur)
     _tulis(nama, data)

@@ -17,6 +17,7 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass
 
+from backend.core import cabut as daftar_cabut
 from backend.core import keamanan
 from backend.core.konfigurasi import pengaturan
 from backend.repositori import pengguna as repo
@@ -38,22 +39,38 @@ class Masuk:
     refresh_kadaluarsa: dt.datetime
     nama: str
     peran: str
+    faktor_kedua: bool = False
 
 
-async def terbitkan(pengguna: dict) -> Masuk:
+async def terbitkan(pengguna: dict, faktor_kedua: bool = False) -> Masuk:
     """Menerbitkan sesi. Dipakai jalur sandi dan jalur passkey.
 
     Satu tempat dengan sengaja: kalau umur token atau cara refresh
     berputar berubah, tidak mungkin salah satu jalur ikut berubah dan
-    satunya tertinggal."""
+    satunya tertinggal.
+
+    `faktor_kedua` dicatat di barisnya, lalu ikut ke dalam token sebagai
+    klaim `f2`. Jalur tulis menuntutnya benar. Bawaannya false, dan yang
+    memanggil wajib menyebutnya sendiri: nilai bawaan yang longgar akan
+    diam diam menguatkan jalur baru yang lupa menyebutkannya.
+
+    Barisnya dibuat lebih dulu daripada tokennya, sebab id barisnya ikut ke
+    dalam token sebagai `sid`. Itu yang membuat sesi ini bisa dicabut
+    seketika, bukan lima belas menit kemudian.
+    """
     atur = pengaturan()
-    akses, umur = keamanan.buat_access_token(str(pengguna["id"]), pengguna["peran"])
     refresh = keamanan.refresh_token_baru()
     kadaluarsa = dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=atur.refresh_umur_hari)
-    await repo.buat_sesi(pengguna["id"], keamanan.ringkas(refresh), kadaluarsa)
+    sesi_id = await repo.buat_sesi(
+        pengguna["id"], keamanan.ringkas(refresh), kadaluarsa, faktor_kedua
+    )
+    akses, umur = keamanan.buat_access_token(
+        str(pengguna["id"]), pengguna["peran"], str(sesi_id), faktor_kedua
+    )
     return Masuk(
         akses=akses, umur_detik=umur, refresh=refresh, refresh_kadaluarsa=kadaluarsa,
         nama=pengguna.get("nama", ""), peran=pengguna["peran"],
+        faktor_kedua=faktor_kedua,
     )
 
 
@@ -108,20 +125,28 @@ async def perpanjang(refresh: str) -> Masuk:
         raise Ditolak("sesi tidak berlaku")
 
     # putar: yang lama langsung mati sebelum yang baru terbit
-    await repo.cabut(ringkas)
+    lama = await repo.cabut(ringkas)
+    await daftar_cabut.catat(lama)
 
     pengguna = await repo.cari_id(sesi["pengguna_id"])
     if pengguna is None:
         raise Ditolak("sesi tidak berlaku")
-    return await terbitkan(pengguna)
+
+    # Kekuatan sesi ikut berputar bersama tokennya. Memutar ulang tanpa
+    # membawanya berarti sesi yang lahir lewat TOTP diam diam turun pangkat
+    # lima belas menit kemudian, dan yang dilihat pemiliknya adalah tombol
+    # Simpan yang tiba tiba ditolak tanpa sebab.
+    return await terbitkan(pengguna, bool(sesi.get("faktor_kedua")))
 
 
 async def keluar(refresh: str) -> None:
-    await repo.cabut(keamanan.ringkas(refresh))
+    await daftar_cabut.catat(await repo.cabut(keamanan.ringkas(refresh)))
 
 
 async def keluar_semua(pengguna_id: str) -> int:
-    return await repo.cabut_semua(pengguna_id)
+    dicabut = await repo.cabut_semua(pengguna_id)
+    await daftar_cabut.catat(dicabut)
+    return len(dicabut)
 
 
 async def sesi_saya(pengguna_id: str, refresh: str | None) -> list[dict]:
@@ -153,5 +178,12 @@ async def keluar_dari_yang_lain(pengguna_id: str, refresh: str | None) -> int:
     dibuktikan miliknya berarti menyisakan justru sesi yang dicurigai.
     """
     if not refresh:
-        return await repo.cabut_semua(pengguna_id)
-    return await repo.cabut_lain(pengguna_id, keamanan.ringkas(refresh))
+        return await keluar_semua(pengguna_id)
+
+    dicabut = await repo.cabut_lain(pengguna_id, keamanan.ringkas(refresh))
+    # Dicatat di daftar cabut supaya token akses milik perangkat lain ikut
+    # mati sekarang. Tanpa ini tombol ini menjanjikan sesuatu yang baru
+    # terjadi lima belas menit kemudian, yaitu tepat pada tombol yang ditekan
+    # orang saat sedang curiga.
+    await daftar_cabut.catat(dicabut)
+    return len(dicabut)

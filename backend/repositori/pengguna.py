@@ -31,11 +31,17 @@ async def simpan_hash(pengguna_id: str, hash_baru: str) -> None:
 # ------------------------------------------------------------------ sesi ---
 
 
-async def buat_sesi(pengguna_id: str, token_hash: str, kadaluarsa: dt.datetime) -> str:
+async def buat_sesi(
+    pengguna_id: str,
+    token_hash: str,
+    kadaluarsa: dt.datetime,
+    faktor_kedua: bool = False,
+) -> str:
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
-            "INSERT INTO sesi (pengguna_id, token_hash, kadaluarsa) VALUES (%s, %s, %s) RETURNING id",
-            (pengguna_id, token_hash, kadaluarsa),
+            "INSERT INTO sesi (pengguna_id, token_hash, kadaluarsa, faktor_kedua) "
+            "VALUES (%s, %s, %s, %s) RETURNING id",
+            (pengguna_id, token_hash, kadaluarsa, faktor_kedua),
         )
         return (await k.fetchone())["id"]
 
@@ -44,7 +50,7 @@ async def sesi_hidup(token_hash: str) -> dict[str, Any] | None:
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             """
-            SELECT s.id, s.pengguna_id, u.peran
+            SELECT s.id, s.pengguna_id, s.faktor_kedua, u.peran
             FROM sesi s JOIN users u ON u.id = s.pengguna_id
             WHERE s.token_hash = %s
               AND s.dicabut_pada IS NULL
@@ -55,12 +61,21 @@ async def sesi_hidup(token_hash: str) -> dict[str, Any] | None:
         return await k.fetchone()
 
 
-async def cabut(token_hash: str) -> None:
+async def cabut(token_hash: str) -> list[str]:
+    """Mengembalikan id sesi yang benar benar berubah.
+
+    Id-nya dipakai lapisan layanan untuk menaruhnya di daftar cabut, supaya
+    access token yang sudah terbit dari sesi itu ikut mati saat itu juga dan
+    bukan lima belas menit kemudian. Mengembalikan rowcount saja tidak cukup:
+    yang dibutuhkan id-nya, bukan jumlahnya.
+    """
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
-            "UPDATE sesi SET dicabut_pada = now() WHERE token_hash = %s AND dicabut_pada IS NULL",
+            "UPDATE sesi SET dicabut_pada = now() "
+            "WHERE token_hash = %s AND dicabut_pada IS NULL RETURNING id",
             (token_hash,),
         )
+        return [str(b["id"]) for b in await k.fetchall()]
 
 
 async def daftar_sesi(pengguna_id: str) -> list[dict[str, Any]]:
@@ -90,7 +105,7 @@ async def daftar_sesi(pengguna_id: str) -> list[dict[str, Any]]:
         return await k.fetchall()
 
 
-async def cabut_lain(pengguna_id: str, token_hash: str) -> int:
+async def cabut_lain(pengguna_id: str, token_hash: str) -> list[str]:
     """Keluar dari perangkat lain, menyisakan yang sedang dipakai.
 
     Dipisahkan dari `cabut_semua` dengan sengaja. Tombol yang mengeluarkan
@@ -100,21 +115,22 @@ async def cabut_lain(pengguna_id: str, token_hash: str) -> int:
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             "UPDATE sesi SET dicabut_pada = now() "
-            "WHERE pengguna_id = %s AND dicabut_pada IS NULL AND token_hash <> %s",
+            "WHERE pengguna_id = %s AND dicabut_pada IS NULL AND token_hash <> %s "
+            "RETURNING id",
             (pengguna_id, token_hash),
         )
-        return k.rowcount
+        return [str(b["id"]) for b in await k.fetchall()]
 
 
-async def cabut_semua(pengguna_id: str) -> int:
+async def cabut_semua(pengguna_id: str) -> list[str]:
     """Keluar dari semua perangkat. Bab 15.10."""
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             "UPDATE sesi SET dicabut_pada = now() "
-            "WHERE pengguna_id = %s AND dicabut_pada IS NULL",
+            "WHERE pengguna_id = %s AND dicabut_pada IS NULL RETURNING id",
             (pengguna_id,),
         )
-        return k.rowcount
+        return [str(b["id"]) for b in await k.fetchall()]
 
 
 async def bersihkan_kadaluarsa() -> int:

@@ -41,6 +41,27 @@ import pytest
 
 from konftes import AKAR
 
+# --- faktor kedua dimatikan untuk seluruh uji, dengan sengaja ---------------
+#
+# Sejak 19 September 2026 jalur tulis menuntut sesi yang lahir lewat faktor
+# kedua. Akun uji di mesin ini tidak punya TOTP, jadi tanpa baris ini seluruh
+# uji tulis menjawab 403.
+#
+# Kenapa dimatikan, bukan akun ujinya yang dipasangi TOTP: memasangnya
+# mengubah keadaan akun yang sama yang dipakai uji peramban, dan uji peramban
+# masuk dengan sandi saja. Satu berkas uji akan memperbaiki dirinya sendiri
+# sambil mematahkan berkas uji lain, dan yang patah baru terlihat kalau
+# keduanya dijalankan berurutan.
+#
+# Yang membuktikan aturannya benar benar berlaku ada di
+# tests/test_faktor_kedua_wajib.py, termasuk satu uji yang menyalakannya lagi
+# lalu menuntut 403. Mematikan sebuah penjaga di sini hanya sah selama ada
+# yang menguji penjaganya sendiri di sana.
+#
+# setdefault, bukan penugasan langsung: siapa pun yang menjalankan ujinya
+# dengan FAKTOR_KEDUA_WAJIB=1 di lingkungannya tetap mendapat yang ia minta.
+os.environ.setdefault("FAKTOR_KEDUA_WAJIB", "false")
+
 try:
     from playwright.sync_api import Page, sync_playwright
 except ImportError:  # playwright belum terpasang, fixture-nya tidak akan dipakai

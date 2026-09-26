@@ -16,6 +16,7 @@ from backend.api.tergantung import alamat_teringkas, butuh_admin
 from backend.core import keamanan as inti
 from backend.core.konfigurasi import pengaturan
 from backend.layanan import autentikasi as layanan
+from backend.layanan import kabar
 from backend.layanan import keamanan as lapis
 
 rute = APIRouter(prefix="/auth", tags=["auth"])
@@ -108,7 +109,17 @@ async def login(
                 pass
         return JawabanMasuk(tahap="faktor2", tiket=tiket, umur_detik=umur, cara=cara)
 
-    hasil = await layanan.terbitkan(pengguna)
+    # Sampai di sini berarti akun ini memang tidak punya satu pun faktor
+    # kedua yang bisa dipakai, sebab kalau ada, jawabannya sudah pulang di
+    # cabang di atas. Sesinya terbit dan ditandai lemah: ia bisa membaca
+    # dashboard dan bisa memasang TOTP, tetapi tidak bisa menulis.
+    # Dikabari SEBELUM peristiwanya dicatat, sebab yang menentukan "perangkat
+    # baru" adalah ada tidaknya catatan masuk yang cocok. Kalau urutannya
+    # dibalik, catatan yang baru saja ditulis membuat tiap perangkat terlihat
+    # sudah pernah dikenal, dan tidak akan ada satu pun kabar yang terkirim.
+    await kabar.kabari_masuk(pengguna, "sandi", alamat, peramban)
+
+    hasil = await layanan.terbitkan(pengguna, faktor_kedua=False)
     pasang_cookie(jawaban, hasil)
     await lapis.catat_peristiwa(str(pengguna["id"]), "masuk", True, "sandi", alamat, peramban)
     return JawabanMasuk(
@@ -178,7 +189,12 @@ async def faktor_kedua(
     if not pengguna:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="kode salah")
 
-    hasil = await layanan.terbitkan(pengguna)
+    await kabar.kabari_masuk(
+        pengguna, isian.cara, alamat, permintaan.headers.get("user-agent", "")
+    )
+
+    # Faktor keduanya baru saja dibuktikan, jadi sesinya kuat.
+    hasil = await layanan.terbitkan(pengguna, faktor_kedua=True)
     pasang_cookie(jawaban, hasil)
     await lapis.catat_peristiwa(
         pengguna_id, "masuk", True, isian.cara, alamat, permintaan.headers.get("user-agent", "")

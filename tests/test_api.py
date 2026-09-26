@@ -239,3 +239,52 @@ def test_router_tidak_memanggil_repositori_langsung():
         if re.search(r"from backend\.repositori", isi):
             bocor.append(berkas.relative_to(AKAR).as_posix())
     assert not bocor, f"router melompati lapisan layanan: {bocor}"
+
+
+# ------------------------------------------------- hak basis data terkecil ---
+
+
+def test_aplikasi_tidak_pernah_mengubah_susunan_basis_data():
+    """Aplikasi berjalan sebagai pengguna yang tidak boleh CREATE, DROP, atau
+    ALTER. Lihat infrastructure/postgres/hak_terkecil.sql.
+
+    Yang menegakkannya PostgreSQL, bukan uji ini. Yang dikerjakan uji ini
+    menangkapnya lebih awal: kueri DDL yang menyelinap ke lapisan repositori
+    akan menjawab galat izin di produksi, dan galat izin yang muncul pertama
+    kali di produksi adalah galat yang ditemukan pembaca, bukan penulisnya.
+    """
+    import re
+
+    larangan = re.compile(
+        r"\b(CREATE|DROP|ALTER|TRUNCATE|GRANT|REVOKE)\s+"
+        r"(TABLE|INDEX|SCHEMA|ROLE|DATABASE|VIEW|SEQUENCE|EXTENSION)\b",
+        re.IGNORECASE,
+    )
+    for berkas in sorted((AKAR / "backend").rglob("*.py")):
+        if "__pycache__" in berkas.parts:
+            continue
+        # Pemasang migrasi memang pekerjaannya begitu, dan ia dijalankan
+        # pemilik skemanya, bukan oleh aplikasi.
+        if berkas.name == "migrasi.py" or "db" in berkas.parts:
+            continue
+        isi = berkas.read_text(encoding="utf-8")
+        cocok = larangan.search(isi)
+        assert cocok is None, (
+            f"{berkas.relative_to(AKAR)} memuat DDL: {cocok.group(0)!r}. "
+            "Aplikasi berjalan tanpa hak itu, jadi ia akan gagal di produksi."
+        )
+
+
+def test_berkas_hak_terkecil_ada_dan_tidak_memuat_sandi():
+    """Sandinya datang dari luar. Berkas ini masuk git."""
+    berkas = AKAR / "infrastructure" / "postgres" / "hak_terkecil.sql"
+    assert berkas.exists(), "infrastructure/postgres/hak_terkecil.sql hilang"
+
+    isi = berkas.read_text(encoding="utf-8")
+    assert "sandi_app" in isi
+    assert "PASSWORD '" not in isi, "ada sandi tertulis di berkas yang masuk git"
+
+    # Hak yang tidak boleh diberikan, disebut satu per satu supaya yang
+    # menambahkannya kembali harus menghapus barisnya lebih dulu.
+    for jahat in ("GRANT ALL", "SUPERUSER", "CREATEDB", "CREATEROLE"):
+        assert jahat not in isi, f"hak_terkecil.sql memberi {jahat}"

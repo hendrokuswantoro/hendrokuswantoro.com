@@ -43,6 +43,9 @@ export type JawabanMasuk = Sesi & {
 export type CaraFaktorKedua = "totp" | "email" | "pemulihan" | "wajah";
 
 export type KeadaanKeamanan = {
+  faktor_kedua_wajib: boolean;
+  sesi_kuat: boolean;
+  pencabutan_segera_siap: boolean;
   email: string;
   email_terverifikasi: boolean;
   email_terverifikasi_pada: string | null;
@@ -304,10 +307,15 @@ export async function hapusBerkas(nama: string): Promise<void> {
 function sekaliUnggah(
   berkas: File,
   kemajuan?: (persen: number) => void,
+  buangMetadata = false,
 ): Promise<{ status: number; isi: unknown }> {
   return new Promise((selesai, gagal) => {
     const bentuk = new FormData();
     bentuk.append("berkas", berkas, berkas.name);
+    // Dikirim sebagai kata, bukan sebagai boolean: multipart hanya membawa
+    // teks, dan "false" yang dibaca sebagai benar adalah kegagalan yang
+    // arahnya paling merugikan.
+    bentuk.append("buang_metadata", buangMetadata ? "true" : "false");
 
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${DASAR}/api/v1/admin/berkas`);
@@ -337,8 +345,9 @@ function sekaliUnggah(
 export async function unggahBerkas(
   berkas: File,
   kemajuan?: (persen: number) => void,
+  buangMetadata = false,
 ): Promise<BerkasBaru> {
-  let hasil = await sekaliUnggah(berkas, kemajuan);
+  let hasil = await sekaliUnggah(berkas, kemajuan, buangMetadata);
 
   // Access token berumur 15 menit. Mengunggah video besar bisa melewatinya
   // di tengah jalan, dan kalau tidak diulang, yang hilang adalah unggahan
@@ -350,7 +359,7 @@ export async function unggahBerkas(
     });
     if (putar.ok) {
       AKSES = ((await putar.json()) as Sesi).akses;
-      hasil = await sekaliUnggah(berkas, kemajuan);
+      hasil = await sekaliUnggah(berkas, kemajuan, buangMetadata);
     }
   }
 

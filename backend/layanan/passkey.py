@@ -247,7 +247,14 @@ async def selesaikan_masuk(jawaban: dict) -> autentikasi.Masuk:
     # Sesi yang terbit sama persis dengan sesi hasil sandi: access token
     # pendek plus refresh token berputar. Passkey mengganti cara membuktikan
     # siapa, bukan cara sesinya dikelola.
-    return await autentikasi.terbitkan(pengguna)
+    #
+    # Ditandai faktor kedua, dan itu bukan kelonggaran. Passkey menandatangani
+    # dengan kunci yang tidak pernah meninggalkan perangkat dan terikat pada
+    # alamat situs ini: ia tidak bisa ditebak, tidak bisa dipakai ulang di
+    # tempat lain, dan tidak bisa dipancing lewat halaman palsu. Menuntut TOTP
+    # di atasnya berarti menuntut faktor yang lebih lemah untuk menjaga faktor
+    # yang lebih kuat.
+    return await autentikasi.terbitkan(pengguna, faktor_kedua=True)
 
 
 # ------------------------------------------------------------- mengelola ---

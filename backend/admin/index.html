@@ -254,12 +254,22 @@
                accept="image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm">
         <div class="laju sembunyi" id="laju" role="progressbar" aria-valuemin="0" aria-valuemax="100"><span></span></div>
         <p class="petunjuk">Foto sampai 10 MB, video sampai 80 MB.</p>
+        <label class="baris-berjajar-tengah" for="buang-metadata">
+          <input type="checkbox" id="buang-metadata">
+          <span>Buang lokasi dan keterangan kamera dari foto</span>
+        </label>
         <!-- Peringatan ini di layar, bukan hanya di dokumentasi: yang
              mengunggah foto anaknya di rumah tidak akan membuka dokumentasi
              lebih dulu. -->
         <p class="petunjuk">
-          Metadata foto tidak dibuang. Foto dari ponsel bisa membawa koordinat
-          tempat pemotretannya, dan koordinat itu ikut terbit.
+          Kalau kotak itu tidak dicentang, metadata foto tidak dibuang. Foto
+          dari ponsel bisa membawa koordinat tempat pemotretannya, dan
+          koordinat itu ikut terbit.
+        </p>
+        <p class="petunjuk">
+          Yang bisa dibuang JPEG, PNG, dan WebP. GIF dan AVIF ditolak kalau
+          kotaknya dicentang, sebab membuang setengah lalu mengaku sudah
+          bersih lebih berbahaya daripada tidak membuang sama sekali.
         </p>
       </div>
       <div id="kabar-berkas" class="kabar sembunyi"></div>

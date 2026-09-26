@@ -312,3 +312,26 @@ async def pakai_tantangan_wajah(pengguna_id: str, tantangan_id: str) -> list[str
         )
         baris = await k.fetchone()
         return list(baris["gerakan"]) if baris else None
+
+
+async def pernah_masuk_dari(
+    pengguna_id: str, alamat: str | None, peramban: str | None
+) -> bool:
+    """Apakah pasangan alamat dan peramban ini pernah berhasil masuk sebelumnya.
+
+    Alamatnya sudah berupa ringkasan SHA-256 sebelum sampai ke sini, dan yang
+    tersimpan juga ringkasannya. Tidak ada satu pun alamat IP yang disimpan
+    apa adanya, bahkan untuk keperluan ini.
+
+    Dibatasi 1 baris: yang ditanyakan ada atau tidak, bukan berapa.
+    """
+    async with koneksi() as s, s.cursor() as k:
+        await k.execute(
+            "SELECT 1 AS ada FROM peristiwa_keamanan "
+            "WHERE pengguna_id = %s AND jenis = 'masuk' AND berhasil "
+            "  AND alamat_ringkas IS NOT DISTINCT FROM %s "
+            "  AND peramban IS NOT DISTINCT FROM %s "
+            "LIMIT 1",
+            (pengguna_id, alamat, peramban),
+        )
+        return await k.fetchone() is not None

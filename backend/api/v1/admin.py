@@ -11,12 +11,18 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
-from backend.api.tergantung import butuh_admin
+from backend.api.tergantung import butuh_admin, butuh_admin_kuat
 from backend.layanan import pratinjau as layanan_pratinjau
 from backend.layanan import tulis as layanan
 from backend.skema.tulis import TulisanMasuk, TulisanUbah
 
-rute = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(butuh_admin)])
+# butuh_admin_kuat, bukan butuh_admin: seluruh rute di berkas ini mengubah
+# isi situs, dan permukaan itu menuntut sesi yang lahir lewat faktor kedua.
+# Halaman keamanan sengaja TIDAK memakainya, supaya faktor keduanya masih bisa
+# dipasang oleh orang yang belum punya.
+rute = APIRouter(
+    prefix="/admin", tags=["admin"], dependencies=[Depends(butuh_admin_kuat)]
+)
 
 
 class UbahStatus(BaseModel):
@@ -53,7 +59,7 @@ async def satu(slug: str) -> dict:
 @rute.post("/blog", status_code=status.HTTP_201_CREATED, summary="Tulisan baru, status draf")
 async def buat(
     masuk: TulisanMasuk,
-    pengguna: Annotated[dict, Depends(butuh_admin)],
+    pengguna: Annotated[dict, Depends(butuh_admin_kuat)],
 ) -> dict:
     try:
         return await layanan.buat(masuk.model_dump(), pengguna["id"])

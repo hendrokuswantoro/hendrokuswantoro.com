@@ -66,6 +66,30 @@ async def jumlah() -> int:
         return (await k.fetchone())["n"]
 
 
+async def pemakaian() -> dict[str, int]:
+    """Jumlah berkas, total bitanya, dan berapa yang masuk hari ini.
+
+    Ketiganya dibaca dalam satu kueri. Tiga kueri berurutan bisa menjawab tiga
+    keadaan yang berbeda kalau ada unggahan lain yang masuk di antaranya, dan
+    batas yang dihitung dari keadaan yang tidak pernah ada bersamaan adalah
+    batas yang salah.
+    """
+    async with koneksi() as s, s.cursor() as k:
+        await k.execute(
+            "SELECT count(*) AS jumlah, "
+            "       coalesce(sum(bita), 0) AS bita, "
+            "       count(*) FILTER (WHERE dibuat_pada > now() - interval '1 day') "
+            "           AS hari_ini "
+            "FROM berkas"
+        )
+        baris = await k.fetchone()
+        return {
+            "jumlah": baris["jumlah"],
+            "bita": int(baris["bita"]),
+            "hari_ini": baris["hari_ini"],
+        }
+
+
 async def hapus(nama: str) -> bool:
     async with koneksi() as s, s.cursor() as k:
         await k.execute("DELETE FROM berkas WHERE nama = %s", (nama,))

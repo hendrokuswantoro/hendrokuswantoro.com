@@ -122,12 +122,34 @@ def test_bentuk_sisipan_sama_dengan_yang_diterima_pengurai(bentuk):
 # ----------------------------------------------------------- unggahannya ---
 
 
-def test_layar_unggah_menyebut_metadata_foto_tidak_dibuang():
+def test_layar_unggah_menyebut_soal_lokasi_di_dalam_foto():
     """Foto dari ponsel bisa membawa koordinat tempat pemotretannya, dan
     koordinat itu ikut terbit. Yang mengunggah foto anaknya di rumah tidak
-    akan membuka dokumentasi lebih dulu, jadi kalimatnya harus di layar."""
-    assert "Metadata foto tidak dibuang" in PUSTAKA
+    akan membuka dokumentasi lebih dulu, jadi kalimatnya harus di layar.
+
+    Sejak 19 September 2026 ada kotak centang untuk membuangnya. Peringatannya
+    tetap wajib ada, sebab kotaknya mati secara bawaan: yang tidak
+    mencentangnya harus tahu apa yang ia biarkan ikut terbit.
+    """
     assert "koordinat" in PUSTAKA
+    assert "tidak dibuang" in PUSTAKA
+    assert 'id="buang-metadata"' in PUSTAKA, "tidak ada kotak centangnya"
+    assert "buangMetadata" in PUSTAKA
+
+
+def test_kotak_buang_metadata_mati_secara_bawaan():
+    """Yang tahu apakah tempatnya boleh diketahui umum adalah pemiliknya.
+    Membuang secara bawaan berarti memutuskan untuknya, dan sebagian foto
+    memang justru perlu lokasinya."""
+    assert "useState(false);" in PUSTAKA.split("buangMetadata")[1][:40], (
+        "kotak buang metadata tidak mati secara bawaan"
+    )
+
+
+def test_layar_unggah_menyebut_jenis_yang_tidak_bisa_dibuang():
+    """Membuang setengah lalu mengaku sudah bersih lebih berbahaya daripada
+    tidak membuang sama sekali."""
+    assert "GIF dan AVIF" in PUSTAKA
 
 
 def test_jenis_yang_ditawarkan_peramban_sama_dengan_yang_diterima_server():

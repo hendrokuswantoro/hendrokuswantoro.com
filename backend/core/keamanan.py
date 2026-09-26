@@ -66,12 +66,24 @@ def refresh_token_baru() -> str:
     return secrets.token_urlsafe(48)
 
 
-def buat_access_token(pengguna_id: str, peran: str) -> tuple[str, int]:
+def buat_access_token(
+    pengguna_id: str,
+    peran: str,
+    sesi_id: str | None = None,
+    faktor_kedua: bool = False,
+) -> tuple[str, int]:
     """Umurnya pendek dengan sengaja. Bab 15.10.
 
-    Access token tidak bisa dicabut, jadi satu satunya cara membatasi
-    kerusakan kalau ia bocor adalah membuatnya cepat mati. Yang dicabut
-    adalah refresh token, yang memang dicatat.
+    Umur pendek dulu satu satunya pembatas kerusakan kalau token ini bocor,
+    sebab JWT diperiksa dengan tanda tangannya sendiri dan tidak pernah
+    ditanyakan ke basis data. Sejak 19 September 2026 ada yang kedua: `sid`
+    membawa id sesinya, dan tiap permintaan memeriksanya terhadap daftar
+    cabut di Redis. Lihat backend/core/cabut.py.
+
+    `f2` mencatat apakah sesi ini lahir lewat faktor kedua. Ia dibawa di
+    dalam token, bukan disimpulkan ulang tiap permintaan, sebab yang benar
+    adalah keadaan saat orangnya masuk: menyalakan TOTP sesudah masuk tidak
+    boleh diam diam menguatkan sesi yang sudah terbit.
     """
     atur = pengaturan()
     sekarang = dt.datetime.now(dt.timezone.utc)
@@ -80,6 +92,8 @@ def buat_access_token(pengguna_id: str, peran: str) -> tuple[str, int]:
     muatan = {
         "sub": pengguna_id,
         "peran": peran,
+        "sid": str(sesi_id) if sesi_id else None,
+        "f2": bool(faktor_kedua),
         "iss": PENERBIT,
         "aud": UNTUK,
         "iat": sekarang,
@@ -95,17 +109,29 @@ def baca_access_token(token: str) -> dict | None:
     Melewatkan salah satunya adalah cacat yang klasik: token sah dari sistem
     lain, atau token kedaluwarsa, diterima seolah masih berlaku.
     """
-    try:
-        return jwt.decode(
-            token,
-            pengaturan().jwt_rahasia,
-            algorithms=[ALGORITMA],
-            audience=UNTUK,
-            issuer=PENERBIT,
-            options={"require": ["exp", "iat", "sub", "iss", "aud"]},
-        )
-    except jwt.PyJWTError:
-        return None
+    atur = pengaturan()
+
+    # Rahasia yang sedang berlaku lebih dulu, lalu yang lama kalau memang
+    # sedang ada rotasi berjalan. Urutannya begitu supaya keadaan biasa, yaitu
+    # tanpa rotasi, tidak membayar satu percobaan tambahan.
+    #
+    # Yang lama HANYA dipakai memeriksa. Tidak ada satu pun jalur yang
+    # menandatangani dengannya, jadi rotasi selalu bergerak satu arah.
+    for rahasia in (atur.jwt_rahasia, atur.jwt_rahasia_lama):
+        if not rahasia:
+            continue
+        try:
+            return jwt.decode(
+                token,
+                rahasia,
+                algorithms=[ALGORITMA],
+                audience=UNTUK,
+                issuer=PENERBIT,
+                options={"require": ["exp", "iat", "sub", "iss", "aud"]},
+            )
+        except jwt.PyJWTError:
+            continue
+    return None
 
 
 # ------------------------------------------------- tiket faktor kedua ---

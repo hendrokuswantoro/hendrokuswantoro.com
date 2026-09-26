@@ -308,3 +308,155 @@ def test_systemexit_dari_pembangkit_tidak_menjatuhkan_pekerjanya(klien, kepala):
     assert "blok" in j.text
     # Dan prosesnya masih melayani permintaan berikutnya.
     assert klien.get("/api/v1/admin/berkas", headers=kepala).status_code == 200
+
+
+# ---------------------------------------------------- buang metadata foto ---
+
+
+def test_koordinat_di_dalam_foto_benar_benar_hilang(klien, kepala, bersih):
+    """Lewat API sungguhan, bukan cuma lewat fungsinya.
+
+    Yang diperiksa bukan jawabannya melainkan bita yang benar benar tersimpan
+    dan disajikan lagi. Pembuang yang bekerja di memori lalu menyimpan yang
+    asli adalah pembuang yang tidak membuang apa apa.
+    """
+    from test_metadata import JEJAK, jpeg_ber_exif
+
+    asli = jpeg_ber_exif()
+    assert JEJAK in asli
+
+    hasil = klien.post(
+        "/api/v1/admin/berkas",
+        headers=kepala,
+        files={"berkas": ("liburan.jpg", asli, "image/jpeg")},
+        data={"buang_metadata": "true"},
+    )
+    assert hasil.status_code == 201, hasil.text
+    isi = hasil.json()
+    bersih.append(isi["nama"])
+
+    tersimpan = klien.get(isi["alamat"]).content
+    assert JEJAK not in tersimpan, "koordinatnya masih ada di berkas yang disajikan"
+    # Ukurannya tetap terbaca, jadi halamannya tidak akan melompat.
+    assert (isi["lebar"], isi["tinggi"]) == (160, 90)
+
+
+def test_tanpa_diminta_metadatanya_dibiarkan(klien, kepala, bersih):
+    """Kotaknya mati secara bawaan, dan bawaannya harus benar benar begitu.
+    Membuang diam diam berarti memutuskan untuk pemiliknya, dan sebagian foto
+    memang justru perlu lokasinya."""
+    from test_metadata import JEJAK, jpeg_ber_exif
+
+    hasil = klien.post(
+        "/api/v1/admin/berkas",
+        headers=kepala,
+        files={"berkas": ("apa-adanya.jpg", jpeg_ber_exif(), "image/jpeg")},
+    )
+    assert hasil.status_code == 201, hasil.text
+    isi = hasil.json()
+    bersih.append(isi["nama"])
+    assert JEJAK in klien.get(isi["alamat"]).content
+
+
+def test_jenis_yang_metadatanya_tidak_bisa_dibuang_ditolak(klien, kepala):
+    """GIF dan AVIF. Menerimanya lalu membiarkan metadatanya utuh akan
+    membuat pemiliknya mengira koordinat rumahnya sudah hilang."""
+    hasil = klien.post(
+        "/api/v1/admin/berkas",
+        headers=kepala,
+        files={"berkas": ("animasi.gif", gif(64, 48), "image/gif")},
+        data={"buang_metadata": "true"},
+    )
+    assert hasil.status_code == 415
+    assert "belum bisa dibuang" in hasil.text
+
+
+def test_video_tidak_berpura_pura_bisa_dibersihkan(klien, kepala):
+    hasil = klien.post(
+        "/api/v1/admin/berkas",
+        headers=kepala,
+        files={"berkas": ("jalan.mp4", mp4(), "video/mp4")},
+        data={"buang_metadata": "true"},
+    )
+    assert hasil.status_code == 415
+    assert "video" in hasil.text
+
+
+# ------------------------------------------------------------- kuotanya ---
+
+
+def test_unggahan_ditolak_saat_jumlahnya_sudah_penuh(klien, kepala, monkeypatch):
+    """Batas per berkas tidak menjaga apa apa terhadap yang mengunggah seribu
+    berkas, dan cakram yang penuh mematikan PostgreSQL."""
+    from backend.core.konfigurasi import pengaturan
+
+    monkeypatch.setenv("UNGGAHAN_JUMLAH_MAKS", "0")
+    pengaturan.cache_clear()
+    try:
+        hasil = klien.post(
+            "/api/v1/admin/berkas",
+            headers=kepala,
+            files={"berkas": ("penuh.png", png(10, 10), "image/png")},
+        )
+        assert hasil.status_code == 415
+        assert "batasnya" in hasil.text
+    finally:
+        pengaturan.cache_clear()
+
+
+def test_unggahan_ditolak_saat_ruangnya_habis(klien, kepala, monkeypatch):
+    from backend.core.konfigurasi import pengaturan
+
+    monkeypatch.setenv("UNGGAHAN_TOTAL_MAKS_MB", "0")
+    pengaturan.cache_clear()
+    try:
+        hasil = klien.post(
+            "/api/v1/admin/berkas",
+            headers=kepala,
+            files={"berkas": ("besar.png", png(10, 10), "image/png")},
+        )
+        assert hasil.status_code == 415
+        assert "ruang unggahan" in hasil.text
+    finally:
+        pengaturan.cache_clear()
+
+
+def test_unggahan_ditolak_saat_sehari_sudah_terlalu_banyak(klien, kepala, monkeypatch):
+    """Menahan akun yang sudah diambil orang memakai situs ini sebagai tempat
+    penitipan berkas dalam satu malam."""
+    from backend.core.konfigurasi import pengaturan
+
+    monkeypatch.setenv("UNGGAHAN_PER_HARI_MAKS", "0")
+    pengaturan.cache_clear()
+    try:
+        hasil = klien.post(
+            "/api/v1/admin/berkas",
+            headers=kepala,
+            files={"berkas": ("harian.png", png(10, 10), "image/png")},
+        )
+        assert hasil.status_code == 415
+        assert "sehari terakhir" in hasil.text
+    finally:
+        pengaturan.cache_clear()
+
+
+def test_kuota_diperiksa_sebelum_berkasnya_ditulis(klien, kepala, monkeypatch):
+    """Menulis dulu lalu menghapus kalau ternyata melewati batas berarti ada
+    saat cakramnya memang sudah penuh."""
+    from backend.core.konfigurasi import pengaturan
+    from backend.layanan import berkas as layanan
+
+    sebelum = {p.name for p in layanan.folder().iterdir()}
+    monkeypatch.setenv("UNGGAHAN_JUMLAH_MAKS", "0")
+    pengaturan.cache_clear()
+    try:
+        klien.post(
+            "/api/v1/admin/berkas",
+            headers=kepala,
+            files={"berkas": ("tidak-boleh-ada.png", png(12, 12), "image/png")},
+        )
+        assert {p.name for p in layanan.folder().iterdir()} == sebelum, (
+            "ada berkas yang tertinggal di cakram padahal unggahannya ditolak"
+        )
+    finally:
+        pengaturan.cache_clear()
