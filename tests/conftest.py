@@ -177,7 +177,11 @@ def _dsn() -> str:
 TITIPAN_FAKTOR = AKAR / "cadangan" / "faktor-kedua-sebelum-uji.json"
 KOLOM_FAKTOR = (
     "totp_rahasia", "totp_aktif_pada", "email_terverifikasi_pada",
-    "wajah_ciri", "wajah_didaftar_pada",
+    "wajah_ciri", "wajah_didaftar_pada", "totp_langkah_terakhir",
+)
+KOLOM_FAKTOR_DIKOSONGKAN = (
+    "totp_rahasia", "totp_aktif_pada", "wajah_ciri", "wajah_didaftar_pada",
+    "totp_langkah_terakhir",
 )
 
 
@@ -202,7 +206,7 @@ def faktor_kedua_untuk_uji():
 
     def pulihkan(simpanan):
         kolom, kode = simpanan["kolom"], simpanan["kode"]
-        passkey = simpanan.get("passkey")
+        passkey = simpanan.get("passkey_baris")
         with psycopg.connect(dsn) as s, s.cursor() as k:
             k.execute(
                 f"UPDATE users SET {', '.join(f'{n}=%s' for n in KOLOM_FAKTOR[:len(kolom)])} "
@@ -220,10 +224,13 @@ def faktor_kedua_untuk_uji():
                         (baris[0], *satu),
                     )
             if baris and passkey is not None:
-                k.execute(
-                    "DELETE FROM kredensial WHERE pengguna_id=%s AND NOT (id::text = ANY(%s))",
-                    (baris[0], passkey),
-                )
+                k.execute("DELETE FROM kredensial WHERE pengguna_id=%s", (baris[0],))
+                for satu in passkey:
+                    k.execute(
+                        "INSERT INTO kredensial "
+                        "SELECT * FROM json_populate_record(NULL::kredensial, %s::json)",
+                        (satu,),
+                    )
             s.commit()
 
     try:
@@ -248,12 +255,24 @@ def faktor_kedua_untuk_uji():
                 (baris[0],),
             )
             kode = [list(r) for r in k.fetchall()]
-            k.execute("SELECT id::text FROM kredensial WHERE pengguna_id=%s", (baris[0],))
+            k.execute(
+                "SELECT row_to_json(k)::text FROM kredensial k WHERE pengguna_id=%s",
+                (baris[0],),
+            )
             semula = {
                 "kolom": list(baris[1:]), "kode": kode,
-                "passkey": [r[0] for r in k.fetchall()],
+                "passkey_baris": [r[0] for r in k.fetchall()],
             }
             tulis(semula)
+
+            k.execute(
+                f"UPDATE users SET {', '.join(f'{n}=NULL' for n in KOLOM_FAKTOR_DIKOSONGKAN)} "
+                "WHERE id=%s",
+                (baris[0],),
+            )
+            k.execute("DELETE FROM kode_pemulihan WHERE pengguna_id=%s", (baris[0],))
+            k.execute("DELETE FROM kredensial WHERE pengguna_id=%s", (baris[0],))
+            s.commit()
     except Exception:
         yield
         return

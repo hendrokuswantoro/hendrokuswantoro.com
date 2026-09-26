@@ -70,3 +70,25 @@ def test_layar_tetap_menyebut_yang_belum_siap():
 def test_tanpa_tanda_strip_panjang(berkas):
     for isi in (i for _, i in _paragraf(berkas.read_text(encoding="utf-8"))):
         assert "—" not in isi and "–" not in isi, f"tanda strip panjang di {berkas.name}"
+
+
+def _nama_peristiwa(berkas) -> set[str]:
+    teks = berkas.read_text(encoding="utf-8")
+    blok = re.search(r"NAMA_PERISTIWA[^{]*\{(.*?)\n\}", teks, re.S)
+    assert blok, f"NAMA_PERISTIWA tidak ketemu di {berkas.name}"
+    return set(re.findall(r"^\s*([a-z_]+):", blok.group(1), re.M))
+
+
+def test_tiap_peristiwa_punya_nama_di_kedua_dashboard():
+    dicatat = set()
+    for berkas in (AKAR / "backend").rglob("*.py"):
+        dicatat |= set(re.findall(
+            r'"([a-z]+_[a-z_]+|masuk)",\s*(?:True|False|berhasil|ok)\b',
+            berkas.read_text(encoding="utf-8"),
+        ))
+    assert "sandi_benar" in dicatat
+
+    next_ = _nama_peristiwa(ADMIN / "PanelKeamanan.tsx")
+    html = _nama_peristiwa(AKAR / "backend" / "admin" / "dasbor-panel.js")
+    assert not dicatat - next_, f"tampil mentah di dashboard Next: {sorted(dicatat - next_)}"
+    assert not dicatat - html, f"tampil mentah di dashboard HTML: {sorted(dicatat - html)}"

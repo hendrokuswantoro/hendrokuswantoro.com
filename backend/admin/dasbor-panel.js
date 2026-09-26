@@ -142,6 +142,7 @@ async function muatSesi() {
 
 const NAMA_PERISTIWA = {
   masuk: "Masuk",
+  sandi_benar: "Sandi benar, menunggu faktor kedua",
   verifikasi_email: "Verifikasi email",
   verifikasi_email_dikirim: "Tautan verifikasi dikirim",
   otp_dikirim: "Kode dikirim lewat email",

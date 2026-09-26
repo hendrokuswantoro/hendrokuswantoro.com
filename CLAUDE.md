@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 866, tanpa peramban, hitungan detik
+python -m pytest                 # 867, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 85, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
@@ -62,7 +62,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    951 uji
+tests/                    952 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -187,6 +187,15 @@ pernah menerbitkan sesi kuat. `tests/test_temuan_audit.py` menahan ketiganya.
 `tests/conftest.py` mematikan aturan itu untuk seluruh uji lain, supaya uji
 yang masuk dengan sandi saja tetap bisa menulis. Mematikan sebuah penjaga di
 dalam uji hanya sah selama ada uji lain yang menguji penjaganya sendiri.
+
+Uji memakai akun admin pemilik yang sungguhan, sebab situs ini hanya punya
+satu. Selama sesi uji, sandinya ditukar dan seluruh faktornya (TOTP, kode
+pemulihan, passkey, wajah) disingkirkan, lalu dikembalikan persis di akhir.
+Titipannya ditulis ke `cadangan/` lebih dulu, jadi sesi uji yang mati di
+tengah jalan dipulihkan oleh sesi berikutnya. Sampai 27 September 2026
+passkey buatan autentikator tiruan tidak ikut dibuang: empat puluh menumpuk,
+dan karena `punya_faktor()` menghitungnya, pemilik ditolak saat memasang
+faktor pertamanya.
 
 **Yang mencabut sesi wajib mencatatnya di `backend/core/cabut.py`.** Access
 token adalah JWT dan tidak pernah ditanyakan ke basis data, jadi mencabut sesi
@@ -430,13 +439,15 @@ memberi situs ini dua tuan.
 2. Model pengenalan wajah 37 MB, tidak ikut git, diambil dengan
    `python tools/ambil_model.py`. **Verifikasi wajah belum pernah dijalankan
    dengan kamera sungguhan.**
-3. Akun admin belum punya faktor kedua. Selama belum, siapa pun yang tahu
-   sandinya bisa memasang faktor PERTAMA miliknya sendiri, karena
-   `butuh_admin_pendaftar` sengaja mengizinkannya. Ini satu satunya temuan
-   audit yang tidak bisa ditutup dengan kode.
-4. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
+3. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
    dashboard, serta konfigurasi nginx belum pernah berjalan di server
-   sungguhan. Langkahnya ada di `docs/vps.md`.
+   sungguhan. Langkahnya ada di `docs/vps.md`. Basis data di sana mulai dari
+   nol, jadi akun adminnya lahir TANPA faktor kedua, dan selama itu siapa pun
+   yang tahu sandinya bisa memasang faktor PERTAMA miliknya sendiri, karena
+   `butuh_admin_pendaftar` sengaja mengizinkannya. Pasang TOTP dan passkey
+   segera sesudah `buat_admin.py`, dan kunci `/admin` dengan `admin_boleh`
+   sampai itu selesai. Ini satu satunya temuan audit yang tidak bisa ditutup
+   dengan kode.
 
 ## Catatan lingkungan
 
@@ -446,6 +457,9 @@ dua belas heksa pertama sha256 masing masing sebagai sidik. **Jangan pernah
 menjalankan `enkripsi.py kunci` untuk `.env` ini.** Kunci baru tidak bisa
 membuka rahasia TOTP dan ciri wajah yang sudah tersimpan, dan salinannya
 tidak akan ikut berganti.
+
+Akun admin di basis data laptop memakai TOTP sejak 27 September 2026, dan
+kode pemulihannya disimpan pemilik di brankas yang sama dengan kuncinya.
 
 SMTP di `.env` mesin ini memakai Gmail dengan sandi aplikasi sejak 26
 September 2026, dan surat uji pertamanya terkirim. `SURAT_WAJIB` sengaja
