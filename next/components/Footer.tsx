@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { COMMON, NAV } from "@/content/nav";
-import { BrandMark } from "./Icons";
+import { COMMON } from "@/content/nav";
 import { useLang } from "./LanguageProvider";
 
 const BUILD_YEAR = 2026;
@@ -19,25 +17,6 @@ export function Footer() {
   return (
     <footer className="footer">
       <div className="wrap">
-        <div className="footer__atas">
-          <div className="footer__merek">
-            <Link className="brand" href="/" aria-label={say(COMMON.brandAria)}>
-              <BrandMark size={40} />
-              <span className="brand__name">
-                hendro<span>kuswantoro</span>
-              </span>
-            </Link>
-            <p>{say(COMMON.footerTagline)}</p>
-          </div>
-          <nav className="footer__nav" aria-label={say(COMMON.footerNav)}>
-            {NAV.map((item) => (
-              <Link key={item.href} href={item.href}>
-                {say(item.label)}
-              </Link>
-            ))}
-            <Link href="/blog/#rss">RSS</Link>
-          </nav>
-        </div>
         <div className="footer__bottom">
           <p>
             &copy; {year} {say(COMMON.rights)}

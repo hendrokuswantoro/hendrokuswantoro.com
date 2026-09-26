@@ -27,11 +27,6 @@ export const COMMON = {
   mobileNav: { en: "Mobile", id: "Menu ponsel" } as Copy,
   language: { en: "Language", id: "Bahasa" } as Copy,
   darkTheme: { en: "Dark theme", id: "Tema gelap" } as Copy,
-  footerTagline: {
-    en: "Spatial analysis, satellite data and web maps that people actually use.",
-    id: "Analisis spasial, data satelit, dan peta web yang benar-benar dipakai orang.",
-  } as Copy,
-  footerNav: { en: "Footer", id: "Kaki halaman" } as Copy,
   backToTop: { en: "Back to top", id: "Kembali ke atas" } as Copy,
   rights: {
     en: "Hendro Kuswantoro. All rights reserved.",
