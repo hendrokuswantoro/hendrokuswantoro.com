@@ -90,7 +90,7 @@ FOLDER_NEXT = ("app", "components", "content", "lib")
 
 # Berkas yang menyebut aset aset itu.
 def halaman() -> list[pathlib.Path]:
-    tidak = {"next", "dist", "backend", ".git"}
+    tidak = {"next", "dist", "backend", ".git", ".claude"}
     return sorted(
         p for p in AKAR.rglob("*.html")
         if not tidak & set(p.relative_to(AKAR).parts)
