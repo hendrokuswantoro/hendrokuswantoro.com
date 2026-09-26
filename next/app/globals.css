@@ -663,7 +663,35 @@ ul { margin: 0; padding: 0; list-style: none; }
 @keyframes memuat { to { background-position: -150% 0; } }
 .peta__ket { margin: 12px 0 0; font-size: var(--fs-sm); color: var(--ink-3); }
 
-.hero__grid--solo { grid-template-columns: 1fr; padding-bottom: 0; }
+.hero__grid--solo {
+  position: relative; grid-template-columns: 1fr;
+  padding-bottom: clamp(44px, 5vw, 64px); margin-bottom: clamp(8px, 1.5vw, 16px);
+}
+.hero:has(.hero__grid--solo)::after {
+  -webkit-mask-image: url("/assets/img/kontur.svg"),
+    linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent),
+    linear-gradient(180deg, #000 45%, transparent 92%);
+  mask-image: url("/assets/img/kontur.svg"),
+    linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent),
+    linear-gradient(180deg, #000 45%, transparent 92%);
+  -webkit-mask-composite: source-in, source-in; mask-composite: intersect, intersect;
+}
+.hero__grid--solo::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 9px;
+  border-bottom: 1px solid var(--line-strong); pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, var(--ink-3) 0 1px, transparent 1px 160px) left bottom / 100% 9px no-repeat,
+    repeating-linear-gradient(90deg, var(--line-strong) 0 1px, transparent 1px 32px) left bottom / 100% 5px no-repeat;
+}
+.hero__grid--solo::before {
+  content: "7\00B0 47\2032  S \00B7  110\00B0 22\2032  E";
+  position: absolute; right: 0; bottom: 16px; pointer-events: none;
+  font-size: .6875rem; font-weight: 500; letter-spacing: .14em; white-space: pre;
+  font-variant-numeric: tabular-nums; color: var(--ink-3);
+}
+@media (max-width: 560px) {
+  .hero__grid--solo::before { bottom: 14px; font-size: .625rem; letter-spacing: .1em; }
+}
 @media (min-width: 900px) { .hero__grid--solo { grid-template-columns: 1fr; } }
 .wrap--narrow { max-width: 680px; }
 

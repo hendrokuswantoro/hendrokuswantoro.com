@@ -22,7 +22,7 @@ export function ProjectView() {
     <main id="main">
       <section className="hero">
         <div className="wrap">
-          <div className="hero__grid" style={{ gridTemplateColumns: "1fr", paddingBottom: 0 }}>
+          <div className="hero__grid hero__grid--solo">
             <div>
               <h1>{say(PROJECT_PAGE.title)}</h1>
             </div>

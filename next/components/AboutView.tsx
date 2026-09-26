@@ -12,7 +12,7 @@ export function AboutView() {
     <main id="main">
       <section className="hero">
         <div className="wrap">
-          <div className="hero__grid" style={{ gridTemplateColumns: "1fr", paddingBottom: 0 }}>
+          <div className="hero__grid hero__grid--solo">
             <div>
               <span className="eyebrow">{say(ABOUT.eyebrow)}</span>
               <h1>{say(ABOUT.title)}</h1>
