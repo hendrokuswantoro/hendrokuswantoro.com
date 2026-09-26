@@ -47,7 +47,7 @@ berdampingan dalam satu proses pytest di Windows, jadi dipisah lewat tanda
 index.html about.html project.html blog/ 404.html   situs yang terbit
 assets/css/style.css      seluruh gaya, token warna dan huruf di :root
 assets/js/app.js          bahasa, tema, filter proyek, header, animasi
-assets/js/peta.js         peta karya, 31 lapisan di atas ubin Mapbox Streets
+assets/js/peta.js         peta karya ala Google Maps, 38 lapisan di atas ubin Mapbox
 assets/js/konfigurasi.js  token Mapbox, TIDAK ikut git
 assets/vendor/maplibre/   MapLibre GL JS, disimpan sendiri, bukan CDN
 assets/fonts/             delapan woff2 Poppins, bukan dari Google
@@ -60,6 +60,7 @@ backend/db/migrations/    0001 sampai 0008, nomornya wajib unik
 backend/admin/            dashboard HTML, gaya dan skripnya berkas sendiri
 unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
+next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
 tests/                    945 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
@@ -308,7 +309,7 @@ tujuh detik, padahal petanya tergambar dan `map.loaded()` menjawab `true`.
 `styledata` menyala dua kali, dan pada saat itu `map.isStyleLoaded()` masih
 `false`, lalu berubah jadi `true` belakangan tanpa satu pun peristiwa yang
 mengabarkannya. Akibatnya relief tidak pernah dipasang, `.peta__frame` tidak
-pernah ditandai `is-ready`, dan ringkasan legenda tinggal kosong sampai ada
+pernah ditandai `is-ready`, dan hitungan di chip kategori tinggal nol sampai ada
 yang menggeser petanya. Sebab yang sama mengenai pembaca dengan sambungan
 lambat, bukan hanya mesin ini. Karena itu `siap()` di kedua port dipicu oleh
 yang pertama tiba di antara `load`, `styledata`, dan `idle`, ditambah jaring
@@ -319,12 +320,23 @@ menuliskannya kembali dengan `replaceState`. Tautan "Lihat di peta" di tiap
 kartu memakai alamat yang sama, jadi yang tersalin dari bilah alamat selalu
 yang sedang dilihat. `tests/test_peta.py` menahan kedua port tetap memilikinya.
 
-**`map.addLayer` tanpa `beforeId` menaruh lapisannya PALING ATAS**, di atas
-seluruh lapisan nama. Itu yang terjadi pada `gedung3d` sampai 14 September
-2026: gedung 3D menimpa nama jalan dan nama tempat, dan di tampilan miring
-akibatnya nama nama itu terpotong badan gedung dan terbaca seperti saling
-tumpang tindih. Tempatnya yang benar tepat sebelum lapisan simbol pertama,
-yaitu `panah-searah`.
+**Tiap mode peta adalah gaya yang dibangun ulang, bukan lapisan yang
+ditambal.** Peta, Satelit, Medan, 3D, tema gelap, dan bahasa semuanya masukan
+bagi satu fungsi, `mapboxStyle()`, dan hasilnya dipasang dengan
+`map.setStyle(gaya, { diff: true })`. MapLibre menghitung bedanya sendiri,
+termasuk `terrain` dan `sky`. Lapisan yang ditambahkan lewat `map.addLayer`
+akan dibuang diff berikutnya, jadi `tests/test_peta.py` menolak `addLayer`
+di kedua port. `gedung3d` dan `citra` selalu ada di gaya, hanya
+`visibility`-nya yang berganti.
+
+`gedung3d` duduk tepat sebelum `panah-searah`, lapisan simbol pertama. Sampai
+14 September 2026 ia ditambahkan tanpa `beforeId`, jadi jatuh PALING ATAS dan
+menimpa seluruh nama: di tampilan miring nama jalan terpotong badan gedung.
+
+Ikon POI tidak datang dari sprite. Tiap ikon digambar di kanvas saat MapLibre
+memintanya lewat `styleimagemissing`, jadi ikonnya selalu ada sesudah diff
+maupun muat ulang penuh. Palet, ikon, dan daftar lapisan nama wajib sama di
+`peta.js` dan `next/components/peta/gaya.ts`; ujinya membandingkan teksnya.
 
 **`map.stop()` bukan sekadar membatalkan animasi.** Ia memanggil
 `handlers.stop()`, yang menyetel ulang seluruh penanganan gerak termasuk

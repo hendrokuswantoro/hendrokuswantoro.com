@@ -26,7 +26,7 @@ dan berkas VPS masuk.
 | Lapisan | Teknologi | Status |
 | --- | --- | --- |
 | Frontend | TypeScript + Next.js + React | Sebagian. Port dibangun dan lolos type check; **halaman admin Next.js sudah dipakai sungguhan** lewat ADMIN_NEXT=1. Halaman publik yang terbit masih versi HTML |
-| Map UI | MapLibre GL JS | Sudah, 31 lapisan di atas ubin vektor Mapbox |
+| Map UI | MapLibre GL JS | Sudah, 38 lapisan di atas ubin vektor Mapbox |
 | Advanced 3D | CesiumJS | Tidak berlaku |
 | Visualisation | Deck.gl | Tidak berlaku |
 | API | Python + FastAPI | Tidak berlaku |

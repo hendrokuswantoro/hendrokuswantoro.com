@@ -43,7 +43,7 @@ dilarang bab 1 dokumen standar.
 | Letak | akar repositori | `next/` |
 | Yang terbit | ya, ini yang hidup | tidak, meski sudah bisa dibangun |
 | Perlu Node | tidak | ya |
-| Peta | `assets/js/peta.js` | `next/components/WorkMap.tsx` |
+| Peta | `assets/js/peta.js` | `next/components/WorkMap.tsx`, `peta/gaya.ts`, `peta/bangun.ts` |
 
 Versi statis yang terbit. Versi Next.js ada karena diminta di spesifikasi dan
 disimpan tetap sejalan.
@@ -83,6 +83,6 @@ Peta dasarnya ditulis tangan di atas ubin vektor Mapbox Streets v8, bukan
 diambil dari URL gaya Mapbox. Dua alasannya ada di README, dan keduanya
 ditemukan lewat kegagalan, bukan lewat dokumentasi.
 
-31 lapisan, disusun dari tanah sampai nama. Urutan lapisan nama sengaja dari
+38 lapisan, disusun dari tanah sampai nama. Urutan lapisan nama sengaja dari
 yang terkecil ke yang terbesar, sebab MapLibre menempatkan simbol dari
 tumpukan paling atas ke bawah.

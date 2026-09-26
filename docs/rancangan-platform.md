@@ -49,7 +49,7 @@ Tetapi konsekuensinya harus ditanggung sadar, dan ada di bagian 11.
 | Proyek | 7, tertanam di markup dan di larik JavaScript |
 | Titik spasial | 7 pasang lng/lat di `assets/js/peta.js` |
 | Kategori proyek | app, analysis, satellite, design |
-| Peta | MapLibre, 31 lapisan di atas ubin vektor Mapbox |
+| Peta | MapLibre, 38 lapisan di atas ubin vektor Mapbox |
 | Dwibahasa | 280 atribut `data-ind`, 37 label, 10 alt |
 | Uji | 154, semuanya membaca berkas |
 | CI/CD | GitHub Actions, lima pekerjaan |

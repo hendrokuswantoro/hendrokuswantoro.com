@@ -115,23 +115,31 @@ tinggi tiap bangunan, jadi tombol 3D menegakkan bangunan dengan tinggi
 aslinya, bukan tinggi tebakan. Di Jakarta terhitung 4.950 bangunan tergambar
 dengan menara tertinggi 383 meter.
 
-**Apa saja yang digambar.** Gayanya punya 31 lapisan, disusun begini:
+**Apa saja yang digambar.** Tampilannya meniru Google Maps. Gayanya punya
+38 lapisan, disusun begini:
 
 | Kelompok | Lapisan | Muncul mulai zoom |
 | --- | --- | --- |
-| Dasar | latar, bayangan bukit, ruang hijau, air, sungai | 0 |
-| Batas | kabupaten, provinsi, negara | 5, 0, 0 |
-| Jalan | tol dan jalan nasional, arteri, tertiary, jalan kecil, masing-masing garis tepi lalu isinya | 4, 7, 10, 12 |
-| Lain | apron dan landasan bandara, rel kereta beserta palangnya | 10, 11 |
+| Dasar | latar, citra satelit, bayangan bukit, kawasan, ruang hijau, air, sungai, kontur | 0, kontur 11 |
+| Batas | kabupaten, provinsi, negara | 7, 0, 0 |
+| Jalan | tol, arteri, tertiary, jalan kecil, masing-masing garis tepi lalu isinya | 4, 7, 10, 13 |
+| Lain | apron dan landasan bandara, rel kereta beserta palangnya | 10 |
 | Bangunan | tapak 2D, dan `gedung3d` yang menggantikannya saat tombol 3D ditekan | 14 |
-| Tanda | panah arah jalan satu arah, titik POI | 15, 15,5 |
-| Nama | alam, kelurahan, kota, jalan, provinsi, negara, POI | 3 sampai 15,5 |
+| Tanda | panah jalan satu arah, angka kontur | 16, 12 |
+| Nama | POI berikon, stasiun, bandara, gunung, alam, kelurahan, kota, jalan, provinsi, negara | 3 sampai 14,5 |
 
-Empat tingkat jalan dibedakan warnanya seperti peta pengemudi: kuning amber
-untuk tol dan jalan nasional, krem hangat untuk arteri, putih untuk sisanya.
-Tanahnya sengaja digelapkan sedikit ke `#e8ecf1`, sebab dengan latar yang
-lebih terang jalan putihnya menyatu dengan tanah dan jaringannya tidak
-terbaca.
+Warnanya mengikuti Google Maps: tanah abu terang, air biru, taman hijau mint,
+tol kuning oranye, jalan nasional kuning pucat, dan jalan lain putih bertepi
+abu. Kawasan permukiman, rumah sakit, sekolah, dan bandara diberi warna
+tipisnya sendiri. Jalan di dalam terowongan dibuat pudar. Nama tempat memakai
+Roboto dari layanan huruf Mapbox.
+
+**Tiga tampilan dari tombol Lapisan** di kiri bawah: Peta, Satelit (citra
+Mapbox dengan nama putih berbingkai gelap), dan Medan (bayangan bukit lebih
+tebal, garis kontur, dan angka ketinggian). Tombol 3D di kanan bawah bisa
+digabung dengan ketiganya dan menambahkan langit di cakrawala. Pilihan
+lapisan disimpan di `localStorage["hk-peta-lapisan"]`. Tema gelap situs
+membawa peta gelapnya sendiri.
 
 **Urutan lapisan nama itu disengaja.** MapLibre menempatkan simbol dari
 tumpukan paling atas ke bawah, jadi lapisan yang ditulis paling akhir yang
@@ -159,17 +167,22 @@ lapisan hillshade yang tetap terlihat di tampilan 2D.
 berikutnya tiap tujuh detik, dan berhenti begitu tangan menyentuh peta.
 Mengklik penanda juga menerbangkan peta ke karya itu pada perbesaran 15.
 
-**Legendanya dinamis.** Angkanya menghitung penanda yang benar benar berada di
-dalam layar saat itu dan berubah selama peta digeser. Ada baris ringkasan yang
-menyebut apa saja yang sedang terlihat. Klik satu baris untuk menyaring satu
+**Kolom cari dan chip kategori** ada di kiri atas, seperti Google Maps. Kolom
+cari mencocokkan judul, tempat, dan jenis karya dalam dua bahasa, bisa
+dipakai dengan panah dan Enter, dan saat kosong menampilkan karya yang sedang
+terlihat. Angka di tiap chip menghitung penanda yang benar benar berada di
+layar dan berubah selama peta digeser. Klik satu chip untuk menyaring satu
 jenis karya.
 
-**Panelnya bisa dilipat**, dan pilihan itu disimpan di `localStorage`.
+**Tiap karya punya kartu tempat**: gambar karyanya, jenis dan lokasinya,
+koordinat dalam format bahasa yang dipilih, tombol ke kartu proyeknya, dan
+tombol untuk menyalin tautan `#peta-<id>`. Di layar sempit gambarnya
+disembunyikan supaya kartu tidak menutupi peta.
 
 **Tombol rumah** mengembalikan tampilan seperti saat peta pertama dibuka.
 
-**Chrome petanya selalu terang.** Bilah skala, kredit, dan tombol kontrol tidak
-ikut tema gelap, sebab peta dasarnya selalu terang.
+**Menggulir tanpa Ctrl menggulir halaman**, dan peta menampilkan petunjuk
+sebentar bahwa Ctrl, atau ⌘ di Mac, yang memperbesar.
 
 Tanpa token Mapbox, peta jatuh ke OpenFreeMap tanpa kunci dan tetap jalan,
 tetapi yang hilang bukan cuma bangunan 3D: batas provinsi dan kabupaten,
@@ -305,7 +318,7 @@ tools/konfigurasi.sh       penulis token dari MAPBOX_TOKEN, dipanggil di atas
 tools/ambil_font.py        pengunduh Poppins, penulis @font-face, --periksa luring
 tools/periksa_alur.py      pemeriksa berkas .github/workflows sebelum CI menjalankannya
 assets/fonts/              delapan woff2 Poppins plus OFL.txt dan sumber.json
-assets/js/peta.js          peta karya, 31 lapisan di atas ubin vektor Mapbox
+assets/js/peta.js          peta karya, 38 lapisan di atas ubin vektor Mapbox
 assets/vendor/maplibre/    MapLibre GL JS, disimpan sendiri, bukan dari CDN
 tests/                     860 uji tanpa peramban, 85 dengan Chromium
 docs/                      arsitektur, panduan uji, pemecahan masalah
