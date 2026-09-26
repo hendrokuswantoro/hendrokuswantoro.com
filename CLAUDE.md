@@ -425,6 +425,8 @@ memberi situs ini dua tuan.
    ada. Inilah sebabnya Health Check merah tiap malam. Langkahnya sengaja
    ditaruh paling akhir supaya kegagalan yang sudah diketahui tidak menutupi
    lima pemeriksaan lain. Situsnya sendiri sehat di alamat `.workers.dev`.
+   Pemiliknya memutuskan pada 26 September 2026 bahwa pendaftaran domain
+   dikerjakan paling akhir, jadi merahnya langkah itu bukan kabar baru.
 2. SMTP belum diisi di `.env`, jadi surat verifikasi ditulis ke
    `cadangan/surat/` dan tidak berangkat.
 3. `KUNCI_KOLOM` belum punya salinan di luar mesin ini. Kalau hilang, kolom
@@ -432,19 +434,23 @@ memberi situs ini dua tuan.
 4. Model pengenalan wajah 37 MB, tidak ikut git, diambil dengan
    `python tools/ambil_model.py`. **Verifikasi wajah belum pernah dijalankan
    dengan kamera sungguhan.**
-5. `http://localhost:8099` belum ada di pembatasan URL token Mapbox, jadi peta
-   tidak tergambar saat dikembangkan secara lokal dan empat uji peta dilewati.
-   Buka console.mapbox.com, Tokens, pilih token `pk.`, URL restrictions,
-   tambahkan baris itu persis, lalu Save changes.
-
-   **Mapbox menolak alamat IP.** Kalimatnya tersurat di layar: "IP addresses
-   are not supported in URL restrictions. Use a domain name instead." Jadi
-   `http://127.0.0.1:8099` akan ditolak, dan itu sebabnya server uji di
-   `tests/conftest.py` menjawab di `localhost`, bukan di `127.0.0.1`. Lihat
-   `INANG_UJI` di sana. Pembatasan URL Mapbox juga **tidak boleh memakai `*`
-   di bagian jalur.**
+5. Akun admin belum punya faktor kedua. Selama belum, siapa pun yang tahu
+   sandinya bisa memasang faktor PERTAMA miliknya sendiri, karena
+   `butuh_admin_pendaftar` sengaja mengizinkannya. Ini satu satunya temuan
+   audit yang tidak bisa ditutup dengan kode.
+6. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
+   dashboard, serta konfigurasi nginx belum pernah berjalan di server
+   sungguhan. Langkahnya ada di `docs/vps.md`.
 
 ## Catatan lingkungan
+
+Pembatasan URL token Mapbox sudah memuat `http://localhost:8099` sejak 26
+September 2026, jadi uji peta lokal tidak lagi dilewati. **Mapbox menolak
+alamat IP.** Kalimatnya tersurat di layar: "IP addresses are not supported in
+URL restrictions. Use a domain name instead." Jadi `http://127.0.0.1:8099`
+akan ditolak, dan itu sebabnya server uji di `tests/conftest.py` menjawab di
+`localhost`, bukan di `127.0.0.1`. Lihat `INANG_UJI` di sana. Pembatasan URL
+Mapbox juga **tidak boleh memakai `*` di bagian jalur.**
 
 Node v24 terpasang, tetapi tidak selalu ada di PATH milik Git Bash.
 `tools/verifikasi.sh` mencarinya sendiri di `/c/Program Files/nodejs`. Port

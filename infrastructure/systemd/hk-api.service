@@ -1,6 +1,6 @@
 [Unit]
 Description=hendrokuswantoro.com API
-Documentation=https://github.com/hendrokuswantoro/personal-web
+Documentation=https://github.com/hendrokuswantoro/hendrokuswantoro.com
 After=network-online.target
 Wants=network-online.target
 

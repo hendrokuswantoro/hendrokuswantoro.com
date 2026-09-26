@@ -89,7 +89,7 @@ mesin sendiri, dan satu satunya jalan kembali adalah konsol darurat penyedia.
 ### 2. Jalankan pemasangnya
 
 ```bash
-git clone https://github.com/hendrokuswantoro/personal-web /tmp/hk
+git clone https://github.com/hendrokuswantoro/hendrokuswantoro.com /tmp/hk
 sh /tmp/hk/infrastructure/pasang.sh
 ```
 
@@ -121,7 +121,20 @@ MAPBOX_TOKEN=pk....
 WEBAUTHN_RP_ID=hendrokuswantoro.com
 WEBAUTHN_ASAL=["https://www.hendrokuswantoro.com"]
 CADANGAN_TUJUAN=r2:hk-cadangan/harian
+KUNCI_KOLOM=...                # SALINAN dari laptop, bukan kunci baru; lihat di bawah
+SMTP_HOST=...
+SMTP_PORTA=587
+SMTP_PENGGUNA=...
+SMTP_SANDI=...
+SURAT_DARI=...
+SURAT_WAJIB=1
 ```
+
+`KUNCI_KOLOM` wajib sama dengan yang dipakai saat rahasia TOTP dan ciri wajah
+disandikan. Kalau basis datanya dipindah dari laptop, kuncinya ikut dipindah;
+kunci baru tidak bisa membuka rahasia lama. Kalau basis datanya baru, buat
+kunci baru dengan `python backend/db/enkripsi.py kunci` dan simpan salinannya
+di luar mesin ini sama seperti `CADANGAN_KUNCI`.
 
 Berkas itu milik root dengan izin 0640 dan grup `hk`. Ia tidak pernah ada di
 git, dan tidak pernah ikut rsync.

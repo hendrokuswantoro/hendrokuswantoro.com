@@ -110,7 +110,9 @@ cat <<'SELESAI'
      sudo nano /etc/hendrokuswantoro/env
    Yang wajib: POSTGRES_PASSWORD, DSN, JWT_SECRET, CADANGAN_KUNCI,
    WEBAUTHN_RP_ID=hendrokuswantoro.com,
-   WEBAUTHN_ASAL=["https://www.hendrokuswantoro.com"]
+   WEBAUTHN_ASAL=["https://www.hendrokuswantoro.com"],
+   KUNCI_KOLOM (salinan dari laptop kalau basis datanya dipindah),
+   SMTP_HOST, SMTP_PENGGUNA, SMTP_SANDI, SURAT_DARI, SURAT_WAJIB=1
 
 2. Nyalakan basis data dan cache:
      cd /srv/hendrokuswantoro/app/infrastructure
