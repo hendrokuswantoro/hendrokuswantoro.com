@@ -51,8 +51,6 @@ export function HomeView() {
         </div>
       </section>
 
-
-      {}
       <div className="pita-alat" aria-hidden="true">
         <div className="pita-alat__jalur">
           {[...TOOLS, ...TOOLS].map((tool, index) => (

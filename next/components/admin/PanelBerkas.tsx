@@ -10,7 +10,6 @@ import {
   type BerkasBaru,
 } from "@/lib/api";
 
-
 function ukuranTerbaca(bita: number): string {
   if (bita < 1024) return `${bita} B`;
   if (bita < 1024 * 1024) return `${Math.round(bita / 1024)} KB`;

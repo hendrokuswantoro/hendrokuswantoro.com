@@ -16,7 +16,6 @@ import {
 } from "@/lib/api";
 import * as passkey from "@/lib/passkey";
 
-
 const NAMA_CARA: Record<CaraFaktorKedua, string> = {
   totp: "Aplikasi authenticator",
   email: "Kode yang dikirim ke email",
@@ -209,7 +208,6 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
     </>
   );
 
-
   if (tiket) {
     return (
       <section className={`${gaya.kartu} ${gaya.masuk}`}>
@@ -333,7 +331,6 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
     );
   }
 
-
   return (
     <section className={`${gaya.kartu} ${gaya.masuk}`}>
       {kepala}
@@ -385,7 +382,6 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
 
         <div className={gaya.baris}>
           <label htmlFor="sandi">Sandi</label>
-          {}
           <div className={gaya.sandiBidang}>
             <input
               id="sandi"

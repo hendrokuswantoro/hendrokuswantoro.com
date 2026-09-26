@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import gaya from "@/app/admin/admin.module.css";
 
-
 const JUDUL: Record<string, string> = {
   tengah: "Hadap lurus ke kamera",
   kiri: "Toleh ke kiri",
@@ -106,7 +105,6 @@ export function KameraWajah({
       ) : null}
 
       <div className={gaya.kameraBingkai}>
-        {}
         <video ref={video} muted playsInline className={gaya.kameraVideo} />
         {sekarang ? (
           <div className={gaya.kameraArah}>

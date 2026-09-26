@@ -3,7 +3,6 @@
 import { useCallback, useEffect } from "react";
 import gaya from "@/app/admin/admin.module.css";
 
-
 export type Sisip = {
   depan: string;
   belakang?: string;
@@ -150,7 +149,6 @@ export function BilahFormat({
         Foto / video
       </button>
 
-      {}
       <span className={gaya.bilahKata}>{kata} kata</span>
     </div>
   );

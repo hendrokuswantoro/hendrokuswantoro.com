@@ -20,7 +20,6 @@ export function ProjectCard({
   return (
     <article className="card reveal" id={`karya-${project.id}`}>
       <div className="card__cover">
-        {}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={project.image}

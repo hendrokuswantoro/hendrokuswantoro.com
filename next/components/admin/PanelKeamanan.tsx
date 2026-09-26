@@ -18,7 +18,6 @@ import {
   type Peristiwa,
 } from "@/lib/api";
 
-
 const NAMA_PERISTIWA: Record<string, string> = {
   masuk: "Masuk",
   sandi_benar: "Sandi benar, menunggu faktor kedua",
@@ -138,8 +137,6 @@ export function PanelKeamanan() {
         </p>
       ) : null}
 
-      {}
-
       <ul className={gaya.daftarKeadaan}>
         <li>
           <span className={`${gaya.tanda} ${keadaan.email_terverifikasi ? gaya.terbit : ""}`}>
@@ -173,8 +170,6 @@ export function PanelKeamanan() {
         </li>
       </ul>
 
-      {}
-
       <h3 className={gaya.subjudul}>Email</h3>
       <p className={gaya.penjelasan}>
         Buktikan alamat email Anda. Ini yang dipakai kalau suatu saat Anda perlu masuk
@@ -202,8 +197,6 @@ export function PanelKeamanan() {
           {keadaan.email_terverifikasi ? "Kirim ulang tautan" : "Kirim tautan"}
         </button>
       </div>
-
-      {}
 
       <h3 className={gaya.subjudul}>Aplikasi authenticator</h3>
       <p className={gaya.penjelasan}>
@@ -339,8 +332,6 @@ export function PanelKeamanan() {
         </div>
       )}
 
-      {}
-
       <h3 className={gaya.subjudul}>Verifikasi wajah</h3>
       <p className={gaya.penjelasan}>
         Saat masuk, kamera minta tiga foto mengikuti gerakan yang diminta. Fotonya{" "}
@@ -406,8 +397,6 @@ export function PanelKeamanan() {
           )}
         </div>
       )}
-
-      {}
 
       <h3 className={gaya.subjudul}>Aktivitas terakhir</h3>
       <p className={gaya.penjelasan}>

@@ -47,14 +47,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={poppins.variable}>
       <head>
-        {}
         <script
           dangerouslySetInnerHTML={{
             __html: SKRIP_TEMA,
           }}
         />
       </head>
-      {}
       <body>{children}</body>
     </html>
   );
