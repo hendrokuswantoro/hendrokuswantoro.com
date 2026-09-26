@@ -35,12 +35,13 @@ def test_tanda_yang_ditulis_bilah_memang_yang_dikenal_pengurai(markah, nama):
 
 @pytest.mark.parametrize("huruf", ["b", "i", "k"])
 def test_pintasan_papan_tik_yang_sudah_dihafal_orang(huruf):
-    assert f"{huruf}: {{ depan:" in BILAH, f"Ctrl+{huruf.upper()} tidak terpasang"
+    assert f'tombol: "{huruf}"' in BILAH, f"Ctrl+{huruf.upper()} tidak terpasang"
 
 
-def test_pintasan_dipasang_pada_kotaknya_bukan_pada_dokumen():
-    assert "el.addEventListener" in BILAH
-    assert "document.addEventListener" not in BILAH
+def test_pintasan_dipasang_pada_kedua_kotak_bukan_pada_dokumen():
+    assert "onKeyDown={(e) => pintasanFormat(e, serap)}" in PENYUNTING
+    assert PENYUNTING.count("<textarea") == 1, "kotak isi tidak lagi dibuat dari satu cetakan"
+    assert "document.addEventListener" not in BILAH + PENYUNTING
 
 
 def test_tumpukan_urung_peramban_tidak_dibuang():

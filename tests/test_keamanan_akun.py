@@ -262,3 +262,15 @@ def test_kode_tidak_pernah_ikut_ke_pesan_galat():
     isi = (AKAR / "backend" / "core" / "surat.py").read_text(encoding="utf-8")
     assert "type(galat).__name__" in isi
     assert "str(galat)" not in isi, "pesan galat SMTP bisa memuat isi suratnya"
+
+
+def test_uji_tidak_pernah_mengirim_surat_sungguhan():
+    from backend.core import konfigurasi
+
+    konfigurasi.pengaturan.cache_clear()
+    atur = konfigurasi.pengaturan()
+    assert atur.smtp_host == "" and atur.surat_dari == "", (
+        "sesi uji membaca SMTP dari .env, jadi uji yang memasang TOTP atau masuk "
+        "lewat kode akan mengirim surat sungguhan ke kotak masuk pemilik"
+    )
+    assert surat.siap() is False

@@ -5,8 +5,6 @@ import gaya from "@/app/admin/admin.module.css";
 import { daftarBerkas, hapusBerkas, pesanDari, unggahBerkas, type Berkas } from "@/lib/api";
 import { Kabar, baik, buruk, type IsiKabar } from "./Kabar";
 
-const DITERIMA = "image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm";
-
 function ukuranTerbaca(bita: number): string {
   if (bita < 1024) return `${bita} B`;
   if (bita < 1024 * 1024) return `${Math.round(bita / 1024)} KB`;
@@ -114,7 +112,7 @@ export function PanelBerkas({
         <input
           ref={pilih}
           type="file"
-          accept={DITERIMA}
+          accept="image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm"
           multiple
           hidden
           onChange={(e) => {
@@ -138,9 +136,9 @@ export function PanelBerkas({
         <span>
           <strong>Buang lokasi dan data kamera dari foto</strong>
           <small>
-            Foto dari HP bisa menyimpan lokasi tempat foto diambil. Tanpa centang, lokasi itu ikut
-            terbit. Cuma JPEG, PNG, dan WebP yang bisa dibersihkan, jadi GIF dan AVIF ditolak selama
-            kotak ini dicentang.
+            Foto dari HP bisa menyimpan koordinat tempat foto diambil. Tanpa centang, metadata
+            tidak dibuang dan koordinat itu ikut terbit. Cuma JPEG, PNG, dan WebP yang bisa
+            dibersihkan, jadi GIF dan AVIF ditolak selama kotak ini dicentang.
           </small>
         </span>
       </label>
