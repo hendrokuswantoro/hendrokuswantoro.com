@@ -64,6 +64,13 @@ langkah "Lint, JavaScript has no syntax error"
 if command -v node >/dev/null 2>&1; then
   node --check assets/js/app.js
   node --check assets/js/peta.js
+  # Skrip dashboard admin, empat berkas sejak 26 September 2026. Sebelumnya
+  # langkah ini hanya memeriksa <script> sebaris di index.html, yang sudah
+  # kosong sejak skripnya dipindah keluar, jadi satu salah ketik di sana
+  # lolos sampai ada yang membuka halamannya.
+  for berkas in backend/admin/*.js; do
+    node --check "$berkas"
+  done
   # Dashboard admin membawa skripnya sendiri di dalam <script>, dan satu salah
   # ketik di sana membuat seluruh halamannya diam tanpa satu pun pesan di mana
   # pun. vm.Script MENGOMPILASI tanpa menjalankan, jadi yang diperiksa memang

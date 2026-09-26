@@ -209,7 +209,8 @@ def dasbor_bertajuk():
     (tmp / "admin").mkdir()
     shutil.copy(sumber / "index.html", tmp / "admin" / "index.html")
     shutil.copy(sumber / "dasbor.css", tmp / "admin" / "dasbor.css")
-    shutil.copy(sumber / "dasbor.js", tmp / "admin" / "dasbor.js")
+    for skrip in sumber.glob("dasbor*.js"):
+        shutil.copy(skrip, tmp / "admin" / skrip.name)
     # Huruf yang dilayani backend di /admin/, supaya font-src ikut diuji
     # dengan berkas yang benar benar dimuat, bukan dengan 404.
     for tebal in ("400", "600", "700"):

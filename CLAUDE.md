@@ -150,7 +150,10 @@ benar jalan. Halaman yang seluruh skripnya ditolak tetap tergambar rapi.
 
 Akibatnya: **jangan menulis `<script>` atau `<style>` sebaris di
 `backend/admin/`, dan jangan memakai atribut `style=` di markupnya.** Gaya dan
-skripnya ada di `dasbor.css` dan `dasbor.js`.
+skripnya ada di `dasbor.css` dan empat berkas `dasbor*.js`, dimuat berurutan
+dengan `dasbor.js` paling akhir sebab ia yang memasang seluruh tombolnya.
+Berkas skrip baru di sana wajib ditambahkan ke `ASET_ADMIN` di
+`backend/main.py`; daftarnya tertutup dengan sengaja.
 
 **Jalur tulis menuntut `butuh_admin_kuat`, bukan `butuh_admin`.** Yang
 membedakan: sesinya lahir lewat faktor kedua atau passkey. Router baru yang

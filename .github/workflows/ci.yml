@@ -63,7 +63,7 @@ jobs:
 
       - name: JavaScript has no syntax error
         run: |
-          for berkas in assets/js/app.js assets/js/peta.js; do
+          for berkas in assets/js/app.js assets/js/peta.js backend/admin/*.js; do
             node --check "$berkas"
             echo "ok $berkas"
           done

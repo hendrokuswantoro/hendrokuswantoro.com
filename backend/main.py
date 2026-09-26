@@ -172,7 +172,7 @@ def buat() -> FastAPI:
     #
     # Dilayani dari sini, bukan dari StaticFiles yang dipasang di /admin,
     # sebab /admin sendiri harus tetap menjawab dokumen HTML-nya. Daftarnya
-    # tertutup: dua nama, dipetakan tangan, jadi tidak ada satu pun jalur yang
+    # tertutup, dipetakan tangan, jadi tidak ada satu pun jalur yang
     # datang dari pemanggil.
     #
     # Tiga huruf Poppins ikut di daftar yang sama sejak 26 September 2026,
@@ -183,6 +183,11 @@ def buat() -> FastAPI:
     HURUF = HTML_ADMIN.parent.parent.parent / "assets" / "fonts"
     ASET_ADMIN = {
         "dasbor.css": (HTML_ADMIN.parent / "dasbor.css", "text/css; charset=utf-8"),
+        "dasbor-inti.js": (HTML_ADMIN.parent / "dasbor-inti.js", "application/javascript; charset=utf-8"),
+        "dasbor-panel.js": (HTML_ADMIN.parent / "dasbor-panel.js", "application/javascript; charset=utf-8"),
+        "dasbor-penyunting.js": (
+            HTML_ADMIN.parent / "dasbor-penyunting.js", "application/javascript; charset=utf-8"
+        ),
         "dasbor.js": (HTML_ADMIN.parent / "dasbor.js", "application/javascript; charset=utf-8"),
         "poppins-400.woff2": (HURUF / "poppins-v24-400-latin.woff2", "font/woff2"),
         "poppins-600.woff2": (HURUF / "poppins-v24-600-latin.woff2", "font/woff2"),

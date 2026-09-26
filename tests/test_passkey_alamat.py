@@ -50,7 +50,7 @@ from konftes import AKAR
 _ADMIN = AKAR / "backend" / "admin"
 ADMIN_STATIS = "\n".join(
     (_ADMIN / nama).read_text(encoding="utf-8")
-    for nama in ("index.html", "dasbor.js")
+    for nama in ["index.html", *sorted(p.name for p in _ADMIN.glob("dasbor*.js"))]
 )
 LIB_TS = (AKAR / "next" / "lib" / "passkey.ts").read_text(encoding="utf-8")
 MASUK_TSX = (AKAR / "next" / "components" / "admin" / "MasukView.tsx").read_text(encoding="utf-8")
