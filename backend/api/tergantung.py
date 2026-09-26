@@ -109,3 +109,38 @@ async def butuh_admin_kuat(
             "halaman keamanan, lalu masuk lagi."
         ),
     )
+
+
+async def butuh_admin_pendaftar(
+    pengguna: Annotated[dict, Depends(butuh_admin)],
+) -> dict:
+    """Untuk MENDAFTARKAN faktor kedua: passkey, TOTP, wajah.
+
+    Sesi yang lahir dari sandi saja boleh memasang faktor pertama, sebab
+    tanpa itu pemilik yang belum punya faktor apa pun tidak akan pernah bisa
+    memasangnya. Sesi yang sama TIDAK boleh memasang faktor tambahan pada akun
+    yang sudah punya.
+
+    Sampai 26 September 2026 keduanya boleh, dan akibatnya sandi saja cukup
+    untuk mengambil alih akun berpasskey: masuk dengan sandi, daftarkan
+    passkey milik sendiri, lalu masuk lewat passkey itu dengan sesi kuat.
+
+    Yang tersisa dan tidak bisa ditutup di sini: akun yang belum punya faktor
+    sama sekali tetap bisa dipasangi faktor pertama oleh siapa pun yang tahu
+    sandinya. Yang menutupnya hanya pemilik yang memasang faktornya lebih dulu.
+    """
+    if not pengaturan().faktor_kedua_wajib:
+        return pengguna
+    if pengguna.get("faktor_kedua"):
+        return pengguna
+    from backend.layanan import keamanan as lapis
+
+    if await lapis.punya_faktor(pengguna["id"]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "akun ini sudah punya faktor kedua. Masuk lewat faktor itu dulu, "
+                "baru daftarkan yang lain."
+            ),
+        )
+    return pengguna

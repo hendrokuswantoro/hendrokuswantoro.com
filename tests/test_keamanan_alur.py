@@ -190,7 +190,9 @@ def _token_dari_surat(kecuali: set | None = None) -> str:
     terbaru = _surat_terbaru(kecuali)
     pesan = pustaka_email.message_from_bytes(terbaru.read_bytes())
     isi = pesan.get_payload(decode=True).decode("utf-8", "replace")
-    return isi.split("?verifikasi=")[1].split()[0].strip()
+    # Di fragmen, bukan di query: fragmen tidak sampai ke log akses server.
+    assert "?verifikasi=" not in isi, "token verifikasi kembali ke query string"
+    return isi.split("#verifikasi=")[1].split()[0].strip()
 
 
 def _kotak_sekarang() -> set:
@@ -331,9 +333,21 @@ def test_totp_dipasang_lalu_dipakai_masuk(klien, kunci_kolom):
     assert isi["akses"] == "", "sesi terbit padahal faktor kedua belum dilewati"
     assert "totp" in isi["cara"]
 
-    lolos = klien.post("/api/v1/auth/faktor-kedua", json={
+    # Kode yang baru saja dipakai mengaktifkan sudah terpakai. Sejak
+    # 26 September 2026 ia ditolak, dan itu yang dijaga di sini lebih dulu.
+    ulang = klien.post("/api/v1/auth/faktor-kedua", json={
         "tiket": isi["tiket"], "cara": "totp",
         "kode": totp.kode_sekarang(rahasia_baru),
+    })
+    assert ulang.status_code == 401, "kode TOTP yang sudah dipakai diterima lagi"
+
+    # Kode jendela berikutnya masih di dalam toleransi satu jendela, dan
+    # belum pernah dipakai. Tanpa ini ujinya harus menunggu tiga puluh detik.
+    import time as _waktu
+
+    berikut = totp.kode_pada(rahasia_baru, int(_waktu.time() // totp.LANGKAH) + 1)
+    lolos = klien.post("/api/v1/auth/faktor-kedua", json={
+        "tiket": isi["tiket"], "cara": "totp", "kode": berikut,
     })
     assert lolos.status_code == 200, lolos.text
     assert lolos.json()["tahap"] == "selesai"

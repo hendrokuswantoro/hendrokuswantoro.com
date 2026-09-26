@@ -147,19 +147,29 @@ def test_jalur_tulis_memakai_penjaga_yang_kuat():
         )
 
 
-def test_halaman_keamanan_sengaja_memakai_penjaga_biasa():
-    """Kalau ia ikut dikuatkan, pemilik yang belum punya faktor kedua tidak
-    akan pernah bisa memasangnya. Aturannya berubah jadi pintu yang dikunci
-    dari dalam, dan satu satunya jalan keluar adalah menyunting .env di
-    server."""
+def test_halaman_keamanan_tidak_mengunci_pemilik_di_luar():
+    """Memasang faktor kedua TIDAK boleh menuntut penjaga yang kuat. Kalau
+    menuntut, pemilik yang belum punya faktor kedua tidak akan pernah bisa
+    memasangnya, dan satu satunya jalan keluar adalah menyunting .env di
+    server.
+
+    Sejak 26 September 2026 aturannya lebih rinci daripada "seluruh halaman
+    memakai penjaga biasa". Memasang memakai butuh_admin_pendaftar, yang
+    mengizinkan sesi lemah hanya untuk faktor PERTAMA. Menghapus faktor
+    memakai butuh_admin_kuat. Rinciannya per rute ada di
+    tests/test_temuan_audit.py.
+    """
     from konftes import AKAR
 
     isi = (AKAR / "backend" / "api" / "v1" / "keamanan.py").read_text(encoding="utf-8")
-    assert "butuh_admin_kuat" not in isi, (
-        "halaman keamanan memakai penjaga yang kuat, jadi faktor kedua tidak "
-        "akan pernah bisa dipasang oleh yang belum punya"
-    )
-    assert "butuh_admin" in isi
+    for fungsi in ("totp_mulai", "totp_aktifkan", "wajah_daftar"):
+        potong = isi[isi.index(f"async def {fungsi}("):]
+        potong = potong[:potong.index(")", potong.index("Depends("))]
+        assert "butuh_admin_kuat" not in potong, (
+            f"{fungsi} memakai penjaga yang kuat, jadi faktor kedua tidak akan "
+            "pernah bisa dipasang oleh yang belum punya"
+        )
+    assert "butuh_admin_pendaftar" in isi
 
 
 # ------------------------------------------------------- lewat API sungguhan ---

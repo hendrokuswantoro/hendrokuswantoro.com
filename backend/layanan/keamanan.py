@@ -43,6 +43,14 @@ UMUR_TAUTAN_JAM = 24
 UMUR_OTP_MENIT = 10
 JEDA_KIRIM_DETIK = 60
 
+# Batas tebakan faktor kedua per akun, bukan per alamat IP. Sampai
+# 26 September 2026 hanya OTP email yang punya batas; TOTP dan kode pemulihan
+# boleh ditebak tanpa henti selama tiketnya hidup, dan satu tiket bisa
+# dipakai berulang selama lima menit. Penebak yang berpindah pindah alamat
+# tetap membakar jatah akun yang sama.
+BATAS_F2 = 5
+JENDELA_F2_MENIT = 15
+
 
 class Ditolak(Exception):
     """Kode salah, kedaluwarsa, atau langkahnya tidak boleh dikerjakan."""
@@ -68,7 +76,14 @@ def _kode_angka() -> str:
 
 
 def _tautan(token: str, asal: str) -> str:
-    return f"{asal.rstrip('/')}/admin?verifikasi={token}"
+    """Tokennya di fragmen #, bukan di query ?.
+
+    Fragmen tidak pernah dikirim peramban ke server. Sampai 26 September 2026
+    tokennya ada di query, dan format log bawaan nginx mencatat query string,
+    jadi token sekali pakai itu ikut tersimpan di log akses selama sisa
+    umurnya.
+    """
+    return f"{asal.rstrip('/')}/admin#verifikasi={token}"
 
 
 # ------------------------------------------------------- verifikasi email ---
@@ -165,6 +180,31 @@ async def periksa_otp_masuk(pengguna_id: str, kode: str, alamat: str | None) -> 
     return False
 
 
+# ------------------------------------------------ batas tebakan faktor 2 ---
+
+
+def _kunci_f2(pengguna_id: str) -> str:
+    # Menumpang tabel gagal_masuk dengan awalan yang tidak mungkin jadi email.
+    return f"f2:{pengguna_id}"
+
+
+async def cek_kunci_f2(pengguna_id: str) -> None:
+    if await repo_pengguna.jumlah_gagal(_kunci_f2(pengguna_id), JENDELA_F2_MENIT) >= BATAS_F2:
+        raise Ditolak(
+            f"terlalu banyak kode salah. Tunggu {JENDELA_F2_MENIT} menit, lalu ulangi dari awal."
+        )
+
+
+async def _gagal_f2(pengguna_id: str, alamat: str | None) -> None:
+    await repo_pengguna.catat_gagal(
+        _kunci_f2(pengguna_id), alamat or inti.ringkas("tidak-diketahui")
+    )
+
+
+async def _berhasil_f2(pengguna_id: str) -> None:
+    await repo_pengguna.bersihkan_gagal(_kunci_f2(pengguna_id))
+
+
 # ------------------------------------------------------------------ TOTP ---
 
 
@@ -210,11 +250,15 @@ async def aktifkan_totp(pengguna: dict, kode: str, alamat: str | None) -> list[s
     yang tersimpan cuma sidiknya.
     """
     rahasia_nya = await _rahasia_aktif(pengguna["id"], harus_aktif=False)
-    if totp_modul.cocok(rahasia_nya, kode) is None:
+    langkah = totp_modul.cocok(rahasia_nya, kode)
+    if langkah is None:
         await repo.catat(pengguna["id"], "totp_aktifkan", False, "kode salah", alamat)
         raise Ditolak("kode dari aplikasi tidak cocok")
 
     await repo.aktifkan_totp(pengguna["id"])
+    # Kode yang dipakai mengaktifkan ikut terpakai: ia tidak boleh dipakai
+    # lagi untuk masuk dalam sembilan puluh detik berikutnya.
+    await repo.pakai_langkah_totp(pengguna["id"], langkah)
     kode_pemulihan = [totp_modul.kode_pemulihan_baru() for _ in range(totp_modul.JUMLAH_PEMULIHAN)]
     await repo.ganti_kode_pemulihan(
         pengguna["id"],
@@ -238,13 +282,24 @@ async def matikan_totp(pengguna: dict, kode: str, alamat: str | None) -> None:
 
 
 async def periksa_totp(pengguna_id: str, kode: str, alamat: str | None) -> bool:
+    """Benar kalau kodenya cocok DAN jendelanya belum pernah dipakai.
+
+    Menaikkan Ditolak kalau jatah tebakan akun ini sudah habis.
+    """
+    await cek_kunci_f2(pengguna_id)
     try:
         rahasia_nya = await _rahasia_aktif(pengguna_id, harus_aktif=True)
     except Ditolak:
         return False
-    if totp_modul.cocok(rahasia_nya, kode) is not None:
-        return True
-    await repo.catat(pengguna_id, "totp_salah", False, None, alamat)
+    langkah = totp_modul.cocok(rahasia_nya, kode)
+    if langkah is not None:
+        if await repo.pakai_langkah_totp(pengguna_id, langkah):
+            await _berhasil_f2(pengguna_id)
+            return True
+        await repo.catat(pengguna_id, "totp_salah", False, "kode sudah dipakai", alamat)
+    else:
+        await repo.catat(pengguna_id, "totp_salah", False, None, alamat)
+    await _gagal_f2(pengguna_id, alamat)
     return False
 
 
@@ -252,11 +307,16 @@ async def periksa_totp(pengguna_id: str, kode: str, alamat: str | None) -> bool:
 
 
 async def periksa_pemulihan(pengguna_id: str, kode: str, alamat: str | None) -> bool:
+    await cek_kunci_f2(pengguna_id)
     bersih = totp_modul.normalkan_pemulihan(kode)
-    if len(bersih) != totp_modul.PANJANG_BAGIAN * 2:
-        return False
-    dipakai = await repo.pakai_kode_pemulihan(pengguna_id, inti.ringkas(bersih))
-    await repo.catat(pengguna_id, "kode_pemulihan", dipakai, None, alamat)
+    dipakai = False
+    if len(bersih) == totp_modul.PANJANG_BAGIAN * 2:
+        dipakai = await repo.pakai_kode_pemulihan(pengguna_id, inti.ringkas(bersih))
+        await repo.catat(pengguna_id, "kode_pemulihan", dipakai, None, alamat)
+    if dipakai:
+        await _berhasil_f2(pengguna_id)
+    else:
+        await _gagal_f2(pengguna_id, alamat)
     return dipakai
 
 
@@ -282,6 +342,14 @@ async def faktor_kedua_yang_berlaku(pengguna: dict) -> list[str]:
     if baris and baris["wajah_didaftar_pada"] and wajah_modul.siap():
         cara.append("wajah")
 
+    # Passkey ikut dihitung sejak 26 September 2026. Sebelumnya akun yang
+    # hanya memasang passkey tetap bisa masuk dengan sandi saja, lalu dari
+    # sesi itu menghapus passkey pemiliknya dan mendaftarkan passkey sendiri.
+    # Passkey tidak bisa dipakai di langkah tiket; router yang memutuskan
+    # apa artinya kalau hanya passkey yang ada.
+    if baris and baris["passkey"]:
+        cara.append("passkey")
+
     if cara:
         return cara
 
@@ -291,6 +359,18 @@ async def faktor_kedua_yang_berlaku(pengguna: dict) -> list[str]:
         # berarti mengunci pemiliknya di luar pintunya sendiri.
         cara.append("email")
     return cara
+
+
+async def punya_faktor(pengguna_id: str) -> bool:
+    """Apakah akun ini sudah punya faktor kedua apa pun yang terpasang.
+
+    Dipakai penjaga pendaftaran faktor: sesi yang lahir dari sandi saja boleh
+    memasang faktor PERTAMA, tidak boleh memasang faktor tambahan. Kalau
+    boleh, yang tahu sandinya cukup memasang faktor miliknya sendiri lalu
+    masuk lewat faktor itu, dan faktor kedua pemiliknya tidak menjaga apa apa.
+    """
+    b = await repo.keadaan(pengguna_id)
+    return bool(b and (b["totp_aktif_pada"] or b["passkey"] or b["wajah_didaftar_pada"]))
 
 
 def cocok_aman(a: str, b: str) -> bool:
@@ -379,6 +459,18 @@ async def tantangan_wajah(pengguna_id: str) -> dict:
 
 
 async def periksa_wajah(
+    pengguna_id: str, tantangan_id: str, bingkai: list[str], alamat: str | None
+) -> bool:
+    await cek_kunci_f2(pengguna_id)
+    lolos = await _periksa_wajah(pengguna_id, tantangan_id, bingkai, alamat)
+    if lolos:
+        await _berhasil_f2(pengguna_id)
+    else:
+        await _gagal_f2(pengguna_id, alamat)
+    return lolos
+
+
+async def _periksa_wajah(
     pengguna_id: str, tantangan_id: str, bingkai: list[str], alamat: str | None
 ) -> bool:
     diminta = await repo.pakai_tantangan_wajah(pengguna_id, tantangan_id)

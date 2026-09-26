@@ -167,10 +167,28 @@ async def matikan_totp(pengguna_id: str) -> None:
         # pemulihannya ikut. Rahasia yang tertinggal adalah rahasia yang masih
         # bisa dipakai kalau kolom aktifnya suatu saat terisi lagi.
         await k.execute(
-            "UPDATE users SET totp_rahasia = NULL, totp_aktif_pada = NULL WHERE id = %s",
+            "UPDATE users SET totp_rahasia = NULL, totp_aktif_pada = NULL, "
+            "totp_langkah_terakhir = NULL WHERE id = %s",
             (pengguna_id,),
         )
         await k.execute("DELETE FROM kode_pemulihan WHERE pengguna_id = %s", (pengguna_id,))
+
+
+async def pakai_langkah_totp(pengguna_id: str, langkah: int) -> bool:
+    """Menandai satu jendela TOTP terpakai. False kalau sudah pernah.
+
+    Satu UPDATE bersyarat, bukan baca lalu tulis: dua permintaan yang
+    membawa kode yang sama pada saat bersamaan tidak boleh sama sama lolos.
+    Syaratnya "lebih kecil", bukan "tidak sama", supaya kode dari jendela
+    yang lebih tua daripada yang terakhir dipakai juga ditolak.
+    """
+    async with koneksi() as s, s.cursor() as k:
+        await k.execute(
+            "UPDATE users SET totp_langkah_terakhir = %s WHERE id = %s "
+            "AND (totp_langkah_terakhir IS NULL OR totp_langkah_terakhir < %s)",
+            (langkah, pengguna_id, langkah),
+        )
+        return k.rowcount == 1
 
 
 async def rahasia_totp(pengguna_id: str) -> dict[str, Any] | None:

@@ -30,11 +30,24 @@ WorkingDirectory=/srv/hendrokuswantoro/app
 ; izin 0640 dan hanya bisa dibaca grup hk.
 EnvironmentFile=/etc/hendrokuswantoro/env
 
+; --forwarded-allow-ips='*', bukan '127.0.0.1'.
+;
+; Lewat --uds, uvicorn tidak punya alamat klien sama sekali: scope["client"]
+; bernilai None, dan '127.0.0.1' tidak pernah cocok dengan None. Sampai
+; 26 September 2026 akibatnya X-Forwarded-For dari nginx diabaikan, SETIAP
+; permintaan terbaca tanpa alamat, pembatas laju di aplikasi meloloskan
+; semuanya, dan seluruh jejak keamanan memakai satu ringkasan alamat yang sama.
+;
+; '*' aman di sini karena satu satunya yang bisa membuka soketnya adalah
+; nginx (izin 0660, lihat ExecStartPost). Syaratnya satu: nginx harus MENIMPA
+; X-Forwarded-For dengan $remote_addr, bukan menambahkannya. Dengan '*',
+; uvicorn memakai alamat paling kiri, dan $proxy_add_x_forwarded_for
+; mempertahankan alamat karangan klien di posisi itu.
 ExecStart=/srv/hendrokuswantoro/venv/bin/python -m uvicorn backend.main:aplikasi \
     --uds /run/hk-api/api.sock \
     --workers 2 \
     --proxy-headers \
-    --forwarded-allow-ips='127.0.0.1' \
+    --forwarded-allow-ips='*' \
     --no-access-log
 
 ; Nginx berjalan sebagai www-data dan harus bisa menulis ke soketnya.

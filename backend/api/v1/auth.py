@@ -95,6 +95,22 @@ async def login(
     # Sandi yang benar belum tentu cukup. Kalau ada faktor kedua yang berlaku,
     # yang terbit tiket, bukan sesi.
     cara = await lapis.faktor_kedua_yang_berlaku(pengguna)
+
+    # Passkey tidak bisa diselesaikan di langkah tiket: ia punya jalurnya
+    # sendiri. Akun yang HANYA punya passkey tidak boleh masuk lewat sandi
+    # saja, sebab sesi itu cukup untuk mencabut passkey pemiliknya.
+    # FAKTOR_KEDUA_WAJIB=false tetap jadi jalan pulang untuk perangkat yang
+    # hilang, sama seperti untuk TOTP yang hilang.
+    if cara == ["passkey"] and pengaturan().faktor_kedua_wajib:
+        await lapis.catat_peristiwa(
+            str(pengguna["id"]), "sandi_benar", False, "akun memakai passkey",
+            alamat, permintaan.headers.get("user-agent", ""),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="akun ini memakai passkey. Masuk dengan tombol passkey.",
+        )
+    cara = [c for c in cara if c != "passkey"]
     if cara:
         tiket, umur = inti.buat_tiket_faktor_kedua(str(pengguna["id"]), cara)
         await lapis.catat_peristiwa(
@@ -164,23 +180,29 @@ async def faktor_kedua(
     if isian.cara not in muatan.get("cara", []):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="cara tidak tersedia")
 
-    if isian.cara == "wajah":
-        if not isian.tantangan or not isian.bingkai:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="butuh tantangan dan bingkai",
+    try:
+        if isian.cara == "wajah":
+            if not isian.tantangan or not isian.bingkai:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="butuh tantangan dan bingkai",
+                )
+            lolos = await lapis.periksa_wajah(
+                pengguna_id, isian.tantangan, isian.bingkai, alamat
             )
-        lolos = await lapis.periksa_wajah(
-            pengguna_id, isian.tantangan, isian.bingkai, alamat
-        )
-    elif not isian.kode:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="kode kosong")
-    elif isian.cara == "totp":
-        lolos = await lapis.periksa_totp(pengguna_id, isian.kode, alamat)
-    elif isian.cara == "email":
-        lolos = await lapis.periksa_otp_masuk(pengguna_id, isian.kode, alamat)
-    else:
-        lolos = await lapis.periksa_pemulihan(pengguna_id, isian.kode, alamat)
+        elif not isian.kode:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="kode kosong")
+        elif isian.cara == "totp":
+            lolos = await lapis.periksa_totp(pengguna_id, isian.kode, alamat)
+        elif isian.cara == "email":
+            lolos = await lapis.periksa_otp_masuk(pengguna_id, isian.kode, alamat)
+        else:
+            lolos = await lapis.periksa_pemulihan(pengguna_id, isian.kode, alamat)
+    except lapis.Ditolak as ditolak:
+        # Jatah tebakan akun ini habis.
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(ditolak)
+        ) from ditolak
 
     if not lolos:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="kode salah")
@@ -193,8 +215,11 @@ async def faktor_kedua(
         pengguna, isian.cara, alamat, permintaan.headers.get("user-agent", "")
     )
 
-    # Faktor keduanya baru saja dibuktikan, jadi sesinya kuat.
-    hasil = await layanan.terbitkan(pengguna, faktor_kedua=True)
+    # Faktor keduanya baru saja dibuktikan, jadi sesinya kuat. KECUALI wajah:
+    # layar pendaftarannya sendiri mengatakan wajah bisa ditembus rekaman
+    # video, jadi sandi ditambah video pemiliknya dari media sosial tidak boleh
+    # membuka jalur yang menerbitkan tulisan. Wajah tetap membuka dashboard.
+    hasil = await layanan.terbitkan(pengguna, faktor_kedua=(isian.cara != "wajah"))
     pasang_cookie(jawaban, hasil)
     await lapis.catat_peristiwa(
         pengguna_id, "masuk", True, isian.cara, alamat, permintaan.headers.get("user-agent", "")

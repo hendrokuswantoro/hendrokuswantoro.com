@@ -94,13 +94,18 @@ export function PanelKeamanan() {
   }, [muat]);
 
   /* Tautan verifikasi dibuka dari kotak surat, dan mendarat di /admin dengan
-     ?verifikasi=... di alamatnya. Ditangani di sini lalu dihapus dari alamat,
-     supaya tokennya tidak tertinggal di riwayat peramban. */
+     #verifikasi=... di alamatnya. Fragmen, bukan query: fragmen tidak pernah
+     dikirim ke server, jadi tokennya tidak masuk log akses nginx. Query tetap
+     dibaca untuk tautan lama yang dikirim sebelum 26 September 2026 dan
+     masih hidup. Ditangani di sini lalu dihapus dari alamat, supaya tokennya
+     tidak tertinggal di riwayat peramban. */
   useEffect(() => {
     const alamat = new URL(window.location.href);
-    const token = alamat.searchParams.get("verifikasi");
+    const fragmen = new URLSearchParams(alamat.hash.slice(1));
+    const token = fragmen.get("verifikasi") || alamat.searchParams.get("verifikasi");
     if (!token) return;
     alamat.searchParams.delete("verifikasi");
+    alamat.hash = "";
     window.history.replaceState(null, "", alamat.toString());
     konfirmasiEmail(token)
       .then(() => {

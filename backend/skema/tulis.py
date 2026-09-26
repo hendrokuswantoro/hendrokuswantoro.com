@@ -14,6 +14,14 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
 
+# Batas panjang, ditambahkan 26 September 2026. Sebelumnya isi dan paragraf
+# pembuka tidak punya batas sama sekali, dan yang menahannya hanya
+# client_max_body_size di nginx. Dua ratus ribu karakter kira kira tiga puluh
+# ribu kata, jauh di atas tulisan terpanjang di situs ini.
+PANJANG_ISI = 200_000
+PANJANG_LEDE = 2_000
+
+
 class TulisanMasuk(BaseModel):
     """Satu tulisan, dua bahasa, keduanya wajib.
 
@@ -31,10 +39,10 @@ class TulisanMasuk(BaseModel):
     ringkas_id: str = Field(min_length=1, max_length=300)
     keterangan_en: str = Field(min_length=1, max_length=300)
     keterangan_id: str = Field(min_length=1, max_length=300)
-    lede_en: str = Field(min_length=1)
-    lede_id: str = Field(min_length=1)
-    isi_en: str = Field(min_length=1)
-    isi_id: str = Field(min_length=1)
+    lede_en: str = Field(min_length=1, max_length=PANJANG_LEDE)
+    lede_id: str = Field(min_length=1, max_length=PANJANG_LEDE)
+    isi_en: str = Field(min_length=1, max_length=PANJANG_ISI)
+    isi_id: str = Field(min_length=1, max_length=PANJANG_ISI)
 
     tag_en: str = Field(min_length=1, max_length=50)
     tag_id: str = Field(min_length=1, max_length=50)
@@ -92,10 +100,10 @@ class TulisanUbah(BaseModel):
     ringkas_id: str | None = Field(default=None, min_length=1, max_length=300)
     keterangan_en: str | None = Field(default=None, min_length=1, max_length=300)
     keterangan_id: str | None = Field(default=None, min_length=1, max_length=300)
-    lede_en: str | None = Field(default=None, min_length=1)
-    lede_id: str | None = Field(default=None, min_length=1)
-    isi_en: str | None = Field(default=None, min_length=1)
-    isi_id: str | None = Field(default=None, min_length=1)
+    lede_en: str | None = Field(default=None, min_length=1, max_length=PANJANG_LEDE)
+    lede_id: str | None = Field(default=None, min_length=1, max_length=PANJANG_LEDE)
+    isi_en: str | None = Field(default=None, min_length=1, max_length=PANJANG_ISI)
+    isi_id: str | None = Field(default=None, min_length=1, max_length=PANJANG_ISI)
     tag_en: str | None = Field(default=None, min_length=1, max_length=50)
     tag_id: str | None = Field(default=None, min_length=1, max_length=50)
     baca_en: str | None = Field(default=None, min_length=1, max_length=30)

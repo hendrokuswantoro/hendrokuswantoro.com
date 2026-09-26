@@ -9,12 +9,12 @@ from __future__ import annotations
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.api.tergantung import butuh_admin, butuh_admin_kuat
 from backend.layanan import pratinjau as layanan_pratinjau
 from backend.layanan import tulis as layanan
-from backend.skema.tulis import TulisanMasuk, TulisanUbah
+from backend.skema.tulis import PANJANG_ISI, TulisanMasuk, TulisanUbah
 
 # butuh_admin_kuat, bukan butuh_admin: seluruh rute di berkas ini mengubah
 # isi situs, dan permukaan itu menuntut sesi yang lahir lewat faktor kedua.
@@ -32,8 +32,8 @@ class UbahStatus(BaseModel):
 class Pratinjau(BaseModel):
     """Dua bahasa sekaligus, sebab yang diperiksa justru kesebangunannya."""
 
-    isi_en: str = ""
-    isi_id: str = ""
+    isi_en: str = Field(default="", max_length=PANJANG_ISI)
+    isi_id: str = Field(default="", max_length=PANJANG_ISI)
 
 
 def _ke_http(galat: Exception) -> HTTPException:

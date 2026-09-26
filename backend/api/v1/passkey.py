@@ -17,7 +17,7 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel, Field
 
-from backend.api.tergantung import butuh_admin
+from backend.api.tergantung import butuh_admin, butuh_admin_kuat, butuh_admin_pendaftar
 from backend.api.v1.auth import JawabanMasuk, pasang_cookie
 from backend.layanan import passkey as layanan
 
@@ -57,7 +57,7 @@ async def siap() -> dict:
 
 @rute.post("/daftar/mulai", summary="Mulai mendaftarkan perangkat ini")
 async def daftar_mulai(
-    pengguna: Annotated[dict, Depends(butuh_admin)],
+    pengguna: Annotated[dict, Depends(butuh_admin_pendaftar)],
     jenis: str = "perangkat",
 ) -> dict:
     """`jenis=perangkat` meminta sensor yang menempel pada perangkatnya, yaitu
@@ -76,7 +76,7 @@ async def daftar_mulai(
 @rute.post("/daftar/selesai", status_code=status.HTTP_201_CREATED,
            summary="Selesaikan pendaftaran perangkat")
 async def daftar_selesai(
-    badan: JawabanDaftar, pengguna: Annotated[dict, Depends(butuh_admin)]
+    badan: JawabanDaftar, pengguna: Annotated[dict, Depends(butuh_admin_pendaftar)]
 ) -> dict:
     _siap()
     try:
@@ -129,7 +129,7 @@ async def daftar(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
 @rute.delete("/{kredensial_id}", status_code=status.HTTP_204_NO_CONTENT,
              summary="Cabut satu passkey")
 async def cabut(
-    kredensial_id: str, pengguna: Annotated[dict, Depends(butuh_admin)]
+    kredensial_id: str, pengguna: Annotated[dict, Depends(butuh_admin_kuat)]
 ) -> None:
     if not await layanan.hapus(str(pengguna["id"]), kredensial_id):
         # 404, bukan 403. Membedakan "bukan milikmu" dari "tidak ada" akan

@@ -326,9 +326,25 @@ def sebaris(teks: str) -> str:
 
 
 def polos(teks: str) -> str:
-    """Teks tanpa markup, untuk atribut data-ind. Tanda kutipnya di-escape."""
+    """Teks tanpa markup, aman untuk atribut biasa. Tanda kutipnya di-escape."""
     bersih = SEBARIS.sub(_telanjangi, teks)
     return html.escape(bersih, quote=True)
+
+
+def untuk_ind(teks: str) -> str:
+    """Teks tanpa markup untuk atribut data-ind, di-escape DUA kali.
+
+    Satu kali tidak cukup, dan itu ditemukan audit 26 September 2026.
+    Peramban membuka satu lapis escape saat atribut dibaca, lalu
+    assets/js/app.js memasang nilainya lewat innerHTML. Dengan satu lapis,
+    `&lt;a href=...&gt;` di atribut kembali jadi tag sungguhan di halaman
+    berbahasa Indonesia. Dengan dua lapis, yang sampai ke innerHTML masih
+    `&lt;`, dan yang tergambar tanda kurang dari, bukan tag.
+
+    Untuk data-ind-alt dan atribut lain yang dipasang lewat setAttribute,
+    pakai polos(): di sana tidak ada innerHTML yang membuka lapis kedua.
+    """
+    return html.escape(polos(teks), quote=True)
 
 
 def _telanjangi(cocok: re.Match[str]) -> str:

@@ -84,7 +84,22 @@ async def periksa_sandi(email: str, sandi: str, alamat_hash: str) -> dict:
     """
     atur = pengaturan()
 
-    if await repo.jumlah_gagal(email, atur.masuk_jendela_menit) >= atur.masuk_gagal_maks:
+    # Dua batas, bukan satu.
+    #
+    # Sampai 26 September 2026 hanya ada batas per email. Email admin tertulis
+    # terbuka di situsnya sendiri, jadi siapa pun bisa mengirim lima sandi
+    # salah tiap lima belas menit dan mengunci pemiliknya di luar selamanya.
+    #
+    # Sekarang batas yang ketat berlaku per pasangan email dan alamat: penebak
+    # dari satu alamat berhenti sesudah lima kali, dan pemiliknya dari alamat
+    # lain tidak ikut terkunci. Batas per email tetap ada, dua puluh kali
+    # lebih longgar, untuk penebak yang berpindah pindah alamat. Keduanya
+    # bersandar pada alamat klien yang benar, lihat hk-api.service.
+    jendela = atur.masuk_jendela_menit
+    if (
+        await repo.jumlah_gagal(email, jendela, alamat_hash) >= atur.masuk_gagal_maks
+        or await repo.jumlah_gagal(email, jendela) >= atur.masuk_gagal_maks * 20
+    ):
         raise Ditolak("terlalu banyak percobaan masuk", terkunci=True)
 
     pengguna = await repo.cari_email(email)

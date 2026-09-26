@@ -150,13 +150,18 @@ async def catat_gagal(email: str, alamat_hash: str) -> None:
         )
 
 
-async def jumlah_gagal(email: str, menit: int) -> int:
+async def jumlah_gagal(email: str, menit: int, alamat_hash: str | None = None) -> int:
+    """Percobaan gagal untuk satu email, atau untuk satu email DARI satu alamat."""
+    sql = (
+        "SELECT count(*) AS n FROM gagal_masuk "
+        "WHERE lower(email) = lower(%s) AND pada > now() - make_interval(mins => %s)"
+    )
+    argumen: list = [email, menit]
+    if alamat_hash:
+        sql += " AND alamat_hash = %s"
+        argumen.append(alamat_hash)
     async with koneksi() as s, s.cursor() as k:
-        await k.execute(
-            "SELECT count(*) AS n FROM gagal_masuk "
-            "WHERE lower(email) = lower(%s) AND pada > now() - make_interval(mins => %s)",
-            (email, menit),
-        )
+        await k.execute(sql, argumen)
         return (await k.fetchone())["n"]
 
 

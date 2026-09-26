@@ -38,8 +38,12 @@ class Pengaturan(BaseSettings):
     dsn: str = Field(default="", alias="DSN")
     redis_url: str = Field(default="", alias="REDIS_URL")
 
+    # Bawaannya hanya alamat situs yang terbit. Sampai 26 September 2026
+    # alamat pengembangan http://127.0.0.1:8081 ikut di bawaan ini, jadi
+    # produksi yang lupa mengisi ASAL_DIIZINKAN diam diam mengizinkan asal
+    # http dengan kredensial. Mesin pengembangan menambahkannya lewat .env.
     asal_diizinkan: list[str] = Field(
-        default=["http://127.0.0.1:8081", "https://www.hendrokuswantoro.com"],
+        default=["https://www.hendrokuswantoro.com"],
         alias="ASAL_DIIZINKAN",
     )
 

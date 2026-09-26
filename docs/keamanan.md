@@ -173,6 +173,34 @@ tetap berlaku selamanya, dan rotasinya tidak menutup apa apa.
 Yang lama **hanya** dipakai memeriksa, tidak pernah untuk menandatangani, jadi
 rotasinya selalu bergerak satu arah.
 
+## Audit 26 September 2026
+
+Audit pra peluncuran, sepuluh temuan, semuanya diperbaiki hari itu juga.
+Tidak ada yang Critical. Uji untuk tiap temuan ada di
+`tests/test_temuan_audit.py`.
+
+| # | Tingkat | Temuan | Perbaikannya |
+| --- | --- | --- | --- |
+| 1 | High | Akun berpasskey bisa diambil alih dengan sandi saja: masuk dengan sandi, hapus passkey pemiliknya, daftarkan passkey sendiri | Passkey ikut dihitung sebagai faktor. `butuh_admin_pendaftar` hanya mengizinkan faktor pertama dari sesi lemah. Menghapus faktor menuntut sesi kuat |
+| 2 | Medium | Lewat soket Unix, uvicorn tidak punya alamat klien, jadi pembatas laju aplikasi mati dan jejak keamanan memakai satu alamat untuk semua orang | `--forwarded-allow-ips='*'`, dan nginx menimpa `X-Forwarded-For` dengan `$remote_addr` |
+| 3 | Medium | TOTP dan kode pemulihan boleh ditebak tanpa batas selama tiketnya hidup | Lima kali salah per akun dalam lima belas menit, dicatat di `gagal_masuk` |
+| 4 | Medium | Wajah, yang bisa ditembus rekaman video, menerbitkan sesi kuat | Masuk lewat wajah menerbitkan sesi lemah |
+| 5 | Medium | Siapa pun yang tahu email admin bisa menguncinya di luar dengan lima sandi salah tiap lima belas menit | Batas ketat per pasangan email dan alamat, batas per email dua puluh kali lebih longgar |
+| 6 | Low | Kode TOTP yang sudah dipakai diterima lagi, padahal keterangan di `totp.py` berjanji menolaknya | Kolom `totp_langkah_terakhir`, migrasi 0008 |
+| 7 | Low | Tag, label tanggal, lama baca, judul, dan paragraf pembuka masuk halaman blog tanpa escape, dan escape `data-ind` dibatalkan `innerHTML` | Semua kolom di-escape, `data-ind` dua kali lewat `markah.untuk_ind()`, JSON-LD lewat `json.dumps` |
+| 8 | Low | Token verifikasi email di query string, jadi tercatat di log akses nginx | Tokennya di fragmen `#`, yang tidak pernah dikirim ke server |
+| 9 | Low | Nilai bawaan CORS memuat alamat pengembangan http | Bawaannya hanya situs yang terbit |
+| 10 | Low | Isi tulisan dan pratinjau tanpa batas panjang | 200.000 karakter untuk isi, 2.000 untuk paragraf pembuka |
+
+Yang tidak bisa ditutup kode: akun yang belum punya faktor sama sekali tetap
+bisa dipasangi faktor pertama oleh siapa pun yang tahu sandinya. Satu satunya
+penutupnya adalah pemilik yang memasang passkey atau TOTP lebih dulu.
+
+Yang diperiksa dan bersih: secret di berkas dan di seluruh riwayat git, SQL
+injection, command injection, IDOR, cookie, header keamanan, dependensi
+(`pip-audit` dan `npm audit`, nol kerentanan), dan kebocoran di log serta
+jawaban galat selain temuan 8.
+
 ## Temuan yang sudah ditutup
 
 ### MapLibre GL JS, GHSA-jrc7-96c5-q579, CRITICAL — **selesai 12 September 2026**

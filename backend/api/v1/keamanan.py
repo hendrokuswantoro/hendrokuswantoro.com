@@ -13,7 +13,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
-from backend.api.tergantung import alamat_teringkas, butuh_admin
+from backend.api.tergantung import (
+    alamat_teringkas,
+    butuh_admin,
+    butuh_admin_kuat,
+    butuh_admin_pendaftar,
+)
 from backend.core import cabut as daftar_cabut
 from backend.core import rahasia, surat
 from backend.layanan import wajah as wajah_modul
@@ -32,8 +37,13 @@ def _asal(permintaan: Request) -> str:
     membiarkan penyerang memilih sendiri alamat tautan verifikasi yang
     dikirimkan ke kotak surat pemilik akun.
     """
-    izin = pengaturan().asal_diizinkan
-    return izin[-1] if izin else "https://www.hendrokuswantoro.com"
+    # Yang pertama berawalan https dan bukan mesin sendiri, bukan yang
+    # terakhir di daftar. Memilih menurut urutan berarti satu baris .env yang
+    # ditulis dengan urutan lain membuat tautan di surat menunjuk localhost.
+    for asal in pengaturan().asal_diizinkan:
+        if asal.startswith("https://") and "localhost" not in asal and "127.0.0.1" not in asal:
+            return asal
+    return "https://www.hendrokuswantoro.com"
 
 
 @rute.get("", summary="Keadaan keamanan akun")
@@ -122,7 +132,7 @@ async def konfirmasi(
 
 
 @rute.post("/totp/mulai", summary="Buat rahasia TOTP baru")
-async def totp_mulai(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
+async def totp_mulai(pengguna: Annotated[dict, Depends(butuh_admin_pendaftar)]) -> dict:
     penuh = await lapis.pengguna(pengguna["id"])
     if not penuh:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="tidak ada")
@@ -141,7 +151,7 @@ class KodeTotp(BaseModel):
 @rute.post("/totp/aktifkan", summary="Aktifkan TOTP dan cetak kode pemulihan")
 async def totp_aktifkan(
     isian: KodeTotp,
-    pengguna: Annotated[dict, Depends(butuh_admin)],
+    pengguna: Annotated[dict, Depends(butuh_admin_pendaftar)],
     alamat: Annotated[str, Depends(alamat_teringkas)],
 ) -> dict:
     penuh = await lapis.pengguna(pengguna["id"])
@@ -165,7 +175,7 @@ async def totp_aktifkan(
 @rute.post("/totp/matikan", summary="Matikan TOTP")
 async def totp_matikan(
     isian: KodeTotp,
-    pengguna: Annotated[dict, Depends(butuh_admin)],
+    pengguna: Annotated[dict, Depends(butuh_admin_kuat)],
     alamat: Annotated[str, Depends(alamat_teringkas)],
 ) -> dict:
     penuh = await lapis.pengguna(pengguna["id"])
@@ -203,7 +213,7 @@ class BingkaiWajah(BaseModel):
 @rute.post("/wajah/daftar", summary="Daftarkan wajah sebagai faktor kedua")
 async def wajah_daftar(
     isian: BingkaiWajah,
-    pengguna: Annotated[dict, Depends(butuh_admin)],
+    pengguna: Annotated[dict, Depends(butuh_admin_pendaftar)],
     alamat: Annotated[str, Depends(alamat_teringkas)],
 ) -> dict:
     """Fotonya TIDAK disimpan. Yang tersimpan 128 angka, dan itu pun tersandi.
@@ -229,7 +239,7 @@ async def wajah_daftar(
 
 @rute.post("/wajah/hapus", summary="Hapus wajah yang terdaftar")
 async def wajah_hapus(
-    pengguna: Annotated[dict, Depends(butuh_admin)],
+    pengguna: Annotated[dict, Depends(butuh_admin_kuat)],
     alamat: Annotated[str, Depends(alamat_teringkas)],
 ) -> dict:
     """Menghapus barisnya, bukan menandainya nonaktif.

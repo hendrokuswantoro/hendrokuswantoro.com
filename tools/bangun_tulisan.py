@@ -15,6 +15,8 @@ hari dan tidak menimbulkan galat apa pun.
 from __future__ import annotations
 
 import argparse
+import html
+import json
 import pathlib
 import re
 import sys
@@ -78,7 +80,7 @@ def badan(mentah: str, lain: str) -> str:
                 f"Inggris {len(en.butir)}, Indonesia {len(idn.butir)}"
             )
 
-        ind = markah.polos(idn.teks)
+        ind = markah.untuk_ind(idn.teks)
         isi = markah.sebaris(en.teks)
 
         if en.jenis == "h2":
@@ -93,7 +95,7 @@ def badan(mentah: str, lain: str) -> str:
             keluar.append(f'        <{en.jenis} class="tulisan__daftar">')
             for a, b in zip(en.butir, idn.butir):
                 keluar.append(
-                    f'          <li data-ind="{markah.polos(b)}">{markah.sebaris(a)}</li>'
+                    f'          <li data-ind="{markah.untuk_ind(b)}">{markah.sebaris(a)}</li>'
                 )
             keluar.append(f"        </{en.jenis}>")
         elif en.jenis in ("gambar", "video"):
@@ -119,7 +121,14 @@ def media(en: markah.Blok, idn: markah.Blok) -> list[str]:
     yaitu pernyataan "ini hiasan", bukan alt berisi nama berkasnya.
     """
     alt = markah.polos(en.teks)
-    ind = markah.polos(idn.teks)
+    # data-ind-alt dipasang lewat setAttribute, data-ind keterangan lewat
+    # innerHTML, jadi escape-nya berbeda. Lihat markah.untuk_ind.
+    ind_alt = markah.polos(idn.teks)
+    ind = markah.untuk_ind(idn.teks)
+    # Alamatnya sudah dibatasi pengurai ke /unggahan/ dan /assets/img/, tetapi
+    # pola alamatnya menerima tanda kutip. Di-escape supaya tidak bisa keluar
+    # dari atribut src.
+    src = html.escape(en.alamat, quote=True)
     baris = ['        <figure class="tulisan__media">']
 
     if en.jenis == "gambar":
@@ -129,7 +138,7 @@ def media(en: markah.Blok, idn: markah.Blok) -> list[str]:
         # punya ukuran di namanya tetap terbit, hanya tanpa janji itu.
         sifat = f' width="{ukur[0]}" height="{ukur[1]}"' if ukur else ""
         baris.append(
-            f'          <img src="{en.alamat}" alt="{alt}" data-ind-alt="{ind}"'
+            f'          <img src="{src}" alt="{alt}" data-ind-alt="{ind_alt}"'
             f'{sifat} loading="lazy" decoding="async">'
         )
     else:
@@ -138,7 +147,7 @@ def media(en: markah.Blok, idn: markah.Blok) -> list[str]:
         # sendiri di halaman yang mungkin tidak pernah digulir sampai ke sana
         # adalah kuota pembaca yang dipakai tanpa pernah dimintai izin.
         baris.append(
-            f'          <video src="{en.alamat}" controls preload="metadata"'
+            f'          <video src="{src}" controls preload="metadata"'
             ' playsinline></video>'
         )
 
@@ -154,7 +163,7 @@ def media(en: markah.Blok, idn: markah.Blok) -> list[str]:
 def tautan_lain(ini: Tulisan, semua: list[Tulisan]) -> str:
     baris = [
         '            <a href="/blog/%s" data-ind="%s">%s</a>'
-        % (t.slug, markah.polos(t.judul.id), markah.sebaris(t.judul.en))
+        % (t.slug, markah.untuk_ind(t.judul.id), markah.sebaris(t.judul.en))
         for t in semua
         if t.slug != ini.slug
     ]
@@ -165,18 +174,27 @@ def halaman(t: Tulisan, semua: list[Tulisan], css: str, js: str) -> str:
     nilai = {
         "slug": t.slug,
         "tanggal": t.tanggal,
-        "tanggal_label_en": t.tanggal_label.en,
-        "tanggal_label_id": t.tanggal_label.id,
-        "tag_en": t.tag.en,
-        "tag_id": t.tag.id,
-        "baca_en": t.baca.en,
-        "baca_id": t.baca.id,
-        "judul_en": t.judul.en,
-        "judul_id": t.judul.id,
-        "keterangan_en": t.keterangan.en,
-        "keterangan_id": t.keterangan.id,
-        "lede_en": t.lede.en,
-        "lede_id": t.lede.id,
+        # Seluruh kolom teks di-escape sebelum masuk template. Sampai
+        # 26 September 2026 semuanya disisipkan apa adanya, termasuk ke dalam
+        # atribut content dan ke dalam JSON-LD, jadi satu tanda kutip di judul
+        # sudah cukup untuk keluar dari atributnya. Yang Inggris satu lapis,
+        # yang Indonesia di data-ind dua lapis, lihat markah.untuk_ind.
+        "tanggal_label_en": html.escape(t.tanggal_label.en, quote=True),
+        "tanggal_label_id": markah.untuk_ind(t.tanggal_label.id),
+        "tag_en": html.escape(t.tag.en, quote=True),
+        "tag_id": markah.untuk_ind(t.tag.id),
+        "baca_en": html.escape(t.baca.en, quote=True),
+        "baca_id": markah.untuk_ind(t.baca.id),
+        "judul_en": html.escape(t.judul.en, quote=True),
+        "judul_id": markah.untuk_ind(t.judul.id),
+        # JSON di dalam <script>: tanda kutip lewat json.dumps, dan < > &
+        # jadi \u003c dan kawannya supaya "</script>" tidak menutup bloknya.
+        "judul_json": json.dumps(t.judul.en, ensure_ascii=False)[1:-1]
+        .replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026"),
+        "keterangan_en": html.escape(t.keterangan.en, quote=True),
+        "keterangan_id": markah.untuk_ind(t.keterangan.id),
+        "lede_en": html.escape(t.lede.en, quote=True),
+        "lede_id": markah.untuk_ind(t.lede.id),
         "isi": badan(t.isi_en, t.isi_id),
         "lain": tautan_lain(t, semua),
         "versi_css": css,
@@ -202,16 +220,17 @@ def kartu(t: Tulisan) -> str:
         '        <a class="post" href="/blog/%s">' % t.slug,
         '          <span class="post__meta">',
         '            <span class="tag" data-ind="%s">%s</span>'
-        % (markah.polos(t.tag.id), t.tag.en),
+        % (markah.untuk_ind(t.tag.id), html.escape(t.tag.en, quote=True)),
         '            <time datetime="%s" data-ind="%s">%s</time>'
-        % (t.tanggal, markah.polos(t.tanggal_label.id), t.tanggal_label.en),
+        % (t.tanggal, markah.untuk_ind(t.tanggal_label.id),
+           html.escape(t.tanggal_label.en, quote=True)),
         '            <span data-ind="%s">%s</span>'
-        % (markah.polos(t.baca.id), t.baca.en),
+        % (markah.untuk_ind(t.baca.id), html.escape(t.baca.en, quote=True)),
         '          </span>',
         '          <h2 data-ind="%s">%s</h2>'
-        % (markah.polos(t.judul.id), markah.sebaris(t.judul.en)),
+        % (markah.untuk_ind(t.judul.id), markah.sebaris(t.judul.en)),
         '          <p data-ind="%s">%s</p>'
-        % (markah.polos(t.ringkas.id), markah.sebaris(t.ringkas.en)),
+        % (markah.untuk_ind(t.ringkas.id), markah.sebaris(t.ringkas.en)),
         '          <span class="post__more" data-ind="Baca selengkapnya">Read more</span>',
         '        </a>',
     ]

@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 819, tanpa peramban, hitungan detik
+python -m pytest                 # 857, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 85, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
@@ -56,12 +56,12 @@ content/template/         template ber-{{slot}}
 backend/api/v1/           router, HTTP saja
 backend/layanan/          aturan bisnis, tidak tahu SQL
 backend/repositori/       satu satunya yang tahu SQL
-backend/db/migrations/    0001 sampai 0007, nomornya wajib unik
+backend/db/migrations/    0001 sampai 0008, nomornya wajib unik
 backend/admin/            dashboard HTML, gaya dan skripnya berkas sendiri
 unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    904 uji
+tests/                    942 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -160,6 +160,15 @@ sengaja TIDAK memakainya: kalau ia ikut ditutup, pemilik yang belum punya
 faktor kedua tidak akan pernah bisa memasangnya, dan aturannya berubah jadi
 pintu yang dikunci dari dalam.
 
+**Memasang faktor memakai `butuh_admin_pendaftar`, menghapusnya memakai
+`butuh_admin_kuat`.** Sesi yang lahir dari sandi saja boleh memasang faktor
+PERTAMA, tidak boleh memasang faktor tambahan. Sampai 26 September 2026
+keduanya boleh, dan akibatnya sandi saja cukup untuk mengambil alih akun
+berpasskey: masuk dengan sandi, hapus passkey pemiliknya, daftarkan passkey
+sendiri, lalu masuk lewat passkey itu dengan sesi kuat. Untuk alasan yang sama,
+akun yang hanya punya passkey tidak bisa masuk dengan sandi, dan wajah tidak
+pernah menerbitkan sesi kuat. `tests/test_temuan_audit.py` menahan ketiganya.
+
 `tests/conftest.py` mematikan aturan itu untuk seluruh uji lain, dengan alasan
 yang tertulis di sana. Mematikan sebuah penjaga di dalam uji hanya sah selama
 ada uji lain yang menguji penjaganya sendiri.
@@ -169,6 +178,13 @@ token adalah JWT dan tidak pernah ditanyakan ke basis data, jadi mencabut sesi
 tanpa mencatatnya hanya mematikan refresh token-nya dan menyisakan token akses
 yang hidup sampai lima belas menit berikutnya. Tombol "keluarkan perangkat
 lain" ditekan justru saat orangnya curiga.
+
+**Nilai `data-ind` di-escape dua kali, lewat `markah.untuk_ind()`.**
+Peramban membuka satu lapis saat atribut dibaca, dan `app.js` memasangnya
+lewat `innerHTML`, yang membuka lapis kedua. Dengan satu lapis, `&lt;a&gt;` di
+atribut kembali jadi tag sungguhan di halaman berbahasa Indonesia. Untuk
+`data-ind-alt` dan atribut lain yang dipasang lewat `setAttribute`, pakai
+`markah.polos()`.
 
 **Metadata foto dibuang hanya kalau diminta, dan tidak pernah setengah.**
 `backend/layanan/metadata.py` mendukung JPEG, PNG, dan WebP. GIF dan AVIF
@@ -356,6 +372,16 @@ dikerjakan sejak 26 September 2026 adalah kebalikannya: tiap gambar karya
 membawa nama situsnya di pojok kanan bawah, digambar `tools/build_work_images.py`,
 jadi gambar yang tertangkap tetap menyebut asalnya. Jangan menambahkan skrip
 yang mengaku menghalangi tangkapan layar.
+
+**Di balik nginx, uvicorn mendengarkan lewat soket Unix, dan di sana ia
+tidak punya alamat klien sama sekali.** `--forwarded-allow-ips='127.0.0.1'`
+tidak pernah cocok dengan alamat yang kosong, jadi sampai 26 September 2026
+seluruh permintaan terbaca tanpa alamat: pembatas laju di aplikasi meloloskan
+semuanya, dan jejak keamanan memakai satu ringkasan alamat untuk semua orang.
+Sekarang uvicorn mempercayai `'*'`, dan nginx wajib MENIMPA `X-Forwarded-For`
+dengan `$remote_addr`, bukan menambahkannya lewat
+`$proxy_add_x_forwarded_for`: dengan `'*'`, uvicorn memakai alamat paling
+kiri, dan yang paling kiri itu karangan klien.
 
 Uji perubahan CSP dengan menyajikan situs **beserta tajuknya**, bukan dengan
 `python -m http.server` saja: galat CSP tidak muncul tanpa tajuk aslinya.
