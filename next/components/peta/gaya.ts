@@ -213,7 +213,6 @@ export function tambahIkon(map: MapLibreMap, id: string) {
   c.stroke();
   c.save();
   c.translate(10, 10);
-  c.scale(1, 1);
   c.fillStyle = "#ffffff";
   c.fill(new Path2D(def.jalur), "evenodd");
   c.restore();

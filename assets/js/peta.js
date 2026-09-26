@@ -202,7 +202,6 @@
     c.stroke();
     c.save();
     c.translate(10, 10);
-    c.scale(1, 1);
     c.fillStyle = "#ffffff";
     c.fill(new Path2D(def.jalur), "evenodd");
     c.restore();
@@ -671,10 +670,7 @@
     var hash = window.location.hash || "";
     if (hash.indexOf(AWALAN_HASH) !== 0) return null;
     var id = hash.slice(AWALAN_HASH.length);
-    for (var i = 0; i < WORK.length; i++) {
-      if (WORK[i].id === id) return id;
-    }
-    return null;
+    return WORK.some(function (item) { return item.id === id; }) ? id : null;
   }
 
   function tulisHash(id) {
@@ -684,7 +680,7 @@
     var alamat = id ? AWALAN_HASH + id : window.location.pathname + window.location.search;
     try {
       window.history.replaceState(null, "", alamat);
-    } catch (e) {  }
+    } catch (e) {}
   }
 
   var TEXT = {
@@ -719,13 +715,16 @@
     focus: { en: "%w, centred on the map.", ind: "%w, dipusatkan di peta." }
   };
 
+  var NAMA_DASAR = { peta: TEXT.map, satelit: TEXT.satellite, medan: TEXT.terrain };
+
   function sentuh() {
     return Boolean(window.matchMedia
       && window.matchMedia("(hover: none) and (pointer: coarse)").matches);
   }
 
   function reducedMotion() {
-    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    return Boolean(window.matchMedia
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }
 
   function ms(duration) {
@@ -814,6 +813,28 @@
     );
   }
 
+  function ikonKind(kind) {
+    return '<svg viewBox="0 0 24 24" focusable="false"><path fill-rule="evenodd" d="' + KIND[kind].glyph + '"></path></svg>';
+  }
+
+  function mati(entry) {
+    return entry.marker.getElement().classList.contains("is-off");
+  }
+
+  function jumlahTampil(markers) {
+    return markers.filter(function (entry) { return !mati(entry); }).length;
+  }
+
+  function tutupKartu(markers) {
+    markers.forEach(function (entry) {
+      if (entry.popup.isOpen()) entry.popup.remove();
+    });
+  }
+
+  function sudutPandang(three, durasi) {
+    return { pitch: three ? 58 : 0, bearing: three ? -18 : 0, duration: ms(durasi) };
+  }
+
   function koordinat(lat, lng) {
     var id = isId();
     function angka(n) {
@@ -835,29 +856,20 @@
   }
 
   function tuneBasemap(map, gelap) {
-    var tweaks = gelap
-      ? [
-          ["background", "background-color", PALET.gelap.latar],
-          ["water", "fill-color", PALET.gelap.air],
-          ["water_shadow", "fill-color", PALET.gelap.air],
-          ["landcover_wood", "fill-color", PALET.gelap.hutan],
-          ["landcover_grass", "fill-color", PALET.gelap.rumput],
-          ["landuse_residential", "fill-color", PALET.gelap.pemukiman],
-          ["building", "fill-color", PALET.gelap.gedung]
-        ]
-      : [
-          ["background", "background-color", PALET.terang.latar],
-          ["water", "fill-color", PALET.terang.air],
-          ["water_shadow", "fill-color", PALET.terang.air],
-          ["landcover_wood", "fill-color", PALET.terang.hutan],
-          ["landcover_grass", "fill-color", PALET.terang.rumput],
-          ["landuse_residential", "fill-color", PALET.terang.pemukiman],
-          ["building", "fill-color", PALET.terang.gedung]
-        ];
+    var P = PALET[gelap ? "gelap" : "terang"];
+    var tweaks = [
+      ["background", "background-color", P.latar],
+      ["water", "fill-color", P.air],
+      ["water_shadow", "fill-color", P.air],
+      ["landcover_wood", "fill-color", P.hutan],
+      ["landcover_grass", "fill-color", P.rumput],
+      ["landuse_residential", "fill-color", P.pemukiman],
+      ["building", "fill-color", P.gedung]
+    ];
     tweaks.forEach(function (item) {
       try {
         if (map.getLayer(item[0])) map.setPaintProperty(item[0], item[1], item[2]);
-      } catch (e) {  }
+      } catch (e) {}
     });
   }
 
@@ -876,7 +888,6 @@
     map.once("styledata", run);
     map.once("idle", run);
   }
-
 
   function Kontrol(isi) {
     this._isi = isi;
@@ -898,20 +909,18 @@
     return button;
   }
 
-
   function markerElement(item) {
-    var el_ = document.createElement("button");
-    el_.type = "button";
-    el_.className = "peta__pin";
-    el_.setAttribute("data-work", item.id);
-    el_.setAttribute("data-kind", item.kind);
-    el_.title = say(item);
-    el_.setAttribute("aria-label", say(item));
-    el_.innerHTML = pinSvg(item.kind);
+    var pin = el("button", "peta__pin");
+    pin.type = "button";
+    pin.setAttribute("data-work", item.id);
+    pin.setAttribute("data-kind", item.kind);
+    pin.title = say(item);
+    pin.setAttribute("aria-label", say(item));
+    pin.innerHTML = pinSvg(item.kind);
     var nama = el("span", "peta__pin-nama", say(item));
     nama.setAttribute("aria-hidden", "true");
-    el_.appendChild(nama);
-    return el_;
+    pin.appendChild(nama);
+    return pin;
   }
 
   function kartu(entry, umumkan) {
@@ -988,7 +997,6 @@
     return box;
   }
 
-
   var LAPISAN_KEY = "hk-peta-lapisan";
 
   function bacaLapisan() {
@@ -999,9 +1007,8 @@
   }
 
   function tulisLapisan(nilai) {
-    try { window.localStorage.setItem(LAPISAN_KEY, nilai); } catch (e) {  }
+    try { window.localStorage.setItem(LAPISAN_KEY, nilai); } catch (e) {}
   }
-
 
   function buildUi(map, frame, markers, state) {
     var atas = el("div", "peta__atas");
@@ -1043,7 +1050,7 @@
       row.setAttribute("aria-pressed", "false");
       var ikon = el("i");
       ikon.setAttribute("aria-hidden", "true");
-      ikon.innerHTML = '<svg viewBox="0 0 24 24" focusable="false"><path fill-rule="evenodd" d="' + KIND[key].glyph + '"></path></svg>';
+      ikon.innerHTML = ikonKind(key);
       row.appendChild(ikon);
       row.appendChild(el("span", "peta__nama"));
       row.appendChild(el("span", "peta__angka", "0"));
@@ -1081,7 +1088,7 @@
       });
       var daftar = el("div", "peta__lapisan-pilihan");
       daftar.setAttribute("role", "group");
-      ["peta", "satelit", "medan"].forEach(function (nama) {
+      Object.keys(NAMA_DASAR).forEach(function (nama) {
         var opsi = el("button", "peta__lapisan-opsi");
         opsi.type = "button";
         opsi.setAttribute("data-lapisan", nama);
@@ -1113,8 +1120,7 @@
     function terlihat() {
       var view = map.getBounds();
       return markers.filter(function (entry) {
-        return !entry.marker.getElement().classList.contains("is-off")
-          && view.contains([entry.item.lng, entry.item.lat]);
+        return !mati(entry) && view.contains([entry.item.lng, entry.item.lat]);
       });
     }
 
@@ -1153,10 +1159,7 @@
       var judul = el("p", "peta__saran-judul");
       if (!q) {
         hasil = terlihat();
-        var total = markers.filter(function (entry) {
-          return !entry.marker.getElement().classList.contains("is-off");
-        }).length;
-        judul.textContent = say(TEXT.inView).replace("%n", hasil.length).replace("%t", total);
+        judul.textContent = say(TEXT.inView).replace("%n", hasil.length).replace("%t", jumlahTampil(markers));
       } else {
         hasil = markers
           .map(function (entry) { return { entry: entry, skor: cocok(entry.item, q) }; })
@@ -1175,7 +1178,7 @@
         opsi.setAttribute("data-kind", entry.item.kind);
         var ikon = el("i", "peta__opsi-ikon");
         ikon.setAttribute("aria-hidden", "true");
-        ikon.innerHTML = '<svg viewBox="0 0 24 24" focusable="false"><path fill-rule="evenodd" d="' + KIND[entry.item.kind].glyph + '"></path></svg>';
+        ikon.innerHTML = ikonKind(entry.item.kind);
         var teks = el("span", "peta__opsi-teks");
         teks.appendChild(el("span", "peta__opsi-nama", say(entry.item)));
         teks.appendChild(el("span", "peta__opsi-ket", say(KIND[entry.item.kind]) + " · " + say(entry.item.at)));
@@ -1249,8 +1252,7 @@
       if (lapisan) {
         lapisan.setAttribute("aria-label", say(TEXT.layers));
         Object.keys(pilihanLapisan).forEach(function (nama) {
-          pilihanLapisan[nama].querySelector(".peta__lapisan-label").textContent =
-            say(nama === "peta" ? TEXT.map : nama === "satelit" ? TEXT.satellite : TEXT.terrain);
+          pilihanLapisan[nama].querySelector(".peta__lapisan-label").textContent = say(NAMA_DASAR[nama]);
         });
         markDasar(state.dasar());
       }
@@ -1296,8 +1298,7 @@
       var view = map.getBounds();
       var seen = { app: 0, analysis: 0, satellite: 0, design: 0 };
       markers.forEach(function (entry) {
-        if (entry.marker.getElement().classList.contains("is-off")) return;
-        if (!view.contains([entry.item.lng, entry.item.lat])) return;
+        if (mati(entry) || !view.contains([entry.item.lng, entry.item.lat])) return;
         seen[entry.item.kind]++;
       });
       Object.keys(rows).forEach(function (key) {
@@ -1321,7 +1322,7 @@
       if (!lapisan) return;
       var berikut = dasar === "satelit" ? "peta" : "satelit";
       utamaGambar.innerHTML = GAMBAR_LAPISAN[berikut];
-      utamaTeks.textContent = say(berikut === "satelit" ? TEXT.satellite : TEXT.map);
+      utamaTeks.textContent = say(NAMA_DASAR[berikut]);
       utama.title = say(TEXT.layers) + ": " + utamaTeks.textContent;
       utama.setAttribute("aria-label", utama.title);
       Object.keys(pilihanLapisan).forEach(function (nama) {
@@ -1351,7 +1352,6 @@
       }
     };
   }
-
 
   function build(container) {
     var bounds = new maplibregl.LngLatBounds();
@@ -1560,8 +1560,7 @@
         tulisLapisan(dasar);
         ui.markDasar(dasar);
         terapkan();
-        umumkan(say(TEXT.layerOn).replace("%l",
-          say(dasar === "satelit" ? TEXT.satellite : dasar === "medan" ? TEXT.terrain : TEXT.map)));
+        umumkan(say(TEXT.layerOn).replace("%l", say(NAMA_DASAR[dasar])));
       },
       setThree: function (three) {
         if (three === current.three) return;
@@ -1570,11 +1569,7 @@
         terapkan();
         if (three) { map.dragRotate.enable(); } else { map.dragRotate.disable(); }
         window.requestAnimationFrame(function () {
-          map.easeTo({
-            pitch: three ? 58 : 0,
-            bearing: three ? -18 : 0,
-            duration: ms(900)
-          });
+          map.easeTo(sudutPandang(three, 900));
         });
       },
       filter: function (kind) {
@@ -1594,13 +1589,10 @@
           duration: ms(700)
         });
         ui.count();
-        var tampil = markers.filter(function (entry) {
-          return !entry.marker.getElement().classList.contains("is-off");
-        }).length;
         umumkan(current.filter
           ? say(TEXT.filterOn)
               .replace("%k", say(KIND[current.filter]))
-              .replace("%n", tampil)
+              .replace("%n", jumlahTampil(markers))
               .replace("%t", markers.length)
           : say(TEXT.filterOff).replace("%t", markers.length));
       },
@@ -1620,7 +1612,7 @@
         function step() {
           var entry = markers[current.tourAt % markers.length];
           current.tourAt++;
-          if (!entry.marker.getElement().classList.contains("is-off")) flyToWork(entry, true);
+          if (!mati(entry)) flyToWork(entry, true);
         }
         step();
         current.tour = window.setInterval(step, 7000);
@@ -1642,14 +1634,8 @@
             entry.marker.getElement().classList.remove("is-off");
           });
         }
-        markers.forEach(function (entry) {
-          if (entry.popup.isOpen()) entry.popup.remove();
-        });
-        map.easeTo({
-          pitch: current.three ? 58 : 0,
-          bearing: current.three ? -18 : 0,
-          duration: ms(500)
-        });
+        tutupKartu(markers);
+        map.easeTo(sudutPandang(current.three, 500));
         map.fitBounds(bounds, { padding: 64, maxZoom: 6, duration: ms(750) });
         ui.count();
         tulisHash(null);
@@ -1666,7 +1652,6 @@
     terjemahkanKontrol();
 
     var booted = false;
-
     var sudahSiap = false;
 
     function siap() {
@@ -1737,10 +1722,7 @@
     container.addEventListener("wheel", tanganDiPeta, { capture: true, passive: true });
     container.addEventListener("keydown", tanganDiPeta, true);
     frame.addEventListener("keydown", function (event) {
-      if (event.key !== "Escape") return;
-      markers.forEach(function (entry) {
-        if (entry.popup.isOpen()) entry.popup.remove();
-      });
+      if (event.key === "Escape") tutupKartu(markers);
     });
     map.on("dragstart", tanganDiPeta);
 

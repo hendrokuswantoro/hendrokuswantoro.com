@@ -95,6 +95,8 @@ const TEXT = {
   focus: { en: "%w, centred on the map.", ind: "%w, dipusatkan di peta." },
 };
 
+const NAMA_DASAR: Record<Dasar, Teks> = { peta: TEXT.map, satelit: TEXT.satellite, medan: TEXT.terrain };
+
 function sentuh(): boolean {
   return Boolean(window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches);
 }
@@ -185,6 +187,16 @@ function pinSvg(kind: Category): string {
 
 function ikonKind(kind: Category): string {
   return `<svg viewBox="0 0 24 24" focusable="false"><path fill-rule="evenodd" d="${KIND[kind].glyph}"></path></svg>`;
+}
+
+function tutupKartu(markers: Entry[]) {
+  markers.forEach((entry) => {
+    if (entry.popup.isOpen()) entry.popup.remove();
+  });
+}
+
+function sudutPandang(three: boolean, durasi: number) {
+  return { pitch: three ? 58 : 0, bearing: three ? -18 : 0, duration: ms(durasi) };
 }
 
 function koordinat(lat: number, lng: number): string {
@@ -426,7 +438,7 @@ function buildUi(map: MapLibreMap, frame: HTMLElement, markers: Entry[], state: 
     utama.addEventListener("click", () => state.setDasar(state.dasar() === "satelit" ? "peta" : "satelit"));
     const daftar = el("div", "peta__lapisan-pilihan");
     daftar.setAttribute("role", "group");
-    (["peta", "satelit", "medan"] as Dasar[]).forEach((nama) => {
+    (Object.keys(NAMA_DASAR) as Dasar[]).forEach((nama) => {
       const opsi = el("button", "peta__lapisan-opsi");
       opsi.type = "button";
       opsi.setAttribute("data-lapisan", nama);
@@ -581,7 +593,7 @@ function buildUi(map: MapLibreMap, frame: HTMLElement, markers: Entry[], state: 
     if (!lapisan) return;
     const berikut: Dasar = dasar === "satelit" ? "peta" : "satelit";
     utamaGambar.innerHTML = GAMBAR_LAPISAN[berikut];
-    utamaTeks.textContent = say(berikut === "satelit" ? TEXT.satellite : TEXT.map);
+    utamaTeks.textContent = say(NAMA_DASAR[berikut]);
     utama.title = `${say(TEXT.layers)}: ${utamaTeks.textContent}`;
     utama.setAttribute("aria-label", utama.title);
     (Object.keys(pilihanLapisan) as Dasar[]).forEach((nama) => {
@@ -605,7 +617,7 @@ function buildUi(map: MapLibreMap, frame: HTMLElement, markers: Entry[], state: 
       lapisan.setAttribute("aria-label", say(TEXT.layers));
       (Object.keys(pilihanLapisan) as Dasar[]).forEach((nama) => {
         const teks = pilihanLapisan[nama].querySelector(".peta__lapisan-label");
-        if (teks) teks.textContent = say(nama === "peta" ? TEXT.map : nama === "satelit" ? TEXT.satellite : TEXT.terrain);
+        if (teks) teks.textContent = say(NAMA_DASAR[nama]);
       });
       markDasar(state.dasar());
     }
@@ -901,8 +913,7 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
       tulisLapisan(dasar);
       ui.markDasar(dasar);
       terapkan();
-      umumkan(say(TEXT.layerOn).replace("%l",
-        say(dasar === "satelit" ? TEXT.satellite : dasar === "medan" ? TEXT.terrain : TEXT.map)));
+      umumkan(say(TEXT.layerOn).replace("%l", say(NAMA_DASAR[dasar])));
     },
     setThree(three) {
       if (three === current.three) return;
@@ -912,7 +923,7 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
       if (three) map.dragRotate.enable();
       else map.dragRotate.disable();
       window.requestAnimationFrame(() => {
-        map.easeTo({ pitch: three ? 58 : 0, bearing: three ? -18 : 0, duration: ms(900) });
+        map.easeTo(sudutPandang(three, 900));
       });
     },
     filter(kind) {
@@ -979,10 +990,8 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
         ui.markFilter(null);
         markers.forEach((entry) => entry.marker.getElement().classList.remove("is-off"));
       }
-      markers.forEach((entry) => {
-        if (entry.popup.isOpen()) entry.popup.remove();
-      });
-      map.easeTo({ pitch: current.three ? 58 : 0, bearing: current.three ? -18 : 0, duration: ms(500) });
+      tutupKartu(markers);
+      map.easeTo(sudutPandang(current.three, 500));
       map.fitBounds(bounds, { padding: 64, maxZoom: 6, duration: ms(750) });
       ui.count();
       tulisHash(null);
@@ -1053,10 +1062,7 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
   container.addEventListener("wheel", tanganDiPeta, { capture: true, passive: true });
   container.addEventListener("keydown", tanganDiPeta, true);
   frame.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape") return;
-    markers.forEach((entry) => {
-      if (entry.popup.isOpen()) entry.popup.remove();
-    });
+    if (event.key === "Escape") tutupKartu(markers);
   });
   map.on("dragstart", tanganDiPeta);
   map.on("rotateend", () => {
