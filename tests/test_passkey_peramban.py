@@ -14,7 +14,7 @@ pytestmark = pytest.mark.peramban
 sys.path.insert(0, str(AKAR))
 sys.path.insert(0, str(AKAR / "tools"))
 
-from conftest import EMAIL_UJI, SANDI_UJI, tab_dengan_otentikator  # noqa: E402
+from conftest import masuk_admin, tab_dengan_otentikator  # noqa: E402
 
 
 @pytest.fixture
@@ -61,15 +61,6 @@ ULANGI_PASSKEY = """async () => {
 }"""
 
 
-def _masuk_dengan_sandi(tab, asal):
-    tab.goto(f"{asal}/admin", wait_until="domcontentloaded")
-    tab.wait_for_selector("#tombol-masuk")
-    tab.fill("#email", EMAIL_UJI)
-    tab.fill("#sandi", SANDI_UJI)
-    tab.click("#tombol-masuk")
-    tab.wait_for_selector("#layar-daftar:not(.sembunyi)", timeout=15000)
-
-
 def test_tombol_passkey_hidup_di_localhost(halaman_admin, server_admin):
     halaman_admin.goto(f"{server_admin}/admin", wait_until="domcontentloaded")
     halaman_admin.wait_for_selector("#blok-passkey:not(.sembunyi)", timeout=15000)
@@ -81,7 +72,7 @@ def test_tombol_passkey_hidup_di_localhost(halaman_admin, server_admin):
 def test_daftar_lalu_masuk_dengan_sidik_jari(halaman_admin, server_admin):
     tab = halaman_admin
 
-    _masuk_dengan_sandi(tab, server_admin)
+    masuk_admin(tab, server_admin)
 
     tab.on("dialog", lambda d: d.accept("Perangkat uji"))
 

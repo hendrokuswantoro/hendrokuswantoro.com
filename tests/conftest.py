@@ -405,5 +405,14 @@ def masuk_admin(tab, asal):
     tab.wait_for_selector("#tombol-masuk")
     tab.fill("#email", EMAIL_UJI)
     tab.fill("#sandi", SANDI_UJI)
-    tab.click("#tombol-masuk")
-    tab.wait_for_selector("#layar-daftar:not(.sembunyi)", timeout=15000)
+    with tab.expect_response(lambda j: j.url.endswith("/api/v1/auth/login"), timeout=30000) as info:
+        tab.click("#tombol-masuk")
+    jawaban = info.value
+    assert jawaban.ok, f"masuk ditolak {jawaban.status}: {jawaban.text()[:300]}"
+    try:
+        tab.wait_for_selector("#layar-daftar:not(.sembunyi)", timeout=25000)
+    except Exception as galat:
+        raise AssertionError(
+            "masuk diterima, tetapi daftar tulisan tidak muncul. Kabar di layar: "
+            f"{tab.inner_text('#kabar')!r}. Galat halaman: {getattr(tab, 'galat', [])}"
+        ) from galat
