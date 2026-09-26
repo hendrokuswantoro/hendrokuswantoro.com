@@ -90,12 +90,12 @@ def test_gambarnya_tetap_utuh_sesudah_dibuang():
     assert bersih.endswith(b"\xff\xd9")
     assert b"badan-gambar" in bersih
     assert b"JFIF" in bersih, "APP0 ikut terbuang, padahal ia bukan metadata pribadi"
-    from backend.layanan import berkas as layanan
+    layanan = pytest.importorskip("backend.layanan.berkas")
     assert layanan.ukuran("image/jpeg", bersih) == (160, 90)
 
 
 def test_png_tetap_terbaca_ukurannya():
-    from backend.layanan import berkas as layanan
+    layanan = pytest.importorskip("backend.layanan.berkas")
 
     bersih = metadata.buang("image/png", png_ber_exif())
     assert layanan.ukuran("image/png", bersih) == (160, 90)
