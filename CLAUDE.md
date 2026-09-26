@@ -427,16 +427,14 @@ memberi situs ini dua tuan.
    lima pemeriksaan lain. Situsnya sendiri sehat di alamat `.workers.dev`.
    Pemiliknya memutuskan pada 26 September 2026 bahwa pendaftaran domain
    dikerjakan paling akhir, jadi merahnya langkah itu bukan kabar baru.
-2. SMTP belum diisi di `.env`, jadi surat verifikasi ditulis ke
-   `cadangan/surat/` dan tidak berangkat.
-3. Model pengenalan wajah 37 MB, tidak ikut git, diambil dengan
+2. Model pengenalan wajah 37 MB, tidak ikut git, diambil dengan
    `python tools/ambil_model.py`. **Verifikasi wajah belum pernah dijalankan
    dengan kamera sungguhan.**
-4. Akun admin belum punya faktor kedua. Selama belum, siapa pun yang tahu
+3. Akun admin belum punya faktor kedua. Selama belum, siapa pun yang tahu
    sandinya bisa memasang faktor PERTAMA miliknya sendiri, karena
    `butuh_admin_pendaftar` sengaja mengizinkannya. Ini satu satunya temuan
    audit yang tidak bisa ditutup dengan kode.
-5. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
+4. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
    dashboard, serta konfigurasi nginx belum pernah berjalan di server
    sungguhan. Langkahnya ada di `docs/vps.md`.
 
@@ -448,6 +446,11 @@ dua belas heksa pertama sha256 masing masing sebagai sidik. **Jangan pernah
 menjalankan `enkripsi.py kunci` untuk `.env` ini.** Kunci baru tidak bisa
 membuka rahasia TOTP dan ciri wajah yang sudah tersimpan, dan salinannya
 tidak akan ikut berganti.
+
+SMTP di `.env` mesin ini memakai Gmail dengan sandi aplikasi sejak 26
+September 2026, dan surat uji pertamanya terkirim. `SURAT_WAJIB` sengaja
+kosong di laptop; di VPS isinya `1`. Surat di `cadangan/surat/` yang lebih tua
+dari tanggal itu ditulis selama SMTP belum ada dan tidak pernah berangkat.
 
 Pembatasan URL token Mapbox sudah memuat `http://localhost:8099` sejak 26
 September 2026, jadi uji peta lokal tidak lagi dilewati. **Mapbox menolak
