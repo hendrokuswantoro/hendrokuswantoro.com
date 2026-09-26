@@ -25,6 +25,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import markah  # noqa: E402
 from isi import SumberApi, SumberBerkas, SumberIsi, Tulisan  # noqa: E402
+from versi_aset import cap_karya  # noqa: E402
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent
 ISI = AKAR / "content"
@@ -127,8 +128,11 @@ def media(en: markah.Blok, idn: markah.Blok) -> list[str]:
     ind = markah.untuk_ind(idn.teks)
     # Alamatnya sudah dibatasi pengurai ke /unggahan/ dan /assets/img/, tetapi
     # pola alamatnya menerima tanda kutip. Di-escape supaya tidak bisa keluar
-    # dari atribut src.
-    src = html.escape(en.alamat, quote=True)
+    # dari atribut src. Gambar karya disajikan immutable, jadi alamatnya
+    # membawa sidik isinya lebih dulu, dari fungsi yang sama dengan
+    # tools/versi_aset.py, supaya kedua alat tidak saling menulis ulang halaman
+    # yang sama.
+    src = html.escape(cap_karya(en.alamat), quote=True)
     baris = ['        <figure class="tulisan__media">']
 
     if en.jenis == "gambar":
