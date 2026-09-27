@@ -86,7 +86,6 @@ const TEXT = {
   north: { en: "Face north", ind: "Hadapkan ke utara" },
   full: { en: "Full screen", ind: "Layar penuh" },
   unfull: { en: "Exit full screen", ind: "Keluar dari layar penuh" },
-  touchHint: { en: "Use two fingers to move the map", ind: "Pakai dua jari untuk menggeser peta" },
   group: { en: "%n works here. Select to zoom in.", ind: "%n karya di sini. Pilih untuk memperbesar." },
   groupShort: { en: "%n works", ind: "%n karya" },
   layerOn: { en: "%l view.", ind: "Tampilan %l." },
@@ -747,9 +746,6 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
     attributionControl: false,
     cooperativeGestures: sentuh(),
     scrollZoom: sentuh(),
-    locale: {
-      "CooperativeGesturesHandler.MobileHelpText": say(TEXT.touchHint),
-    },
   });
 
   map.touchZoomRotate.disableRotation();

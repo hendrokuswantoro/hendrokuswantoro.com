@@ -359,6 +359,26 @@ def test_roda_tetikus_menggulir_halaman_bukan_memperbesar_peta(halaman, situs):
     )
 
 
+def test_layar_sentuh_tanpa_tulisan_dua_jari(peramban, situs):
+    konteks = peramban.new_context(viewport={"width": 390, "height": 844},
+                                   is_mobile=True, has_touch=True)
+    p = konteks.new_page()
+    try:
+        p.goto(f"{situs}/project", wait_until="networkidle")
+        p.locator(".peta").scroll_into_view_if_needed()
+        peta_siap(p)
+        assert p.evaluate("() => window.HK_PETA_MAP.cooperativeGestures.isEnabled()"), (
+            "satu jari di layar sentuh kembali menggeser peta, jadi halamannya tidak bisa digulir"
+        )
+        layar = p.locator(".maplibregl-cooperative-gesture-screen")
+        assert layar.count() == 1
+        assert layar.evaluate("e => getComputedStyle(e).display") == "none", (
+            "tulisan dua jari kembali tampil di atas peta"
+        )
+    finally:
+        konteks.close()
+
+
 def test_ctrl_sambil_menggulir_memperbesar_peta(halaman, situs):
     buka(halaman, situs, "/project")
     peta_siap(halaman)

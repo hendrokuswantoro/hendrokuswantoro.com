@@ -19,7 +19,7 @@ python -m http.server 8080
 # uji
 pip install -r tests/requirements.txt
 python -m pytest                 # 875, tanpa peramban, hitungan detik
-python -m pytest -m peramban     # 87, Chromium sungguhan
+python -m pytest -m peramban     # 88, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
 # backend dan dashboard admin
@@ -62,7 +62,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    962 uji
+tests/                    963 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -381,7 +381,10 @@ warna yang nyaris sama, dan kotanya tampak seperti hamparan rata.
 
 **Roda tetikus tidak memperbesar peta kecuali Ctrl atau Cmd ditahan.**
 Menggulir saja menggulir halaman. `cooperativeGestures` hanya dipasang di layar
-sentuh, tempat satu jari memang harus tetap menggulir halaman.
+sentuh, tempat satu jari memang harus tetap menggulir halaman. Layar hitam
+bertulisan "Use two fingers to move the map" yang menyertainya disembunyikan
+dengan CSS sejak 27 September 2026 atas permintaan pemilik; perilaku dua
+jarinya tetap.
 
 **Hanya ada satu pengurai markah, dan ia di server.** `tools/markah.py`
 dipakai pembangkit situs statis, validator skema API, dan sejak 18 September
