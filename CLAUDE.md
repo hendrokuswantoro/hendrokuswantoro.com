@@ -541,14 +541,17 @@ memberi situs ini dua tuan.
 
 ## Yang belum selesai, dan itu milik pemilik proyek
 
-1. **`hendrokuswantoro.com` belum terdaftar.** Otoritas `.com` menjawab
-   NXDOMAIN, bukan sekadar tanpa A record. Setiap `rel=canonical`, `og:url`,
-   JSON-LD, `sitemap.xml`, `feed.xml`, dan `CNAME` menunjuk ke nama yang tidak
-   ada. Inilah sebabnya Health Check merah tiap malam. Langkahnya sengaja
-   ditaruh paling akhir supaya kegagalan yang sudah diketahui tidak menutupi
-   lima pemeriksaan lain. Situsnya sendiri sehat di alamat `.workers.dev`.
-   Pemiliknya memutuskan pada 26 September 2026 bahwa pendaftaran domain
-   dikerjakan paling akhir, jadi merahnya langkah itu bukan kabar baru.
+1. **`hendrokuswantoro.com` terdaftar lewat Cloudflare Registrar sejak 28
+   September 2026**, berlaku sampai 27 September 2027 dengan perpanjangan
+   otomatis. Kedua nama dipasang sebagai custom domain di `wrangler.toml`,
+   bukan lewat dasbor, supaya tercatat di git; `tests/test_terbit.py`
+   menahannya, termasuk jebakan TOML: `routes` yang ditulis di bawah
+   `[assets]` masuk ke tabel itu dan diabaikan tanpa galat. Pengalihan dari
+   nama tanpa `www` ke `www` adalah Redirect Rule di dasbor, milik pemilik.
+   Pembayaran pertamanya gagal belasan kali di halaman checkout dasbor, lewat
+   Google Pay, kartu, maupun PayPal, tanpa OTP dari bank; yang berhasil adalah
+   halaman tagihan Stripe (`invoice.stripe.com`) dengan kartu diketik langsung.
+   Ingat itu saat perpanjangan pertama gagal.
 2. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
    dashboard, serta konfigurasi nginx belum pernah berjalan di server
    sungguhan. Langkahnya ada di `docs/vps.md`. `hk-api.service` tidak

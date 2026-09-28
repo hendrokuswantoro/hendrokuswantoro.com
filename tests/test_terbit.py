@@ -259,6 +259,17 @@ def test_wrangler_menunjuk_dist():
     assert 'not_found_handling = "404-page"' in WRANGLER
 
 
+def test_wrangler_memasang_kedua_nama_domain():
+    import tomllib
+
+    isi = tomllib.loads(WRANGLER)
+    pola = {r["pattern"] for r in isi.get("routes", []) if r.get("custom_domain")}
+    assert pola == {"www.hendrokuswantoro.com", "hendrokuswantoro.com"}, (
+        f"custom domain berubah atau masuk ke tabel [assets]: {pola}"
+    )
+    assert "routes" not in isi["assets"]
+
+
 PEMBANGUN = {
     "tools/bangun_situs.sh": (AKAR / "tools" / "bangun_situs.sh").read_text(encoding="utf-8"),
     "tools/build_dist.py": (AKAR / "tools" / "build_dist.py").read_text(encoding="utf-8"),
