@@ -1,5 +1,6 @@
 name = "hendrokuswantoro-com"
 compatibility_date = "2026-09-12"
+workers_dev = true
 
 routes = [
   { pattern = "www.hendrokuswantoro.com", custom_domain = true },

@@ -546,7 +546,10 @@ memberi situs ini dua tuan.
    otomatis. Kedua nama dipasang sebagai custom domain di `wrangler.toml`,
    bukan lewat dasbor, supaya tercatat di git; `tests/test_terbit.py`
    menahannya, termasuk jebakan TOML: `routes` yang ditulis di bawah
-   `[assets]` masuk ke tabel itu dan diabaikan tanpa galat. Pengalihan dari
+   `[assets]` masuk ke tabel itu dan diabaikan tanpa galat. `workers_dev = true`
+   wajib ada: begitu `routes` diisi, Wrangler mematikan alamat `workers.dev`
+   diam diam, dan pada 28 September 2026 alamat lama itu sempat menjawab galat
+   1042 beberapa menit. Pengalihan dari
    nama tanpa `www` ke `www` adalah Redirect Rule di dasbor, milik pemilik.
    Pembayaran pertamanya gagal belasan kali di halaman checkout dasbor, lewat
    Google Pay, kartu, maupun PayPal, tanpa OTP dari bank; yang berhasil adalah

@@ -268,6 +268,9 @@ def test_wrangler_memasang_kedua_nama_domain():
         f"custom domain berubah atau masuk ke tabel [assets]: {pola}"
     )
     assert "routes" not in isi["assets"]
+    assert isi.get("workers_dev") is True, (
+        "tanpa workers_dev = true, Wrangler mematikan alamat workers.dev begitu routes diisi"
+    )
 
 
 PEMBANGUN = {
