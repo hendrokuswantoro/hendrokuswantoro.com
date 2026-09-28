@@ -134,7 +134,8 @@ jobs:
         run: |
           admin="${{ vars.ADMIN }}"
           if [ -z "$admin" ]; then
-            admin="https://www.hendrokuswantoro.com"
+            echo "variabel ADMIN belum diisi: situs belum dipindah ke VPS, pemeriksaan dilewati"
+            exit 0
           fi
           kode=$(curl -s -o /dev/null -w '%{http_code}' "$admin/admin")
           case "$kode" in

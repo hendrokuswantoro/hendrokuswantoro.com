@@ -255,7 +255,9 @@ dan tidak ada gunanya melanjutkan sampai ia ada.
 Situs mati beberapa menit di tengah langkah ini, antara custom domain dilepas
 dan record DNS dibuat. Kerjakan saat sepi, dan baca sampai habis dulu.
 
-**a. Buktikan VPS sehat, dari VPS sendiri.** Firewall hanya menerima
+**a. Buktikan VPS sehat, dari VPS sendiri.** Deploy otomatis (bagian di
+bawah) harus sudah berjalan sekali: pemasang tidak mengirim situs maupun
+dashboard Next, keduanya dikirim `vps.yml`. Firewall hanya menerima
 Cloudflare, jadi pemeriksaannya lewat alamat mesin itu sendiri:
 
 ```bash
@@ -306,6 +308,8 @@ berikutnya mencoba memasang kedua custom domain lagi. `workers_dev = true`
 tetap, supaya alamat `workers.dev` tetap hidup sebagai cadangan.
 `tests/test_terbit.py` yang menuntut kedua pola harus ikut diganti di commit
 yang sama.
+Sesudah itu isi variabel repositori `ADMIN` dengan
+`https://www.hendrokuswantoro.com`, supaya tiap deploy memeriksa dashboardnya.
 
 **Kalau gagal di tengah jalan**, kembalikan dalam urutan terbalik: hapus
 record `A` `www` dan `@`, lalu di Domains & Routes Worker tambahkan lagi
@@ -331,7 +335,7 @@ Yang harus diisi di **Settings > Secrets and variables > Actions**:
 | Secret | `VPS_PORTA` | opsional, bawaannya 22 |
 | Variable | `VPS_AKTIF` | `1` |
 | Variable | `SITUS` | `https://www.hendrokuswantoro.com` |
-| Variable | `ADMIN` | opsional, bawaannya `https://www.hendrokuswantoro.com` |
+| Variable | `ADMIN` | `https://www.hendrokuswantoro.com`, diisi SESUDAH situs pindah (langkah 8); sebelum itu `/admin` di `www` masih milik Worker |
 
 `VPS_HOST` adalah alamat asli VPS, bukan `www.hendrokuswantoro.com`: nama
 itu menunjuk Cloudflare, dan Cloudflare tidak meneruskan SSH.
