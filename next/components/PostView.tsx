@@ -1,30 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { POSTS, type Post } from "@/content/posts";
 import { COMMON } from "@/content/nav";
+import { gulirKe, slug } from "./gulir";
 import { useLang } from "./LanguageProvider";
-
-function slug(text: string): string {
-  return (
-    text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .trim()
-      .replace(/\s+/g, "-")
-      .slice(0, 60) || "bagian"
-  );
-}
-
-function gulirKe(event: MouseEvent<HTMLAnchorElement>, id: string) {
-  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-  const tujuan = document.getElementById(id);
-  if (!tujuan) return;
-  event.preventDefault();
-  const kurangi = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  tujuan.scrollIntoView({ behavior: kurangi ? "auto" : "smooth", block: "start" });
-}
 
 export function PostView({ post }: { post: Post }) {
   const { say } = useLang();

@@ -108,9 +108,8 @@ def test_maplibre_terkunci():
     )
 
     paket = (AKAR / "next" / "package.json").read_text(encoding="utf-8")
-    mayor = versi.split(".")[0]
-    assert f'"maplibre-gl": "^{mayor}.' in paket, (
-        f"port Next.js meminta mayor yang berbeda dari {versi} yang dibawa"
+    assert f'"maplibre-gl": "{versi}"' in paket, (
+        f"port Next.js harus mengunci MapLibre persis {versi}, sebab pekerjanya diambil dari salinan versi itu"
     )
 
 

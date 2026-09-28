@@ -86,7 +86,7 @@ dipakai CI, jadi menyunting hasilnya akan ketahuan, tetapi baru di CI.
 | `assets/img/og-cover.png`, ikon | `tools/build_og.py`, `tools/build_icons.py` |
 | `assets/img/work/*.webp` | `tools/build_work_images.py` |
 | `@font-face` di `style.css` | `tools/ambil_font.py` |
-| `assets/js/parkir-data.js` | `tools/bangun_parkir.py` |
+| `assets/js/parkir-data.js`, `next/content/parkir-data.json` | `tools/bangun_parkir.py` |
 | hash sha256 di `_headers` | `tools/hash_skrip.py` |
 | `dist/`, `dist-hendrokuswantoro.zip` | `tools/bangun_situs.sh`, `tools/build_dist.py` |
 
@@ -448,8 +448,10 @@ FastAPI dengan GeoPackage. Karena situs ini statis, kawasan dan tarif dihitung
 di peramban oleh `parkir.js`, dengan rumus yang disalin dari `api/layanan.py`
 proyek itu. `tests/parkir_rujukan.py` menyalin rumus yang sama dalam Python,
 dan `tests/test_parkir_peramban.py` menuntut keduanya sepakat di lebih dari
-650 titik dan 660 kombinasi tarif. Kalau rumusnya berubah, ketiganya diubah
-bersama.
+650 titik dan 660 kombinasi tarif. Port Next menyalin rumus yang sama di
+`next/components/peta/parkir-hitung.ts`, dan `tests/test_parkir_next.py`
+menerjemahkannya dengan TypeScript milik port itu lalu menjalankannya di node
+terhadap rujukan yang sama. Kalau rumusnya berubah, keempatnya diubah bersama.
 
 - Di luar `content/parkir/cakupan.json` kawasannya kosong dan tarifnya
   kosong, bukan Kawasan III. Batas itu selubung jaringan jalan, bukan batas
@@ -476,8 +478,20 @@ bersama.
   legenda dan meringkas kartu disimpan di `localStorage["hk-parkir"]`; itu
   kenyamanan per pembaca, jadi gagal membacanya tidak boleh merusak peta.
 
-Port Next baru memuat judul dan pengantar bagian ini, belum peta
-interaktifnya, dan layarnya mengatakan begitu.
+Port Next memuat peta yang sama lewat `next/components/peta/parkir.ts`.
+Tabel teks, kendaraan, layanan, warna, dan ikonnya disalin apa adanya dari
+`parkir.js`, dan ujinya menolak kalau satu kalimat saja berbeda. Kerangka
+`.parkir__bungkus` dirender React, bukan dibuat skripnya, sebab React tidak
+boleh kehilangan simpul yang ia pasang sendiri.
+
+**Peta di port Next butuh alamat pekerja MapLibre yang disetel sendiri.**
+Webpack mengganti `import.meta.url` di dalam MapLibre dengan alamat berkas di
+cakram, jadi MapLibre tidak menemukan `maplibre-gl-worker.mjs`. Akibatnya ubin
+vektor dan GeoJSON tidak pernah diproses dan petanya kosong, tanpa satu galat
+pun. Sampai 28 September 2026 peta karya port Next begitu sejak awal. Sekarang
+`pustakaPeta()` di `next/components/peta/pustaka.ts` memanggil
+`setWorkerUrl` ke salinan di `next/public/assets/vendor/maplibre/6.9.0/`, dan
+versi MapLibre di `next/package.json` dikunci persis sama dengan folder itu.
 
 **Hanya ada satu pengurai markah, dan ia di server.** `tools/markah.py`
 dipakai pembangkit situs statis, validator skema API, dan sejak 18 September

@@ -147,11 +147,29 @@ export const PARKIR = {
         id: "Cari nama jalan, ketuk peta, atau geser petanya. Pin langsung menunjukkan kawasan dan tarifnya.",
       },
     ] as Copy[],
-    belum: {
-      en: "The interactive map lives on the published site. This port shows the case study only.",
-      id: "Peta interaktifnya ada di situs yang terbit. Port ini hanya menampilkan studi kasusnya.",
+    label: { en: "Parking fee map", id: "Peta tarif parkir" } as Copy,
+    gagal: {
+      en: "The map could not load. The fee panel still works for central Yogyakarta.",
+      id: "Petanya gagal dimuat. Panel tarif tetap bekerja untuk pusat Yogyakarta.",
+    } as Copy,
+    ket: {
+      en: "Move the map until the pin sits on your parking spot. Fees follow Yogyakarta city regulation 10/2023 and zones follow mayoral regulation 149/2020. This map is a guide, not a ruling. The fee board on site is what counts.",
+      id: "Geser peta sampai pin tepat di tempat parkir. Tarif mengikuti Perda Kota Yogyakarta No. 10 Tahun 2023, kawasan mengikuti Perwal 149/2020. Peta ini panduan, bukan keputusan. Yang berlaku tetap papan tarif di lokasi.",
     } as Copy,
     tombol: { en: "See the live map", id: "Lihat peta langsung" } as Copy,
+  },
+
+  rail: {
+    daftar: { en: "On this page", id: "Di halaman ini" } as Copy,
+    judul: { en: "Interactive map", id: "Peta interaktif" } as Copy,
+    isi: {
+      en: "Drop a pin on any street in Yogyakarta. The zone and the fee appear instantly.",
+      id: "Taruh pin di jalan mana pun di Kota Yogyakarta. Zona dan tarifnya langsung muncul.",
+    } as Copy,
+    tombol: { en: "Open the parking map", id: "Buka peta parkir" } as Copy,
+    bacaJuga: { en: "Read next", id: "Baca juga" } as Copy,
+    tulisan: { en: "When a map should say I do not know", id: "Kapan peta sebaiknya bilang tidak tahu" } as Copy,
+    semua: { en: "All projects", id: "Semua proyek" } as Copy,
   },
 
   ajakTitle: { en: "See the rest", id: "Lihat yang lain" } as Copy,

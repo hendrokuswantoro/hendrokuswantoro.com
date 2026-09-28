@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { PROJECT_PAGE } from "@/content/projects";
 import { useLang } from "./LanguageProvider";
+import { pustakaPeta } from "./peta/pustaka";
 import type { PetaHidup } from "./peta/bangun";
 
 type JendelaPeta = Window & {
@@ -26,7 +27,7 @@ export function WorkMap() {
 
     async function start() {
       if (!holder.current || hidup.current) return;
-      const [maplibregl, { bangun }] = await Promise.all([import("maplibre-gl"), import("./peta/bangun")]);
+      const [maplibregl, { bangun }] = await Promise.all([pustakaPeta(), import("./peta/bangun")]);
       if (cancelled || !holder.current) return;
       hidup.current = bangun(maplibregl, holder.current);
       const jendela = window as JendelaPeta;
