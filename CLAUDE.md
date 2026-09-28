@@ -171,6 +171,16 @@ dengan `dasbor.js` paling akhir sebab ia yang memasang seluruh tombolnya.
 Berkas skrip baru di sana wajib ditambahkan ke `ASET_ADMIN` di
 `backend/main.py`; daftarnya tertutup dengan sengaja.
 
+**CSP dashboard Next dihitung aplikasinya, dipasang nginx.** Ekspor statis
+Next menaruh sembilan skrip sebaris di `admin/index.html`, dan isinya berganti
+tiap build. Hash yang diketik tangan di nginx pasti tertinggal. Karena itu
+`backend/core/csp_admin.py` menghitung hash dari berkas yang benar benar
+disajikan dan mengirimnya lewat tajuk `X-HK-CSP`; nginx memetakannya ke
+`$csp_admin`, menyembunyikan tajuk aslinya, dan memakai kebijakan dashboard
+HTML bila tajuk itu tidak ada. `tests/test_csp.py` menjalankan dashboard Next
+di balik kebijakan itu, dan membuktikan kebalikannya juga: tanpa hash,
+skripnya memang ditolak.
+
 **Jalur tulis menuntut `butuh_admin_kuat`, bukan `butuh_admin`.** Yang
 membedakan: sesinya lahir lewat faktor kedua atau passkey. Router baru yang
 mengubah isi situs wajib memakainya di tingkat router, bukan per rute, dan
@@ -577,10 +587,15 @@ memberi situs ini dua tuan.
    HSTS sengaja TIDAK dinyalakan di dasbor; `_headers` sudah mengirimnya.
 2. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
    dashboard, serta konfigurasi nginx belum pernah berjalan di server
-   sungguhan. Langkahnya ada di `docs/vps.md`. `hk-api.service` tidak
-   menyetel `ADMIN_NEXT=1` dan `pasang.sh` tidak membangun `next/out/`, jadi
-   VPS akan menyajikan dashboard HTML, bukan dashboard Next yang dipakai
-   pemiliknya di laptop; putuskan dulu mana yang terbit. Basis data di sana mulai dari
+   sungguhan. Langkahnya ada di `docs/vps.md`. Sejak 28 September 2026 yang
+   terbit di VPS adalah dashboard Next: `.env.example`, yang menjadi
+   `/etc/hendrokuswantoro/env`, menyetel `ADMIN_NEXT=1`, `vps.yml` membangun `next/out` di GitHub Actions lalu
+   mengirimnya, dan nginx menyajikan `/_next/` langsung dari cakram.
+   Satu keputusan masih milik pemilik: `www.hendrokuswantoro.com` kini
+   dilayani Worker Cloudflare, sedangkan nginx di VPS ditulis untuk nama yang
+   sama. Sebelum VPS menyala, pilih antara subdomain sendiri untuk API dan
+   dashboard, atau rute `/api/*` dan `/admin*` di Cloudflare yang diteruskan
+   ke VPS. Basis data di sana mulai dari
    nol, jadi akun adminnya lahir TANPA faktor kedua, dan selama itu siapa pun
    yang tahu sandinya bisa memasang faktor PERTAMA miliknya sendiri, karena
    `butuh_admin_pendaftar` sengaja mengizinkannya. Pasang TOTP dan passkey

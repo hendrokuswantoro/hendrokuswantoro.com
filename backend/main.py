@@ -20,6 +20,7 @@ from backend.api.v1 import (admin, auth, berkas, keamanan, kesehatan, passkey,
                             peta, proyek, tulisan)
 from backend.core import basis_data
 from backend.core.catat import CatatPermintaan, pasang
+from backend.core.csp_admin import kebijakan as kebijakan_admin
 from backend.core.konfigurasi import pengaturan
 from backend.core.laju import BatasiLaju
 from backend.core.tanpa_simpan import TanpaSimpan
@@ -94,8 +95,13 @@ def buat() -> FastAPI:
 
     @app.get("/admin", include_in_schema=False)
     async def dashboard() -> FileResponse:
-        berkas = (NEXT_ADMIN / "admin" / "index.html") if pakai_next else HTML_ADMIN
-        return FileResponse(berkas, headers={"X-Robots-Tag": "noindex, nofollow"})
+        kepala = {"X-Robots-Tag": "noindex, nofollow"}
+        if pakai_next:
+            berkas = NEXT_ADMIN / "admin" / "index.html"
+            kepala["X-HK-CSP"] = kebijakan_admin(berkas.read_text(encoding="utf-8"))
+        else:
+            berkas = HTML_ADMIN
+        return FileResponse(berkas, headers=kepala)
 
     HURUF = HTML_ADMIN.parent.parent.parent / "assets" / "fonts"
     ASET_ADMIN = {

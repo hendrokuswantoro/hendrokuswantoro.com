@@ -46,7 +46,7 @@ install -d -o root -g root -m 0755 /var/www/certbot
 langkah "kode"
 rsync -a --delete \
   --exclude '.git' --exclude 'node_modules' --exclude '__pycache__' \
-  --exclude 'cadangan' --exclude '.env' \
+  --exclude 'cadangan' --exclude '.env' --exclude 'next/out' --exclude 'next/.next' \
   "$AKAR/" "$TUJUAN/app/"
 chown -R "$PENGGUNA:$PENGGUNA" "$TUJUAN/app"
 chmod +x "$TUJUAN/app/infrastructure/"*.sh
@@ -127,12 +127,17 @@ cat <<'SELESAI'
 4. Arahkan DNS A dan AAAA ke mesin ini, TUNGGU sampai menyebar, baru:
      sudo certbot --nginx -d hendrokuswantoro.com -d www.hendrokuswantoro.com
 
-5. Nyalakan:
+5. Dashboard admin yang terbit adalah versi Next (ADMIN_NEXT=1 di env).
+   Berkasnya, next/out, dibangun GitHub Actions dan dikirim oleh alur Deploy VPS,
+   bukan dibangun di mesin ini. Selama next/out belum pernah terkirim, /admin
+   menyajikan dashboard HTML dengan sendirinya.
+
+6. Nyalakan:
      sudo systemctl start hk-api
      sudo systemctl start hk-cadangan.timer
      sudo nginx -t && sudo systemctl reload nginx
 
-6. Buktikan cadangannya benar benar bisa dipulihkan, sekarang, bukan nanti:
+7. Buktikan cadangannya benar benar bisa dipulihkan, sekarang, bukan nanti:
      sudo systemctl start hk-cadangan.service
      sudo journalctl -u hk-cadangan -n 40 --no-pager
 

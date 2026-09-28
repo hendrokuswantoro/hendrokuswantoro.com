@@ -33,6 +33,19 @@ jobs:
       - name: Build the static site
         run: sh tools/bangun_situs.sh
 
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: next/package-lock.json
+
+      - name: Build the Next dashboard
+        working-directory: next
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          test -f out/admin/index.html || { echo "next/out/admin/index.html tidak terbentuk"; exit 1; }
+
       - name: Load the deploy key
         env:
           KUNCI: ${{ secrets.VPS_SSH_KUNCI }}
@@ -60,7 +73,7 @@ jobs:
 
           rsync -az --delete -e "$SSH" \
             --exclude '.git' --exclude 'node_modules' --exclude '__pycache__' \
-            --exclude 'cadangan' --exclude '.env' --exclude 'dist' \
+            --exclude 'cadangan' --exclude '.env' --exclude 'dist' --exclude 'next/.next' \
             ./ "$AKUN@$HOST:/srv/hendrokuswantoro/app/"
 
       - name: Install dependencies, migrate, restart

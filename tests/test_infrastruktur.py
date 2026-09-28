@@ -393,7 +393,10 @@ def _csp_dari_blok(awalan: str) -> str:
     tanda = re.search(r"^ *" + re.escape(awalan) + r" *\{$", NGINX, re.M)
     assert tanda, f"{awalan} tidak ada di konfigurasi nginx"
     blok = NGINX[tanda.start():NGINX.index("\n    }", tanda.start())]
-    cocok = re.search(r'add_header Content-Security-Policy "([^"]+)"', blok)
+    if "add_header Content-Security-Policy $csp_admin always;" in blok:
+        cocok = re.search(r'map \$upstream_http_x_hk_csp \$csp_admin \{\s*""\s*"([^"]+)";', NGINX)
+    else:
+        cocok = re.search(r'add_header Content-Security-Policy "([^"]+)"', blok)
     assert cocok, f"{awalan} tidak memasang CSP"
     return cocok.group(1)
 

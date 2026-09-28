@@ -43,6 +43,10 @@ def tajuk_nginx(awalan: str) -> dict[str, str]:
     mulai = tanda.start()
     blok = konf[mulai:konf.index("\n    }", mulai)]
     hasil = dict(re.findall(r'add_header ([A-Za-z-]+) "([^"]*)" always;', blok))
+    if "add_header Content-Security-Policy $csp_admin always;" in blok:
+        bawaan = re.search(r'map \$upstream_http_x_hk_csp \$csp_admin \{\s*""\s*"([^"]+)";', konf)
+        assert bawaan, "peta $csp_admin tidak punya kebijakan bawaan"
+        hasil["Content-Security-Policy"] = bawaan.group(1)
     assert "Content-Security-Policy" in hasil, f"{awalan} tidak menyebut CSP"
     return hasil
 
@@ -195,3 +199,60 @@ def test_kebijakan_dashboard_lebih_ketat_daripada_situs_publik():
     )
     assert "object-src 'none'" in csp
     assert "frame-ancestors 'none'" in csp
+
+
+NEXT_OUT = AKAR / "next" / "out"
+
+
+@pytest.fixture(scope="module")
+def dasbor_next_bertajuk():
+    halaman = NEXT_OUT / "admin" / "index.html"
+    if not halaman.exists():
+        pytest.skip("next/out belum dibangun")
+    import sys
+
+    sys.path.insert(0, str(AKAR))
+    from backend.core.csp_admin import kebijakan
+
+    tajuk = dict(tajuk_nginx("location ^~ /admin"))
+    tajuk["Content-Security-Policy"] = kebijakan(halaman.read_text(encoding="utf-8"))
+    srv = _server(NEXT_OUT, tajuk, 8133)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        yield "http://127.0.0.1:8133/admin/"
+    finally:
+        srv.shutdown()
+
+
+def test_dashboard_next_jalan_di_balik_kebijakan_yang_dihitung_aplikasi(peramban, dasbor_next_bertajuk):
+    konteks = peramban.new_context(viewport={"width": 1280, "height": 900})
+    tab = konteks.new_page()
+    _pasang_pengintai(tab)
+    try:
+        tab.goto(dasbor_next_bertajuk, wait_until="load")
+        tab.wait_for_timeout(2500)
+        langgar = _pelanggaran(tab)
+        assert langgar == [], f"dashboard Next: {langgar}"
+        assert tab.evaluate("() => typeof window.next === 'object'"), (
+            "React di dashboard Next tidak pernah jalan, padahal tidak ada pelanggaran tercatat"
+        )
+    finally:
+        konteks.close()
+
+
+def test_kebijakan_tanpa_hash_memang_mematikan_dashboard_next(peramban):
+    halaman = NEXT_OUT / "admin" / "index.html"
+    if not halaman.exists():
+        pytest.skip("next/out belum dibangun")
+    srv = _server(NEXT_OUT, tajuk_nginx("location ^~ /admin"), 8134)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    konteks = peramban.new_context()
+    tab = konteks.new_page()
+    _pasang_pengintai(tab)
+    try:
+        tab.goto("http://127.0.0.1:8134/admin/", wait_until="load")
+        tab.wait_for_timeout(1500)
+        assert _pelanggaran(tab), "tanpa hash pun tidak ada yang ditolak, jadi uji di atas tidak membuktikan apa pun"
+    finally:
+        konteks.close()
+        srv.shutdown()

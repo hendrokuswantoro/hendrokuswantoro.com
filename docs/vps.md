@@ -158,6 +158,21 @@ sudo -u hk /srv/hendrokuswantoro/venv/bin/python backend/db/buat_admin.py
 
 ### 5. DNS, lalu sertifikat
 
+**Baca dulu sebelum menyentuh DNS.** Sejak 28 September 2026
+`hendrokuswantoro.com` dan `www` dilayani Worker Cloudflare lewat custom
+domain di `wrangler.toml`. Mengarahkan `www` ke VPS berarti memindahkan
+seluruh situs, bukan hanya API dan dashboard. Ada dua jalan, dan memilihnya
+adalah keputusan pemilik:
+
+1. **Subdomain sendiri**, misalnya `admin.hendrokuswantoro.com`, diarahkan
+   ke VPS. Situs tetap di Cloudflare. `server_name` di nginx, `WEBAUTHN_ASAL`,
+   dan daftar asal CORS ikut diganti ke nama itu; passkey tetap sah karena
+   `WEBAUTHN_RP_ID` adalah domain induknya.
+2. **Pindah sepenuhnya ke VPS**: lepas kedua custom domain dari
+   `wrangler.toml`, lalu ikuti langkah di bawah apa adanya.
+
+Langkah di bawah ditulis untuk jalan kedua.
+
 Arahkan `A` dan `AAAA` untuk `hendrokuswantoro.com` dan
 `www.hendrokuswantoro.com` ke alamat VPS. **Tunggu sampai benar benar
 menyebar**, periksa dengan `dig +short www.hendrokuswantoro.com`, baru:
