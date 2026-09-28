@@ -19,7 +19,7 @@ python -m http.server 8080
 # uji
 pip install -r tests/requirements.txt
 python -m pytest                 # 944, tanpa peramban, hitungan detik
-python -m pytest -m peramban     # 91, Chromium sungguhan
+python -m pytest -m peramban     # 102, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
 # backend dan dashboard admin
@@ -65,7 +65,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    1035 uji
+tests/                    1046 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -255,9 +255,12 @@ Hanya itu yang dipasang aplikasi; header keamanan lain tetap urusan nginx,
 sebab blok `/api/` di nginx mewarisi header induknya dan memasang yang sama
 dua kali membuat nilainya ganda.
 
-`/.well-known/security.txt` berlaku sampai tanggal di `Expires`, dan RFC 9116
-melarang lebih dari setahun. `tests/test_pengerasan.py` gagal begitu
-tanggalnya lewat; itu disengaja, perbarui tanggalnya.
+`/.well-known/security.txt` berlaku sampai akhir 2099. RFC 9116 menyarankan
+`Expires` kurang dari setahun, tetapi itu saran (SHOULD), bukan kewajiban, dan
+pemiliknya memilih pada 28 September 2026 agar berkasnya berlaku terus tanpa
+diperbarui tiap tahun. Akibatnya validator seperti internet.nl memberi
+peringatan, bukan galat. Kalau alamat kontaknya berganti, berkas ini yang
+diganti, sebab tanggalnya tidak akan pernah mengingatkan.
 
 **Yang mencabut sesi wajib mencatatnya di `backend/core/cabut.py`.** Access
 token adalah JWT dan tidak pernah ditanyakan ke basis data, jadi mencabut sesi
@@ -461,6 +464,17 @@ bersama.
   jadi ketikan pembaca tidak pernah meninggalkan peramban.
 - Lapisan parkir disisipkan ke gaya dari `HK_PETA.gaya()` sebelum lapisan
   simbol pertama, bukan lewat `addLayer`, supaya ikut diff tema dan bahasa.
+  Legenda juga sakelar: menyembunyikan satu kategori mengubah `filter` atau
+  `visibility` di gaya yang dibangun ulang, bukan menambal lapisannya.
+- Tata letaknya satu untuk semua layar. Di 860 piksel ke atas panel melayang di
+  kiri peta dan peta diberi `padding` selebar panel, jadi pin dan pusat peta
+  tetap sama. Di bawahnya pencarian melayang di atas peta, kartunya di bawah
+  peta, dan di layar penuh kartunya jadi lembar bawah. Pin, legenda, dan
+  padding membaca `--parkir-kiri`, `--parkir-tepi`, dan `--parkir-atas` yang
+  dihitung `aturLetak()`. Uji menahannya di 320, 375, 768, 1.024, dan 1.440.
+- Legenda terbuka sendiri hanya di 1.200 piksel ke atas. Pilihan membuka
+  legenda dan meringkas kartu disimpan di `localStorage["hk-parkir"]`; itu
+  kenyamanan per pembaca, jadi gagal membacanya tidak boleh merusak peta.
 
 Port Next baru memuat judul dan pengantar bagian ini, belum peta
 interaktifnya, dan layarnya mengatakan begitu.

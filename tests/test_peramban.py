@@ -494,6 +494,19 @@ def test_tombol_perbesar_tetap_bekerja(halaman, situs):
     assert halaman.evaluate("() => window.HK_PETA_MAP.getZoom()") > sebelum + 0.5
 
 
+def test_studi_kasus_tidak_menyisakan_ruang_kosong_di_kanan(halaman, situs):
+    halaman.set_viewport_size({"width": 1440, "height": 900})
+    buka(halaman, situs, "/parkir-jogja")
+    kotak = halaman.evaluate("""() => {
+      const a = document.querySelector('.article').getBoundingClientRect();
+      const r = document.querySelector('.article > .rail').getBoundingClientRect();
+      return { kananArtikel: a.right, kananRail: r.right, kiriRail: r.left, lebarArtikel: a.width };
+    }""")
+    assert abs(kotak["kananRail"] - kotak["kananArtikel"]) <= 1, f"kolom kanan tidak sampai tepi: {kotak}"
+    assert halaman.locator(".rail__daftar ol a").count() >= 5
+    assert halaman.locator('.rail a[href="#coba"]').is_visible()
+
+
 def test_angka_studi_kasus_berdiri_di_atas_keterangannya(halaman, situs):
     buka(halaman, situs, "/parkir-jogja")
     kotak = halaman.evaluate("""() => {

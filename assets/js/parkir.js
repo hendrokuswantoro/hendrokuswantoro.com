@@ -77,7 +77,19 @@
     north: { en: "Face north", ind: "Hadapkan ke utara" },
     full: { en: "Full screen", ind: "Layar penuh" },
     unfull: { en: "Exit full screen", ind: "Keluar dari layar penuh" },
-    close: { en: "Close", ind: "Tutup" }
+    close: { en: "Close", ind: "Tutup" },
+    legend: { en: "Legend", ind: "Legenda" },
+    legendTitle: { en: "What the map shows", ind: "Yang tampil di peta" },
+    legendHint: {
+      en: "Tap an item to hide or show it on the map.",
+      ind: "Ketuk salah satu untuk menyembunyikan atau menampilkannya di peta."
+    },
+    legendHide: { en: "Hide legend", ind: "Sembunyikan legenda" },
+    moreDetails: { en: "Show fee options", ind: "Tampilkan pilihan tarif" },
+    lessDetails: { en: "Hide fee options", ind: "Sembunyikan pilihan tarif" },
+    nearest: { en: "Nearest provincial car park", ind: "Parkir aset Pemda DIY terdekat" },
+    here: { en: "here", ind: "di sini" },
+    goThere: { en: "Go to %n, %d", ind: "Menuju %n, %d" }
   };
 
   function isId() {
@@ -231,25 +243,102 @@
     };
   }
 
-  function lapisanParkir(w) {
+  var SIMPAN = "hk-parkir";
+
+  function bacaSetelan() {
+    try {
+      var nilai = JSON.parse(window.localStorage.getItem(SIMPAN) || "{}");
+      return nilai && typeof nilai === "object" ? nilai : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function simpanSetelan(kunci, nilai) {
+    var setelan = bacaSetelan();
+    setelan[kunci] = nilai;
+    try {
+      window.localStorage.setItem(SIMPAN, JSON.stringify(setelan));
+    } catch (e) {
+      return;
+    }
+  }
+
+  function susun(induk, anak) {
+    anak.forEach(function (a) { induk.appendChild(a); });
+    return induk;
+  }
+
+  function ikon(kelas, svg) {
+    var node = el("span", "parkir__ikon" + (kelas ? " " + kelas : ""));
+    node.setAttribute("aria-hidden", "true");
+    node.innerHTML = svg;
+    return node;
+  }
+
+  function kedip(node, kelas) {
+    node.classList.remove(kelas);
+    void node.offsetWidth;
+    node.classList.add(kelas);
+  }
+
+  function jarakTeks(meter) {
+    if (meter < 15) return say(TEXT.here);
+    if (meter < 1000) return rupiah(Math.round(meter / 10) * 10) + " m";
+    return (meter / 1000).toLocaleString(isId() ? "id-ID" : "en-US", { maximumFractionDigits: 1 }) + " km";
+  }
+
+  function asetTerdekat(lat, lon) {
+    var m = meterPerDerajat(lat);
+    var terbaik = null;
+    DATA.titik.forEach(function (t, i) {
+      var d = Math.hypot((t.lon - lon) * m.x, (t.lat - lat) * m.y);
+      if (!terbaik || d < terbaik.jarak) terbaik = { indeks: i, jarak: d };
+    });
+    return terbaik;
+  }
+
+  var DEKAT_M = 2500;
+
+  var LEGENDA = [
+    { kunci: "I", tanda: "parkir__garis parkir__garis--satu", teks: "legendOne" },
+    { kunci: "II", tanda: "parkir__garis parkir__garis--dua", teks: "legendTwo" },
+    { kunci: "usulan", tanda: "parkir__garis parkir__garis--usulan", teks: "legendProposal" },
+    { kunci: "aset", tanda: "parkir__bulatan", teks: "legendAsset" }
+  ];
+
+  var IKON = {
+    cari: '<svg viewBox="0 0 24 24" focusable="false"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>',
+    hapus: '<svg viewBox="0 0 24 24" focusable="false"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>',
+    lapis: '<svg viewBox="0 0 24 24" focusable="false"><path d="m11.99 18.54-7.37-5.73L3 14.07l9 7 9-7-1.63-1.27-7.38 5.74zM12 16l7.36-5.73L21 9l-9-7-9 7 1.63 1.27L12 16z"></path></svg>',
+    lipat: '<svg viewBox="0 0 24 24" focusable="false"><path d="M7.41 15.41 12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path></svg>',
+    tempat: '<svg viewBox="0 0 24 24" focusable="false"><path d="M13 3H6v18h4v-6h3c3.31 0 6-2.69 6-6s-2.69-6-6-6zm.2 8H10V7h3.2c1.1 0 2 .9 2 2s-.9 2-2 2z"></path></svg>',
+    cek: '<svg viewBox="0 0 24 24" focusable="false"><path d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>'
+  };
+
+  function lapisanParkir(w, tampil) {
     var tebal = ["interpolate", ["linear"], ["zoom"], 12, 2, 15, 4.5, 18, 9];
     var tebalHalo = ["interpolate", ["linear"], ["zoom"], 12, 4, 15, 7.5, 18, 13];
     var tebalSorot = ["interpolate", ["linear"], ["zoom"], 12, 9, 15, 14, 18, 22];
     var warna = ["match", ["get", "k"], "I", w.I, w.II];
+    var zona = ["I", "II"].filter(function (k) { return tampil[k]; });
+    var tetap = ["all", ["==", ["get", "u"], 0], ["in", ["get", "k"], ["literal", zona]]];
+    var usul = ["all", ["==", ["get", "u"], 1], Boolean(tampil.usulan)];
     return [
       { id: "parkir-sorot", type: "line", source: "parkir-terpilih",
         layout: { "line-cap": "round", "line-join": "round" },
         paint: { "line-color": w.sorot, "line-opacity": 0.22, "line-width": tebalSorot } },
-      { id: "parkir-halo", type: "line", source: "parkir",
+      { id: "parkir-halo", type: "line", source: "parkir", filter: ["any", tetap, usul],
         layout: { "line-cap": "round", "line-join": "round" },
         paint: { "line-color": w.halo, "line-width": tebalHalo } },
-      { id: "parkir-tetap", type: "line", source: "parkir", filter: ["==", ["get", "u"], 0],
+      { id: "parkir-tetap", type: "line", source: "parkir", filter: tetap,
         layout: { "line-cap": "round", "line-join": "round" },
         paint: { "line-color": warna, "line-width": tebal } },
-      { id: "parkir-usulan", type: "line", source: "parkir", filter: ["==", ["get", "u"], 1],
+      { id: "parkir-usulan", type: "line", source: "parkir", filter: usul,
         layout: { "line-cap": "butt", "line-join": "round" },
         paint: { "line-color": warna, "line-width": tebal, "line-dasharray": [0.6, 1.2] } },
       { id: "parkir-aset", type: "circle", source: "parkir-aset",
+        layout: { visibility: tampil.aset ? "visible" : "none" },
         paint: {
           "circle-radius": ["interpolate", ["linear"], ["zoom"], 12, 5, 17, 9],
           "circle-color": w.aset,
@@ -264,9 +353,16 @@
     var section = frame.closest("[data-parkir]");
     var map = null;
     var dasarCadangan = null;
+    var setelan = bacaSetelan();
+    var layarLebar = window.matchMedia("(min-width: 860px)");
     var keadaan = {
       kendaraan: "Sepeda motor", layanan: "reguler", jam: 1,
-      posisi: null, gelap: temaGelap()
+      posisi: null, titik: PUSAT, gelap: temaGelap(),
+      tampil: { I: true, II: true, usulan: true, aset: true },
+      legenda: typeof setelan.legenda === "boolean"
+        ? setelan.legenda
+        : window.matchMedia("(min-width: 1200px)").matches,
+      ringkas: setelan.ringkas === true
     };
 
     var samping = el("div", "parkir__samping");
@@ -281,31 +377,42 @@
     isian.setAttribute("aria-autocomplete", "list");
     isian.setAttribute("aria-expanded", "false");
     isian.setAttribute("aria-controls", "parkir-saran");
+    var hapus = el("button", "parkir__cari-hapus");
+    hapus.type = "button";
+    hapus.hidden = true;
+    hapus.appendChild(ikon("", IKON.hapus));
     var saran = el("ul", "parkir__saran");
     saran.id = "parkir-saran";
     saran.setAttribute("role", "listbox");
     saran.hidden = true;
-    cari.appendChild(isian);
-    cari.appendChild(saran);
+    susun(cari, [ikon("parkir__cari-ikon", IKON.cari), isian, hapus, saran]);
 
     var kartu = el("div", "parkir__kartu");
+    var lipat = el("button", "parkir__lipat");
+    lipat.type = "button";
+    lipat.setAttribute("aria-controls", "parkir-atur");
+    lipat.appendChild(ikon("", IKON.lipat));
+
+    var ringkasan = el("div", "parkir__ringkasan");
     var lokasi = el("p", "parkir__lokasi");
     var titikWarna = el("i", "parkir__titik");
     titikWarna.setAttribute("aria-hidden", "true");
     var namaRuas = el("strong", "parkir__ruas");
-    lokasi.appendChild(titikWarna);
-    lokasi.appendChild(namaRuas);
+    susun(lokasi, [titikWarna, namaRuas]);
     var ketLokasi = el("p", "parkir__ket");
     var harga = el("p", "parkir__harga");
     var subHarga = el("p", "parkir__sub");
     var usulan = el("p", "parkir__usulan");
     usulan.hidden = true;
+    susun(ringkasan, [lokasi, ketLokasi, harga, subHarga, usulan]);
+
+    var atur = el("div", "parkir__atur");
+    atur.id = "parkir-atur";
 
     var bidangKendaraan = el("label", "parkir__bidang");
     var labelKendaraan = el("span");
     var pilihKendaraan = el("select", "parkir__pilih");
-    bidangKendaraan.appendChild(labelKendaraan);
-    bidangKendaraan.appendChild(pilihKendaraan);
+    susun(bidangKendaraan, [labelKendaraan, pilihKendaraan]);
 
     var bidangJam = el("div", "parkir__bidang parkir__bidang--jam");
     var labelJam = el("span");
@@ -318,11 +425,8 @@
     var nilaiJam = el("output", "parkir__jam");
     var tambah = el("button", "parkir__bulat", "+");
     tambah.type = "button";
-    langkah.appendChild(kurang);
-    langkah.appendChild(nilaiJam);
-    langkah.appendChild(tambah);
-    bidangJam.appendChild(labelJam);
-    bidangJam.appendChild(langkah);
+    susun(langkah, [kurang, nilaiJam, tambah]);
+    susun(bidangJam, [labelJam, langkah]);
 
     var bidangLayanan = el("div", "parkir__layanan");
     bidangLayanan.setAttribute("role", "group");
@@ -338,54 +442,127 @@
       tombolLayanan[kunci] = b;
     });
 
-    var legenda = el("ul", "parkir__legenda");
-    var itemLegenda = {};
-    [["one", "parkir__garis parkir__garis--satu"], ["two", "parkir__garis parkir__garis--dua"],
-     ["proposal", "parkir__garis parkir__garis--usulan"], ["asset", "parkir__bulatan"]].forEach(function (p) {
-      var li = el("li");
-      var tanda = el("i", p[1]);
-      tanda.setAttribute("aria-hidden", "true");
-      li.appendChild(tanda);
-      li.appendChild(el("span"));
-      legenda.appendChild(li);
-      itemLegenda[p[0]] = li.lastChild;
-    });
-    var catatanLegenda = el("p", "parkir__catatan");
+    var terdekat = el("button", "parkir__terdekat");
+    terdekat.type = "button";
+    terdekat.hidden = true;
+    var teksTerdekat = el("span", "parkir__terdekat-teks");
+    var labelTerdekat = el("small");
+    var namaTerdekat = el("strong");
+    susun(teksTerdekat, [labelTerdekat, namaTerdekat]);
+    var jarakTerdekat = el("span", "parkir__terdekat-jarak");
+    susun(terdekat, [ikon("parkir__terdekat-ikon", IKON.tempat), teksTerdekat, jarakTerdekat]);
 
-    kartu.appendChild(lokasi);
-    kartu.appendChild(ketLokasi);
-    kartu.appendChild(harga);
-    kartu.appendChild(subHarga);
-    kartu.appendChild(usulan);
-    kartu.appendChild(bidangKendaraan);
-    kartu.appendChild(bidangJam);
-    kartu.appendChild(bidangLayanan);
-    kartu.appendChild(legenda);
-    kartu.appendChild(catatanLegenda);
-    samping.appendChild(cari);
-    samping.appendChild(kartu);
+    susun(atur, [bidangKendaraan, bidangJam, bidangLayanan, terdekat]);
+    susun(kartu, [lipat, ringkasan, atur]);
+    susun(samping, [cari, kartu]);
 
     var bungkus = el("div", "parkir__bungkus");
     frame.parentNode.insertBefore(bungkus, frame);
-    bungkus.appendChild(frame);
-    bungkus.appendChild(samping);
+    susun(bungkus, [frame, samping]);
 
     var pin = el("div", "parkir__pin");
     pin.setAttribute("aria-hidden", "true");
-    pin.innerHTML = '<svg viewBox="0 0 26 34" focusable="false"><path d="M13 0C5.8 0 0 5.8 0 13c0 9.7 13 21 13 21s13-11.3 13-21C26 5.8 20.2 0 13 0z"></path><circle cx="13" cy="12.6" r="4.6"></circle></svg>';
+    pin.innerHTML = '<span class="parkir__denyut"></span><svg viewBox="0 0 26 34" focusable="false"><path d="M13 0C5.8 0 0 5.8 0 13c0 9.7 13 21 13 21s13-11.3 13-21C26 5.8 20.2 0 13 0z"></path><circle cx="13" cy="12.6" r="4.6"></circle></svg>';
     frame.appendChild(pin);
+
+    var legendaKotak = el("div", "parkir__legenda-kotak");
+    var isiLegenda = el("div", "parkir__legenda-isi");
+    isiLegenda.id = "parkir-legenda";
+    var kepalaLegenda = el("div", "parkir__legenda-kepala");
+    var judulLegenda = el("p", "parkir__legenda-judul");
+    var tutupLegenda = el("button", "parkir__legenda-tutup");
+    tutupLegenda.type = "button";
+    tutupLegenda.appendChild(ikon("", IKON.hapus));
+    susun(kepalaLegenda, [judulLegenda, tutupLegenda]);
+    var petunjukLegenda = el("p", "parkir__legenda-petunjuk");
+    var legenda = el("ul", "parkir__legenda");
+    var tombolLapis = {};
+    LEGENDA.forEach(function (item) {
+      var b = el("button", "parkir__lapis");
+      b.type = "button";
+      b.setAttribute("data-lapis", item.kunci);
+      var tanda = el("i", item.tanda);
+      tanda.setAttribute("aria-hidden", "true");
+      var nama = el("span", "parkir__lapis-nama");
+      susun(b, [tanda, nama, ikon("parkir__lapis-cek", IKON.cek)]);
+      b.addEventListener("click", function () {
+        keadaan.tampil[item.kunci] = !keadaan.tampil[item.kunci];
+        tandaiLapis();
+        terapkan();
+      });
+      legenda.appendChild(susun(el("li"), [b]));
+      tombolLapis[item.kunci] = { tombol: b, nama: nama, teks: TEXT[item.teks] };
+    });
+    var catatanLegenda = el("p", "parkir__catatan");
+    susun(isiLegenda, [kepalaLegenda, petunjukLegenda, legenda, catatanLegenda]);
+    var tombolLegenda = el("button", "parkir__legenda-tombol");
+    tombolLegenda.type = "button";
+    tombolLegenda.setAttribute("aria-controls", "parkir-legenda");
+    var teksLegenda = el("span");
+    susun(tombolLegenda, [ikon("", IKON.lapis), teksLegenda]);
+    susun(legendaKotak, [isiLegenda, tombolLegenda]);
+    frame.appendChild(legendaKotak);
 
     var kabar = el("p", "parkir__kabar visually-hidden");
     kabar.setAttribute("aria-live", "polite");
     section.insertBefore(kabar, bungkus.nextSibling);
 
-    var layarLebar = window.matchMedia("(min-width: 860px)");
-
     function aturLetak() {
-      var kiri = layarLebar.matches ? samping.offsetWidth + 24 : 0;
-      pin.style.left = "calc(" + kiri + "px + (100% - " + kiri + "px) / 2)";
-      if (map) map.setPadding({ top: 0, right: 0, bottom: 0, left: kiri });
+      var lebar = layarLebar.matches;
+      var kiri = lebar ? samping.offsetWidth + 24 : 0;
+      var atas = lebar ? 0 : cari.offsetHeight + 12;
+      bungkus.style.setProperty("--parkir-kiri", kiri + "px");
+      bungkus.style.setProperty("--parkir-tepi", (lebar ? kiri : 12) + "px");
+      bungkus.style.setProperty("--parkir-atas", atas + "px");
+      if (map) map.setPadding({ top: atas, right: 0, bottom: 0, left: kiri });
     }
+
+    function aturLegenda(buka, fokus) {
+      keadaan.legenda = buka;
+      isiLegenda.hidden = !buka;
+      tombolLegenda.hidden = buka;
+      tombolLegenda.setAttribute("aria-expanded", String(buka));
+      legendaKotak.classList.toggle("is-buka", buka);
+      if (fokus) (buka ? tutupLegenda : tombolLegenda).focus();
+    }
+
+    function labelLipat() {
+      var teks = say(keadaan.ringkas ? TEXT.moreDetails : TEXT.lessDetails);
+      lipat.setAttribute("aria-label", teks);
+      lipat.title = teks;
+    }
+
+    function aturRingkas(ringkas) {
+      keadaan.ringkas = ringkas;
+      kartu.setAttribute("data-ringkas", ringkas ? "ya" : "tidak");
+      atur.hidden = ringkas;
+      lipat.setAttribute("aria-expanded", String(!ringkas));
+      labelLipat();
+    }
+
+    function tandaiLapis() {
+      Object.keys(tombolLapis).forEach(function (kunci) {
+        tombolLapis[kunci].tombol.setAttribute("aria-pressed", String(keadaan.tampil[kunci]));
+      });
+    }
+
+    tombolLegenda.addEventListener("click", function () {
+      aturLegenda(true, true);
+      simpanSetelan("legenda", true);
+    });
+    tutupLegenda.addEventListener("click", function () {
+      aturLegenda(false, true);
+      simpanSetelan("legenda", false);
+    });
+    isiLegenda.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      aturLegenda(false, true);
+      simpanSetelan("legenda", false);
+    });
+    lipat.addEventListener("click", function () {
+      aturRingkas(!keadaan.ringkas);
+      simpanSetelan("ringkas", keadaan.ringkas);
+    });
 
     function isiKendaraan() {
       var terpilih = keadaan.kendaraan;
@@ -414,6 +591,7 @@
     function label() {
       isian.placeholder = say(TEXT.search);
       isian.setAttribute("aria-label", say(TEXT.search));
+      hapus.setAttribute("aria-label", say(TEXT.clear));
       labelKendaraan.textContent = say(TEXT.vehicle);
       labelJam.textContent = say(TEXT.hours);
       kurang.setAttribute("aria-label", say(TEXT.less));
@@ -422,11 +600,17 @@
       Object.keys(tombolLayanan).forEach(function (kunci) {
         tombolLayanan[kunci].textContent = say(LAYANAN[kunci]);
       });
-      itemLegenda.one.textContent = say(TEXT.legendOne);
-      itemLegenda.two.textContent = say(TEXT.legendTwo);
-      itemLegenda.proposal.textContent = say(TEXT.legendProposal);
-      itemLegenda.asset.textContent = say(TEXT.legendAsset);
+      teksLegenda.textContent = say(TEXT.legend);
+      judulLegenda.textContent = say(TEXT.legendTitle);
+      petunjukLegenda.textContent = say(TEXT.legendHint);
+      tutupLegenda.setAttribute("aria-label", say(TEXT.legendHide));
+      tutupLegenda.title = say(TEXT.legendHide);
+      Object.keys(tombolLapis).forEach(function (kunci) {
+        tombolLapis[kunci].nama.textContent = say(tombolLapis[kunci].teks);
+      });
       catatanLegenda.textContent = say(TEXT.legendRest);
+      labelTerdekat.textContent = say(TEXT.nearest);
+      labelLipat();
       isiKendaraan();
     }
 
@@ -448,6 +632,45 @@
       tundaKabar = window.setTimeout(function () { kabar.textContent = teks; }, 700);
     }
 
+    var hargaKini = null;
+    var hargaBingkai = 0;
+    function pasangHarga(total) {
+      window.cancelAnimationFrame(hargaBingkai);
+      var angka = document.createTextNode("");
+      harga.replaceChildren(el("span", "parkir__rp", "Rp"), angka);
+      var dari = hargaKini;
+      hargaKini = total;
+      if (dari === null || dari === total || reducedMotion()) {
+        angka.nodeValue = rupiah(total);
+        return;
+      }
+      var awal = null;
+      function langkahHarga(waktu) {
+        if (awal === null) awal = waktu;
+        var k = Math.min(1, (waktu - awal) / 420);
+        var mulus = 1 - Math.pow(1 - k, 3);
+        angka.nodeValue = rupiah(k < 1 ? Math.round((dari + (total - dari) * mulus) / 100) * 100 : total);
+        if (k < 1) hargaBingkai = window.requestAnimationFrame(langkahHarga);
+      }
+      hargaBingkai = window.requestAnimationFrame(langkahHarga);
+    }
+
+    function tampilTerdekat(p) {
+      var dekat = p.luar ? null : asetTerdekat(keadaan.titik[1], keadaan.titik[0]);
+      if (!dekat || dekat.jarak > DEKAT_M) {
+        terdekat.hidden = true;
+        return;
+      }
+      var nama = DATA.titik[dekat.indeks].nama;
+      var jarak = jarakTeks(dekat.jarak);
+      terdekat.hidden = false;
+      terdekat.setAttribute("data-indeks", String(dekat.indeks));
+      namaTerdekat.textContent = nama;
+      jarakTerdekat.textContent = jarak;
+      terdekat.setAttribute("aria-label", say(TEXT.goThere).replace("%n", nama).replace("%d", jarak));
+    }
+
+    var kunciTampil = null;
     function tampilkan() {
       var w = WARNA[keadaan.gelap ? "gelap" : "terang"];
       var p = keadaan.posisi;
@@ -458,6 +681,10 @@
         tombolLayanan[kunci].setAttribute("aria-pressed", String(kunci === keadaan.layanan));
       });
       if (!p) return;
+
+      var kunci = p.luar ? "luar" : (p.ruas || "") + "|" + p.kawasan;
+      if (kunciTampil !== null && kunci !== kunciTampil) kedip(ringkasan, "is-baru");
+      kunciTampil = kunci;
 
       var h = hitungTarif(keadaan.kendaraan, p.kawasan, keadaan.jam, keadaan.layanan);
       kartu.setAttribute("data-kawasan", p.luar ? "luar" : p.kawasan);
@@ -479,19 +706,22 @@
       usulan.textContent = p.usulan ? say(TEXT.proposal) : "";
 
       if (!h) {
-        harga.innerHTML = "";
-        harga.appendChild(el("span", "parkir__rp", "—"));
+        window.cancelAnimationFrame(hargaBingkai);
+        hargaKini = null;
+        harga.replaceChildren(el("span", "parkir__rp", "—"));
         subHarga.textContent = p.luar ? "" : say(TEXT.noFee);
       } else {
-        harga.replaceChildren(el("span", "parkir__rp", "Rp"), document.createTextNode(rupiah(h.total)));
+        pasangHarga(h.total);
         subHarga.textContent = teksTarif(h);
       }
+      tampilTerdekat(p);
       umumkan(say(TEXT.announce)
         .replace("%r", namaRuas.textContent)
         .replace("%f", h ? "Rp" + rupiah(h.total) : say(TEXT.outside)));
     }
 
     function posisiDari(lng, lat) {
+      keadaan.titik = [lng, lat];
       keadaan.posisi = cariKawasan(lat, lng);
       if (map && map.getSource("parkir-terpilih")) map.getSource("parkir-terpilih").setData(terpilih());
       tampilkan();
@@ -510,7 +740,7 @@
       gaya.sources["parkir-aset"] = { type: "geojson", data: geojsonAset() };
       var sebelum = gaya.layers.findIndex(function (l) { return l.type === "symbol"; });
       if (sebelum < 0) sebelum = gaya.layers.length;
-      Array.prototype.splice.apply(gaya.layers, [sebelum, 0].concat(lapisanParkir(w)));
+      Array.prototype.splice.apply(gaya.layers, [sebelum, 0].concat(lapisanParkir(w, keadaan.tampil)));
       return gaya;
     }
 
@@ -547,6 +777,28 @@
       }
     }
 
+    function terbangKe(titik, zoom, durasi) {
+      if (!map) {
+        posisiDari(titik[0], titik[1]);
+        return;
+      }
+      map.flyTo({
+        center: titik, zoom: Math.max(map.getZoom(), zoom),
+        duration: reducedMotion() ? 0 : durasi
+      });
+    }
+
+    terdekat.addEventListener("click", function () {
+      var t = DATA.titik[Number(terdekat.getAttribute("data-indeks"))];
+      if (!t) return;
+      if (!keadaan.tampil.aset) {
+        keadaan.tampil.aset = true;
+        tandaiLapis();
+        terapkan();
+      }
+      terbangKe([t.lon, t.lat], 17, 1200);
+    });
+
     var aktif = -1;
     var hasil = [];
 
@@ -567,17 +819,17 @@
     }
 
     function pilih(ruas) {
-      isian.value = "";
+      isian.value = ruas.nama;
+      hapus.hidden = false;
       tutupSaran();
-      if (map) {
-        map.flyTo({ center: ruas.titik, zoom: 17, duration: reducedMotion() ? 0 : 1400 });
-      } else {
-        posisiDari(ruas.titik[0], ruas.titik[1]);
-      }
+      isian.blur();
+      if (map) map.flyTo({ center: ruas.titik, zoom: 17, duration: reducedMotion() ? 0 : 1400 });
+      else posisiDari(ruas.titik[0], ruas.titik[1]);
     }
 
     function isiSaran() {
       var q = polos(isian.value.trim());
+      hapus.hidden = !isian.value;
       saran.replaceChildren();
       if (!q) { tutupSaran(); return; }
       hasil = DAFTAR_RUAS.filter(function (r) { return polos(r.nama).indexOf(q) !== -1; }).slice(0, 8);
@@ -615,14 +867,58 @@
         tutupSaran();
       }
     });
+    hapus.addEventListener("click", function () {
+      isian.value = "";
+      hapus.hidden = true;
+      tutupSaran();
+      isian.focus();
+    });
 
     label();
+    tandaiLapis();
+    aturLegenda(keadaan.legenda, false);
+    aturRingkas(keadaan.ringkas);
     aturLetak();
     posisiDari(PUSAT[0], PUSAT[1]);
+    if ("ResizeObserver" in window) new ResizeObserver(aturLetak).observe(bungkus);
+    else window.addEventListener("resize", aturLetak);
 
     if (!window.maplibregl || !window.HK_PETA) {
       section.classList.add("is-failed");
       return;
+    }
+
+    function pasangPetunjuk() {
+      var tip = new maplibregl.Popup({
+        closeButton: false, closeOnClick: false, className: "parkir__tip", offset: 12, maxWidth: "240px"
+      });
+      var tipKunci = "";
+      function tunjuk(e) {
+        var f = e.features && e.features[0];
+        if (!f || map.isMoving()) return;
+        var p = f.properties;
+        var kunci = p.n + "|" + p.k + "|" + p.u;
+        if (kunci !== tipKunci) {
+          tipKunci = kunci;
+          var isi = el("div", "parkir__tip-isi");
+          isi.appendChild(el("strong", "", p.n));
+          isi.appendChild(el("span", "", Number(p.u) === 1 ? say(TEXT.legendProposal) : say(TEXT.zone).replace("%k", p.k)));
+          tip.setDOMContent(isi);
+        }
+        tip.setLngLat(e.lngLat);
+        if (!tip.isOpen()) tip.addTo(map);
+        map.getCanvas().style.cursor = "pointer";
+      }
+      function lepas() {
+        tip.remove();
+        tipKunci = "";
+        map.getCanvas().style.cursor = "";
+      }
+      ["parkir-tetap", "parkir-usulan"].forEach(function (id) {
+        map.on("mousemove", id, tunjuk);
+        map.on("mouseleave", id, lepas);
+      });
+      map.on("movestart", lepas);
     }
 
     function mulai(gaya) {
@@ -650,8 +946,6 @@
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
 
       aturLetak();
-      if ("ResizeObserver" in window) new ResizeObserver(aturLetak).observe(bungkus);
-      else window.addEventListener("resize", aturLetak);
 
       var sudahSiap = false;
       function siap() {
@@ -671,8 +965,15 @@
       map.on("movestart", function () { pin.classList.add("is-geser"); });
       map.on("moveend", function () {
         pin.classList.remove("is-geser");
+        kedip(pin, "is-mendarat");
         var c = map.getCenter();
         posisiDari(c.lng, c.lat);
+      });
+
+      map.on("click", function (e) {
+        if (map.getLayer("parkir-aset")
+          && map.queryRenderedFeatures(e.point, { layers: ["parkir-aset"] }).length) return;
+        map.easeTo({ center: e.lngLat, duration: reducedMotion() ? 0 : 650 });
       });
 
       map.on("click", "parkir-aset", function (e) {
@@ -689,6 +990,7 @@
       map.on("mouseleave", "parkir-aset", function () { map.getCanvas().style.cursor = ""; });
 
       if (!sentuh()) {
+        pasangPetunjuk();
         container.addEventListener("wheel", function (event) {
           if (event.ctrlKey || event.metaKey) map.scrollZoom.enable();
           else map.scrollZoom.disable();

@@ -64,7 +64,7 @@ def test_security_txt_mengikuti_rfc_9116():
     habis = dt.datetime.fromisoformat(medan["Expires"].replace("Z", "+00:00"))
     sekarang = dt.datetime.now(dt.timezone.utc)
     assert habis > sekarang, "security.txt sudah kedaluwarsa, perbarui Expires"
-    assert habis - sekarang <= dt.timedelta(days=366), "RFC 9116 meminta Expires kurang dari setahun"
+    assert habis - sekarang > dt.timedelta(days=3650), "pemilik memilih security.txt berlaku terus, bukan setahun"
 
 
 def test_security_txt_ikut_terbit():

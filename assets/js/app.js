@@ -425,7 +425,7 @@
     saatMendekat(wrap, function () {
       muatPustakaPeta()
         .then(function () { return loadOnce("js", "/assets/js/parkir-data.js?v=259bffdc68"); })
-        .then(function () { return loadOnce("js", "/assets/js/parkir.js?v=af0b59e7ef"); })
+        .then(function () { return loadOnce("js", "/assets/js/parkir.js?v=16e8c37e51"); })
         .then(function () {
           wrap.classList.add("is-live");
           window.HK_PARKIR.build(canvas);
