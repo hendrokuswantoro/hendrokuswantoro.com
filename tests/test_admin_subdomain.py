@@ -4,6 +4,8 @@ import ipaddress
 import re
 import sys
 
+import pytest
+
 from konftes import AKAR
 
 sys.path.insert(0, str(AKAR))
@@ -90,6 +92,7 @@ def test_subdomain_admin_tidak_diindeks_dan_api_tidak_boleh_memuat_apa_pun():
 
 
 def test_cookie_sesi_hanya_milik_nama_admin():
+    pytest.importorskip("fastapi")
     from fastapi import Response
 
     import datetime as dt
