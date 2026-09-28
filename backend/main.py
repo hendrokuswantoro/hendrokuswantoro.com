@@ -22,6 +22,7 @@ from backend.core import basis_data
 from backend.core.catat import CatatPermintaan, pasang
 from backend.core.konfigurasi import pengaturan
 from backend.core.laju import BatasiLaju
+from backend.core.tanpa_simpan import TanpaSimpan
 from backend.layanan import pembersihan
 
 
@@ -64,6 +65,7 @@ def buat() -> FastAPI:
         allow_headers=["Authorization", "Content-Type"],
     )
     app.add_middleware(BatasiLaju)
+    app.add_middleware(TanpaSimpan)
     app.add_middleware(CatatPermintaan)
 
     app.include_router(kesehatan.rute)

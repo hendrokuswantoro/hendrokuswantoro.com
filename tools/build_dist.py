@@ -16,6 +16,7 @@ FILES = [
     "site.webmanifest",
     "_headers",
     "CNAME",
+    ".well-known/security.txt",
 ]
 
 DIRS = ["assets", "blog"]

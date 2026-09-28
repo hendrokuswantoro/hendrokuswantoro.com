@@ -100,6 +100,22 @@ boleh diubah. Sekarang diterjemahkan, dan dibuktikan berubah.
 
 ---
 
+## Pengerasan 28 September 2026
+
+| Celah | Akibatnya | Yang dipasang |
+| --- | --- | --- |
+| Refresh token curian tidak terdeteksi | pencuri yang memakai token lebih dulu mendapat sesi, pemiliknya yang terlempar | token yang sudah diputar lalu dipakai lagi mencabut seluruh sesi dan mengirim surat |
+| Sesi tanpa umur mutlak | tiap putaran memberi umur baru, sesi bisa hidup selamanya | `SESI_MAKS_HARI`, bawaan 30 hari sejak masuk |
+| Tebakan sandi tidak dikabarkan | akunnya terkunci tetapi pemiliknya tidak tahu | surat sekali saat batas tebakan tercapai |
+| Jawaban berisi token tanpa `no-store` | bisa tersimpan di cache peramban atau proxy | `Cache-Control: no-store` untuk auth, keamanan, dan admin |
+| Isolasi asal | halaman lain bisa memegang rujukan jendela situs ini | `Cross-Origin-Opener-Policy` dan `Cross-Origin-Resource-Policy` `same-origin` |
+| Bingkai | `child-src blob:` juga berlaku untuk bingkai | `frame-src 'none'` |
+| Fitur peramban | hanya lima fitur yang ditolak | sembilan belas, layar penuh tetap untuk peta |
+| Saluran lapor kerentanan | tidak ada | `/.well-known/security.txt` |
+
+Keempat perilaku backend di atas punya uji yang sudah dibuktikan gagal saat
+perbaikannya dimatikan.
+
 ## Yang diperiksa dan ternyata sudah benar
 
 | | Cara memeriksanya | Hasil |

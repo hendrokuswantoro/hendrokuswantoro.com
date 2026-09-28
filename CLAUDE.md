@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 923, tanpa peramban, hitungan detik
+python -m pytest                 # 944, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 91, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
@@ -59,13 +59,13 @@ content/parkir/           ruas kawasan, tarif, aset provinsi, batas cakupan
 backend/api/v1/           router, HTTP saja
 backend/layanan/          aturan bisnis, tidak tahu SQL
 backend/repositori/       satu satunya yang tahu SQL
-backend/db/migrations/    0001 sampai 0009, nomornya wajib unik
+backend/db/migrations/    0001 sampai 0010, nomornya wajib unik
 backend/admin/            dashboard HTML, gaya dan skripnya berkas sendiri
 unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    1014 uji
+tests/                    1035 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -234,6 +234,30 @@ Aktivitas akun.
 Dashboard HTML di `backend/admin/` belum punya halaman ini; ia hanya
 mengenal nama peristiwanya. `tests/conftest.py` menitipkan ketiga kolom
 setelan bersama faktor lain dan mengembalikannya di akhir sesi uji.
+
+**Refresh token lama yang dipakai lagi dianggap curian.** Sejak 28 September
+2026 tiap baris `sesi` mencatat `awal`, saat orangnya masuk, dan
+`dicabut_karena`. Token yang sudah DIPUTAR lalu dipakai lagi lebih dari
+`TENGGANG_PUTAR_DETIK` (30 detik) sesudahnya mencabut seluruh sesi pemiliknya,
+dicatat sebagai `refresh_dipakai_ulang`, dan dikabarkan lewat surat. Tenggang
+itu ada karena dua tab yang memperpanjang bersamaan bukan pencurian. Token
+yang dicabut karena keluar atau dikeluarkan TIDAK memicunya: perangkat yang
+dikeluarkan lalu mencoba memperpanjang bukan pencuri, dan kalau memicu
+pencabutan massal, menekan "keluarkan perangkat lain" akan mengeluarkan
+pemiliknya sendiri. Umur mutlak sesi `SESI_MAKS_HARI` (30), karena sebelum
+ini tiap putaran memberi umur baru dan sesi yang terus dipakai tidak pernah
+berakhir. `tests/test_pengerasan.py` menahan keempatnya, dan sudah dibuktikan
+gagal ketika perbaikannya dimatikan.
+
+Jawaban di bawah `/api/v1/auth`, `/api/v1/keamanan`, dan `/api/v1/admin`
+dikirim dengan `Cache-Control: no-store` oleh `backend/core/tanpa_simpan.py`.
+Hanya itu yang dipasang aplikasi; header keamanan lain tetap urusan nginx,
+sebab blok `/api/` di nginx mewarisi header induknya dan memasang yang sama
+dua kali membuat nilainya ganda.
+
+`/.well-known/security.txt` berlaku sampai tanggal di `Expires`, dan RFC 9116
+melarang lebih dari setahun. `tests/test_pengerasan.py` gagal begitu
+tanggalnya lewat; itu disengaja, perbarui tanggalnya.
 
 **Yang mencabut sesi wajib mencatatnya di `backend/core/cabut.py`.** Access
 token adalah JWT dan tidak pernah ditanyakan ke basis data, jadi mencabut sesi

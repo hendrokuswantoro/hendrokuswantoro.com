@@ -39,6 +39,7 @@ class Pengaturan(BaseSettings):
     jwt_rahasia_lama: str = Field(default="", alias="JWT_SECRET_LAMA")
     akses_umur_menit: int = Field(default=15, alias="AKSES_UMUR_MENIT")
     refresh_umur_hari: int = Field(default=14, alias="REFRESH_UMUR_HARI")
+    sesi_maks_hari: int = Field(default=30, alias="SESI_MAKS_HARI")
     masuk_gagal_maks: int = Field(default=5, alias="MASUK_GAGAL_MAKS")
 
     faktor_kedua_wajib: bool = Field(default=True, alias="FAKTOR_KEDUA_WAJIB")

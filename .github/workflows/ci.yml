@@ -360,7 +360,7 @@ jobs:
       - name: Every page reached dist/
         run: |
           for berkas in index.html about.html project.html 404.html \
-                        robots.txt sitemap.xml feed.xml _headers \
+                        robots.txt sitemap.xml feed.xml _headers .well-known/security.txt \
                         assets/js/peta.js assets/js/parkir.js assets/js/parkir-data.js \
                         assets/css/style.css \
                         blog/index.html; do

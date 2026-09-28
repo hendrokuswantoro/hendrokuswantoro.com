@@ -46,6 +46,9 @@ def _dari_nginx(nama: str) -> str:
     "Permissions-Policy",
     "Strict-Transport-Security",
     "Content-Security-Policy",
+    "Cross-Origin-Opener-Policy",
+    "Cross-Origin-Resource-Policy",
+    "X-Permitted-Cross-Domain-Policies",
 ])
 def test_header_nginx_sama_dengan_cloudflare(header):
     assert _dari_nginx(header) == _dari_headers(header), (
@@ -463,5 +466,6 @@ def test_blok_admin_tidak_kehilangan_header_lain():
     blok = re.search(r"location \^~ /admin \{(.*?)\n    \}", NGINX, re.S)
     isi = blok.group(1)
     for arahan in ("X-Content-Type-Options", "X-Frame-Options", "Referrer-Policy",
-                   "Strict-Transport-Security", "Content-Security-Policy"):
+                   "Strict-Transport-Security", "Content-Security-Policy",
+                   "Cross-Origin-Opener-Policy", "Cross-Origin-Resource-Policy"):
         assert arahan in isi, f"blok /admin kehilangan {arahan}"

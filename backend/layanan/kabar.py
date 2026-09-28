@@ -43,6 +43,28 @@ async def kabari_masuk(
         )
 
 
+async def kabari_tebakan(pengguna: dict, jumlah: int, menit: int) -> None:
+    alamat_surat = pengguna.get("email")
+    if not alamat_surat or not await _mau(str(pengguna["id"]), "kabar_masuk"):
+        return
+
+    try:
+        surat.kirim(
+            alamat_surat,
+            "Ada yang berulang kali salah memasukkan sandi Anda",
+            f"Sandi akun Anda salah dimasukkan {jumlah} kali dalam {menit} menit, "
+            "jadi percobaan dari tempat itu dikunci sementara.\n\n"
+            "Kalau itu Anda, tunggu sebentar lalu coba lagi.\n\n"
+            "Kalau bukan Anda, seseorang sedang menebak sandi Anda. Sandinya belum "
+            "tertebak. Pastikan authenticator atau sidik jari sudah terpasang.",
+        )
+    except Exception as galat:  # pragma: no cover
+        pasang().warning(
+            "kabar tebakan sandi gagal dikirim",
+            extra={"tambahan": {"jenis": type(galat).__name__}},
+        )
+
+
 async def kabari_perubahan_keamanan(pengguna: dict, apa: str, paksa: bool = False) -> None:
     alamat_surat = pengguna.get("email")
     if not alamat_surat:

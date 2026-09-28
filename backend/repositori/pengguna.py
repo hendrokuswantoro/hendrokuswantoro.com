@@ -31,12 +31,13 @@ async def buat_sesi(
     token_hash: str,
     kadaluarsa: dt.datetime,
     faktor_kedua: bool = False,
+    awal: dt.datetime | None = None,
 ) -> str:
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
-            "INSERT INTO sesi (pengguna_id, token_hash, kadaluarsa, faktor_kedua) "
-            "VALUES (%s, %s, %s, %s) RETURNING id",
-            (pengguna_id, token_hash, kadaluarsa, faktor_kedua),
+            "INSERT INTO sesi (pengguna_id, token_hash, kadaluarsa, faktor_kedua, awal) "
+            "VALUES (%s, %s, %s, %s, COALESCE(%s, now())) RETURNING id",
+            (pengguna_id, token_hash, kadaluarsa, faktor_kedua, awal),
         )
         return (await k.fetchone())["id"]
 
@@ -45,7 +46,7 @@ async def sesi_hidup(token_hash: str) -> dict[str, Any] | None:
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
             """
-            SELECT s.id, s.pengguna_id, s.faktor_kedua, u.peran
+            SELECT s.id, s.pengguna_id, s.faktor_kedua, s.awal, u.peran
             FROM sesi s JOIN users u ON u.id = s.pengguna_id
             WHERE s.token_hash = %s
               AND s.dicabut_pada IS NULL
@@ -56,14 +57,24 @@ async def sesi_hidup(token_hash: str) -> dict[str, Any] | None:
         return await k.fetchone()
 
 
-async def cabut(token_hash: str) -> list[str]:
+async def cabut(token_hash: str, karena: str = "keluar") -> list[str]:
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
-            "UPDATE sesi SET dicabut_pada = now() "
+            "UPDATE sesi SET dicabut_pada = now(), dicabut_karena = %s "
             "WHERE token_hash = %s AND dicabut_pada IS NULL RETURNING id",
-            (token_hash,),
+            (karena, token_hash),
         )
         return [str(b["id"]) for b in await k.fetchall()]
+
+
+async def sesi_bekas(token_hash: str) -> dict[str, Any] | None:
+    async with koneksi() as s, s.cursor() as k:
+        await k.execute(
+            "SELECT pengguna_id, dicabut_pada, dicabut_karena FROM sesi "
+            "WHERE token_hash = %s AND dicabut_pada IS NOT NULL",
+            (token_hash,),
+        )
+        return await k.fetchone()
 
 
 async def daftar_sesi(pengguna_id: str) -> list[dict[str, Any]]:
@@ -83,7 +94,7 @@ async def daftar_sesi(pengguna_id: str) -> list[dict[str, Any]]:
 async def cabut_lain(pengguna_id: str, token_hash: str) -> list[str]:
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
-            "UPDATE sesi SET dicabut_pada = now() "
+            "UPDATE sesi SET dicabut_pada = now(), dicabut_karena = 'cabut' "
             "WHERE pengguna_id = %s AND dicabut_pada IS NULL AND token_hash <> %s "
             "RETURNING id",
             (pengguna_id, token_hash),
@@ -91,12 +102,12 @@ async def cabut_lain(pengguna_id: str, token_hash: str) -> list[str]:
         return [str(b["id"]) for b in await k.fetchall()]
 
 
-async def cabut_semua(pengguna_id: str) -> list[str]:
+async def cabut_semua(pengguna_id: str, karena: str = "cabut") -> list[str]:
     async with koneksi() as s, s.cursor() as k:
         await k.execute(
-            "UPDATE sesi SET dicabut_pada = now() "
+            "UPDATE sesi SET dicabut_pada = now(), dicabut_karena = %s "
             "WHERE pengguna_id = %s AND dicabut_pada IS NULL RETURNING id",
-            (pengguna_id,),
+            (karena, pengguna_id),
         )
         return [str(b["id"]) for b in await k.fetchall()]
 

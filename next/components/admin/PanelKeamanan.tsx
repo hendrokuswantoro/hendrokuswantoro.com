@@ -51,6 +51,7 @@ const NAMA_PERISTIWA: Record<string, string> = {
   wajah_salah: "Wajah tidak cocok",
   setelan_kabar: "Notifikasi diubah",
   mode_ketat: "Mode ketat diubah",
+  refresh_dipakai_ulang: "Token lama dipakai lagi, semua perangkat dikeluarkan",
 };
 
 function waktu(nilai: string): string {

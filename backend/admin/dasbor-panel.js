@@ -157,6 +157,7 @@ const NAMA_PERISTIWA = {
   wajah_salah: "Verifikasi wajah gagal",
   setelan_kabar: "Notifikasi diubah",
   mode_ketat: "Mode ketat diubah",
+  refresh_dipakai_ulang: "Token lama dipakai lagi, semua perangkat dikeluarkan",
 };
 
 async function muatJejak() {
