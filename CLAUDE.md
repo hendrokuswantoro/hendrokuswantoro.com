@@ -554,7 +554,8 @@ memberi situs ini dua tuan.
    Pembayaran pertamanya gagal belasan kali di halaman checkout dasbor, lewat
    Google Pay, kartu, maupun PayPal, tanpa OTP dari bank; yang berhasil adalah
    halaman tagihan Stripe (`invoice.stripe.com`) dengan kartu diketik langsung.
-   Ingat itu saat perpanjangan pertama gagal.
+   Ingat itu saat perpanjangan pertama gagal. Pemeriksaan kesehatan malam kini
+   memeriksa `https://www.hendrokuswantoro.com`, bukan alamat `workers.dev`.
 2. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
    dashboard, serta konfigurasi nginx belum pernah berjalan di server
    sungguhan. Langkahnya ada di `docs/vps.md`. `hk-api.service` tidak

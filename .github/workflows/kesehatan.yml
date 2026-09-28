@@ -22,7 +22,7 @@ jobs:
         run: |
           situs="${{ vars.SITUS }}"
           if [ -z "$situs" ]; then
-            situs="https://hendrokuswantoro-com.kuswantoro-hendro01.workers.dev"
+            situs="https://www.hendrokuswantoro.com"
           fi
           echo "situs=$situs" >> "$GITHUB_OUTPUT"
           echo "checking $situs"
