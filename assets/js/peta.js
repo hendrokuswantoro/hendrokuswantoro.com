@@ -1742,5 +1742,11 @@
     return map;
   }
 
-  window.HK_PETA = { build: build, count: WORK.length };
+  window.HK_PETA = {
+    build: build,
+    count: WORK.length,
+    gaya: mapboxStyle,
+    ikon: tambahIkon,
+    cadangan: FALLBACK_STYLE
+  };
 })();

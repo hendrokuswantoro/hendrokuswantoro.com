@@ -46,6 +46,7 @@ langkah "Lint, JavaScript has no syntax error"
 if command -v node >/dev/null 2>&1; then
   node --check assets/js/app.js
   node --check assets/js/peta.js
+  node --check assets/js/parkir.js
   for berkas in backend/admin/*.js; do
     node --check "$berkas"
   done

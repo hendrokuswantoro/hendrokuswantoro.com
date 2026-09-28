@@ -63,6 +63,19 @@ export function ParkirJogjaView() {
         </div>
       </section>
 
+      <section className="section section--surface" id="coba">
+        <div className="wrap">
+          <div className="peta__intro">
+            <span className="eyebrow">{say(PARKIR.coba.eyebrow)}</span>
+            <h2>{say(PARKIR.coba.h2)}</h2>
+            {PARKIR.coba.intro.map((teks) => (
+              <p key={teks.en}>{say(teks)}</p>
+            ))}
+          </div>
+          <p className="peta__ket">{say(PARKIR.coba.belum)}</p>
+        </div>
+      </section>
+
       <section className="section">
         <div className="wrap">
           <div className="panel reveal">

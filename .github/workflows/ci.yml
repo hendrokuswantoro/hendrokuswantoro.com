@@ -41,9 +41,13 @@ jobs:
         run: |
           python tools/bangun_tulisan.py --periksa
 
+      - name: The parking data script matches content/parkir
+        run: |
+          python tools/bangun_parkir.py --periksa
+
       - name: JavaScript has no syntax error
         run: |
-          for berkas in assets/js/app.js assets/js/peta.js backend/admin/*.js; do
+          for berkas in assets/js/app.js assets/js/peta.js assets/js/parkir.js assets/js/parkir-data.js backend/admin/*.js; do
             node --check "$berkas"
             echo "ok $berkas"
           done
@@ -357,7 +361,8 @@ jobs:
         run: |
           for berkas in index.html about.html project.html 404.html \
                         robots.txt sitemap.xml feed.xml _headers \
-                        assets/js/peta.js assets/css/style.css \
+                        assets/js/peta.js assets/js/parkir.js assets/js/parkir-data.js \
+                        assets/css/style.css \
                         blog/index.html; do
             test -f "dist/$berkas" || { echo "missing dist/$berkas"; exit 1; }
           done

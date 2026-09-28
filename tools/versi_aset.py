@@ -36,7 +36,8 @@ pernah pada saat lain.
 
 Yang dinomori:
 
-- `style.css`, `app.js`, `peta.js` lewat `?v=<sepuluh heksa pertama sha256>`
+- `style.css`, `app.js`, `peta.js`, `parkir.js`, dan `parkir-data.js` lewat
+  `?v=<sepuluh heksa pertama sha256>`
 - pustaka MapLibre lewat **nama foldernya**, bukan lewat query. Modul
   `maplibre-gl.mjs` mengimpor `maplibre-gl-shared.mjs` secara relatif lewat
   `import.meta.url`, jadi query pada modul induk tidak ikut menurun ke
@@ -71,7 +72,10 @@ BERSIDIK = {
     "assets/css/style.css": r"/assets/css/style\.css\?v=([0-9a-z]+)",
     "assets/js/app.js": r"/assets/js/app\.js\?v=([0-9a-z]+)",
     "assets/js/peta.js": r"/assets/js/peta\.js\?v=([0-9a-z]+)",
+    "assets/js/parkir.js": r"/assets/js/parkir\.js\?v=([0-9a-z]+)",
+    "assets/js/parkir-data.js": r"/assets/js/parkir-data\.js\?v=([0-9a-z]+)",
 }
+DIMUAT_APP = ("assets/js/parkir.js", "assets/js/parkir-data.js")
 
 VENDOR = AKAR / "assets" / "vendor" / "maplibre"
 POLA_VENDOR = re.compile(r"/assets/vendor/maplibre/(?:[0-9][0-9a-zA-Z.\-]*/)?(maplibre-gl[a-z.\-]*)")
@@ -145,6 +149,8 @@ def rencana() -> dict[str, str]:
 
     app = cap_karya((AKAR / "assets" / "js" / "app.js").read_text(encoding="utf-8"))
     app, _ = _ganti(app, BERSIDIK["assets/js/peta.js"], _sidik_teks(peta))
+    for aset in DIMUAT_APP:
+        app, _ = _ganti(app, BERSIDIK[aset], sidik(AKAR / aset))
     app = POLA_VENDOR.sub(rf"/assets/vendor/maplibre/{vendor}/\1", app)
     hasil["assets/js/app.js"] = app
 

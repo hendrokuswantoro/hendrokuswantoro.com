@@ -151,6 +151,23 @@ export const PARKIR = {
     },
   ] as Bagian[],
 
+  coba: {
+    eyebrow: { en: "Try it yourself", id: "Coba sendiri" } as Copy,
+    h2: { en: "The live parking map", id: "Peta parkir yang hidup" } as Copy,
+    intro: [
+      { en: "Search a street or move the map.", id: "Cari nama jalan atau geser petanya." },
+      {
+        en: "The pin reads the zone and the fee from the same data and rules.",
+        id: "Pin membaca kawasan dan tarifnya dari data dan aturan yang sama.",
+      },
+    ] as Copy[],
+    belum: {
+      en: "The interactive map lives on the published site. This port shows the case study only.",
+      id: "Peta interaktifnya ada di situs yang terbit. Port ini hanya menampilkan studi kasusnya.",
+    } as Copy,
+    tombol: { en: "Try the live map", id: "Coba peta langsung" } as Copy,
+  },
+
   ajakTitle: { en: "See the rest", id: "Lihat yang lain" } as Copy,
   ajakBody: {
     en: "Other projects, and writing about how I decide things like the above.",

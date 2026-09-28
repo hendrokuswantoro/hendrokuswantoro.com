@@ -18,8 +18,8 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 909, tanpa peramban, hitungan detik
-python -m pytest -m peramban     # 88, Chromium sungguhan
+python -m pytest                 # 923, tanpa peramban, hitungan detik
+python -m pytest -m peramban     # 91, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
 # backend dan dashboard admin
@@ -48,11 +48,14 @@ index.html about.html project.html blog/ 404.html   situs yang terbit
 assets/css/style.css      seluruh gaya, token warna dan huruf di :root
 assets/js/app.js          bahasa, tema, filter proyek, header, animasi
 assets/js/peta.js         peta karya ala Google Maps, 38 lapisan di atas ubin Mapbox
+assets/js/parkir.js       peta tarif parkir Yogyakarta, memakai gaya peta.js
+assets/js/parkir-data.js  data parkir, DIBANGKITKAN dari content/parkir/
 assets/js/konfigurasi.js  token Mapbox, TIDAK ikut git
 assets/vendor/maplibre/   MapLibre GL JS, disimpan sendiri, bukan CDN
 assets/fonts/             delapan woff2 Poppins, bukan dari Google
 content/blog/*.md         sumber tulisan blog
 content/template/         template ber-{{slot}}
+content/parkir/           ruas kawasan, tarif, aset provinsi, batas cakupan
 backend/api/v1/           router, HTTP saja
 backend/layanan/          aturan bisnis, tidak tahu SQL
 backend/repositori/       satu satunya yang tahu SQL
@@ -62,7 +65,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    997 uji
+tests/                    1014 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -83,6 +86,7 @@ dipakai CI, jadi menyunting hasilnya akan ketahuan, tetapi baru di CI.
 | `assets/img/og-cover.png`, ikon | `tools/build_og.py`, `tools/build_icons.py` |
 | `assets/img/work/*.webp` | `tools/build_work_images.py` |
 | `@font-face` di `style.css` | `tools/ambil_font.py` |
+| `assets/js/parkir-data.js` | `tools/bangun_parkir.py` |
 | hash sha256 di `_headers` | `tools/hash_skrip.py` |
 | `dist/`, `dist-hendrokuswantoro.zip` | `tools/bangun_situs.sh`, `tools/build_dist.py` |
 
@@ -410,6 +414,32 @@ sentuh, tempat satu jari memang harus tetap menggulir halaman. Layar hitam
 bertulisan "Use two fingers to move the map" yang menyertainya disembunyikan
 dengan CSS sejak 27 September 2026 atas permintaan pemilik; perilaku dua
 jarinya tetap.
+
+**Peta parkir di `/parkir-jogja#coba` membawa kaidah proyek asalnya.**
+Sumbernya `D:\Projects\Portfolio Kerja\sistem parkir yogyakarta`, aplikasi
+FastAPI dengan GeoPackage. Karena situs ini statis, kawasan dan tarif dihitung
+di peramban oleh `parkir.js`, dengan rumus yang disalin dari `api/layanan.py`
+proyek itu. `tests/parkir_rujukan.py` menyalin rumus yang sama dalam Python,
+dan `tests/test_parkir_peramban.py` menuntut keduanya sepakat di lebih dari
+650 titik dan 660 kombinasi tarif. Kalau rumusnya berubah, ketiganya diubah
+bersama.
+
+- Di luar `content/parkir/cakupan.json` kawasannya kosong dan tarifnya
+  kosong, bukan Kawasan III. Batas itu selubung jaringan jalan, bukan batas
+  administrasi kota, dan tidak boleh dikarang ulang.
+- Tidak ada satu tempat pun yang dilabeli ilegal, liar, atau tidak resmi.
+  Hijau hanya untuk aset parkir Pemda DIY. Ruas usulan digambar putus putus
+  dan memunculkan peringatan.
+- Warna kawasan dihitung ulang untuk palet situs ini, bukan disalin: warna
+  Kawasan II asli `#a86a00` hanya 2,61:1 di atas air. Tiap ruas digambar di
+  atas halo, dan uji menuntut 3:1 terhadap halonya di kedua tema.
+- Pencarian hanya mencari nama ruas di data sendiri. Tidak ada geokode luar,
+  jadi ketikan pembaca tidak pernah meninggalkan peramban.
+- Lapisan parkir disisipkan ke gaya dari `HK_PETA.gaya()` sebelum lapisan
+  simbol pertama, bukan lewat `addLayer`, supaya ikut diff tema dan bahasa.
+
+Port Next baru memuat judul dan pengantar bagian ini, belum peta
+interaktifnya, dan layarnya mengatakan begitu.
 
 **Hanya ada satu pengurai markah, dan ia di server.** `tools/markah.py`
 dipakai pembangkit situs statis, validator skema API, dan sejak 18 September

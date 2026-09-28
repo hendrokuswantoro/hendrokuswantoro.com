@@ -338,6 +338,34 @@
     });
   }
 
+  var pustakaPeta = null;
+
+  function muatPustakaPeta() {
+    if (!pustakaPeta) {
+      pustakaPeta = Promise.all([
+        loadOnce("css", "/assets/vendor/maplibre/6.9.0/maplibre-gl.css"),
+        import("/assets/vendor/maplibre/6.9.0/maplibre-gl.mjs").then(function (mod) {
+          window.maplibregl = mod;
+          return mod;
+        }),
+        loadOnce("js", "/assets/js/konfigurasi.js").catch(function () { return null; })
+      ]).then(function () { return loadOnce("js", "/assets/js/peta.js?v=269744b2e8"); });
+    }
+    return pustakaPeta;
+  }
+
+  function saatMendekat(wrap, mulai) {
+    if (!("IntersectionObserver" in window)) { mulai(); return; }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        io.disconnect();
+        mulai();
+      });
+    }, { rootMargin: "500px 0px" });
+    io.observe(wrap);
+  }
+
   function initMap() {
     var wrap = doc.querySelector("[data-peta]");
     if (!wrap) return;
@@ -350,15 +378,7 @@
       if (started) return;
       started = true;
 
-      Promise.all([
-        loadOnce("css", "/assets/vendor/maplibre/6.9.0/maplibre-gl.css"),
-        import("/assets/vendor/maplibre/6.9.0/maplibre-gl.mjs").then(function (mod) {
-          window.maplibregl = mod;
-          return mod;
-        }),
-        loadOnce("js", "/assets/js/konfigurasi.js").catch(function () { return null; })
-      ])
-        .then(function () { return loadOnce("js", "/assets/js/peta.js?v=1978c0c521"); })
+      muatPustakaPeta()
         .then(function () {
           wrap.classList.add("is-live");
           window.HK_PETA_MAP = window.HK_PETA.build(canvas);
@@ -393,15 +413,27 @@
       });
     });
 
-    if (!("IntersectionObserver" in window)) { start(); return; }
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (!entry.isIntersecting) return;
-        io.disconnect();
-        start();
-      });
-    }, { rootMargin: "500px 0px" });
-    io.observe(wrap);
+    saatMendekat(wrap, start);
+  }
+
+  function initParkir() {
+    var wrap = doc.querySelector("[data-parkir]");
+    if (!wrap) return;
+    var canvas = wrap.querySelector("[data-parkir-kanvas]");
+    if (!canvas) return;
+
+    saatMendekat(wrap, function () {
+      muatPustakaPeta()
+        .then(function () { return loadOnce("js", "/assets/js/parkir-data.js?v=259bffdc68"); })
+        .then(function () { return loadOnce("js", "/assets/js/parkir.js?v=af0b59e7ef"); })
+        .then(function () {
+          wrap.classList.add("is-live");
+          window.HK_PARKIR.build(canvas);
+        })
+        .catch(function () {
+          wrap.classList.add("is-failed");
+        });
+    });
   }
 
   function initProgress() {
@@ -520,6 +552,7 @@
     initLindungi();
     initFilters();
     initMap();
+    initParkir();
     initProgress();
     initToc();
     initYear();

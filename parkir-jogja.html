@@ -26,8 +26,8 @@
 <link rel="preload" href="/assets/fonts/poppins-v24-600-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/poppins-v24-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="alternate" type="application/rss+xml" title="hendrokuswantoro.com" href="/feed.xml">
-<link rel="stylesheet" href="/assets/css/style.css?v=4321f1ec93">
-<script defer src="/assets/js/app.js?v=c68f9c69ec"></script>
+<link rel="stylesheet" href="/assets/css/style.css?v=f06819a002">
+<script defer src="/assets/js/app.js?v=48b3a1598c"></script>
 </head>
 <body>
 <a class="skip-link" href="#main" data-ind="Lompat ke isi">Skip to content</a>
@@ -88,6 +88,9 @@
           <p data-ind="Pilih titik di peta, zona dan tarifnya muncul. Bagian yang paling lama saya pikirkan justru bukan itu, melainkan kapan peta ini harus menolak menjawab.">
             Pick a point on the map and the zone and the fee show up. The part that took longest to get right was not that. It was deciding when the map should refuse to answer.
           </p>
+          <div class="hero__actions">
+            <a class="btn btn--primary" href="#coba" data-ind="Coba peta langsung">Try the live map</a>
+          </div>
         </header>
 
         <img class="article__gambar" src="/assets/img/work/parking.webp?v=8e000f92a9"
@@ -175,6 +178,24 @@
           The monitoring dashboard is already built and reads the real database views, so nothing more needs writing once the data arrives. While a table is empty the panel names which table is empty and who owns it, rather than showing a zero. A zero is a reading. Missing data is not.
         </p>
       </article>
+    </div>
+  </section>
+
+  <section class="section section--surface" id="coba">
+    <div class="wrap">
+      <div class="peta__intro">
+        <span class="eyebrow" data-ind="Coba sendiri">Try it yourself</span>
+        <h2 data-ind="Peta parkir yang hidup">The live parking map</h2>
+        <p data-ind="Cari nama jalan atau geser petanya.">Search a street or move the map.</p>
+        <p data-ind="Pin membaca kawasan dan tarifnya dari data dan aturan yang sama.">The pin reads the zone and the fee from the same data and rules.</p>
+      </div>
+
+      <section class="peta parkir" data-parkir aria-label="Parking fee map" data-ind-label="Peta tarif parkir">
+        <div class="peta__frame parkir__frame" data-gagal="The map could not load. The fee panel still works for central Yogyakarta." data-ind-gagal="Petanya gagal dimuat. Panel tarif tetap bekerja untuk pusat Yogyakarta.">
+          <div class="peta__kanvas" data-parkir-kanvas></div>
+        </div>
+        <p class="peta__ket" data-ind="Geser peta sampai pin berada di tempat parkir Anda. Tarif mengikuti Perda Kota Yogyakarta No. 10 Tahun 2023, kawasan mengikuti Perwal 149/2020. Peta ini panduan, bukan keputusan; papan tarif di lokasi yang berlaku.">Move the map until the pin sits on your parking spot. Fees follow Yogyakarta city regulation 10/2023 and zones follow mayoral regulation 149/2020. This map is a guide, not a ruling; the fee board on site is what counts.</p>
+      </section>
     </div>
   </section>
 
