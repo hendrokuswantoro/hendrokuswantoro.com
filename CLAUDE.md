@@ -566,15 +566,21 @@ Uji perubahan CSP dengan menyajikan situs **beserta tajuknya**, bukan dengan
 `Permissions-Policy: camera=(self)` hanya dipasang pada `location = /admin`,
 tidak pada seluruh situs.
 
-**Dashboard dan API tinggal di `admin.hendrokuswantoro.com`, bukan di `www`.**
-Pemilik memilihnya pada 28 September 2026. Situs publik tetap di Worker
-Cloudflare; server `www` di nginx hanya menyajikan situs statis dan tidak
-punya satu pun `proxy_pass`. CORS dan `WEBAUTHN_RP_ID` produksi hanya menyebut
-`admin.`, jadi skrip yang lolos ke `www` tidak bisa membaca jawaban API admin,
-dan passkey tidak berlaku di subdomain lain. Cookie refresh sengaja TANPA
-atribut `Domain`: bagi peramban `www` dan `admin.` itu *same-site*, jadi
-`SameSite=strict` tidak memisahkan keduanya, hanya ketiadaan `Domain` yang
-memisahkan. `tests/test_admin_subdomain.py` menahan semuanya.
+**Situs, dashboard, dan API akan tinggal di satu VPS, di `www`.** Pemilik
+memilihnya pada 29 September 2026, sehari sesudah memilih subdomain `admin.`
+untuk dashboard, supaya tulisan dari dashboard bisa terbit di mesin yang sama
+dan foto unggahan tampil tanpa disalin. Dashboard di `/admin`, Cloudflare tetap
+di depan. Sampai VPS menyala dan langkah 8 di `docs/vps.md` dikerjakan, `www`
+tetap dilayani Worker Cloudflare, dan `wrangler.toml` tetap memuat kedua custom
+domain; mengubahnya lebih dulu mematikan situs.
+
+Yang diterima dengan sadar: dashboard dan situs publik satu asal bagi
+peramban, jadi skrip yang lolos ke situs publik bisa memakai sesi admin.
+Penjaganya CSP situs tanpa skrip sebaris kecuali satu hash, dan Cloudflare
+Access di depan jalur `/admin` dan `/api`. CORS dan `WEBAUTHN_RP_ID` produksi
+menyebut `www`, bukan `hendrokuswantoro.com`, supaya passkey tidak berlaku di
+subdomain lain. Cookie refresh tetap TANPA atribut `Domain`.
+`tests/test_vps_cloudflare.py` menahan susunan nginx dan cookienya.
 
 **Di balik Cloudflare, nginx melihat alamat Cloudflare.** Tanpa
 `set_real_ip_from`, pembatas masuk sepuluh kali per menit berlaku untuk semua
@@ -640,17 +646,17 @@ memberi situs ini dua tuan.
    terbit di VPS adalah dashboard Next: `.env.example`, yang menjadi
    `/etc/hendrokuswantoro/env`, menyetel `ADMIN_NEXT=1`, `vps.yml` membangun `next/out` di GitHub Actions lalu
    mengirimnya, dan nginx menyajikan `/_next/` langsung dari cakram.
-   Dashboard dan API akan tinggal di `admin.hendrokuswantoro.com`
-   (Proxied, SSL Full (strict), sertifikat origin Cloudflare); langkah dasbornya
-   di `docs/vps.md` langkah 5. Basis data di sana mulai dari
+   Situs dan dashboard akan tinggal di `www` di VPS itu (Proxied, SSL Full
+   (strict) yang sudah menyala, sertifikat origin Cloudflare); pemindahannya,
+   termasuk cara membatalkannya, di `docs/vps.md` langkah 8. Basis data di sana mulai dari
    nol, jadi akun adminnya lahir TANPA faktor kedua, dan selama itu siapa pun
    yang tahu sandinya bisa memasang faktor PERTAMA miliknya sendiri, karena
-   `butuh_admin_pendaftar` sengaja mengizinkannya. Pasang Cloudflare Access
-   untuk `admin.` sebelum record DNS-nya dibuat, lalu pasang TOTP dan passkey
-   segera sesudah `buat_admin.py`. Ini satu satunya temuan audit yang tidak
-   bisa ditutup dengan kode. Gambar unggahan belum punya jalan ke situs
-   publik; lihat bagian terakhir `docs/vps.md` sebelum tulisan dari basis
-   data mulai diterbitkan.
+   `butuh_admin_pendaftar` sengaja mengizinkannya. Cloudflare Access sudah
+   dipasang pada 29 September 2026; tujuannya diganti ke `www/admin` dan
+   `www/api` sebelum situs dipindah. Pasang TOTP dan passkey segera sesudah
+   situs pindah. Ini satu satunya temuan audit yang tidak bisa ditutup dengan
+   kode. Tulisan dari dashboard belum punya jalan ke situs publik; lihat
+   bagian terakhir `docs/vps.md`.
 
 ## Catatan lingkungan
 

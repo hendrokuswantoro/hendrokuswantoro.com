@@ -120,8 +120,8 @@ DSN=postgresql://hendro:...@127.0.0.1:5433/hendrokuswantoro
 JWT_SECRET=...                 # python -c "import secrets;print(secrets.token_urlsafe(48))"
 CADANGAN_KUNCI=...             # python backend/db/enkripsi.py kunci
 MAPBOX_TOKEN=pk....
-WEBAUTHN_RP_ID=admin.hendrokuswantoro.com
-WEBAUTHN_ASAL=["https://admin.hendrokuswantoro.com"]
+WEBAUTHN_RP_ID=www.hendrokuswantoro.com
+WEBAUTHN_ASAL=["https://www.hendrokuswantoro.com"]
 CADANGAN_TUJUAN=r2:hk-cadangan/harian
 KUNCI_KOLOM=...                # SALINAN dari laptop, bukan kunci baru; lihat di bawah
 SMTP_HOST=...
@@ -158,25 +158,26 @@ sudo -u hk /srv/hendrokuswantoro/venv/bin/python backend/db/muat_awal.py
 sudo -u hk /srv/hendrokuswantoro/venv/bin/python backend/db/buat_admin.py
 ```
 
-### 5. DNS dan sertifikat, di dasbor Cloudflare
+### 5. Sertifikat, di dasbor Cloudflare
 
-Situs publik tetap di Worker Cloudflare, di `www`. Dashboard dan API tinggal
-di `admin.hendrokuswantoro.com`, di VPS. Pemilik memilih susunan ini pada 28
-September 2026. Alasannya:
+Situs, dashboard, dan API tinggal di satu VPS, di balik Cloudflare. Situs di
+`www.hendrokuswantoro.com`, dashboard di `www.hendrokuswantoro.com/admin`.
+Pemilik memilih susunan ini pada 29 September 2026, sesudah sehari memakai
+subdomain `admin.` untuk dashboard. Alasannya: tulisan dari dashboard bisa
+terbit ke situs di mesin yang sama, dan foto unggahan tampil tanpa disalin ke
+tempat lain.
 
-- Situs publik tidak ikut mati kalau VPS mati.
-- Beda nama berarti beda asal bagi peramban. Skrip yang lolos ke `www` tidak
-  bisa membaca jawaban API admin, sebab CORS hanya mengizinkan `admin.`.
-- `/admin` bisa dikunci terpisah, misalnya dengan Cloudflare Access.
+Yang diterima dengan sadar: dashboard dan situs publik satu asal bagi peramban.
+Skrip yang lolos ke situs publik bisa memakai sesi admin. Penjaganya CSP situs
+yang tidak mengizinkan skrip sebaris kecuali satu hash, dan Cloudflare Access
+di depan `/admin` dan `/api`.
 
-Di dasbor Cloudflare, zona `hendrokuswantoro.com`:
+**DNS belum diubah di langkah ini.** `www` tetap dilayani Worker Cloudflare
+sampai VPS terbukti sehat; pemindahannya di langkah 8.
 
-1. **DNS**: record `A` (dan `AAAA` kalau VPS-nya punya IPv6) bernama `admin`
-   ke alamat VPS, **Proxied** (awan oranye). Awan abu abu membuka alamat VPS
-   ke dunia, dan firewall di atas akan menolak semua orang.
-2. **SSL/TLS, Overview**: **Full (strict)**. Worker di `www` tidak
-   terpengaruh, sebab ia tidak punya origin.
-3. **SSL/TLS, Origin Server, Create Certificate**, untuk
+1. **SSL/TLS, Overview**: **Full (strict)**. Sudah dinyalakan 29 September
+   2026.
+2. **SSL/TLS, Origin Server, Create Certificate**, untuk
    `hendrokuswantoro.com` dan `*.hendrokuswantoro.com`, 15 tahun. Tempel
    sertifikatnya ke `/etc/ssl/hendrokuswantoro/origin.pem` dan kuncinya ke
    `origin.key` di folder yang sama, lalu `chmod 0600` kuncinya. Kuncinya
@@ -218,14 +219,17 @@ adalah Authenticated Origin Pulls: Cloudflare menunjukkan sertifikat klien dan
 nginx menolak yang tidak membawanya. Ia butuh sakelar di dasbor, dan kalau
 nginx menuntutnya sebelum sakelarnya menyala, seluruh dashboard menjawab 400.
 
-### Cloudflare Access, disarankan
+### Cloudflare Access
+
+Aplikasi Access "Dashboard admin" dibuat 29 September 2026, hanya untuk
+`kuswantoro.hendro01@gmail.com`, dengan kode sekali pakai ke email itu. Saat
+itu tujuannya `admin.hendrokuswantoro.com`. Sebelum situs dipindah, tujuannya
+diganti di langkah 8 menjadi dua jalur di `www`: `admin` dan `api`. `unggahan`
+dan `_next` SENGAJA tidak ikut: foto di tulisan harus terbuka untuk pembaca.
 
 Akun admin di VPS lahir tanpa faktor kedua. Selama itu, siapa pun yang tahu
-sandinya bisa memasang faktor PERTAMA miliknya sendiri. Sebelum record DNS
-`admin` dibuat, pasang aplikasi Cloudflare Access (Zero Trust,
-gratis untuk sedikit pemakai) untuk `admin.hendrokuswantoro.com`, dengan
-aturan yang hanya mengizinkan `kuswantoro.hendro01@gmail.com`. Lalu masuk dan
-pasang authenticator serta passkey hari itu juga.
+sandinya bisa memasang faktor PERTAMA miliknya sendiri, dan Access yang
+menahannya. Pasang authenticator dan passkey hari itu juga.
 
 ### 6. Nyalakan
 
@@ -246,6 +250,68 @@ Yang dicari di keluarannya: baris `BERHASIL: ... pulih utuh, seluruh jumlah
 baris cocok`. Kalau baris itu tidak ada, cadangannya belum terbukti apa apa,
 dan tidak ada gunanya melanjutkan sampai ia ada.
 
+### 8. Memindahkan situs ke VPS
+
+Situs mati beberapa menit di tengah langkah ini, antara custom domain dilepas
+dan record DNS dibuat. Kerjakan saat sepi, dan baca sampai habis dulu.
+
+**a. Buktikan VPS sehat, dari VPS sendiri.** Firewall hanya menerima
+Cloudflare, jadi pemeriksaannya lewat alamat mesin itu sendiri:
+
+```bash
+for jalur in / /about /project /parkir-jogja /blog/ /admin; do
+  curl -sk --resolve www.hendrokuswantoro.com:443:127.0.0.1 -o /dev/null \
+    -w "%{http_code} $jalur\n" "https://www.hendrokuswantoro.com$jalur"
+done
+```
+
+Semuanya harus `200`. Kalau belum, berhenti di sini; situs lama masih utuh.
+
+**b. Arahkan Cloudflare Access ke `www`.** Cloudflare One, Access controls,
+Applications, "Dashboard admin", Edit. Di Destinations ganti subdomain `admin`
+menjadi `www` dengan path `admin`, lalu Add public hostname: `www`, path
+`api`. Simpan. Situs lama tidak punya `/admin`, jadi langkah ini tidak
+mengubah apa pun untuk pembaca.
+
+**c. Lepas custom domain dari Worker.** Workers & Pages,
+`hendrokuswantoro-com`, Settings, Domains & Routes. Hapus
+`www.hendrokuswantoro.com` dan `hendrokuswantoro.com`. **Situs mati mulai
+detik ini.** Record DNS milik Worker ikut terhapus bersama custom domainnya.
+
+**d. Buat record DNS ke VPS.** DNS, Records, Add record, dua kali:
+
+| Type | Name | Isi | Proxy |
+| --- | --- | --- | --- |
+| `A` | `www` | alamat IP VPS | Proxied |
+| `A` | `@` | alamat IP VPS | Proxied |
+
+Tambahkan `AAAA` yang sama kalau VPS punya IPv6. Record `@` wajib ada dan
+wajib Proxied: Redirect Rule dari nama tanpa `www` hanya berlaku pada nama
+yang lewat Cloudflare.
+
+**e. Buktikan dari luar.**
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://www.hendrokuswantoro.com/
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" https://www.hendrokuswantoro.com/admin
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" https://hendrokuswantoro.com/
+```
+
+Yang benar: `200`; `302` ke `cloudflareaccess.com`; `301` ke `www`. Buka juga
+satu halaman berpeta dan pastikan nama jalan tampil: itu bukti token Mapbox
+ikut terbangun.
+
+**f. Commit `wrangler.toml` tanpa `routes`.** Kalau tidak, build Worker
+berikutnya mencoba memasang kedua custom domain lagi. `workers_dev = true`
+tetap, supaya alamat `workers.dev` tetap hidup sebagai cadangan.
+`tests/test_terbit.py` yang menuntut kedua pola harus ikut diganti di commit
+yang sama.
+
+**Kalau gagal di tengah jalan**, kembalikan dalam urutan terbalik: hapus
+record `A` `www` dan `@`, lalu di Domains & Routes Worker tambahkan lagi
+kedua custom domain. Situs lama kembali dalam hitungan menit, sebab Worker-nya
+tidak pernah dihapus.
+
 ---
 
 ## Deploy otomatis
@@ -265,10 +331,14 @@ Yang harus diisi di **Settings > Secrets and variables > Actions**:
 | Secret | `VPS_PORTA` | opsional, bawaannya 22 |
 | Variable | `VPS_AKTIF` | `1` |
 | Variable | `SITUS` | `https://www.hendrokuswantoro.com` |
-| Variable | `ADMIN` | opsional, bawaannya `https://admin.hendrokuswantoro.com` |
+| Variable | `ADMIN` | opsional, bawaannya `https://www.hendrokuswantoro.com` |
 
-`VPS_HOST` adalah alamat asli VPS, bukan `admin.hendrokuswantoro.com`: nama
+`VPS_HOST` adalah alamat asli VPS, bukan `www.hendrokuswantoro.com`: nama
 itu menunjuk Cloudflare, dan Cloudflare tidak meneruskan SSH.
+
+Secret `MAPBOX_TOKEN`, yang sudah dipakai CI, juga dipakai membangun situs
+untuk VPS. Deploy menolak berjalan tanpa token itu, sebab tanpa token peta di
+VPS jatuh ke OpenFreeMap tanpa nama jalan dan tanpa gedung.
 
 Buat kunci khusus untuk ini, jangan pakai kunci pribadi Anda:
 
@@ -369,27 +439,20 @@ formalitas: perintah itu menimpa seluruh isi basis data yang sekarang.
 
 ---
 
-## Kalau nanti pindah sepenuhnya dari Cloudflare
+## Kalau nanti lepas dari Cloudflare sama sekali
 
-nginx masih memuat server untuk `www` yang menyajikan situs statis yang sama,
-dengan header keamanan yang sama persis, dijaga `tests/test_infrastruktur.py`
-supaya keduanya tidak pernah bergeser. Tetapi pindah tidak lagi cukup dengan
-mengganti DNS: sertifikat origin hanya dipercaya Cloudflare, firewall hanya
-menerima Cloudflare, dan `set_real_ip_from` hanya berarti di balik Cloudflare.
-Ketiganya harus diganti bersamaan, ditambah sertifikat Let's Encrypt.
+Sertifikat origin hanya dipercaya Cloudflare, firewall hanya menerima
+Cloudflare, dan `set_real_ip_from` hanya berarti di balik Cloudflare. Lepas
+dari Cloudflare berarti ketiganya diganti bersamaan, ditambah sertifikat Let's
+Encrypt dan porta 80 yang dibuka lagi untuknya. Yang hilang: cache tepi,
+perlindungan DDoS, dan alamat VPS yang tersembunyi.
 
-Yang hilang kalau pindah: cache tepi di puluhan kota, perlindungan DDoS, dan
-sertifikat yang mengurus dirinya sendiri. Yang didapat: satu mesin yang
-seluruhnya milik Anda dan yang seluruhnya jadi tanggung jawab Anda untuk
-ditambal.
+## Tulisan dari dashboard ke situs publik
 
-## Gambar unggahan di situs publik
-
-Foto dan video dari dashboard disimpan di VPS dan disajikan di
-`https://admin.hendrokuswantoro.com/unggahan/...`. Situs publik di Cloudflare
-belum membangun tulisan dari basis data (`bangun_tulisan.py --sumber api`
-belum dipakai build Cloudflare), jadi hari ini belum ada tulisan terbit yang
-menunjuk unggahan. Saat jalur itu dipasang, berkas unggahan yang disebut
-tulisan wajib ikut disalin ke `dist/unggahan/` saat build. Jangan menunjuk
-`admin.` langsung dari situs publik: itu membuka CSP situs ke subdomain admin
-dan membuat tiap pembaca menyambung ke VPS.
+Situs dan API kini satu mesin, jadi foto di `/unggahan/` tampil di situs
+tanpa disalin ke mana pun. Yang belum ada: situs dibangun dari `content/` di
+git oleh GitHub Actions, bukan dari basis data. Tulisan yang dibuat di
+dashboard baru terbit kalau `bangun_tulisan.py --sumber api` dijalankan di
+VPS. Saat jalur itu dipasang, rsync `dist/` di `vps.yml` memakai `--delete`
+dan akan menghapus halaman blog yang dibangun di VPS; keduanya harus
+disatukan lebih dulu.

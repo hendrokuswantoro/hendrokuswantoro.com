@@ -16,7 +16,7 @@ import ip_cloudflare  # noqa: E402
 INFRA = AKAR / "infrastructure"
 NGINX = (INFRA / "nginx" / "hendrokuswantoro.conf").read_text(encoding="utf-8")
 PASANG = (INFRA / "pasang.sh").read_text(encoding="utf-8")
-ADMIN = "admin.hendrokuswantoro.com"
+WWW = "www.hendrokuswantoro.com"
 
 
 def _server(nama: str) -> str:
@@ -61,37 +61,27 @@ def test_tidak_ada_http_dan_nama_asing_ditolak_sejak_jabat_tangan():
 
 
 def test_sertifikat_origin_dipakai_di_setiap_server():
-    for nama in ("hendrokuswantoro.com", "www.hendrokuswantoro.com", ADMIN):
+    for nama in ("hendrokuswantoro.com", WWW):
         blok = _server(nama)
         assert "ssl_certificate     /etc/ssl/hendrokuswantoro/origin.pem;" in blok, nama
         assert "ssl_certificate_key /etc/ssl/hendrokuswantoro/origin.key;" in blok, nama
     assert "ssl_protocols TLSv1.2 TLSv1.3;" in NGINX
 
 
-def test_dashboard_dan_api_hanya_tinggal_di_subdomain_admin():
-    www = _server("www.hendrokuswantoro.com")
-    for jalur in ("/api/", "/admin", "/unggahan/", "/_next/"):
-        assert f"{jalur} {{" not in www and f"{jalur}{{" not in www, f"www masih menyajikan {jalur}"
-    assert "proxy_pass" not in www
-
-    admin = _server(ADMIN)
-    for awalan in ("location ^~ /admin {", "location /api/ {", "location /api/v1/auth/ {",
+def test_situs_dan_dashboard_tinggal_di_satu_server_www():
+    assert "admin.hendrokuswantoro.com" not in NGINX, "masih ada server untuk subdomain admin"
+    www = _server(WWW)
+    for awalan in ("location / {", "location ^~ /admin {", "location /api/ {", "location /api/v1/auth/ {",
                    "location = /api/v1/admin/berkas {", "location /unggahan/ {", "location ^~ /_next/ {"):
-        assert awalan in admin, awalan
-    assert re.search(r"location / \{\s*return 308 https://www\.hendrokuswantoro\.com\$request_uri;", admin)
+        assert awalan in www, awalan
+    assert "root /srv/hendrokuswantoro/situs;" in www
+    admin = www[www.index("location ^~ /admin {"):]
+    admin = admin[:admin.index("\n    }")]
+    assert 'add_header X-Robots-Tag "noindex, nofollow" always;' in admin
+    assert "add_header Content-Security-Policy $csp_admin always;" in admin
 
 
-def test_subdomain_admin_tidak_diindeks_dan_api_tidak_boleh_memuat_apa_pun():
-    admin = _server(ADMIN)
-    kepala = admin[:admin.index("\n    location ")]
-    assert 'add_header X-Robots-Tag "noindex, nofollow" always;' in kepala
-    assert "Strict-Transport-Security" in kepala
-    csp = re.search(r'add_header Content-Security-Policy "([^"]+)" always;', kepala).group(1)
-    assert csp.startswith("default-src 'none';")
-    assert "script-src" not in csp
-
-
-def test_cookie_sesi_hanya_milik_nama_admin():
+def test_cookie_sesi_tanpa_domain_dan_hanya_untuk_jalur_masuk():
     pytest.importorskip("fastapi")
     from fastapi import Response
 
@@ -113,8 +103,8 @@ def test_cookie_sesi_hanya_milik_nama_admin():
     assert "httponly" in cookie and "samesite=strict" in cookie and "path=/api/v1/auth" in cookie
 
 
-def test_passkey_produksi_terikat_ke_nama_admin():
+def test_passkey_produksi_terikat_ke_www():
     contoh = (AKAR / ".env.example").read_text(encoding="utf-8")
-    assert f"# Produksi : WEBAUTHN_RP_ID={ADMIN}" in contoh
-    assert f"WEBAUTHN_RP_ID={ADMIN}" in PASANG
-    assert f'WEBAUTHN_ASAL=["https://{ADMIN}"]' in PASANG
+    assert f"# Produksi : WEBAUTHN_RP_ID={WWW}" in contoh
+    assert f"WEBAUTHN_RP_ID={WWW}" in PASANG
+    assert f'WEBAUTHN_ASAL=["https://{WWW}"]' in PASANG

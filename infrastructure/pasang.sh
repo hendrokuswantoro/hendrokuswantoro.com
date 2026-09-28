@@ -118,8 +118,8 @@ cat <<'SELESAI'
 1. Isi rahasianya:
      sudo nano /etc/hendrokuswantoro/env
    Yang wajib: POSTGRES_PASSWORD, DSN, JWT_SECRET, CADANGAN_KUNCI,
-   WEBAUTHN_RP_ID=admin.hendrokuswantoro.com,
-   WEBAUTHN_ASAL=["https://admin.hendrokuswantoro.com"],
+   WEBAUTHN_RP_ID=www.hendrokuswantoro.com,
+   WEBAUTHN_ASAL=["https://www.hendrokuswantoro.com"],
    KUNCI_KOLOM (salinan dari laptop kalau basis datanya dipindah),
    SMTP_HOST, SMTP_PENGGUNA, SMTP_SANDI, SURAT_DARI, SURAT_WAJIB=1
 
@@ -134,8 +134,10 @@ cat <<'SELESAI'
      sudo -u hk /srv/hendrokuswantoro/venv/bin/python backend/db/buat_admin.py
 
 4. Di dasbor Cloudflare, bukan di mesin ini:
-   a. DNS: record A (dan AAAA) bernama admin ke alamat mesin ini, Proxied
-      (awan oranye). Tanpa awan oranye firewall di atas menolak semuanya.
+   a. DNS BELUM diubah. www masih dilayani Worker Cloudflare sampai mesin
+      ini terbukti sehat; pemindahannya ada di docs/vps.md, "Memindahkan
+      situs ke VPS". Record A nanti harus Proxied (awan oranye), sebab
+      firewall di atas menolak semua yang bukan Cloudflare.
    b. SSL/TLS, Overview: Full (strict).
    c. SSL/TLS, Origin Server, Create Certificate untuk
       hendrokuswantoro.com dan *.hendrokuswantoro.com. Tempel hasilnya ke:
@@ -154,7 +156,7 @@ cat <<'SELESAI'
      sudo systemctl start hk-cadangan.timer
      sudo nginx -t && sudo systemctl reload nginx
 
-7. SEGERA buka https://admin.hendrokuswantoro.com/admin, masuk, lalu pasang
+7. SEGERA sesudah situs dipindah, buka www.hendrokuswantoro.com/admin, lalu pasang
    authenticator dan passkey di menu Keamanan. Sampai itu selesai, siapa pun
    yang tahu sandinya bisa memasang faktor pertamanya sendiri.
 

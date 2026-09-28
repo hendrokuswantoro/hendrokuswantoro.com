@@ -25,7 +25,7 @@ def _asal(permintaan: Request) -> str:
     for asal in pengaturan().asal_diizinkan:
         if asal.startswith("https://") and "localhost" not in asal and "127.0.0.1" not in asal:
             return asal
-    return "https://admin.hendrokuswantoro.com"
+    return "https://www.hendrokuswantoro.com"
 
 
 async def _pengguna_penuh(pengguna: dict) -> dict:

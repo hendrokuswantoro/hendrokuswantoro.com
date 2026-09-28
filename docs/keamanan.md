@@ -297,3 +297,10 @@ tidak memisahkan keduanya. Yang memisahkan adalah cookie refresh tanpa atribut
 `Domain`, sehingga ia hanya milik `admin.`. `tests/test_admin_subdomain.py`
 menolak kalau atribut itu ditambahkan, dan ujinya sudah dibuktikan gagal saat
 jaringan Cloudflare, firewall, dan cookie sengaja dirusak.
+
+Sehari kemudian, 29 September 2026, pemilik memilih memindahkan situs dan
+dashboard sekaligus ke VPS, dengan dashboard kembali di `www/admin`. Temuan 1,
+2, dan 3 tetap berlaku dan perbaikannya tetap terpasang. Temuan 4 berbalik:
+CORS dan `WEBAUTHN_RP_ID` kini menyebut `www`, dan pemisahan asal antara situs
+publik dan dashboard dilepas dengan sadar. Penggantinya Cloudflare Access pada
+jalur `/admin` dan `/api`, di atas CSP situs yang sudah ketat.

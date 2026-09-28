@@ -31,7 +31,11 @@ jobs:
           python-version: '3.12'
 
       - name: Build the static site
-        run: sh tools/bangun_situs.sh
+        env:
+          MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}
+        run: |
+          test -n "$MAPBOX_TOKEN" || { echo "secret MAPBOX_TOKEN kosong: peta di VPS akan jatuh ke OpenFreeMap"; exit 1; }
+          sh tools/bangun_situs.sh
 
       - uses: actions/setup-node@v7
         with:
@@ -126,11 +130,11 @@ jobs:
             echo "ok   $jalur"
           done
 
-      - name: The dashboard answers on its own name
+      - name: The dashboard answers
         run: |
           admin="${{ vars.ADMIN }}"
           if [ -z "$admin" ]; then
-            admin="https://admin.hendrokuswantoro.com"
+            admin="https://www.hendrokuswantoro.com"
           fi
           kode=$(curl -s -o /dev/null -w '%{http_code}' "$admin/admin")
           case "$kode" in

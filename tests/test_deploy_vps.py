@@ -57,3 +57,11 @@ def test_soket_api_terbuka_untuk_nginx_bukan_untuk_semua_orang():
 def test_izin_diuji_sungguhan_di_ci():
     assert "sh infrastructure/periksa_izin.sh" in CI
     assert 'sh "$AKAR/infrastructure/izin.sh"' in PASANG
+
+
+def test_situs_untuk_vps_dibangun_dengan_token_peta():
+    langkah = VPS[VPS.index("- name: Build the static site"):VPS.index("sh tools/bangun_situs.sh")]
+    assert "MAPBOX_TOKEN: ${{ secrets.MAPBOX_TOKEN }}" in langkah, (
+        "tanpa token, situs di VPS memuat peta OpenFreeMap tanpa nama jalan dan tanpa gedung"
+    )
+    assert 'test -n "$MAPBOX_TOKEN"' in langkah
