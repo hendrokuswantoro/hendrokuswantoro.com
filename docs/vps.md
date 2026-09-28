@@ -51,6 +51,18 @@ diambil dengan angka, bukan karena daftarnya belum semua tercentang.
 | DigitalOcean | 1 vCPU, 2 GB, 50 GB | sekitar Rp190.000 |
 | Biznet Gio | 1 vCPU, 2 GB | sekitar Rp100.000 |
 | IDCloudHost | 1 vCPU, 2 GB | sekitar Rp120.000 |
+| Oracle Cloud Always Free | ARM, sampai 4 OCPU, 24 GB | Rp0, dengan catatan di bawah |
+
+**Oracle Cloud Always Free** dicoba pada 29 September 2026 dan berhenti di
+verifikasi kartu: kartu debit pemilik ditolak tanpa OTP, polanya sama dengan
+checkout Cloudflare sehari sebelumnya, dan Oracle tidak punya jalan lain selain
+kartu. Satu akun gratis per orang, jadi jangan mencoba berulang dengan kartu
+yang sama. Kalau dicoba lagi dengan kartu kredit: wilayah yang dipilih
+Indonesia North (Batam), mesinnya ARM, dan `postgis/postgis` hanya tersedia
+untuk amd64, jadi basis datanya perlu image PostGIS untuk arm64 lebih dulu.
+Ubuntu buatan Oracle juga membawa aturan iptables sendiri yang menutup semua
+porta kecuali SSH, dan penggunanya `ubuntu`, bukan `root`; `pasang.sh` belum
+menangani keduanya.
 
 2 GB memori adalah batas bawah yang masuk akal: PostGIS, Redis, dan dua
 pekerja uvicorn muat di 1 GB, tetapi tanpa ruang sisa untuk apa pun.

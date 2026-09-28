@@ -655,7 +655,9 @@ memberi situs ini dua tuan.
    dipasang pada 29 September 2026; tujuannya diganti ke `www/admin` dan
    `www/api` sebelum situs dipindah. Pasang TOTP dan passkey segera sesudah
    situs pindah. Ini satu satunya temuan audit yang tidak bisa ditutup dengan
-   kode. Tulisan dari dashboard belum punya jalan ke situs publik; lihat
+   kode. Pada 29 September 2026 pemilik MENUNDA VPS sesudah Oracle Cloud
+   Free menolak kartunya; catatan untuk mencobanya lagi ada di `docs/vps.md`,
+   "Kalau memang jadi". Tulisan dari dashboard belum punya jalan ke situs publik; lihat
    bagian terakhir `docs/vps.md`.
 
 ## Catatan lingkungan
