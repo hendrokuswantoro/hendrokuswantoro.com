@@ -74,6 +74,7 @@ jobs:
           rsync -az --delete -e "$SSH" \
             --exclude '.git' --exclude 'node_modules' --exclude '__pycache__' \
             --exclude 'cadangan' --exclude '.env' --exclude 'dist' --exclude 'next/.next' \
+            --exclude '/unggahan' \
             ./ "$AKUN@$HOST:/srv/hendrokuswantoro/app/"
 
       - name: Install dependencies, migrate, restart

@@ -18,9 +18,9 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 963, tanpa peramban, hitungan detik
+python -m pytest                 # 974, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 111, Chromium sungguhan
-sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
+sh tools/verifikasi.sh           # 22 langkah, seluruhnya, berurutan
 
 # backend dan dashboard admin
 cd infrastructure && docker compose --env-file ../.env up -d
@@ -65,7 +65,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    1074 uji
+tests/                    1085 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -587,6 +587,17 @@ Cloudflare, bukan certbot. Jangan pernah membaca alamat dari
 Cloudflare berubah, `python tools/ip_cloudflare.py --ambil`; pemeriksaan
 kesehatan malam menjalankan `--banding` terhadap `api.cloudflare.com`.
 
+**Di VPS, yang mengirim kode dan yang menjalankannya adalah dua akun.**
+`deploy` memiliki `app/`, `situs/`, dan `venv/`; `hk` menjalankan API dan
+hanya membaca ketiganya. Unggahan tinggal di `/srv/hendrokuswantoro/unggahan`,
+di luar `app/`, sebab `rsync --delete` menghapus apa pun di sana dan
+`ProtectSystem=strict` menguncinya. Soket API milik grup `hk-soket`
+(`hk`, `deploy`, `www-data`); jangan pernah memasukkan `www-data` ke grup
+`hk`, grup itu membaca `/etc/hendrokuswantoro/env`. Semuanya dipasang
+`infrastructure/izin.sh`, dan `infrastructure/periksa_izin.sh` mencobanya
+sungguhan di Ubuntu dalam Docker. Sampai 29 September 2026 izin ini hanya
+kalimat di `docs/vps.md`, dan deploy pertama akan gagal di tiga tempat.
+
 Deploy sengaja tidak ada di `ci.yml`. Cloudflare membangun dan menerbitkan
 sendiri ketika `main` bergerak, jadi deploy kedua di GitHub Actions berarti
 memberi situs ini dua tuan.
@@ -627,7 +638,8 @@ memberi situs ini dua tuan.
    `butuh_admin_pendaftar` sengaja mengizinkannya. Pasang Cloudflare Access
    untuk `admin.` sebelum record DNS-nya dibuat, lalu pasang TOTP dan passkey
    segera sesudah `buat_admin.py`. Ini satu satunya temuan audit yang tidak
-   bisa ditutup dengan kode. Gambar unggahan belum punya jalan ke situs
+   bisa ditutup dengan kode. Unggahan belum ikut cadangan malam, yang hanya
+   menyalin basis data. Gambar unggahan juga belum punya jalan ke situs
    publik; lihat bagian terakhir `docs/vps.md` sebelum tulisan dari basis
    data mulai diterbitkan.
 

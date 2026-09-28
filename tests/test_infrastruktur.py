@@ -249,7 +249,7 @@ def test_deploy_memeriksa_hasilnya():
 
 
 def test_deploy_tidak_pernah_menyalin_env_atau_cadangan():
-    for larangan in ("--exclude '.env'", "--exclude 'cadangan'"):
+    for larangan in ("--exclude '.env'", "--exclude 'cadangan'", "--exclude '/unggahan'"):
         assert larangan in VPS, larangan
 
 

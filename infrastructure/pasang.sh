@@ -5,6 +5,7 @@ set -eu
 AKAR=$(cd "$(dirname "$0")/.." && pwd)
 TUJUAN=/srv/hendrokuswantoro
 PENGGUNA=hk
+PENGIRIM=deploy
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "jalankan sebagai root" >&2
@@ -30,25 +31,17 @@ if ! command -v rclone >/dev/null 2>&1; then
   curl -fsSL https://rclone.org/install.sh | bash
 fi
 
-langkah "pengguna $PENGGUNA"
-if ! id "$PENGGUNA" >/dev/null 2>&1; then
-  useradd --system --create-home --home-dir "$TUJUAN" --shell /usr/sbin/nologin "$PENGGUNA"
-fi
+langkah "pengguna $PENGGUNA dan $PENGIRIM, folder, izin sudo"
+TUJUAN="$TUJUAN" sh "$AKAR/infrastructure/izin.sh"
 usermod -aG docker "$PENGGUNA"
-
-install -d -o "$PENGGUNA" -g "$PENGGUNA" -m 0755 "$TUJUAN"
-install -d -o "$PENGGUNA" -g "$PENGGUNA" -m 0755 "$TUJUAN/app"
-install -d -o "$PENGGUNA" -g "$PENGGUNA" -m 0755 "$TUJUAN/situs"
-install -d -o "$PENGGUNA" -g "$PENGGUNA" -m 0700 "$TUJUAN/cadangan"
-install -d -o root -g "$PENGGUNA" -m 0750 /etc/hendrokuswantoro
-install -d -o root -g root -m 0700 /etc/ssl/hendrokuswantoro
 
 langkah "kode"
 rsync -a --delete \
   --exclude '.git' --exclude 'node_modules' --exclude '__pycache__' \
   --exclude 'cadangan' --exclude '.env' --exclude 'next/out' --exclude 'next/.next' \
+  --exclude '/unggahan' \
   "$AKAR/" "$TUJUAN/app/"
-chown -R "$PENGGUNA:$PENGGUNA" "$TUJUAN/app"
+chown -R "$PENGIRIM:$PENGGUNA" "$TUJUAN/app"
 chmod +x "$TUJUAN/app/infrastructure/"*.sh
 
 langkah "venv"
@@ -57,14 +50,19 @@ if [ ! -x "$TUJUAN/venv/bin/python" ]; then
 fi
 "$TUJUAN/venv/bin/pip" install -q --upgrade pip
 "$TUJUAN/venv/bin/pip" install -q -r "$TUJUAN/app/backend/requirements.txt"
-chown -R "$PENGGUNA:$PENGGUNA" "$TUJUAN/venv"
+chown -R "$PENGIRIM:$PENGGUNA" "$TUJUAN/venv"
 
 langkah "env"
 if [ ! -f /etc/hendrokuswantoro/env ]; then
   cp "$TUJUAN/app/.env.example" /etc/hendrokuswantoro/env
+  sed -i "s|^UNGGAHAN_DIR=.*|UNGGAHAN_DIR=$TUJUAN/unggahan|" /etc/hendrokuswantoro/env
   echo "  /etc/hendrokuswantoro/env dibuat dari contoh. ISI DULU sebelum menyalakan."
 else
   echo "  /etc/hendrokuswantoro/env sudah ada, tidak disentuh."
+fi
+if ! grep -q "^UNGGAHAN_DIR=$TUJUAN/unggahan\$" /etc/hendrokuswantoro/env; then
+  echo "  PERINGATAN: UNGGAHAN_DIR di env bukan $TUJUAN/unggahan."
+  echo "  Di dalam app/ unggahan terhapus tiap deploy dan tidak bisa ditulis API."
 fi
 chown root:"$PENGGUNA" /etc/hendrokuswantoro/env
 chmod 0640 /etc/hendrokuswantoro/env
@@ -158,5 +156,10 @@ cat <<'SELESAI'
 8. Buktikan cadangannya benar benar bisa dipulihkan, sekarang, bukan nanti:
      sudo systemctl start hk-cadangan.service
      sudo journalctl -u hk-cadangan -n 40 --no-pager
+
+9. Deploy otomatis dari GitHub, kalau mau:
+     sudo nano /home/deploy/.ssh/authorized_keys
+   Tempel kunci publik deploy, diawali kata restrict. Isi secret dan variabel
+   di GitHub seperti di docs/vps.md, lalu VPS_AKTIF=1.
 
 SELESAI

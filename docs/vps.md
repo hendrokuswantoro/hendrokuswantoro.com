@@ -96,7 +96,7 @@ sh /tmp/hk/infrastructure/pasang.sh
 Idempoten: menjalankannya lagi aman dan tidak menggandakan apa pun.
 
 Yang dikerjakannya: paket, Docker, rclone, pengguna sistem `hk` tanpa shell,
-venv, berkas unit systemd, konfigurasi nginx, ufw, fail2ban, dan pembaruan
+akun `deploy` untuk GitHub Actions, venv, berkas unit systemd, konfigurasi nginx, ufw, fail2ban, dan pembaruan
 keamanan otomatis. Firewall-nya membuka SSH untuk semua orang dan porta 443
 HANYA untuk jaringan Cloudflare di `infrastructure/cloudflare-ip.txt`. Porta 80
 tertutup.
@@ -260,7 +260,7 @@ Yang harus diisi di **Settings > Secrets and variables > Actions**:
 | Jenis | Nama | Isi |
 | --- | --- | --- |
 | Secret | `VPS_HOST` | alamat IP |
-| Secret | `VPS_PENGGUNA` | akun SSH untuk deploy |
+| Secret | `VPS_PENGGUNA` | `deploy` |
 | Secret | `VPS_SSH_KUNCI` | kunci privat OpenSSH, khusus deploy |
 | Secret | `VPS_PORTA` | opsional, bawaannya 22 |
 | Variable | `VPS_AKTIF` | `1` |
@@ -276,15 +276,43 @@ Buat kunci khusus untuk ini, jangan pakai kunci pribadi Anda:
 ssh-keygen -t ed25519 -f ~/.ssh/hk-deploy -C "deploy hendrokuswantoro" -N ""
 ```
 
-Akun deploy perlu `sudo systemctl restart hk-api` tanpa sandi, dan tidak
-perlu apa apa lagi. Di `/etc/sudoers.d/hk-deploy`:
+Kunci publiknya ditempel ke akun `deploy` di VPS, diawali kata `restrict`:
 
 ```
-deploy ALL=(root) NOPASSWD: /bin/systemctl restart hk-api
+restrict ssh-ed25519 AAAA... deploy hendrokuswantoro
 ```
 
-Satu baris itu, bukan `NOPASSWD: ALL`. Kunci deploy yang bocor lalu bisa
-menjalankan apa saja sebagai root adalah mesin yang bocor seluruhnya.
+di `/home/deploy/.ssh/authorized_keys`. `restrict` mematikan penerusan porta,
+agen, dan terminal untuk kunci itu; rsync dan perintah deploy tetap jalan.
+Kunci privatnya, `~/.ssh/hk-deploy`, ditempel utuh ke secret `VPS_SSH_KUNCI`,
+lalu dihapus dari laptop kalau tidak ada gunanya lagi di sana.
+
+Akun `deploy`, folder, dan aturan sudonya dibuat `infrastructure/izin.sh`, yang
+dipanggil `pasang.sh`. Sampai 29 September 2026 bagian ini hanya berupa
+kalimat di berkas ini, dan kalau diikuti, deploy pertama akan gagal:
+
+- `app/`, `situs/`, dan `venv/` milik `hk` dengan izin 0755, jadi rsync
+  sebagai `deploy` ditolak menulis. Sekarang ketiganya milik `deploy:hk`.
+  API berjalan sebagai `hk` dan hanya membaca, jadi ia justru tidak bisa
+  mengubah kode yang ia jalankan sendiri.
+- Unggahan duduk di `app/unggahan`, yang dihapus `rsync --delete` tiap deploy
+  dan dikunci hanya-baca oleh `ProtectSystem=strict`. Sekarang di
+  `/srv/hendrokuswantoro/unggahan`, satu satunya `ReadWritePaths` milik API.
+- Soket API milik `hk:hk` di folder 0750, jadi nginx (`www-data`) tidak bisa
+  menyambung dan seluruh `/api/` menjawab 502. Sekarang soketnya milik grup
+  `hk-soket`, yang anggotanya `hk`, `deploy`, dan `www-data`. `www-data`
+  sengaja TIDAK dimasukkan ke grup `hk`, sebab grup itu bisa membaca
+  `/etc/hendrokuswantoro/env`.
+
+Aturan sudonya satu baris, `deploy ALL=(root) NOPASSWD: /usr/bin/systemctl
+restart hk-api`, diperiksa `visudo` sebelum dipasang. Bukan `NOPASSWD: ALL`:
+kunci deploy yang bocor lalu bisa menjalankan apa saja sebagai root adalah
+mesin yang bocor seluruhnya.
+
+`infrastructure/periksa_izin.sh` menjalankan `izin.sh` di Ubuntu 24.04 dalam
+Docker, lalu mencoba tiap pekerjaan sebagai `deploy`, `hk`, `www-data`, dan
+orang lain: yang harus bisa, dan yang harus ditolak. CI menjalankannya. Uji itu
+sudah dibuktikan gagal terhadap izin lama dan unit lama.
 
 Urutan langkahnya: bangun situs, kirim `dist/`, kirim kodenya, pasang
 dependensi, **migrasi**, baru nyalakan ulang. Migrasi sebelum restart, bukan

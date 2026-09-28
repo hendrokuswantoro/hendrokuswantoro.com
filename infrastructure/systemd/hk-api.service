@@ -8,6 +8,7 @@ Wants=network-online.target
 Type=exec
 User=hk
 Group=hk
+SupplementaryGroups=hk-soket
 WorkingDirectory=/srv/hendrokuswantoro/app
 
 EnvironmentFile=/etc/hendrokuswantoro/env
@@ -19,19 +20,20 @@ ExecStart=/srv/hendrokuswantoro/venv/bin/python -m uvicorn backend.main:aplikasi
     --forwarded-allow-ips='*' \
     --no-access-log
 
-ExecStartPost=/bin/sh -c 'until [ -S /run/hk-api/api.sock ]; do sleep 0.1; done; chmod 660 /run/hk-api/api.sock'
+ExecStartPost=/bin/sh -c 'until [ -S /run/hk-api/api.sock ]; do sleep 0.1; done; chgrp hk-soket /run/hk-api/api.sock; chmod 660 /run/hk-api/api.sock'
 
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=3s
 
 RuntimeDirectory=hk-api
-RuntimeDirectoryMode=0750
+RuntimeDirectoryMode=0751
 
 NoNewPrivileges=true
 PrivateTmp=true
 PrivateDevices=true
 ProtectSystem=strict
+ReadWritePaths=/srv/hendrokuswantoro/unggahan
 ProtectHome=true
 ProtectKernelTunables=true
 ProtectKernelModules=true

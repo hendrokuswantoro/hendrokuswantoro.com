@@ -110,6 +110,16 @@ else
   lulus
 fi
 
+langkah "Server, the VPS users can deploy and cannot do more"
+if ! command -v docker >/dev/null 2>&1; then
+  lewat "docker is not installed, CI checks this instead"
+elif ! docker info >/dev/null 2>&1; then
+  lewat "docker daemon is not answering, CI checks this instead"
+else
+  sh infrastructure/periksa_izin.sh >/dev/null
+  lulus
+fi
+
 langkah "Lint, blog pages match their content"
 python tools/bangun_tulisan.py --periksa >/dev/null
 lulus
