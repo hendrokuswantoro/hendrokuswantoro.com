@@ -56,6 +56,7 @@ langkah "env"
 if [ ! -f /etc/hendrokuswantoro/env ]; then
   cp "$TUJUAN/app/.env.example" /etc/hendrokuswantoro/env
   sed -i "s|^UNGGAHAN_DIR=.*|UNGGAHAN_DIR=$TUJUAN/unggahan|" /etc/hendrokuswantoro/env
+  sed -i "s|^CADANGAN_FOLDER=.*|CADANGAN_FOLDER=$TUJUAN/cadangan|" /etc/hendrokuswantoro/env
   echo "  /etc/hendrokuswantoro/env dibuat dari contoh. ISI DULU sebelum menyalakan."
 else
   echo "  /etc/hendrokuswantoro/env sudah ada, tidak disentuh."
@@ -63,6 +64,10 @@ fi
 if ! grep -q "^UNGGAHAN_DIR=$TUJUAN/unggahan\$" /etc/hendrokuswantoro/env; then
   echo "  PERINGATAN: UNGGAHAN_DIR di env bukan $TUJUAN/unggahan."
   echo "  Di dalam app/ unggahan terhapus tiap deploy dan tidak bisa ditulis API."
+fi
+if ! grep -q "^CADANGAN_FOLDER=$TUJUAN/cadangan\$" /etc/hendrokuswantoro/env; then
+  echo "  PERINGATAN: CADANGAN_FOLDER di env bukan $TUJUAN/cadangan."
+  echo "  Unit cadangan hanya boleh menulis di sana, jadi cadangan malam akan gagal."
 fi
 chown root:"$PENGGUNA" /etc/hendrokuswantoro/env
 chmod 0640 /etc/hendrokuswantoro/env

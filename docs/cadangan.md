@@ -8,6 +8,8 @@ Bab 15.18. Berlaku sejak ada basis data, tidak sebelumnya.
 python backend/db/cadangan.py buat       # buat cadangan
 python backend/db/cadangan.py daftar     # lihat yang ada
 python backend/db/cadangan.py uji-pulih  # buktikan yang terbaru bisa dipulihkan
+python backend/db/cadangan.py pulihkan-unggahan            # kembalikan unggahan yang hilang
+python backend/db/cadangan.py pulihkan-unggahan NAMA.webp  # satu berkas, termasuk yang sudah dihapus
 python backend/db/cadangan.py pulihkan cadangan/hk-2026-09-12-1855.sql.gz.enc
 python backend/db/enkripsi.py kunci      # buat kunci enkripsi, sekali saja
 ```
@@ -17,6 +19,7 @@ python backend/db/enkripsi.py kunci      # buat kunci enkripsi, sekali saja
 | | Cadangannya | Kenapa |
 | --- | --- | --- |
 | Skema dan isi basis data | `pg_dump` terkompres | satu satunya data yang tidak ada di tempat lain |
+| Foto dan video dari dashboard | tiap berkas dikunci sendiri | basis data hanya menyimpan catatannya, berkasnya di cakram |
 | Isi tulisan dan proyek | `content/` di git dan GitHub | sudah tercadangkan tiga tempat |
 | Kode, gaya, gambar | git dan GitHub | sama |
 | Situs yang terbit | dibangun ulang dari keduanya | tidak perlu dicadangkan sendiri |
@@ -24,6 +27,58 @@ python backend/db/enkripsi.py kunci      # buat kunci enkripsi, sekali saja
 Itu sebabnya cadangannya kecil. Sebagian besar situs ini memang sudah hidup
 di git, dan menyalinnya lagi ke tempat lain hanya menambah barang yang bisa
 kedaluwarsa.
+
+## Unggahan
+
+Sejak 29 September 2026 `buat` juga mencadangkan folder unggahan
+(`UNGGAHAN_DIR`) ke `unggahan/` di dalam folder cadangan. Sebelumnya tidak,
+jadi cakram VPS yang rusak berarti basis data kembali utuh tetapi setiap
+gambar di tulisan kosong.
+
+Berbeda dengan basis data, unggahan tidak diarsipkan ulang tiap malam. Satu
+video delapan puluh megabita kali empat belas malam adalah satu cakram penuh.
+Nama unggahan acak dan tidak pernah dipakai ulang untuk isi lain, jadi tiap
+berkas cukup dikunci **sekali**: `nama.enc`, format yang sama dengan cadangan
+basis data. Tiap berkas yang baru dikunci langsung dibuka lagi dan
+dibandingkan sidiknya dengan aslinya, dan yang tidak sama dibuang lalu
+dilaporkan sebagai kegagalan.
+
+- **Berkas yang dihapus dari dashboard** dipindah ke `unggahan/terhapus/TANGGAL/`
+  dan disimpan 30 hari, lalu dibuang.
+- **Folder unggahan yang tiba tiba kosong** padahal cadangannya berisi, atau
+  folder yang tidak ada, membuat `buat` gagal alih alih memindahkan semuanya
+  ke `terhapus/`. Itu hampir selalu `UNGGAHAN_DIR` yang salah, bukan pemilik
+  yang menghapus seluruh fotonya dalam satu hari.
+- **`uji-pulih`** juga menuntut tiap unggahan punya cadangan, dan membuka
+  tiga di antaranya secara acak lalu membandingkan isinya.
+- **`pulihkan-unggahan`** hanya mengembalikan berkas yang HILANG. Berkas yang
+  masih ada tidak pernah ditimpa, jadi perintah itu aman dijalankan kapan
+  saja. Dengan nama berkas, ia juga mencari di `terhapus/`.
+- **Pengiriman** memakai `rclone copy`, tidak pernah `rclone sync`. Mesin
+  baru dengan folder cadangan kosong yang menjalankan `sync` akan menyapu
+  seluruh cadangan di penyedia. Akibatnya unggahan yang dihapus tetap ada di
+  penyedia, terkunci, sampai dibuang dengan tangan. Retensi 30 hari di
+  penyedia hanya berlaku untuk berkas basis data di akar tujuan
+  (`--max-depth 1`); tanpa itu ia ikut menghapus cadangan unggahan yang masih
+  dipakai begitu umurnya lewat sebulan.
+
+### Sesudah cakram VPS hilang
+
+```bash
+rclone copy r2:hk-cadangan/harian/unggahan /srv/hendrokuswantoro/cadangan/unggahan
+sudo -u hk /srv/hendrokuswantoro/venv/bin/python backend/db/cadangan.py pulihkan-unggahan
+```
+
+Pulihkan basis datanya lebih dulu, lalu unggahannya. Kuncinya
+`CADANGAN_KUNCI` yang sama, dari brankas di luar mesin itu.
+
+## Folder cadangan
+
+`CADANGAN_FOLDER`, bawaannya `cadangan` di akar repositori. Di VPS pasang.sh
+mengisinya dengan `/srv/hendrokuswantoro/cadangan`, satu satunya folder yang
+boleh ditulis `hk-cadangan.service`. Sampai 29 September 2026 `cadangan.py`
+selalu menulis ke `app/cadangan`, yang dikunci `ProtectSystem=strict`, jadi
+cadangan malam di VPS akan gagal sejak malam pertama.
 
 ## RPO dan RTO
 

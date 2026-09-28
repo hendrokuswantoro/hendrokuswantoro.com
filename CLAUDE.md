@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 974, tanpa peramban, hitungan detik
+python -m pytest                 # 994, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 111, Chromium sungguhan
 sh tools/verifikasi.sh           # 22 langkah, seluruhnya, berurutan
 
@@ -65,7 +65,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    1085 uji
+tests/                    1105 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -598,6 +598,16 @@ di luar `app/`, sebab `rsync --delete` menghapus apa pun di sana dan
 sungguhan di Ubuntu dalam Docker. Sampai 29 September 2026 izin ini hanya
 kalimat di `docs/vps.md`, dan deploy pertama akan gagal di tiga tempat.
 
+**Cadangan unggahan dikunci per berkas, sekali, dan tidak pernah disinkronkan.**
+`cadangan.py buat` menyalin tiap unggahan yang belum punya cadangan ke
+`CADANGAN_FOLDER/unggahan/NAMA.enc`, membukanya lagi untuk membandingkan
+sidiknya, dan memindahkan yang dihapus ke `terhapus/TANGGAL/` selama 30 hari.
+Folder unggahan yang kosong padahal cadangannya berisi adalah galat, bukan
+alasan menyapu cadangan. `kirim.sh` memakai `rclone copy`, bukan `sync`, dan
+retensi penyedianya `--max-depth 1`; tanpa itu retensi 30 hari menghapus
+cadangan unggahan yang masih dipakai. `tests/test_cadangan_unggahan.py`
+menahannya, dan sudah dibuktikan gagal saat pengamannya dimatikan.
+
 Deploy sengaja tidak ada di `ci.yml`. Cloudflare membangun dan menerbitkan
 sendiri ketika `main` bergerak, jadi deploy kedua di GitHub Actions berarti
 memberi situs ini dua tuan.
@@ -638,8 +648,7 @@ memberi situs ini dua tuan.
    `butuh_admin_pendaftar` sengaja mengizinkannya. Pasang Cloudflare Access
    untuk `admin.` sebelum record DNS-nya dibuat, lalu pasang TOTP dan passkey
    segera sesudah `buat_admin.py`. Ini satu satunya temuan audit yang tidak
-   bisa ditutup dengan kode. Unggahan belum ikut cadangan malam, yang hanya
-   menyalin basis data. Gambar unggahan juga belum punya jalan ke situs
+   bisa ditutup dengan kode. Gambar unggahan belum punya jalan ke situs
    publik; lihat bagian terakhir `docs/vps.md` sebelum tulisan dari basis
    data mulai diterbitkan.
 

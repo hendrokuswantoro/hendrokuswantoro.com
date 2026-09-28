@@ -3,7 +3,11 @@
 set -eu
 
 AKAR=$(cd "$(dirname "$0")/.." && pwd)
-CADANGAN="${CADANGAN_FOLDER:-$AKAR/cadangan}"
+CADANGAN="${CADANGAN_FOLDER:-cadangan}"
+case "$CADANGAN" in
+  /*|[A-Za-z]:*) ;;
+  *) CADANGAN="$AKAR/$CADANGAN" ;;
+esac
 
 TUJUAN="${CADANGAN_TUJUAN:-}"
 
@@ -74,11 +78,45 @@ for berkas in $DAFTAR; do
   fi
 done
 
+UNGGAHAN="$CADANGAN/unggahan"
+if [ -d "$UNGGAHAN" ]; then
+  SIAP=$(mktemp)
+  JUMLAH=0
+  for berkas in $(ls -1 "$UNGGAHAN" 2>/dev/null); do
+    [ -f "$UNGGAHAN/$berkas" ] || continue
+    case "$berkas" in .*) continue ;; esac
+    penanda=$(head -c 6 "$UNGGAHAN/$berkas" 2>/dev/null || true)
+    case "$berkas" in
+      *.enc) ;;
+      *) penanda="" ;;
+    esac
+    if [ "$penanda" != "HKCAD1" ]; then
+      echo "TOLAK unggahan/$berkas: tidak terenkripsi" >&2
+      GAGAL=1
+      continue
+    fi
+    printf '%s\n' "$berkas" >> "$SIAP"
+    JUMLAH=$((JUMLAH + 1))
+  done
+
+  if [ "$COBA" -eq 1 ]; then
+    echo "akan dikirim: $JUMLAH berkas unggahan -> $TUJUAN/unggahan/"
+  elif [ "$JUMLAH" -gt 0 ]; then
+    if rclone copy --checksum --files-from "$SIAP" "$UNGGAHAN" "$TUJUAN/unggahan"; then
+      echo "terkirim: $JUMLAH berkas unggahan, yang sudah ada di sana dilewati"
+    else
+      echo "GAGAL mengirim unggahan" >&2
+      GAGAL=1
+    fi
+  fi
+  rm -f "$SIAP"
+fi
+
 set +f
 IFS=$IFS_ASLI
 
 if [ "$COBA" -eq 0 ] && [ "$GAGAL" -eq 0 ]; then
-  rclone delete --min-age "${CADANGAN_SIMPAN_HARI:-30}d" "$TUJUAN/" || true
+  rclone delete --max-depth 1 --min-age "${CADANGAN_SIMPAN_HARI:-30}d" "$TUJUAN/" || true
 fi
 
 exit "$GAGAL"

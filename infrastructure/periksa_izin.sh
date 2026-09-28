@@ -62,7 +62,7 @@ tidak "deploy membuka folder cadangan" sebagai deploy ls "$T/cadangan"
 tidak "hk mengubah kode yang ia jalankan" sebagai hk touch "$T/app/backend/c.py"
 bisa "hk membaca kode" sebagai hk cat "$T/app/backend/a.py"
 bisa "hk menulis unggahan" sebagai hk touch "$T/unggahan/video.mp4"
-tidak "www-data membaca env" sebagai www-data cat /etc/hendrokuswantoro/env
+bisa "hk mencadangkan unggahan ke folder cadangan" sebagai hk sh -c "mkdir -p '$T/cadangan/unggahan' && cp '$T/unggahan/foto.webp' '$T/cadangan/unggahan/foto.webp.enc'"tidak "www-data membaca env" sebagai www-data cat /etc/hendrokuswantoro/env
 bisa "www-data membaca situs" sebagai www-data cat "$T/situs/index.html"
 
 MODE=$(sed -n 's/^RuntimeDirectoryMode=//p' "$UNIT")

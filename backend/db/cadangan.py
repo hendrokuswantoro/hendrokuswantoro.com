@@ -4,6 +4,14 @@
     python backend/db/cadangan.py daftar
     python backend/db/cadangan.py pulihkan cadangan/hk-2026-09-12-1530.sql.gz.enc
     python backend/db/cadangan.py uji-pulih
+    python backend/db/cadangan.py pulihkan-unggahan [nama-berkas]
+
+`buat` juga menyalin tiap berkas unggahan yang belum punya cadangan, dikunci
+satu per satu, ke `unggahan/` di folder cadangan. `uji-pulih` juga memeriksa
+bahwa tiap unggahan punya cadangan dan membuka beberapa di antaranya.
+`pulihkan-unggahan` hanya mengembalikan berkas yang HILANG; berkas yang masih
+ada tidak pernah ditimpa. Folder cadangan dibaca dari CADANGAN_FOLDER, folder
+unggahan dari UNGGAHAN_DIR; jalur relatif dihitung dari akar repositori.
 
 `uji-pulih` yang paling penting. Cadangan yang belum pernah dipulihkan belum
 terbukti apa apa, dan pemulihan pertama tidak boleh dicoba pada hari datanya
@@ -54,8 +62,17 @@ import os  # noqa: E402
 sys.path.insert(0, str(AKAR))
 
 from backend.db import enkripsi  # noqa: E402
+from backend.db import unggahan_cadangan  # noqa: E402
 
-CADANGAN = AKAR / "cadangan"
+
+def _folder(nama_env: str, bawaan: str) -> pathlib.Path:
+    jalur = pathlib.Path(os.environ.get(nama_env) or bawaan)
+    return jalur if jalur.is_absolute() else AKAR / jalur
+
+
+CADANGAN = _folder("CADANGAN_FOLDER", "cadangan")
+UNGGAHAN = _folder("UNGGAHAN_DIR", "unggahan")
+CADANGAN_UNGGAHAN = CADANGAN / "unggahan"
 WADAH = "hk_db"
 
 SIMPAN_TERAKHIR = 14
@@ -137,6 +154,53 @@ def buat() -> pathlib.Path:
     return tujuan
 
 
+def cadangkan_unggahan() -> int:
+    if not UNGGAHAN.is_dir():
+        print(f"unggahan: folder {UNGGAHAN} belum ada, dilewati")
+        return 0
+    kunci = enkripsi.kunci_dari_env(wajib=False)
+    try:
+        laporan = unggahan_cadangan.salin(UNGGAHAN, CADANGAN_UNGGAHAN, kunci)
+    except unggahan_cadangan.Salah as galat:
+        print(f"GAGAL unggahan: {galat}")
+        return 1
+    print(f"unggahan: {len(laporan.baru)} baru dicadangkan"
+          f"{'' if kunci else ' TANPA enkripsi'}, "
+          f"{len(laporan.dipindah)} dipindah ke {unggahan_cadangan.TERHAPUS}/, "
+          f"{len(laporan.dibuang)} hari lewat retensi dibuang")
+    for nama in laporan.rusak:
+        print(f"  GAGAL: cadangan {nama} tidak sama dengan aslinya, dibuang")
+    return 1 if laporan.rusak else 0
+
+
+def uji_unggahan() -> int:
+    if not UNGGAHAN.is_dir():
+        print("unggahan: folder belum ada, tidak ada yang diuji")
+        return 0
+    kunci = enkripsi.kunci_dari_env(wajib=False)
+    masalah = unggahan_cadangan.periksa(UNGGAHAN, CADANGAN_UNGGAHAN, kunci)
+    for baris in masalah:
+        print(f"  {baris}")
+    if masalah:
+        print(f"GAGAL: {len(masalah)} masalah di cadangan unggahan")
+        return 1
+    print("BERHASIL: tiap unggahan punya cadangan, dan contohnya terbuka utuh")
+    return 0
+
+
+def pulihkan_unggahan(nama: str | None) -> int:
+    kunci = enkripsi.kunci_dari_env(wajib=False)
+    try:
+        kembali = unggahan_cadangan.pulihkan(CADANGAN_UNGGAHAN, UNGGAHAN, kunci, nama)
+    except (unggahan_cadangan.Salah, enkripsi.TidakBisaDibuka) as galat:
+        print(f"GAGAL: {galat}")
+        return 1
+    for berkas in kembali:
+        print(f"  dikembalikan: {berkas}")
+    print(f"{len(kembali)} berkas dikembalikan ke {UNGGAHAN}; yang masih ada tidak disentuh")
+    return 0
+
+
 def semua_cadangan() -> list[pathlib.Path]:
     if not CADANGAN.exists():
         return []
@@ -168,6 +232,10 @@ def daftar() -> None:
         print(f"  {berkas.name}  {ukuran} KB  {'terkunci' if aman else 'TANPA ENKRIPSI'}")
 
     print(f"\n{len(semua)} cadangan, retensi {SIMPAN_TERAKHIR} terakhir")
+    tersimpan = [p for p in CADANGAN_UNGGAHAN.glob("*") if p.is_file()]
+    if tersimpan:
+        ukuran = sum(p.stat().st_size for p in tersimpan) // (1024 * 1024)
+        print(f"{len(tersimpan)} berkas unggahan tercadangkan, {ukuran} MB")
     if polos:
         print(f"{polos} di antaranya belum terenkripsi dan tidak boleh dikirim "
               f"keluar dari mesin ini.")
@@ -253,20 +321,25 @@ def uji_pulih() -> int:
 
 def main() -> int:
     alasan = argparse.ArgumentParser(description=__doc__)
-    alasan.add_argument("perintah", choices=["buat", "daftar", "pulihkan", "uji-pulih"])
+    alasan.add_argument(
+        "perintah", choices=["buat", "daftar", "pulihkan", "uji-pulih", "pulihkan-unggahan"]
+    )
     alasan.add_argument("berkas", nargs="?")
     pilihan = alasan.parse_args()
 
     if pilihan.perintah == "buat":
         buat()
+        return cadangkan_unggahan()
     elif pilihan.perintah == "daftar":
         daftar()
     elif pilihan.perintah == "pulihkan":
         if not pilihan.berkas:
             sys.exit("sebutkan berkas cadangannya")
         pulihkan(pathlib.Path(pilihan.berkas))
+    elif pilihan.perintah == "pulihkan-unggahan":
+        return pulihkan_unggahan(pilihan.berkas)
     else:
-        return uji_pulih()
+        return max(uji_pulih(), uji_unggahan())
     return 0
 
 
