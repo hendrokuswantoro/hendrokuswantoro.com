@@ -39,6 +39,8 @@ $("tombol-passkey").onclick = masukPasskey;
 $("tombol-daftar-kunci").onclick = daftarkanKunci;
 $("sandi").onkeydown = (e) => { if (e.key === "Enter") masuk(); };
 $("keluar").onclick = keluar;
+$("tombol-buka-kunci").onclick = tekanBukaKunci;
+$("tombol-keluar-kunci").onclick = keluar;
 $("tombol-baru").onclick = bukaBaru;
 $("tombol-kembali").onclick = muatDaftar;
 

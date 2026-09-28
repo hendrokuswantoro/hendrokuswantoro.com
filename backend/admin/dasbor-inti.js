@@ -62,10 +62,12 @@ async function sesudahMasuk(isi) {
   document.body.classList.add("sudah-masuk");
   $("keluar").classList.remove("sembunyi");
   $("layar-masuk").classList.add("sembunyi");
-  for (const id of ("layar-ringkasan layar-perangkat layar-jejak").split(" ")) {
+  for (const id of ("layar-ringkasan layar-keamanan layar-perangkat layar-jejak").split(" ")) {
     $(id).classList.remove("sembunyi");
   }
+  await muatKeamanan();
   await muatDaftar();
+  await konfirmasiDariAlamat();
 
   setTimeout(() => {
     segarkan();

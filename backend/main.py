@@ -111,6 +111,9 @@ def buat() -> FastAPI:
         "dasbor-penyunting.js": (
             HTML_ADMIN.parent / "dasbor-penyunting.js", "application/javascript; charset=utf-8"
         ),
+        "dasbor-keamanan.js": (
+            HTML_ADMIN.parent / "dasbor-keamanan.js", "application/javascript; charset=utf-8"
+        ),
         "dasbor.js": (HTML_ADMIN.parent / "dasbor.js", "application/javascript; charset=utf-8"),
         "poppins-400.woff2": (HURUF / "poppins-v24-400-latin.woff2", "font/woff2"),
         "poppins-600.woff2": (HURUF / "poppins-v24-600-latin.woff2", "font/woff2"),

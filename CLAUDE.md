@@ -18,8 +18,8 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 944, tanpa peramban, hitungan detik
-python -m pytest -m peramban     # 102, Chromium sungguhan
+python -m pytest                 # 955, tanpa peramban, hitungan detik
+python -m pytest -m peramban     # 111, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
 # backend dan dashboard admin
@@ -65,7 +65,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    1046 uji
+tests/                    1066 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -166,7 +166,7 @@ benar jalan. Halaman yang seluruh skripnya ditolak tetap tergambar rapi.
 
 Akibatnya: **jangan menulis `<script>` atau `<style>` sebaris di
 `backend/admin/`, dan jangan memakai atribut `style=` di markupnya.** Gaya dan
-skripnya ada di `dasbor.css` dan empat berkas `dasbor*.js`, dimuat berurutan
+skripnya ada di `dasbor.css` dan lima berkas `dasbor*.js`, dimuat berurutan
 dengan `dasbor.js` paling akhir sebab ia yang memasang seluruh tombolnya.
 Berkas skrip baru di sana wajib ditambahkan ke `ASET_ADMIN` di
 `backend/main.py`; daftarnya tertutup dengan sengaja.
@@ -241,8 +241,14 @@ Aktivitas akun.
   pernah menerbitkan sesi. Tantangannya bertujuan `buka`, jadi tidak bisa
   dipakai untuk masuk, dan tantangan masuk tidak bisa dipakai untuk membuka.
 
-Dashboard HTML di `backend/admin/` belum punya halaman ini; ia hanya
-mengenal nama peristiwanya. `tests/conftest.py` menitipkan ketiga kolom
+Dashboard HTML di `backend/admin/` punya menu yang sama sejak 28 September
+2026, di `dasbor-keamanan.js`, dengan kunci setelan perangkat yang sama
+(`hk-admin-perangkat`), jadi pilihan di satu dashboard berlaku di yang lain.
+Satu yang sengaja tidak disalin: mendaftarkan wajah butuh kamera, jadi dashboard
+HTML hanya bisa menghapusnya, dan layarnya mengatakan begitu. Ujinya,
+`tests/test_dasbor_keamanan_peramban.py`, memakai API tiruan lewat
+`page.route`, jadi tidak menyentuh basis data maupun akun pemilik.
+`tests/conftest.py` menitipkan ketiga kolom
 setelan bersama faktor lain dan mengembalikannya di akhir sesi uji.
 
 **Refresh token lama yang dipakai lagi dianggap curian.** Sejak 28 September

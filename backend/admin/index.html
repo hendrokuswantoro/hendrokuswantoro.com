@@ -29,6 +29,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"></path><path d="M14 3v6h6M9 14h7M9 18h5"></path></svg>
         Tulisan
       </a>
+      <a class="menu__tautan" href="#layar-keamanan">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5.5c0 4.3 3 7.9 7 9.5 4-1.6 7-5.2 7-9.5V6z"></path><rect x="9" y="11" width="6" height="5" rx="1"></rect><path d="M10 11v-1.5a2 2 0 0 1 4 0V11"></path></svg>
+        Keamanan
+      </a>
       <a class="menu__tautan" href="#layar-kunci">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="15" r="4"></circle><path d="m10.8 12.2 8.7-8.7M17 6l3 3M15 8l2 2"></path></svg>
         Passkey
@@ -132,6 +136,10 @@
           </div>
         </div>
         <div id="keadaan-sistem" class="keadaan"></div>
+      </section>
+
+      <section id="layar-keamanan" class="kartu sembunyi" aria-label="Keamanan akun">
+        <div id="isi-keamanan"></div>
       </section>
 
       <section id="layar-daftar" class="kartu sembunyi">
@@ -317,9 +325,23 @@
   </div>
 </div>
 
+<div id="kunci-layar" class="kunci-layar sembunyi" role="dialog" aria-modal="true" aria-labelledby="judul-kunci">
+  <div class="kunci-kartu">
+    <span class="pahlawan__ikon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"></rect><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5M12 14.5v2"></path></svg>
+    </span>
+    <h2 id="judul-kunci">Dashboard terkunci</h2>
+    <p class="penjelasan">Buka pakai sidik jari, wajah di HP, atau PIN perangkat.</p>
+    <div id="kabar-kunci" class="kabar salah sembunyi" role="alert"></div>
+    <button id="tombol-buka-kunci" type="button" class="utama">Buka kunci</button>
+    <button id="tombol-keluar-kunci" type="button">Keluar</button>
+  </div>
+</div>
+
 <script src="/admin/dasbor-inti.js" defer></script>
 <script src="/admin/dasbor-panel.js" defer></script>
 <script src="/admin/dasbor-penyunting.js" defer></script>
+<script src="/admin/dasbor-keamanan.js" defer></script>
 <script src="/admin/dasbor.js" defer></script>
 </body>
 </html>
