@@ -503,13 +503,6 @@
       item.appendChild(link);
       list.appendChild(item);
       links.push({ link: link, head: head });
-
-      var jangkar = doc.createElement("a");
-      jangkar.className = "anchor";
-      jangkar.href = "#" + head.id;
-      jangkar.setAttribute("aria-hidden", "true");
-      jangkar.setAttribute("tabindex", "-1");
-      head.appendChild(jangkar);
     });
 
     rail.hidden = false;
@@ -536,6 +529,42 @@
     window.addEventListener("resize", onScroll);
   }
 
+  function gulirKe(tujuan, halus) {
+    tujuan.scrollIntoView({ behavior: halus && !kurangiGerak() ? "smooth" : "auto", block: "start" });
+    if (!tujuan.hasAttribute("tabindex") && !/^(A|BUTTON|INPUT|SELECT|TEXTAREA)$/.test(tujuan.tagName)) {
+      tujuan.setAttribute("tabindex", "-1");
+    }
+    tujuan.focus({ preventScroll: true });
+  }
+
+  function buangPagar() {
+    if (!window.history || !window.history.replaceState) return;
+    try {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    } catch (galat) {}
+  }
+
+  function initGulir() {
+    doc.addEventListener("click", function (event) {
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      var tautan = event.target.closest ? event.target.closest('a[href^="#"]') : null;
+      if (!tautan || tautan.hasAttribute("data-peta-buka")) return;
+      var id = tautan.getAttribute("href").slice(1);
+      if (!id || id.indexOf("peta-") === 0) return;
+      var tujuan = doc.getElementById(id);
+      if (!tujuan) return;
+      event.preventDefault();
+      gulirKe(tujuan, true);
+    });
+
+    var awal = decodeURIComponent(window.location.hash.slice(1));
+    if (!awal || awal.indexOf("peta-") === 0) return;
+    var tujuan = doc.getElementById(awal);
+    if (tujuan) gulirKe(tujuan, false);
+    buangPagar();
+  }
+
   function initYear() {
     var year = String(new Date().getFullYear());
     each(doc.querySelectorAll("[data-year]"), function (el) { el.textContent = year; });
@@ -555,6 +584,7 @@
     initParkir();
     initProgress();
     initToc();
+    initGulir();
     initYear();
 
     doc.documentElement.setAttribute("data-siap", "1");

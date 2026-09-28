@@ -655,13 +655,6 @@ h3 { font-size: 1.125rem; line-height: 1.3; }
   margin-top: 40px; font-size: 1.375rem;
   scroll-margin-top: calc(var(--header-h) + 20px);
 }
-.article h2 .anchor {
-  margin-left: 8px; font-weight: 500; color: var(--ink-3); text-decoration: none;
-  opacity: 0; transition: opacity .16s var(--ease), color .16s var(--ease);
-}
-.article h2:hover .anchor, .article h2 .anchor:focus-visible { opacity: 1; }
-.article h2 .anchor:hover { color: var(--accent); }
-.article h2 .anchor::before { content: "#"; }
 .article blockquote {
   margin: 24px 0; padding: 18px 22px; background: var(--surface-2);
   border-left: 4px solid var(--brand); border-radius: 0 var(--r-sm) var(--r-sm) 0;

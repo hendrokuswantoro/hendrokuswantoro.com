@@ -85,7 +85,31 @@ def test_saring_proyek(halaman, situs):
 def test_daftar_isi_tulisan_terbentuk(halaman, situs):
     buka(halaman, situs, "/blog/kapan-peta-diam")
     assert halaman.locator(".rail__daftar ol a").count() >= 2
-    assert halaman.locator(".article h2 .anchor").count() >= 2
+    assert halaman.locator(".article h2 .anchor").count() == 0, "tanda pagar di judul muncul lagi"
+
+
+def test_daftar_isi_menggulir_tanpa_mengubah_alamat(halaman, situs):
+    buka(halaman, situs, "/parkir-jogja")
+    alamat = halaman.url
+    tautan = halaman.locator(".rail__daftar ol a").nth(2)
+    tujuan = tautan.get_attribute("href")[1:]
+    tautan.click()
+    halaman.wait_for_timeout(1200)
+    assert halaman.url == alamat, f"alamat berubah jadi {halaman.url}"
+    atas = halaman.evaluate(f"() => document.getElementById('{tujuan}').getBoundingClientRect().top")
+    assert 0 <= atas < 250, f"judul tujuan tidak tergulir ke atas: {atas}"
+
+    halaman.locator('.hero__actions a[href="#coba"]').click()
+    halaman.wait_for_timeout(1200)
+    assert "#" not in halaman.url
+
+
+def test_alamat_lama_berpagar_tetap_sampai_lalu_pagarnya_hilang(halaman, situs):
+    buka(halaman, situs, "/parkir-jogja#knowing-when-to-say-no")
+    halaman.wait_for_timeout(600)
+    assert "#" not in halaman.url
+    atas = halaman.evaluate("() => document.getElementById('knowing-when-to-say-no').getBoundingClientRect().top")
+    assert 0 <= atas < 250, f"alamat lama tidak lagi mengantar ke bagiannya: {atas}"
 
 
 def tunggu(halaman: Page, ungkapan: str, batas_ms: int = 45000, alasan: str = "") -> None:
