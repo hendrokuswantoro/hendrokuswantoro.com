@@ -100,7 +100,7 @@ export function HomeView() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section section--surface">
         <div className="wrap ajak-peta">
           <div>
             <div className="peta__intro">
@@ -119,7 +119,7 @@ export function HomeView() {
         </div>
       </section>
 
-      <section className="section section--surface">
+      <section className="section">
         <div className="wrap">
           <div className="section-head">
             <span className="eyebrow">{say(HOME.howEyebrow)}</span>
@@ -140,7 +140,7 @@ export function HomeView() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section section--surface">
         <div className="wrap">
           <div className="panel reveal">
             <h2>{say(HOME.ctaTitle)}</h2>
