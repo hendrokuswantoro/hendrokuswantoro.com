@@ -27,7 +27,7 @@ class Pengaturan(BaseSettings):
     redis_url: str = Field(default="", alias="REDIS_URL")
 
     asal_diizinkan: list[str] = Field(
-        default=["https://www.hendrokuswantoro.com"],
+        default=["https://admin.hendrokuswantoro.com"],
         alias="ASAL_DIIZINKAN",
     )
 

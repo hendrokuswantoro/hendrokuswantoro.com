@@ -41,7 +41,7 @@ install -d -o "$PENGGUNA" -g "$PENGGUNA" -m 0755 "$TUJUAN/app"
 install -d -o "$PENGGUNA" -g "$PENGGUNA" -m 0755 "$TUJUAN/situs"
 install -d -o "$PENGGUNA" -g "$PENGGUNA" -m 0700 "$TUJUAN/cadangan"
 install -d -o root -g "$PENGGUNA" -m 0750 /etc/hendrokuswantoro
-install -d -o root -g root -m 0755 /var/www/certbot
+install -d -o root -g root -m 0700 /etc/ssl/hendrokuswantoro
 
 langkah "kode"
 rsync -a --delete \
@@ -84,16 +84,22 @@ ln -sf /etc/nginx/sites-available/hendrokuswantoro.conf \
   /etc/nginx/sites-enabled/hendrokuswantoro.conf
 rm -f /etc/nginx/sites-enabled/default
 
-if [ -f /etc/letsencrypt/live/hendrokuswantoro.com/fullchain.pem ]; then
+if [ -f /etc/ssl/hendrokuswantoro/origin.pem ]; then
   nginx -t && systemctl reload nginx
 else
-  echo "  sertifikat belum ada, nginx belum dinyalakan ulang"
+  echo "  sertifikat origin belum ada, nginx belum dinyalakan ulang"
 fi
 
 langkah "firewall"
-ufw allow 22/tcp   >/dev/null
-ufw allow 80/tcp   >/dev/null
-ufw allow 443/tcp  >/dev/null
+ufw default deny incoming  >/dev/null
+ufw default allow outgoing >/dev/null
+ufw allow 22/tcp >/dev/null
+ufw delete allow 80/tcp  >/dev/null 2>&1 || true
+ufw delete allow 443/tcp >/dev/null 2>&1 || true
+while IFS= read -r jaringan; do
+  [ -n "$jaringan" ] || continue
+  ufw allow proto tcp from "$jaringan" to any port 443 >/dev/null
+done < "$TUJUAN/app/infrastructure/cloudflare-ip.txt"
 ufw --force enable >/dev/null
 ufw status numbered | sed 's/^/  /'
 
@@ -109,8 +115,8 @@ cat <<'SELESAI'
 1. Isi rahasianya:
      sudo nano /etc/hendrokuswantoro/env
    Yang wajib: POSTGRES_PASSWORD, DSN, JWT_SECRET, CADANGAN_KUNCI,
-   WEBAUTHN_RP_ID=hendrokuswantoro.com,
-   WEBAUTHN_ASAL=["https://www.hendrokuswantoro.com"],
+   WEBAUTHN_RP_ID=admin.hendrokuswantoro.com,
+   WEBAUTHN_ASAL=["https://admin.hendrokuswantoro.com"],
    KUNCI_KOLOM (salinan dari laptop kalau basis datanya dipindah),
    SMTP_HOST, SMTP_PENGGUNA, SMTP_SANDI, SURAT_DARI, SURAT_WAJIB=1
 
@@ -124,8 +130,16 @@ cat <<'SELESAI'
      sudo -u hk /srv/hendrokuswantoro/venv/bin/python backend/db/muat_awal.py
      sudo -u hk /srv/hendrokuswantoro/venv/bin/python backend/db/buat_admin.py
 
-4. Arahkan DNS A dan AAAA ke mesin ini, TUNGGU sampai menyebar, baru:
-     sudo certbot --nginx -d hendrokuswantoro.com -d www.hendrokuswantoro.com
+4. Di dasbor Cloudflare, bukan di mesin ini:
+   a. DNS: record A (dan AAAA) bernama admin ke alamat mesin ini, Proxied
+      (awan oranye). Tanpa awan oranye firewall di atas menolak semuanya.
+   b. SSL/TLS, Overview: Full (strict).
+   c. SSL/TLS, Origin Server, Create Certificate untuk
+      hendrokuswantoro.com dan *.hendrokuswantoro.com. Tempel hasilnya ke:
+        sudo nano /etc/ssl/hendrokuswantoro/origin.pem
+        sudo nano /etc/ssl/hendrokuswantoro/origin.key
+        sudo chmod 0600 /etc/ssl/hendrokuswantoro/origin.key
+   Kuncinya hanya ditampilkan sekali. Kalau hilang, buat sertifikat baru.
 
 5. Dashboard admin yang terbit adalah versi Next (ADMIN_NEXT=1 di env).
    Berkasnya, next/out, dibangun GitHub Actions dan dikirim oleh alur Deploy VPS,
@@ -137,7 +151,11 @@ cat <<'SELESAI'
      sudo systemctl start hk-cadangan.timer
      sudo nginx -t && sudo systemctl reload nginx
 
-7. Buktikan cadangannya benar benar bisa dipulihkan, sekarang, bukan nanti:
+7. SEGERA buka https://admin.hendrokuswantoro.com/admin, masuk, lalu pasang
+   authenticator dan passkey di menu Keamanan. Sampai itu selesai, siapa pun
+   yang tahu sandinya bisa memasang faktor pertamanya sendiri.
+
+8. Buktikan cadangannya benar benar bisa dipulihkan, sekarang, bukan nanti:
      sudo systemctl start hk-cadangan.service
      sudo journalctl -u hk-cadangan -n 40 --no-pager
 

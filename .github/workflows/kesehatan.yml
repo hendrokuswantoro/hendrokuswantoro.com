@@ -180,3 +180,16 @@ jobs:
                 issue_number: isu.number, state: "closed",
               });
             }
+
+  alamat-cloudflare:
+    name: Cloudflare address list
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: The VPS firewall still lists every Cloudflare network
+        run: python tools/ip_cloudflare.py --banding

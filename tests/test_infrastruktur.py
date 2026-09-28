@@ -102,13 +102,6 @@ def test_versi_nginx_tidak_diumumkan():
     assert "server_tokens off;" in NGINX
 
 
-def test_http_hanya_untuk_dialihkan_dan_acme():
-    blok = re.search(r"listen 80;(.*?)\n\}", NGINX, re.DOTALL)
-    assert blok, "tidak ada blok HTTP"
-    assert "acme-challenge" in blok.group(1)
-    assert "return 308 https://" in blok.group(1)
-
-
 def _baca_unit(berkas):
     p = configparser.ConfigParser(strict=False, allow_no_value=True, interpolation=None)
     p.optionxform = str

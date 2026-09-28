@@ -349,8 +349,8 @@ def test_alamat_media_di_escape():
 def test_token_verifikasi_di_fragmen():
     from backend.layanan import keamanan as lapis
 
-    tautan = lapis._tautan("TOKEN", "https://www.hendrokuswantoro.com")
-    assert tautan == "https://www.hendrokuswantoro.com/admin#verifikasi=TOKEN"
+    tautan = lapis._tautan("TOKEN", "https://admin.hendrokuswantoro.com")
+    assert tautan == "https://admin.hendrokuswantoro.com/admin#verifikasi=TOKEN"
     assert "?" not in tautan
 
 
@@ -359,12 +359,12 @@ def test_dashboard_membaca_token_dari_fragmen():
     assert "alamat.hash" in isi
 
 
-def test_bawaan_cors_hanya_situs_yang_terbit(monkeypatch):
+def test_bawaan_cors_hanya_dashboard_bukan_situs_publik(monkeypatch):
     monkeypatch.delenv("ASAL_DIIZINKAN", raising=False)
     from backend.core.konfigurasi import Pengaturan
 
     bawaan = Pengaturan.model_fields["asal_diizinkan"].default
-    assert bawaan == ["https://www.hendrokuswantoro.com"]
+    assert bawaan == ["https://admin.hendrokuswantoro.com"]
 
 
 def test_tautan_surat_tidak_menunjuk_mesin_sendiri(monkeypatch):
@@ -372,10 +372,10 @@ def test_tautan_surat_tidak_menunjuk_mesin_sendiri(monkeypatch):
 
     monkeypatch.setenv(
         "ASAL_DIIZINKAN",
-        '["https://www.hendrokuswantoro.com","http://127.0.0.1:8081"]',
+        '["https://admin.hendrokuswantoro.com","http://127.0.0.1:8081"]',
     )
     pengaturan.cache_clear()
-    assert keamanan._asal(None) == "https://www.hendrokuswantoro.com"
+    assert keamanan._asal(None) == "https://admin.hendrokuswantoro.com"
 
 
 def test_isi_tulisan_dan_pratinjau_punya_batas():

@@ -96,13 +96,15 @@ sh /tmp/hk/infrastructure/pasang.sh
 Idempoten: menjalankannya lagi aman dan tidak menggandakan apa pun.
 
 Yang dikerjakannya: paket, Docker, rclone, pengguna sistem `hk` tanpa shell,
-venv, berkas unit systemd, konfigurasi nginx, ufw dengan tiga porta terbuka,
-fail2ban, dan pembaruan keamanan otomatis.
+venv, berkas unit systemd, konfigurasi nginx, ufw, fail2ban, dan pembaruan
+keamanan otomatis. Firewall-nya membuka SSH untuk semua orang dan porta 443
+HANYA untuk jaringan Cloudflare di `infrastructure/cloudflare-ip.txt`. Porta 80
+tertutup.
 
-Yang **tidak** dikerjakannya, dengan sengaja: tidak meminta sertifikat TLS
-(certbot butuh DNS sudah mengarah ke mesin itu, dan itu tidak bisa dipastikan
-skrip), tidak mengisi rahasia (rahasia diketik manusia, tidak dibangkitkan
-skrip yang keluarannya masuk log), dan tidak menyalakan apa pun.
+Yang **tidak** dikerjakannya, dengan sengaja: tidak memasang sertifikat TLS
+(sertifikatnya dibuat di dasbor Cloudflare, lihat langkah 5), tidak mengisi
+rahasia (rahasia diketik manusia, tidak dibangkitkan skrip yang keluarannya
+masuk log), dan tidak menyalakan apa pun.
 
 ### 3. Isi rahasianya
 
@@ -118,8 +120,8 @@ DSN=postgresql://hendro:...@127.0.0.1:5433/hendrokuswantoro
 JWT_SECRET=...                 # python -c "import secrets;print(secrets.token_urlsafe(48))"
 CADANGAN_KUNCI=...             # python backend/db/enkripsi.py kunci
 MAPBOX_TOKEN=pk....
-WEBAUTHN_RP_ID=hendrokuswantoro.com
-WEBAUTHN_ASAL=["https://www.hendrokuswantoro.com"]
+WEBAUTHN_RP_ID=admin.hendrokuswantoro.com
+WEBAUTHN_ASAL=["https://admin.hendrokuswantoro.com"]
 CADANGAN_TUJUAN=r2:hk-cadangan/harian
 KUNCI_KOLOM=...                # SALINAN dari laptop, bukan kunci baru; lihat di bawah
 SMTP_HOST=...
@@ -156,34 +158,74 @@ sudo -u hk /srv/hendrokuswantoro/venv/bin/python backend/db/muat_awal.py
 sudo -u hk /srv/hendrokuswantoro/venv/bin/python backend/db/buat_admin.py
 ```
 
-### 5. DNS, lalu sertifikat
+### 5. DNS dan sertifikat, di dasbor Cloudflare
 
-**Baca dulu sebelum menyentuh DNS.** Sejak 28 September 2026
-`hendrokuswantoro.com` dan `www` dilayani Worker Cloudflare lewat custom
-domain di `wrangler.toml`. Mengarahkan `www` ke VPS berarti memindahkan
-seluruh situs, bukan hanya API dan dashboard. Ada dua jalan, dan memilihnya
-adalah keputusan pemilik:
+Situs publik tetap di Worker Cloudflare, di `www`. Dashboard dan API tinggal
+di `admin.hendrokuswantoro.com`, di VPS. Pemilik memilih susunan ini pada 28
+September 2026. Alasannya:
 
-1. **Subdomain sendiri**, misalnya `admin.hendrokuswantoro.com`, diarahkan
-   ke VPS. Situs tetap di Cloudflare. `server_name` di nginx, `WEBAUTHN_ASAL`,
-   dan daftar asal CORS ikut diganti ke nama itu; passkey tetap sah karena
-   `WEBAUTHN_RP_ID` adalah domain induknya.
-2. **Pindah sepenuhnya ke VPS**: lepas kedua custom domain dari
-   `wrangler.toml`, lalu ikuti langkah di bawah apa adanya.
+- Situs publik tidak ikut mati kalau VPS mati.
+- Beda nama berarti beda asal bagi peramban. Skrip yang lolos ke `www` tidak
+  bisa membaca jawaban API admin, sebab CORS hanya mengizinkan `admin.`.
+- `/admin` bisa dikunci terpisah, misalnya dengan Cloudflare Access.
 
-Langkah di bawah ditulis untuk jalan kedua.
+Di dasbor Cloudflare, zona `hendrokuswantoro.com`:
 
-Arahkan `A` dan `AAAA` untuk `hendrokuswantoro.com` dan
-`www.hendrokuswantoro.com` ke alamat VPS. **Tunggu sampai benar benar
-menyebar**, periksa dengan `dig +short www.hendrokuswantoro.com`, baru:
+1. **DNS**: record `A` (dan `AAAA` kalau VPS-nya punya IPv6) bernama `admin`
+   ke alamat VPS, **Proxied** (awan oranye). Awan abu abu membuka alamat VPS
+   ke dunia, dan firewall di atas akan menolak semua orang.
+2. **SSL/TLS, Overview**: **Full (strict)**. Worker di `www` tidak
+   terpengaruh, sebab ia tidak punya origin.
+3. **SSL/TLS, Origin Server, Create Certificate**, untuk
+   `hendrokuswantoro.com` dan `*.hendrokuswantoro.com`, 15 tahun. Tempel
+   sertifikatnya ke `/etc/ssl/hendrokuswantoro/origin.pem` dan kuncinya ke
+   `origin.key` di folder yang sama, lalu `chmod 0600` kuncinya. Kuncinya
+   hanya ditampilkan sekali; kalau hilang, buat sertifikat baru.
+
+Sertifikat origin Cloudflare hanya dipercaya Cloudflare, bukan peramban. Itu
+disengaja: tidak ada yang boleh menghubungi VPS tanpa lewat Cloudflare. Ini
+juga menghapus certbot sama sekali. Certbot butuh porta 80 terbuka untuk Let's
+Encrypt, dan porta itu justru ditutup.
+
+### Alamat asli pengunjung
+
+Di balik Cloudflare, nginx melihat alamat Cloudflare, bukan alamat orangnya.
+Tanpa perbaikan, pembatas masuk sepuluh kali per menit berlaku untuk SEMUA
+orang sekaligus, jadi satu penyerang bisa membuat pemilik tidak bisa masuk.
+Kunci `admin_boleh` per alamat juga tidak berguna, dan jejak keamanan mencatat
+alamat Cloudflare.
+
+Karena itu nginx membaca `CF-Connecting-IP`, tetapi HANYA dari jaringan
+Cloudflare (`set_real_ip_from`). Tajuk yang sama dari alamat lain diabaikan,
+dan firewall memang tidak membiarkan alamat lain masuk. Daftar jaringannya
+tinggal di `infrastructure/cloudflare-ip.txt` dan dibangkitkan oleh
+`tools/ip_cloudflare.py`:
 
 ```bash
-sudo certbot --nginx -d hendrokuswantoro.com -d www.hendrokuswantoro.com
+python tools/ip_cloudflare.py --ambil     # ambil daftar terbaru, tulis ulang nginx
+python tools/ip_cloudflare.py --banding   # bandingkan dengan api.cloudflare.com
 ```
 
-Let's Encrypt membatasi lima kegagalan per jam untuk nama yang sama. Meminta
-sertifikat sebelum DNS-nya siap adalah cara paling cepat kehabisan jatah itu
-lalu menunggu satu jam tanpa bisa berbuat apa apa.
+Pemeriksaan kesehatan malam menjalankan `--banding`. Kalau Cloudflare menambah
+jaringan, jalankan `--ambil`, commit, lalu di VPS jalankan ulang `pasang.sh`
+supaya firewall ikut. Jaringan yang DIHAPUS Cloudflare tidak ikut hilang dari
+ufw dengan sendirinya; hapus aturannya dengan `sudo ufw status numbered` lalu
+`sudo ufw delete <nomor>`.
+
+Server bawaan nginx menolak jabat tangan TLS untuk nama apa pun selain nama
+milik situs ini (`ssl_reject_handshake`). Lapisan tambahan yang belum dipasang
+adalah Authenticated Origin Pulls: Cloudflare menunjukkan sertifikat klien dan
+nginx menolak yang tidak membawanya. Ia butuh sakelar di dasbor, dan kalau
+nginx menuntutnya sebelum sakelarnya menyala, seluruh dashboard menjawab 400.
+
+### Cloudflare Access, disarankan
+
+Akun admin di VPS lahir tanpa faktor kedua. Selama itu, siapa pun yang tahu
+sandinya bisa memasang faktor PERTAMA miliknya sendiri. Sebelum record DNS
+`admin` dibuat, pasang aplikasi Cloudflare Access (Zero Trust,
+gratis untuk sedikit pemakai) untuk `admin.hendrokuswantoro.com`, dengan
+aturan yang hanya mengizinkan `kuswantoro.hendro01@gmail.com`. Lalu masuk dan
+pasang authenticator serta passkey hari itu juga.
 
 ### 6. Nyalakan
 
@@ -223,6 +265,10 @@ Yang harus diisi di **Settings > Secrets and variables > Actions**:
 | Secret | `VPS_PORTA` | opsional, bawaannya 22 |
 | Variable | `VPS_AKTIF` | `1` |
 | Variable | `SITUS` | `https://www.hendrokuswantoro.com` |
+| Variable | `ADMIN` | opsional, bawaannya `https://admin.hendrokuswantoro.com` |
+
+`VPS_HOST` adalah alamat asli VPS, bukan `admin.hendrokuswantoro.com`: nama
+itu menunjuk Cloudflare, dan Cloudflare tidak meneruskan SSH.
 
 Buat kunci khusus untuk ini, jangan pakai kunci pribadi Anda:
 
@@ -297,13 +343,25 @@ formalitas: perintah itu menimpa seluruh isi basis data yang sekarang.
 
 ## Kalau nanti pindah sepenuhnya dari Cloudflare
 
-Yang berubah hanya DNS. Konfigurasi nginx menyajikan situs statis yang sama,
+nginx masih memuat server untuk `www` yang menyajikan situs statis yang sama,
 dengan header keamanan yang sama persis, dijaga `tests/test_infrastruktur.py`
-supaya keduanya tidak pernah bergeser satu sama lain.
+supaya keduanya tidak pernah bergeser. Tetapi pindah tidak lagi cukup dengan
+mengganti DNS: sertifikat origin hanya dipercaya Cloudflare, firewall hanya
+menerima Cloudflare, dan `set_real_ip_from` hanya berarti di balik Cloudflare.
+Ketiganya harus diganti bersamaan, ditambah sertifikat Let's Encrypt.
 
-Yang hilang: cache tepi di puluhan kota, perlindungan DDoS, dan sertifikat
-yang mengurus dirinya sendiri. Yang didapat: satu mesin yang seluruhnya milik
-Anda dan yang seluruhnya jadi tanggung jawab Anda untuk ditambal.
+Yang hilang kalau pindah: cache tepi di puluhan kota, perlindungan DDoS, dan
+sertifikat yang mengurus dirinya sendiri. Yang didapat: satu mesin yang
+seluruhnya milik Anda dan yang seluruhnya jadi tanggung jawab Anda untuk
+ditambal.
 
-Susunan paling masuk akal adalah keduanya: Cloudflare di depan sebagai DNS
-dan cache, VPS di belakang untuk `/api/` dan `/admin`.
+## Gambar unggahan di situs publik
+
+Foto dan video dari dashboard disimpan di VPS dan disajikan di
+`https://admin.hendrokuswantoro.com/unggahan/...`. Situs publik di Cloudflare
+belum membangun tulisan dari basis data (`bangun_tulisan.py --sumber api`
+belum dipakai build Cloudflare), jadi hari ini belum ada tulisan terbit yang
+menunjuk unggahan. Saat jalur itu dipasang, berkas unggahan yang disebut
+tulisan wajib ikut disalin ke `dist/unggahan/` saat build. Jangan menunjuk
+`admin.` langsung dari situs publik: itu membuka CSP situs ke subdomain admin
+dan membuat tiap pembaca menyambung ke VPS.

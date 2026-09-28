@@ -279,3 +279,21 @@ sudah gratis tidak ada gunanya dibiarkan tidak menjaga apa apa.
 ## Temuan yang belum selesai
 
 Tidak ada.
+
+## Subdomain admin, 28 September 2026
+
+Dashboard dan API pindah ke `admin.hendrokuswantoro.com`, di balik Cloudflare.
+Saat memeriksa susunan itu ditemukan satu celah yang berlaku apa pun namanya.
+
+| # | Tingkat | Temuan | Perbaikannya |
+| --- | --- | --- | --- |
+| 1 | Medium | Di balik Cloudflare nginx melihat alamat Cloudflare, jadi pembatas masuk berlaku untuk semua orang sekaligus, `admin_boleh` tidak berguna, dan jejak keamanan mencatat alamat yang salah | `set_real_ip_from` untuk jaringan Cloudflare saja, `real_ip_header CF-Connecting-IP`, dibangkitkan dari `infrastructure/cloudflare-ip.txt` |
+| 2 | Medium | Firewall membuka 80 dan 443 untuk siapa pun, jadi yang tahu alamat VPS melewati Cloudflare sepenuhnya | ufw hanya membuka 443 untuk jaringan Cloudflare, porta 80 tertutup, sertifikat origin Cloudflare menggantikan certbot |
+| 3 | Low | Nama host asing yang diarahkan ke VPS tetap dilayani server pertama | Server bawaan menolak jabat tangan TLS (`ssl_reject_handshake`) |
+| 4 | Low | CORS dan passkey terikat ke `www`, padahal dashboard pindah | CORS hanya `admin.`, `WEBAUTHN_RP_ID` produksi `admin.hendrokuswantoro.com`, jadi passkey tidak berlaku di subdomain lain |
+
+`www` dan `admin.` tetap *same-site* bagi peramban, jadi `SameSite=strict`
+tidak memisahkan keduanya. Yang memisahkan adalah cookie refresh tanpa atribut
+`Domain`, sehingga ia hanya milik `admin.`. `tests/test_admin_subdomain.py`
+menolak kalau atribut itu ditambahkan, dan ujinya sudah dibuktikan gagal saat
+jaringan Cloudflare, firewall, dan cookie sengaja dirusak.

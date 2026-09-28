@@ -125,6 +125,19 @@ jobs:
             echo "ok   $jalur"
           done
 
+      - name: The dashboard answers on its own name
+        run: |
+          admin="${{ vars.ADMIN }}"
+          if [ -z "$admin" ]; then
+            admin="https://admin.hendrokuswantoro.com"
+          fi
+          kode=$(curl -s -o /dev/null -w '%{http_code}' "$admin/admin")
+          case "$kode" in
+            200) echo "ok, $admin/admin answers 200" ;;
+            302) echo "ok, $admin/admin sits behind Cloudflare Access" ;;
+            *) echo "FAIL, $admin/admin answers $kode"; exit 1 ;;
+          esac
+
       - name: Say what to do if this failed
         if: failure()
         run: |
