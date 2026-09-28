@@ -13,8 +13,8 @@ export const PARKIR = {
 
   title: { en: "Yogyakarta Parking Map", id: "Peta Parkir Yogyakarta" } as Copy,
   lede: {
-    en: "Pick a point on the map and the zone and the fee show up. The part that took longest to get right was not that. It was deciding when the map should refuse to answer.",
-    id: "Pilih titik di peta, zona dan tarifnya muncul. Bagian yang paling lama saya pikirkan justru bukan itu, melainkan kapan peta ini harus menolak menjawab.",
+    en: "Drop a pin on any street in Yogyakarta and see its parking zone and fee in seconds. Just as important, the map knows when to stay quiet.",
+    id: "Taruh pin di jalan mana pun di Kota Yogyakarta, zona dan tarif parkirnya langsung terlihat. Sama pentingnya, peta ini tahu kapan harus diam.",
   } as Copy,
 
   image: "/assets/img/work/parking.webp?v=8e000f92a9",
@@ -27,145 +27,131 @@ export const PARKIR = {
     {
       num: { en: "495", id: "495" },
       label: {
-        en: "street segments stored for Zone I and II",
-        id: "ruas Kawasan I dan II yang disimpan",
+        en: "Zone I and II street segments mapped",
+        id: "ruas Kawasan I dan II terpetakan",
       },
     },
     {
       num: { en: "14,272", id: "14.272" },
       label: {
-        en: "roads used to build the coverage boundary",
-        id: "ruas jalan dipakai membangun batas cakupan",
+        en: "roads that shape the coverage area",
+        id: "ruas jalan membentuk area cakupan",
       },
     },
     {
       num: { en: "594", id: "594" },
       label: {
-        en: "fee combinations, three implementations agree",
-        id: "kombinasi tarif, tiga penerapan sepakat",
+        en: "fee combinations, three engines agree",
+        id: "kombinasi tarif, tiga mesin hitung sepakat",
       },
     },
     {
       num: { en: "0", id: "0" },
       label: {
         en: "places labelled legal or illegal",
-        id: "tempat yang dilabeli legal atau ilegal",
+        id: "tempat dilabeli legal atau ilegal",
       },
     },
   ] as Angka[],
 
   bagian: [
     {
-      h2: { en: "The question it answers", id: "Pertanyaan yang dijawabnya" },
+      h2: { en: "The problem it solves", id: "Masalah yang diselesaikan" },
       p: [
         {
-          en: "What is the parking fee on this street, and why that number. The fee follows a city regulation that splits Yogyakarta into Zone I, Zone II and Zone III. Zone I and Zone II have a list of streets. Zone III is whatever is left.",
-          id: "Berapa tarif parkir di ruas ini, dan kenapa segitu. Tarifnya mengikuti Perwal 149/2020, yang membagi kota jadi Kawasan I, II, dan III. Kawasan I dan II punya daftar ruas; Kawasan III adalah sisanya.",
+          en: "Parking fees in Yogyakarta depend on the zone. Mayoral Regulation 149/2020 divides the city into Zone I, Zone II and Zone III, and each zone has its own rate. The catch is that none of these zones can be seen from the street.",
+          id: "Tarif parkir di Kota Yogyakarta bergantung pada kawasannya. Perwal 149/2020 membagi kota menjadi Kawasan I, II, dan III, dan tiap kawasan punya tarif sendiri. Masalahnya, batas kawasan itu tidak terlihat dari jalan.",
         },
         {
-          en: "Because Zone III is the remainder, the system does not store a list for it. It stores 27 segments for Zone I and 468 for Zone II. Building a Zone III list would mean inventing a list the regulation itself does not have.",
-          id: "Karena Kawasan III adalah sisa, sistem ini tidak menyimpan daftarnya. Yang tersimpan 27 ruas Kawasan I dan 468 ruas Kawasan II. Membuat daftar Kawasan III berarti mengarang daftar yang aturannya sendiri tidak punya.",
+          en: "This map makes them visible. It holds all 27 Zone I segments and 468 Zone II segments named in the regulation. Zone III is every other street in the city, so it is never stored as a list. Writing that list would mean inventing something the regulation never wrote.",
+          id: "Peta ini membuatnya terlihat. Seluruh 27 ruas Kawasan I dan 468 ruas Kawasan II yang disebut peraturan itu tersimpan di dalamnya. Kawasan III adalah semua jalan lain di dalam kota, jadi tidak disimpan sebagai daftar. Membuat daftarnya sama dengan mengarang sesuatu yang tidak pernah ditulis peraturannya.",
         },
       ],
     },
     {
-      h2: { en: "What it refuses to answer", id: "Yang ia tolak jawab" },
+      h2: { en: "Knowing when to say no", id: "Tahu kapan harus menolak" },
       p: [
         {
-          en: "The regulation binds inside Yogyakarta city and nowhere else. An early version answered Zone III for any point far from a Zone I or Zone II street. So it showed Zone III and a fee in other towns, and out at sea.",
-          id: "Aturan itu mengikat di Kota Yogyakarta saja. Versi awal menjawab Kawasan III untuk titik mana pun yang jauh dari ruas Kawasan I dan II, jadi ia menampilkan Kawasan III dan Rp1.000 di Purworejo, di Bandung, bahkan di tengah laut.",
+          en: "The regulation only applies inside Yogyakarta city. An early version missed this. Any point far from a Zone I or II street was treated as Zone III, so the map quoted a fee in Bandung, in Purworejo, even out at sea.",
+          id: "Peraturan ini hanya berlaku di Kota Yogyakarta. Versi awal peta ini melewatkan hal itu. Titik mana pun yang jauh dari ruas Kawasan I atau II dianggap Kawasan III, sehingga peta memberi tarif di Bandung, di Purworejo, bahkan di tengah laut.",
         },
         {
-          en: "That is not a display bug. It is a claim that a city regulation applies somewhere it does not. Outside the coverage the zone comes back empty and the fee comes back empty, not as a number.",
-          id: "Itu bukan sekadar salah tampilan. Itu mengarang bahwa aturan Kota Yogyakarta berlaku di tempat itu. Sekarang di luar cakupan, zonanya kosong dan tarifnya kosong, bukan angka.",
+          en: "That was more than a display bug. The map was claiming a city rule applied where it does not. Now, outside the coverage area, it shows no zone and no fee.",
+          id: "Itu lebih dari sekadar salah tampilan. Peta mengklaim aturan kota berlaku di tempat yang bukan wilayahnya. Sekarang, di luar area cakupan, peta tidak menampilkan zona maupun tarif.",
         },
         {
-          en: "The coverage boundary is not the administrative boundary either, and the system says so plainly. It is a concave hull around the 14,272 road segments that were actually loaded, buffered by 250 metres, about 91 km2. The city itself is 32.5 km2, so the error leans the safe way. A point still inside the city will not be turned away.",
-          id: "Batas cakupannya juga bukan batas administrasi kota, dan itu disebut terus terang. Yang dipakai selubung cekung dari 14.272 ruas jalan yang benar benar dimuat, disangga 250 meter, luasnya sekitar 91 km2. Kota Yogyakarta sendiri 32,5 km2, jadi kekeliruannya condong ke arah yang aman: tempat yang masih di dalam kota tidak akan tertolak.",
+          en: "The coverage area is not the official city boundary, and the map says so openly. It is drawn around the 14,272 road segments in the data with a 250 metre margin, about 91 km² in total. The city itself is 32.5 km², so any error falls on the safe side. No place inside the city is ever turned away.",
+          id: "Area cakupannya juga bukan batas resmi kota, dan itu disampaikan terus terang. Area ini dibentuk dari 14.272 ruas jalan dalam data, ditambah jarak aman 250 meter, luasnya sekitar 91 km². Luas kota sendiri 32,5 km², jadi selisihnya selalu berpihak pada pengguna. Tidak ada tempat di dalam kota yang tertolak.",
         },
       ],
     },
     {
-      h2: { en: "What it never says", id: "Yang ia tidak pernah katakan" },
+      h2: { en: "No labels it cannot back up", id: "Tanpa label yang tidak berdasar" },
       p: [
         {
-          en: "No place and no person is labelled legal or illegal. The data for that does not exist. The list of permitted points sits with the transport agency, and there is no data on no-parking signs. A label like that would have to be invented.",
-          id: "Tidak ada tempat dan tidak ada orang yang dilabeli legal atau ilegal. Datanya memang tidak ada: daftar titik bersurat keputusan hanya dipegang Dinas Perhubungan, dan data rambu larangan parkir belum tersedia. Label semacam itu akan dikarang.",
+          en: "The map never labels a place or a person as legal or illegal. The data to support that does not exist. Only the city transport agency holds the list of licensed parking spots, and there is no data on no-parking signs. Any such label would be a guess.",
+          id: "Peta ini tidak pernah melabeli tempat atau orang sebagai legal maupun ilegal. Data untuk mendukungnya memang tidak ada. Daftar titik parkir berizin hanya dipegang Dinas Perhubungan, dan data rambu larangan parkir belum tersedia. Label semacam itu hanya tebakan.",
         },
         {
-          en: "There are only three states: matching, needs checking, and no assignment on record. Deciding legal status belongs to an officer, not to an algorithm, and least of all to one reading a phone position that can be twenty to thirty metres out in a tight corridor.",
-          id: "Status yang dikenal cuma tiga: sesuai, perlu verifikasi, dan tanpa penugasan. Penetapan status hukum wewenang petugas, bukan algoritma, apalagi algoritma yang membaca posisi ponsel yang di koridor rapat bisa meleset dua puluh sampai tiga puluh meter.",
+          en: "Instead it uses three neutral states: matching, needs checking, and no assignment on record. Legal status is for an officer to decide, not an algorithm, least of all one reading a phone position that can drift twenty to thirty metres in a narrow street.",
+          id: "Sebagai gantinya, peta memakai tiga status netral: sesuai, perlu dicek, dan belum ada penugasan. Status hukum ditentukan petugas, bukan algoritma, apalagi algoritma yang membaca lokasi ponsel yang bisa meleset dua puluh sampai tiga puluh meter di jalan sempit.",
         },
         {
-          en: "Five Malioboro side streets that are still proposals are drawn with a dashed line and carry a warning, so a proposal never looks like a decision.",
-          id: "Lima sirip Malioboro yang belum ditetapkan digambar putus putus dan memunculkan peringatan, supaya usulan tidak terlihat seperti keputusan.",
+          en: "Five Malioboro side streets are still only proposals. They are drawn as dashed lines with a warning, so a proposal never looks like a decision.",
+          id: "Lima sirip Malioboro masih berupa usulan. Ruasnya digambar putus putus dan disertai peringatan, supaya usulan tidak terlihat seperti keputusan.",
         },
       ],
     },
     {
-      h2: { en: "What it does not store", id: "Yang ia tidak simpan" },
+      h2: { en: "Privacy by design", id: "Privasi sejak rancangan" },
       p: [
         {
-          en: "The parking attendant table holds no national ID number, no name and no address. Only a pseudonym. That follows the Indonesian personal data protection law.",
-          id: "Tabel juru parkir tidak memuat NIK, nama, maupun alamat. Hanya pseudonim. Ini mengikuti Undang-Undang Nomor 27 Tahun 2022.",
+          en: "The parking attendant table stores no ID number, name or address. Only a pseudonym is kept, in line with Indonesia's Personal Data Protection Law of 2022.",
+          id: "Tabel juru parkir tidak menyimpan NIK, nama, atau alamat. Yang tersimpan hanya nama samaran, sesuai Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi.",
         },
         {
-          en: "A complaint never asks who is filing it. What is kept is the place, the time, the category, the fee that was charged, and a free text note. That note is the one place an identity could slip in by accident, so the form warns against writing names and numbers in it.",
-          id: "Aduan tidak pernah menanyakan identitas pelapor. Yang disimpan lokasi, waktu, kategori, tarif yang dipungut, dan keterangan bebas. Kolom keterangan itu satu satunya tempat identitas bisa masuk tanpa sengaja, jadi antarmukanya memperingatkan agar nama dan nomor tidak ditulis di sana.",
+          en: "Complaints are anonymous. The form records the place, the time, the category, the fee charged and a short note. That note is the only place a name could slip in, so the form reminds people not to write names or phone numbers there.",
+          id: "Aduan bersifat anonim. Formulirnya mencatat lokasi, waktu, kategori, tarif yang ditarik, dan catatan singkat. Catatan itu satu satunya tempat nama bisa ikut masuk, jadi formulirnya mengingatkan agar nama dan nomor telepon tidak ditulis di sana.",
         },
         {
-          en: "The rate limiter on complaints hashes the IP address with a random salt made fresh for each process. It lives in memory only, never reaches the database or a log file, and disappears when the process stops.",
-          id: "Pembatas laju pengiriman aduan meringkas alamat IP dengan garam acak per proses, disimpan di memori saja, tidak pernah masuk basis data maupun berkas log, dan hilang saat prosesnya berhenti.",
+          en: "Spam protection hashes each IP address with a random salt that changes every time the server restarts. It lives in memory only and never reaches the database or the logs.",
+          id: "Perlindungan dari spam meringkas alamat IP dengan kunci acak yang berganti setiap server dinyalakan ulang. Datanya hanya ada di memori, tidak pernah masuk basis data maupun log.",
         },
       ],
     },
     {
-      h2: { en: "How it is built", id: "Cara ia dibangun" },
+      h2: { en: "Built to be trusted", id: "Dibangun agar bisa dipercaya" },
       p: [
         {
-          en: "The fee is calculated in exactly one place. The interface does not do its own arithmetic. Three implementations have to agree, the GeoPackage mode, the PostGIS mode, and an embedded copy inside the standalone preview file, and all three were tested against 594 combinations.",
-          id: "Perhitungan tarif hanya ada di satu tempat. Antarmukanya tidak menghitung sendiri. Ada tiga penerapan yang harus sepakat, yaitu mode GeoPackage, mode PostGIS, dan salinan tertanam di berkas pratinjau mandiri, dan ketiganya sudah diuji sepakat pada 594 kombinasi.",
+          en: "The fee is calculated in one place only. Three versions must agree on every result: the GeoPackage mode, the PostGIS mode and the standalone preview file. All three were tested against 594 combinations and matched every time.",
+          id: "Tarif hanya dihitung di satu tempat. Tiga versi harus selalu memberi hasil yang sama: mode GeoPackage, mode PostGIS, dan berkas pratinjau mandiri. Ketiganya diuji pada 594 kombinasi dan hasilnya selalu sama.",
         },
         {
-          en: "The coverage check is written in plain Python rather than with a geometry library, so both storage modes run exactly the same code. Two modes that answer differently is a defect that only shows up in production.",
-          id: "Pemeriksaan batas cakupan ditulis dengan Python biasa, bukan memakai shapely, supaya kedua mode penyimpanan menjalankan kode yang sama persis. Dua mode yang menjawab berbeda adalah cacat yang hanya muncul di produksi.",
+          en: "The coverage check is written in plain Python, without a geometry library, so both storage modes run exactly the same code. Two modes that disagree would be a bug that only shows up in production.",
+          id: "Pemeriksaan area cakupan ditulis dengan Python biasa tanpa pustaka geometri, supaya kedua mode penyimpanan menjalankan kode yang persis sama. Dua mode yang memberi jawaban berbeda adalah bug yang baru muncul di produksi.",
         },
         {
-          en: "The zone colours were checked against the basemap rather than picked by eye. Zone I reaches 6.64:1, Zone II 3.97:1, Zone III 4.94:1, against a 3.0:1 threshold for graphics.",
-          id: "Warna kawasannya dihitung kontrasnya terhadap peta dasar, bukan dipilih karena enak dilihat. Kawasan I 6,64:1, Kawasan II 3,97:1, Kawasan III 4,94:1, sedangkan ambang WCAG untuk grafis 3,0:1.",
-        },
-      ],
-    },
-    {
-      h2: { en: "What is still missing", id: "Yang belum ada" },
-      p: [
-        {
-          en: "Three things hold up the next phase, and none of them is code. The list of permitted parking points, a pseudonymised register of attendants, and attendant positions, which will not exist until there is an operational partnership.",
-          id: "Tiga hal menahan fase berikutnya, dan ketiganya bukan soal kode: daftar titik parkir bersurat keputusan, rekap juru parkir yang sudah dipseudonimkan, dan posisi juru parkir yang tidak akan ada sampai ada kemitraan operasional.",
-        },
-        {
-          en: "The monitoring dashboard is already built and reads the real database views, so nothing more needs writing once the data arrives. While a table is empty the panel names which table is empty and who owns it, rather than showing a zero. A zero is a reading. Missing data is not.",
-          id: "Kerangka dashboard pengawasannya sudah ada dan memanggil tampilan basis data yang sebenarnya, jadi begitu datanya masuk tidak ada lagi yang perlu ditulis. Selama datanya kosong, panelnya menyebutkan tabel mana yang kosong dan siapa pemiliknya, bukan menampilkan nol. Nol adalah bacaan; ketiadaan data bukan.",
+          en: "Zone colours were chosen by measuring contrast against the base map, not by eye. Zone I reaches 6.64:1, Zone II 3.97:1 and Zone III 4.94:1, all above the WCAG threshold of 3:1 for graphics.",
+          id: "Warna kawasan dipilih dengan mengukur kontrasnya terhadap peta dasar, bukan sekadar enak dilihat. Kawasan I mencapai 6,64:1, Kawasan II 3,97:1, dan Kawasan III 4,94:1, semuanya di atas ambang WCAG 3:1 untuk grafis.",
         },
       ],
     },
   ] as Bagian[],
 
   coba: {
-    eyebrow: { en: "Try it yourself", id: "Coba sendiri" } as Copy,
-    h2: { en: "The live parking map", id: "Peta parkir yang hidup" } as Copy,
+    eyebrow: { en: "Live demo", id: "Demo langsung" } as Copy,
+    h2: { en: "Check parking fees on the map", id: "Cek tarif parkir di peta" } as Copy,
     intro: [
-      { en: "Search a street or move the map.", id: "Cari nama jalan atau geser petanya." },
       {
-        en: "The pin reads the zone and the fee from the same data and rules.",
-        id: "Pin membaca kawasan dan tarifnya dari data dan aturan yang sama.",
+        en: "Search for a street, tap the map or drag it. The pin shows the zone and the fee right away.",
+        id: "Cari nama jalan, ketuk peta, atau geser petanya. Pin langsung menunjukkan kawasan dan tarifnya.",
       },
     ] as Copy[],
     belum: {
       en: "The interactive map lives on the published site. This port shows the case study only.",
       id: "Peta interaktifnya ada di situs yang terbit. Port ini hanya menampilkan studi kasusnya.",
     } as Copy,
-    tombol: { en: "Try the live map", id: "Coba peta langsung" } as Copy,
+    tombol: { en: "See the live map", id: "Lihat peta langsung" } as Copy,
   },
 
   ajakTitle: { en: "See the rest", id: "Lihat yang lain" } as Copy,

@@ -14,7 +14,7 @@
   };
 
   var KENDARAAN = {
-    "Sepeda motor": { en: "Motorcycle", ind: "Sepeda motor" },
+    "Sepeda motor": { en: "Motorbike", ind: "Motor" },
     "Sedan, jip, pickup, station wagon, kendaraan roda tiga": { en: "Car", ind: "Mobil" },
     "Truk sedang atau box": { en: "Medium truck", ind: "Truk sedang" },
     "Truk besar": { en: "Large truck", ind: "Truk besar" },
@@ -28,68 +28,65 @@
   };
 
   var LAYANAN = {
-    reguler: { en: "Regular", ind: "Reguler" },
-    insidental: { en: "Event", ind: "Insidental" },
-    pasar: { en: "Market", ind: "Di pasar" }
+    reguler: { en: "Regular", ind: "Biasa" },
+    insidental: { en: "Event", ind: "Acara" },
+    pasar: { en: "Market", ind: "Pasar" }
   };
 
   var TEXT = {
-    search: { en: "Search a street in Yogyakarta", ind: "Cari jalan di Yogyakarta" },
-    clear: { en: "Clear search", ind: "Hapus pencarian" },
-    noMatch: { en: "No street matches “%q”", ind: "Tidak ada jalan yang cocok dengan “%q”" },
+    search: { en: "Search a street", ind: "Cari nama jalan" },
+    clear: { en: "Clear", ind: "Hapus" },
+    noMatch: { en: "No street called “%q”", ind: "Jalan “%q” tidak ketemu" },
     zone: { en: "Zone %k", ind: "Kawasan %k" },
-    fromStreet: { en: "%m m from the street", ind: "%m m dari ruas" },
-    zoneThree: { en: "Outside Zone I and II", ind: "Di luar Kawasan I dan II" },
-    zoneThreeNote: { en: "Zone III, the lowest fee", ind: "Kawasan III, tarif terendah" },
-    outside: { en: "Outside the data coverage", ind: "Di luar cakupan data" },
+    fromStreet: { en: "%m m from the street", ind: "%m m dari jalan" },
+    zoneThree: { en: "Zone III street", ind: "Jalan Kawasan III" },
+    zoneThreeNote: { en: "The cheapest zone", ind: "Kawasan paling murah" },
+    outside: { en: "Outside Yogyakarta city", ind: "Di luar Kota Yogyakarta" },
     outsideNote: {
-      en: "These fees only apply in Yogyakarta city, so the map does not guess one here.",
-      ind: "Tarif ini hanya berlaku di Kota Yogyakarta, jadi peta tidak menebak angka di sini."
+      en: "These fees only apply in Yogyakarta city, so there is no fee here.",
+      ind: "Tarif ini cuma berlaku di Kota Yogyakarta, jadi di sini tidak ada tarifnya."
     },
-    once: { en: "Zone %k, once, however long you stay", ind: "Kawasan %k, sekali parkir berapa pun lamanya" },
-    market: { en: "Market fee, once per visit", ind: "Tarif kawasan pasar, sekali parkir" },
-    firstTwo: { en: "Rp%a for the first two hours", ind: "Rp%a untuk dua jam pertama" },
+    once: { en: "Zone %k. Pay once, however long you stay.", ind: "Kawasan %k. Bayar sekali, berapa lama pun." },
+    market: { en: "Market fee. Pay once each visit.", ind: "Tarif pasar. Bayar sekali tiap parkir." },
+    firstTwo: { en: "Rp%a for the first 2 hours", ind: "Rp%a untuk 2 jam pertama" },
     thenHours: { en: ", then %j h × Rp%b", ind: ", lalu %j jam × Rp%b" },
     proposal: {
-      en: "This street is proposed for Zone I as a Malioboro side street. It is not decided yet, so check the fee board on site.",
-      ind: "Ruas ini diusulkan masuk Kawasan I sebagai sirip Malioboro. Belum ditetapkan, jadi periksa papan tarif di lokasi."
+      en: "This street is only proposed for Zone I and not decided yet. Check the fee board on site.",
+      ind: "Jalan ini baru diusulkan masuk Kawasan I dan belum ditetapkan. Cek papan tarif di lokasi, ya."
     },
     vehicle: { en: "Vehicle", ind: "Kendaraan" },
-    hours: { en: "Hours", ind: "Lama parkir" },
+    hours: { en: "How long", ind: "Lama parkir" },
     hourUnit: { en: "%j h", ind: "%j jam" },
-    less: { en: "One hour less", ind: "Kurangi satu jam" },
-    more: { en: "One hour more", ind: "Tambah satu jam" },
-    service: { en: "Service", ind: "Layanan" },
+    less: { en: "1 hour less", ind: "Kurangi 1 jam" },
+    more: { en: "1 hour more", ind: "Tambah 1 jam" },
+    service: { en: "Parking type", ind: "Jenis parkir" },
     legendOne: { en: "Zone I", ind: "Kawasan I" },
     legendTwo: { en: "Zone II", ind: "Kawasan II" },
-    legendProposal: { en: "Proposed, not decided", ind: "Usulan, belum ditetapkan" },
-    legendAsset: { en: "Provincial parking", ind: "Parkir aset Pemda DIY" },
-    legendRest: { en: "Any other street in the city is Zone III.", ind: "Ruas lain di dalam kota termasuk Kawasan III." },
+    legendProposal: { en: "Still a proposal", ind: "Masih usulan" },
+    legendAsset: { en: "Provincial parking", ind: "Parkir Pemda DIY" },
+    legendRest: { en: "Other streets in the city are Zone III.", ind: "Jalan lain di kota masuk Kawasan III." },
     assetNote: {
-      en: "Provincial parking has its own fees, set by Pergub DIY 46/2024.",
-      ind: "Parkir aset provinsi punya tarif sendiri, diatur Pergub DIY 46/2024."
+      en: "Fees here are different, set by Pergub DIY 46/2024.",
+      ind: "Tarif di sini beda, diatur Pergub DIY 46/2024."
     },
-    spaces: { en: "%n motorcycle spaces", ind: "%n SRP roda dua" },
+    spaces: { en: "%n motorbike spots", ind: "%n tempat motor" },
     announce: { en: "%r. %f.", ind: "%r. %f." },
-    noFee: { en: "No fee", ind: "Tanpa tarif" },
+    noFee: { en: "No fee listed", ind: "Tarif tidak tersedia" },
     zoomIn: { en: "Zoom in", ind: "Perbesar" },
     zoomOut: { en: "Zoom out", ind: "Perkecil" },
-    north: { en: "Face north", ind: "Hadapkan ke utara" },
+    north: { en: "Face north", ind: "Hadap utara" },
     full: { en: "Full screen", ind: "Layar penuh" },
-    unfull: { en: "Exit full screen", ind: "Keluar dari layar penuh" },
+    unfull: { en: "Exit full screen", ind: "Keluar layar penuh" },
     close: { en: "Close", ind: "Tutup" },
-    legend: { en: "Legend", ind: "Legenda" },
-    legendTitle: { en: "What the map shows", ind: "Yang tampil di peta" },
-    legendHint: {
-      en: "Tap an item to hide or show it on the map.",
-      ind: "Ketuk salah satu untuk menyembunyikan atau menampilkannya di peta."
-    },
-    legendHide: { en: "Hide legend", ind: "Sembunyikan legenda" },
-    moreDetails: { en: "Show fee options", ind: "Tampilkan pilihan tarif" },
-    lessDetails: { en: "Hide fee options", ind: "Sembunyikan pilihan tarif" },
-    nearest: { en: "Nearest provincial car park", ind: "Parkir aset Pemda DIY terdekat" },
+    legend: { en: "Map key", ind: "Keterangan" },
+    legendTitle: { en: "Map key", ind: "Keterangan peta" },
+    legendHint: { en: "Tap to show or hide.", ind: "Ketuk untuk tampilkan atau sembunyikan." },
+    legendHide: { en: "Close", ind: "Tutup" },
+    moreDetails: { en: "Show options", ind: "Tampilkan pilihan" },
+    lessDetails: { en: "Hide options", ind: "Sembunyikan pilihan" },
+    nearest: { en: "Nearest provincial parking", ind: "Parkir Pemda DIY terdekat" },
     here: { en: "here", ind: "di sini" },
-    goThere: { en: "Go to %n, %d", ind: "Menuju %n, %d" }
+    goThere: { en: "Go to %n, %d", ind: "Ke %n, %d" }
   };
 
   function isId() {

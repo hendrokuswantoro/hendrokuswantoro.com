@@ -4,12 +4,12 @@ import { ParkirJogjaView } from "@/components/ParkirJogjaView";
 export const metadata: Metadata = {
   title: "Yogyakarta Parking Map",
   description:
-    "A case study: the parking map that refuses to answer outside the city, and why refusing is part of the design.",
+    "A case study: a Yogyakarta parking map that shows the zone and fee for any street, and knows when to stay quiet.",
   alternates: { canonical: "/parkir-jogja/" },
   openGraph: {
     type: "article",
     title: "Yogyakarta Parking Map, a case study",
-    description: "The parking map that refuses to answer outside the city.",
+    description: "A Yogyakarta parking map that shows the zone and fee for any street, and knows when to stay quiet.",
   },
 };
 

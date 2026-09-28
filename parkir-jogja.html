@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script>try{var t=localStorage.getItem("hk-tema");if(t==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <title data-ind="Peta Parkir Yogyakarta">Yogyakarta Parking Map</title>
-<meta name="description" data-ind="Studi kasus: peta parkir yang menolak menjawab di luar kota, dan kenapa penolakan itu bagian dari rancangannya." content="A case study: the parking map that refuses to answer outside the city, and why refusing is part of the design.">
+<meta name="description" data-ind="Studi kasus: peta parkir Yogyakarta yang menunjukkan zona dan tarif tiap jalan, dan tahu kapan harus diam." content="A case study: a Yogyakarta parking map that shows the zone and fee for any street, and knows when to stay quiet.">
 <link rel="canonical" href="https://www.hendrokuswantoro.com/parkir-jogja">
 <meta name="theme-color" content="#f6f6f6">
 <meta name="author" content="Hendro Kuswantoro">
@@ -13,11 +13,11 @@
 <meta property="og:site_name" content="Hendro Kuswantoro">
 <meta property="og:url" content="https://www.hendrokuswantoro.com/parkir-jogja">
 <meta property="og:title" content="Yogyakarta Parking Map, a case study">
-<meta property="og:description" content="The parking map that refuses to answer outside the city.">
+<meta property="og:description" content="A Yogyakarta parking map that shows the zone and fee for any street, and knows when to stay quiet.">
 <meta property="og:image" content="https://www.hendrokuswantoro.com/assets/img/og-cover.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Yogyakarta Parking Map, a case study">
-<meta name="twitter:description" content="The parking map that refuses to answer outside the city.">
+<meta name="twitter:description" content="A Yogyakarta parking map that shows the zone and fee for any street, and knows when to stay quiet.">
 <meta name="twitter:image" content="https://www.hendrokuswantoro.com/assets/img/og-cover.png">
 <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
@@ -26,8 +26,8 @@
 <link rel="preload" href="/assets/fonts/poppins-v24-600-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="/assets/fonts/poppins-v24-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="alternate" type="application/rss+xml" title="hendrokuswantoro.com" href="/feed.xml">
-<link rel="stylesheet" href="/assets/css/style.css?v=1e1d989a80">
-<script defer src="/assets/js/app.js?v=f01edf2e2b"></script>
+<link rel="stylesheet" href="/assets/css/style.css?v=2ccfdd7ab9">
+<script defer src="/assets/js/app.js?v=d39c59ed75"></script>
 </head>
 <body>
 <a class="skip-link" href="#main" data-ind="Lompat ke isi">Skip to content</a>
@@ -85,11 +85,11 @@
             <span class="tag">MapLibre</span>
           </p>
           <h1 data-ind="Peta Parkir Yogyakarta">Yogyakarta Parking Map</h1>
-          <p data-ind="Pilih titik di peta, zona dan tarifnya muncul. Bagian yang paling lama saya pikirkan justru bukan itu, melainkan kapan peta ini harus menolak menjawab.">
-            Pick a point on the map and the zone and the fee show up. The part that took longest to get right was not that. It was deciding when the map should refuse to answer.
+          <p data-ind="Taruh pin di jalan mana pun di Kota Yogyakarta, zona dan tarif parkirnya langsung terlihat. Sama pentingnya, peta ini tahu kapan harus diam.">
+            Drop a pin on any street in Yogyakarta and see its parking zone and fee in seconds. Just as important, the map knows when to stay quiet.
           </p>
           <div class="hero__actions">
-            <a class="btn btn--primary" href="#coba" data-ind="Coba peta langsung">Try the live map</a>
+            <a class="btn btn--primary" href="#coba" data-ind="Lihat peta langsung">See the live map</a>
           </div>
         </header>
 
@@ -102,80 +102,72 @@
         <div class="stats" id="angka-parkir">
           <div class="stat">
             <span class="stat__num" data-ind="495">495</span>
-            <span class="stat__label" data-ind="ruas Kawasan I dan II yang disimpan">street segments stored for Zone I and II</span>
+            <span class="stat__label" data-ind="ruas Kawasan I dan II terpetakan">Zone I and II street segments mapped</span>
           </div>
           <div class="stat">
             <span class="stat__num" data-ind="14.272">14,272</span>
-            <span class="stat__label" data-ind="ruas jalan dipakai membangun batas cakupan">roads used to build the coverage boundary</span>
+            <span class="stat__label" data-ind="ruas jalan membentuk area cakupan">roads that shape the coverage area</span>
           </div>
           <div class="stat">
             <span class="stat__num" data-ind="594">594</span>
-            <span class="stat__label" data-ind="kombinasi tarif, tiga penerapan sepakat">fee combinations, three implementations agree</span>
+            <span class="stat__label" data-ind="kombinasi tarif, tiga mesin hitung sepakat">fee combinations, three engines agree</span>
           </div>
           <div class="stat">
             <span class="stat__num">0</span>
-            <span class="stat__label" data-ind="tempat yang dilabeli legal atau ilegal">places labelled legal or illegal</span>
+            <span class="stat__label" data-ind="tempat dilabeli legal atau ilegal">places labelled legal or illegal</span>
           </div>
         </div>
 
-        <h2 data-ind="Pertanyaan yang dijawabnya">The question it answers</h2>
-        <p data-ind="Berapa tarif parkir di ruas ini, dan kenapa segitu. Tarifnya mengikuti Perwal 149/2020, yang membagi kota jadi Kawasan I, II, dan III. Kawasan I dan II punya daftar ruas; Kawasan III adalah sisanya.">
-          What is the parking fee on this street, and why that number. The fee follows a city regulation that splits Yogyakarta into Zone I, Zone II and Zone III. Zone I and Zone II have a list of streets. Zone III is whatever is left.
+        <h2 data-ind="Masalah yang diselesaikan">The problem it solves</h2>
+        <p data-ind="Tarif parkir di Kota Yogyakarta bergantung pada kawasannya. Perwal 149/2020 membagi kota menjadi Kawasan I, II, dan III, dan tiap kawasan punya tarif sendiri. Masalahnya, batas kawasan itu tidak terlihat dari jalan.">
+          Parking fees in Yogyakarta depend on the zone. Mayoral Regulation 149/2020 divides the city into Zone I, Zone II and Zone III, and each zone has its own rate. The catch is that none of these zones can be seen from the street.
         </p>
-        <p data-ind="Karena Kawasan III adalah sisa, sistem ini tidak menyimpan daftarnya. Yang tersimpan 27 ruas Kawasan I dan 468 ruas Kawasan II. Membuat daftar Kawasan III berarti mengarang daftar yang aturannya sendiri tidak punya.">
-          Because Zone III is the remainder, the system does not store a list for it. It stores 27 segments for Zone I and 468 for Zone II. Building a Zone III list would mean inventing a list the regulation itself does not have.
-        </p>
-
-        <h2 data-ind="Yang ia tolak jawab">What it refuses to answer</h2>
-        <p data-ind="Aturan itu mengikat di Kota Yogyakarta saja. Versi awal menjawab Kawasan III untuk titik mana pun yang jauh dari ruas Kawasan I dan II, jadi ia menampilkan Kawasan III dan Rp1.000 di Purworejo, di Bandung, bahkan di tengah laut.">
-          The regulation binds inside Yogyakarta city and nowhere else. An early version answered Zone III for any point far from a Zone I or Zone II street. So it showed Zone III and a fee in other towns, and out at sea.
-        </p>
-        <p data-ind="Itu bukan sekadar salah tampilan. Itu mengarang bahwa aturan Kota Yogyakarta berlaku di tempat itu. Sekarang di luar cakupan, zonanya kosong dan tarifnya kosong, bukan angka.">
-          That is not a display bug. It is a claim that a city regulation applies somewhere it does not. Outside the coverage the zone comes back empty and the fee comes back empty, not as a number.
-        </p>
-        <p data-ind="Batas cakupannya juga bukan batas administrasi kota, dan itu disebut terus terang. Yang dipakai selubung cekung dari 14.272 ruas jalan yang benar benar dimuat, disangga 250 meter, luasnya sekitar 91 km2. Kota Yogyakarta sendiri 32,5 km2, jadi kekeliruannya condong ke arah yang aman: tempat yang masih di dalam kota tidak akan tertolak.">
-          The coverage boundary is not the administrative boundary either, and the system says so plainly. It is a concave hull around the 14,272 road segments that were actually loaded, buffered by 250 metres, about 91 km2. The city itself is 32.5 km2, so the error leans the safe way. A point still inside the city will not be turned away.
+        <p data-ind="Peta ini membuatnya terlihat. Seluruh 27 ruas Kawasan I dan 468 ruas Kawasan II yang disebut peraturan itu tersimpan di dalamnya. Kawasan III adalah semua jalan lain di dalam kota, jadi tidak disimpan sebagai daftar. Membuat daftarnya sama dengan mengarang sesuatu yang tidak pernah ditulis peraturannya.">
+          This map makes them visible. It holds all 27 Zone I segments and 468 Zone II segments named in the regulation. Zone III is every other street in the city, so it is never stored as a list. Writing that list would mean inventing something the regulation never wrote.
         </p>
 
-        <h2 data-ind="Yang ia tidak pernah katakan">What it never says</h2>
-        <p data-ind="Tidak ada tempat dan tidak ada orang yang dilabeli legal atau ilegal. Datanya memang tidak ada: daftar titik bersurat keputusan hanya dipegang Dinas Perhubungan, dan data rambu larangan parkir belum tersedia. Label semacam itu akan dikarang.">
-          No place and no person is labelled legal or illegal. The data for that does not exist. The list of permitted points sits with the transport agency, and there is no data on no-parking signs. A label like that would have to be invented.
+        <h2 data-ind="Tahu kapan harus menolak">Knowing when to say no</h2>
+        <p data-ind="Peraturan ini hanya berlaku di Kota Yogyakarta. Versi awal peta ini melewatkan hal itu. Titik mana pun yang jauh dari ruas Kawasan I atau II dianggap Kawasan III, sehingga peta memberi tarif di Bandung, di Purworejo, bahkan di tengah laut.">
+          The regulation only applies inside Yogyakarta city. An early version missed this. Any point far from a Zone I or II street was treated as Zone III, so the map quoted a fee in Bandung, in Purworejo, even out at sea.
         </p>
-        <p data-ind="Status yang dikenal cuma tiga: sesuai, perlu verifikasi, dan tanpa penugasan. Penetapan status hukum wewenang petugas, bukan algoritma, apalagi algoritma yang membaca posisi ponsel yang di koridor rapat bisa meleset dua puluh sampai tiga puluh meter.">
-          There are only three states: matching, needs checking, and no assignment on record. Deciding legal status belongs to an officer, not to an algorithm, and least of all to one reading a phone position that can be twenty to thirty metres out in a tight corridor.
+        <p data-ind="Itu lebih dari sekadar salah tampilan. Peta mengklaim aturan kota berlaku di tempat yang bukan wilayahnya. Sekarang, di luar area cakupan, peta tidak menampilkan zona maupun tarif.">
+          That was more than a display bug. The map was claiming a city rule applied where it does not. Now, outside the coverage area, it shows no zone and no fee.
         </p>
-        <p data-ind="Lima sirip Malioboro yang belum ditetapkan digambar putus putus dan memunculkan peringatan, supaya usulan tidak terlihat seperti keputusan.">
-          Five Malioboro side streets that are still proposals are drawn with a dashed line and carry a warning, so a proposal never looks like a decision.
-        </p>
-
-        <h2 data-ind="Yang ia tidak simpan">What it does not store</h2>
-        <p data-ind="Tabel juru parkir tidak memuat NIK, nama, maupun alamat. Hanya pseudonim. Ini mengikuti Undang-Undang Nomor 27 Tahun 2022.">
-          The parking attendant table holds no national ID number, no name and no address. Only a pseudonym. That follows the Indonesian personal data protection law.
-        </p>
-        <p data-ind="Aduan tidak pernah menanyakan identitas pelapor. Yang disimpan lokasi, waktu, kategori, tarif yang dipungut, dan keterangan bebas. Kolom keterangan itu satu satunya tempat identitas bisa masuk tanpa sengaja, jadi antarmukanya memperingatkan agar nama dan nomor tidak ditulis di sana.">
-          A complaint never asks who is filing it. What is kept is the place, the time, the category, the fee that was charged, and a free text note. That note is the one place an identity could slip in by accident, so the form warns against writing names and numbers in it.
-        </p>
-        <p data-ind="Pembatas laju pengiriman aduan meringkas alamat IP dengan garam acak per proses, disimpan di memori saja, tidak pernah masuk basis data maupun berkas log, dan hilang saat prosesnya berhenti.">
-          The rate limiter on complaints hashes the IP address with a random salt made fresh for each process. It lives in memory only, never reaches the database or a log file, and disappears when the process stops.
+        <p data-ind="Area cakupannya juga bukan batas resmi kota, dan itu disampaikan terus terang. Area ini dibentuk dari 14.272 ruas jalan dalam data, ditambah jarak aman 250 meter, luasnya sekitar 91 km². Luas kota sendiri 32,5 km², jadi selisihnya selalu berpihak pada pengguna. Tidak ada tempat di dalam kota yang tertolak.">
+          The coverage area is not the official city boundary, and the map says so openly. It is drawn around the 14,272 road segments in the data with a 250 metre margin, about 91 km² in total. The city itself is 32.5 km², so any error falls on the safe side. No place inside the city is ever turned away.
         </p>
 
-        <h2 data-ind="Cara ia dibangun">How it is built</h2>
-        <p data-ind="Perhitungan tarif hanya ada di satu tempat. Antarmukanya tidak menghitung sendiri. Ada tiga penerapan yang harus sepakat, yaitu mode GeoPackage, mode PostGIS, dan salinan tertanam di berkas pratinjau mandiri, dan ketiganya sudah diuji sepakat pada 594 kombinasi.">
-          The fee is calculated in exactly one place. The interface does not do its own arithmetic. Three implementations have to agree, the GeoPackage mode, the PostGIS mode, and an embedded copy inside the standalone preview file, and all three were tested against 594 combinations.
+        <h2 data-ind="Tanpa label yang tidak berdasar">No labels it cannot back up</h2>
+        <p data-ind="Peta ini tidak pernah melabeli tempat atau orang sebagai legal maupun ilegal. Data untuk mendukungnya memang tidak ada. Daftar titik parkir berizin hanya dipegang Dinas Perhubungan, dan data rambu larangan parkir belum tersedia. Label semacam itu hanya tebakan.">
+          The map never labels a place or a person as legal or illegal. The data to support that does not exist. Only the city transport agency holds the list of licensed parking spots, and there is no data on no-parking signs. Any such label would be a guess.
         </p>
-        <p data-ind="Pemeriksaan batas cakupan ditulis dengan Python biasa, bukan memakai shapely, supaya kedua mode penyimpanan menjalankan kode yang sama persis. Dua mode yang menjawab berbeda adalah cacat yang hanya muncul di produksi.">
-          The coverage check is written in plain Python rather than with a geometry library, so both storage modes run exactly the same code. Two modes that answer differently is a defect that only shows up in production.
+        <p data-ind="Sebagai gantinya, peta memakai tiga status netral: sesuai, perlu dicek, dan belum ada penugasan. Status hukum ditentukan petugas, bukan algoritma, apalagi algoritma yang membaca lokasi ponsel yang bisa meleset dua puluh sampai tiga puluh meter di jalan sempit.">
+          Instead it uses three neutral states: matching, needs checking, and no assignment on record. Legal status is for an officer to decide, not an algorithm, least of all one reading a phone position that can drift twenty to thirty metres in a narrow street.
         </p>
-        <p data-ind="Warna kawasannya dihitung kontrasnya terhadap peta dasar, bukan dipilih karena enak dilihat. Kawasan I 6,64:1, Kawasan II 3,97:1, Kawasan III 4,94:1, sedangkan ambang WCAG untuk grafis 3,0:1.">
-          The zone colours were checked against the basemap rather than picked by eye. Zone I reaches 6.64:1, Zone II 3.97:1, Zone III 4.94:1, against a 3.0:1 threshold for graphics.
+        <p data-ind="Lima sirip Malioboro masih berupa usulan. Ruasnya digambar putus putus dan disertai peringatan, supaya usulan tidak terlihat seperti keputusan.">
+          Five Malioboro side streets are still only proposals. They are drawn as dashed lines with a warning, so a proposal never looks like a decision.
         </p>
 
-        <h2 data-ind="Yang belum ada">What is still missing</h2>
-        <p data-ind="Tiga hal menahan fase berikutnya, dan ketiganya bukan soal kode: daftar titik parkir bersurat keputusan, rekap juru parkir yang sudah dipseudonimkan, dan posisi juru parkir yang tidak akan ada sampai ada kemitraan operasional.">
-          Three things hold up the next phase, and none of them is code. The list of permitted parking points, a pseudonymised register of attendants, and attendant positions, which will not exist until there is an operational partnership.
+        <h2 data-ind="Privasi sejak rancangan">Privacy by design</h2>
+        <p data-ind="Tabel juru parkir tidak menyimpan NIK, nama, atau alamat. Yang tersimpan hanya nama samaran, sesuai Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi.">
+          The parking attendant table stores no ID number, name or address. Only a pseudonym is kept, in line with Indonesia's Personal Data Protection Law of 2022.
         </p>
-        <p data-ind="Kerangka dashboard pengawasannya sudah ada dan memanggil tampilan basis data yang sebenarnya, jadi begitu datanya masuk tidak ada lagi yang perlu ditulis. Selama datanya kosong, panelnya menyebutkan tabel mana yang kosong dan siapa pemiliknya, bukan menampilkan nol. Nol adalah bacaan; ketiadaan data bukan.">
-          The monitoring dashboard is already built and reads the real database views, so nothing more needs writing once the data arrives. While a table is empty the panel names which table is empty and who owns it, rather than showing a zero. A zero is a reading. Missing data is not.
+        <p data-ind="Aduan bersifat anonim. Formulirnya mencatat lokasi, waktu, kategori, tarif yang ditarik, dan catatan singkat. Catatan itu satu satunya tempat nama bisa ikut masuk, jadi formulirnya mengingatkan agar nama dan nomor telepon tidak ditulis di sana.">
+          Complaints are anonymous. The form records the place, the time, the category, the fee charged and a short note. That note is the only place a name could slip in, so the form reminds people not to write names or phone numbers there.
+        </p>
+        <p data-ind="Perlindungan dari spam meringkas alamat IP dengan kunci acak yang berganti setiap server dinyalakan ulang. Datanya hanya ada di memori, tidak pernah masuk basis data maupun log.">
+          Spam protection hashes each IP address with a random salt that changes every time the server restarts. It lives in memory only and never reaches the database or the logs.
+        </p>
+
+        <h2 data-ind="Dibangun agar bisa dipercaya">Built to be trusted</h2>
+        <p data-ind="Tarif hanya dihitung di satu tempat. Tiga versi harus selalu memberi hasil yang sama: mode GeoPackage, mode PostGIS, dan berkas pratinjau mandiri. Ketiganya diuji pada 594 kombinasi dan hasilnya selalu sama.">
+          The fee is calculated in one place only. Three versions must agree on every result: the GeoPackage mode, the PostGIS mode and the standalone preview file. All three were tested against 594 combinations and matched every time.
+        </p>
+        <p data-ind="Pemeriksaan area cakupan ditulis dengan Python biasa tanpa pustaka geometri, supaya kedua mode penyimpanan menjalankan kode yang persis sama. Dua mode yang memberi jawaban berbeda adalah bug yang baru muncul di produksi.">
+          The coverage check is written in plain Python, without a geometry library, so both storage modes run exactly the same code. Two modes that disagree would be a bug that only shows up in production.
+        </p>
+        <p data-ind="Warna kawasan dipilih dengan mengukur kontrasnya terhadap peta dasar, bukan sekadar enak dilihat. Kawasan I mencapai 6,64:1, Kawasan II 3,97:1, dan Kawasan III 4,94:1, semuanya di atas ambang WCAG 3:1 untuk grafis.">
+          Zone colours were chosen by measuring contrast against the base map, not by eye. Zone I reaches 6.64:1, Zone II 3.97:1 and Zone III 4.94:1, all above the WCAG threshold of 3:1 for graphics.
         </p>
 
         <aside class="rail" aria-label="On this page" data-ind-label="Di halaman ini">
@@ -184,8 +176,8 @@
             <ol></ol>
           </nav>
           <div class="rail__ajak">
-            <p class="rail__title" data-ind="Coba sendiri">Try it yourself</p>
-            <p data-ind="Geser pin ke ruas mana pun di Kota Yogyakarta, kawasan dan tarifnya langsung muncul.">Drop the pin on any street in Yogyakarta city and the zone and the fee show up at once.</p>
+            <p class="rail__title" data-ind="Peta interaktif">Interactive map</p>
+            <p data-ind="Taruh pin di jalan mana pun di Kota Yogyakarta. Zona dan tarifnya langsung muncul.">Drop a pin on any street in Yogyakarta. The zone and the fee appear instantly.</p>
             <a class="btn btn--primary" href="#coba" data-ind="Buka peta parkir">Open the parking map</a>
           </div>
           <div>
@@ -202,18 +194,17 @@
 
   <section class="section section--surface" id="coba">
     <div class="wrap">
-      <div class="peta__intro">
-        <span class="eyebrow" data-ind="Coba sendiri">Try it yourself</span>
-        <h2 data-ind="Peta parkir yang hidup">The live parking map</h2>
-        <p data-ind="Cari nama jalan, ketuk peta, atau geser petanya.">Search a street, tap the map, or drag it.</p>
-        <p data-ind="Pin membaca kawasan dan tarifnya dari data dan aturan yang sama.">The pin reads the zone and the fee from the same data and rules.</p>
+      <div class="peta__intro peta__intro--satu">
+        <span class="eyebrow" data-ind="Demo langsung">Live demo</span>
+        <h2 data-ind="Cek tarif parkir di peta">Check parking fees on the map</h2>
+        <p data-ind="Cari nama jalan, ketuk peta, atau geser petanya. Pin langsung menunjukkan kawasan dan tarifnya.">Search for a street, tap the map or drag it. The pin shows the zone and the fee right away.</p>
       </div>
 
       <section class="peta parkir" data-parkir aria-label="Parking fee map" data-ind-label="Peta tarif parkir">
         <div class="peta__frame parkir__frame" data-gagal="The map could not load. The fee panel still works for central Yogyakarta." data-ind-gagal="Petanya gagal dimuat. Panel tarif tetap bekerja untuk pusat Yogyakarta.">
           <div class="peta__kanvas" data-parkir-kanvas></div>
         </div>
-        <p class="peta__ket" data-ind="Geser peta sampai pin berada di tempat parkir Anda. Tarif mengikuti Perda Kota Yogyakarta No. 10 Tahun 2023, kawasan mengikuti Perwal 149/2020. Peta ini panduan, bukan keputusan; papan tarif di lokasi yang berlaku.">Move the map until the pin sits on your parking spot. Fees follow Yogyakarta city regulation 10/2023 and zones follow mayoral regulation 149/2020. This map is a guide, not a ruling; the fee board on site is what counts.</p>
+        <p class="peta__ket" data-ind="Geser peta sampai pin tepat di tempat parkir. Tarif mengikuti Perda Kota Yogyakarta No. 10 Tahun 2023, kawasan mengikuti Perwal 149/2020. Peta ini panduan, bukan keputusan. Yang berlaku tetap papan tarif di lokasi.">Move the map until the pin sits on your parking spot. Fees follow Yogyakarta city regulation 10/2023 and zones follow mayoral regulation 149/2020. This map is a guide, not a ruling. The fee board on site is what counts.</p>
       </section>
     </div>
   </section>
