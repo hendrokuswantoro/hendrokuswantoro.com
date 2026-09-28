@@ -265,8 +265,9 @@ Health Check terpisah di `.github/workflows/kesehatan.yml`, jalan tiap hari
 dan sesudah CI. Isinya memeriksa situs yang sudah terbit, bukan salinan
 kerja: sepuluh halaman menjawab 200, halaman yang tidak ada menjawab 404,
 kelima header keamanan masih terkirim, umpan RSS terbaca, dan token petanya
-benar benar sampai. Alamat yang diperiksa diambil dari variabel repositori
-`SITUS`, jadi bisa pindah ke domain asli tanpa menyunting berkasnya.
+benar benar sampai. Alamat yang diperiksa `https://www.hendrokuswantoro.com`;
+variabel repositori `SITUS`, kalau diisi, menimpanya tanpa perlu menyunting
+berkasnya.
 
 ## Dokumentasi
 
@@ -492,13 +493,17 @@ cukup `git push`.
 
 ### Memasang domainnya
 
-1. Di proyek Pages, buka **Custom domains**, tekan **Set up a custom domain**.
-2. Masukkan `www.hendrokuswantoro.com`, lalu ulangi untuk
-   `hendrokuswantoro.com`.
-3. Kalau domainnya sudah berada di akun Cloudflare yang sama, catatan DNS-nya
-   dibuat otomatis. Kalau belum, pindahkan dulu nameserver domainnya ke
-   Cloudflare, atau tambahkan CNAME `www` ke alamat `.pages.dev` di penyedia
-   DNS yang sekarang.
+Sudah terpasang sejak 28 September 2026. Yang tertulis di bawah adalah cara
+memasangnya kalau suatu saat harus diulang.
+
+1. Kedua nama ditulis di `wrangler.toml` sebagai `routes` dengan
+   `custom_domain = true`, **di atas** tabel `[assets]`. Terbitan berikutnya
+   memasangnya dan membuat catatan DNS-nya sendiri, asal domainnya berada di
+   akun Cloudflare yang sama.
+2. `workers_dev = true` wajib ikut ditulis. Tanpa itu Wrangler mematikan
+   alamat `workers.dev` begitu `routes` diisi.
+3. Untuk Pages, caranya lewat **Custom domains → Set up a custom domain**,
+   satu kali untuk tiap nama.
 4. Pengalihan dari tanpa www ke dengan www **tidak** memakai berkas
    `_redirects`. Berkas itu dulu ada dan sudah dihapus: Cloudflare Workers
    menolaknya dengan `Only relative URLs are allowed [code: 100324]`, sebab
@@ -513,7 +518,10 @@ cukup `git push`.
    dengan status **301** dan **Preserve query string** dinyalakan.
 
 Berkas `_headers` ikut terbaca otomatis, termasuk Content Security Policy dan
-HSTS. Sertifikat TLS diterbitkan Cloudflare sendiri.
+HSTS, jadi HSTS **jangan** dinyalakan lagi di dasbor. Sertifikat TLS diterbitkan
+Cloudflare sendiri. Di **SSL/TLS → Edge Certificates** nyalakan Always Use
+HTTPS dan setel Minimum TLS Version ke 1.2; DNSSEC dinyalakan di
+**DNS → Settings**.
 
 ## Sesudah terbit, periksa ini
 

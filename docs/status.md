@@ -19,7 +19,7 @@ dan berkas VPS masuk.
 | 4 | Menu home, about, project | Sudah, plus Blog atas permintaan Anda |
 | 5 | Copyright | Sudah |
 | 7 | Keamanan dashboard seperti Meta dan Google | Lambang, rata kiri kanan, verifikasi email, kode OTP, dan sidik jari lewat WebAuthn sudah dan sudah dijalankan. Verifikasi wajah terpasang dan **belum pernah dijalankan dengan kamera sungguhan**, lihat [keamanan-akun.md](keamanan-akun.md) |
-| 6 | Domain hendrokuswantoro.com | **Belum terdaftar.** Otoritas .com menjawab NXDOMAIN, bukan delegasi yang sedang menyebar. Situsnya hidup di workers.dev. Lihat bagian Domain di bawah |
+| 6 | Domain hendrokuswantoro.com | Sudah, sejak 28 September 2026. Terdaftar lewat Cloudflare Registrar, dipasang sebagai custom domain Worker, dengan HTTPS wajib, DNSSEC, dan pengalihan ke `www`. Lihat bagian Domain di bawah |
 
 ## Bagian dua, tumpukan teknologi
 
@@ -232,3 +232,17 @@ Dua jalan keluarnya:
 
 Yang pertama yang Anda maksud. Yang kedua membuat situs ini bisa diindeks
 hari ini.
+
+### Selesai 28 September 2026
+
+Jalan pertama yang diambil. Nama itu terdaftar lewat Cloudflare Registrar
+sampai 27 September 2027, dengan perpanjangan otomatis. Kedua nama dipasang
+sebagai custom domain di `wrangler.toml`, bukan lewat dasbor, supaya tercatat
+di git. Nama tanpa `www` dialihkan ke `www` dengan Redirect Rule 301, `http://`
+dialihkan ke `https://` oleh Always Use HTTPS, TLS minimal 1.2, DNSSEC aktif,
+dan tiga record TXT menyatakan domain ini tidak pernah mengirim email.
+
+Alamat `workers.dev` tetap hidup lewat `workers_dev = true`, sebab tanpa baris
+itu Wrangler mematikannya begitu `routes` diisi. Itu sempat terjadi beberapa
+menit dan alamat lama menjawab galat 1042. `kesehatan.yml` kini memeriksa
+`https://www.hendrokuswantoro.com`.

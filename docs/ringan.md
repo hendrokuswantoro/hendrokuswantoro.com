@@ -198,8 +198,9 @@ dicetak di sebelahnya.
 
 ## Yang paling berpengaruh dan belum dilakukan siapa pun di sini
 
-Satu angka yang tidak bisa diperbaiki dari dalam repositori ini: situs ini
-disajikan dari `workers.dev`, dan `www.hendrokuswantoro.com` belum terdaftar.
-Lihat [status.md](status.md). Selama itu, semua pengukuran di atas berlaku
+Sampai 28 September 2026 situs ini hanya disajikan dari `workers.dev`, dan
+`www.hendrokuswantoro.com` belum terdaftar, jadi pengukuran di atas berlaku
 untuk alamat yang bukan alamat yang diiklankan situs ini tentang dirinya
-sendiri.
+sendiri. Sejak hari itu keduanya menyajikan berkas yang sama dari Worker yang
+sama; lihat [status.md](status.md). Ukur ulang di alamat `www` kalau angka di
+atas hendak dikutip.
