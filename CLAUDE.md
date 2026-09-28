@@ -556,6 +556,11 @@ memberi situs ini dua tuan.
    halaman tagihan Stripe (`invoice.stripe.com`) dengan kartu diketik langsung.
    Ingat itu saat perpanjangan pertama gagal. Pemeriksaan kesehatan malam kini
    memeriksa `https://www.hendrokuswantoro.com`, bukan alamat `workers.dev`.
+   Di dasbor sudah menyala: Always Use HTTPS, TLS minimal 1.2, DNSSEC, dan
+   tiga record penolak email (`v=spf1 -all`, DKIM kosong, DMARC `p=reject`),
+   sebab domain ini tidak mengirim email. Kalau kelak memakai Email Routing,
+   SPF dan DMARC itu wajib diganti lebih dulu, kalau tidak surat sah ikut ditolak.
+   HSTS sengaja TIDAK dinyalakan di dasbor; `_headers` sudah mengirimnya.
 2. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
    dashboard, serta konfigurasi nginx belum pernah berjalan di server
    sungguhan. Langkahnya ada di `docs/vps.md`. `hk-api.service` tidak
