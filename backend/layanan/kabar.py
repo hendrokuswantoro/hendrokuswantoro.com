@@ -5,6 +5,11 @@ from backend.core.catat import pasang
 from backend.repositori import keamanan as repo
 
 
+async def _mau(pengguna_id: str, kolom: str) -> bool:
+    setelan = await repo.setelan(pengguna_id)
+    return setelan is None or bool(setelan[kolom])
+
+
 async def perangkat_baru(pengguna_id: str, alamat: str | None, peramban: str | None) -> bool:
     return not await repo.pernah_masuk_dari(pengguna_id, alamat, peramban)
 
@@ -12,6 +17,8 @@ async def perangkat_baru(pengguna_id: str, alamat: str | None, peramban: str | N
 async def kabari_masuk(
     pengguna: dict, cara: str, alamat: str | None, peramban: str | None
 ) -> None:
+    if not await _mau(str(pengguna["id"]), "kabar_masuk"):
+        return
     if not await perangkat_baru(str(pengguna["id"]), alamat, peramban):
         return
 
@@ -36,9 +43,11 @@ async def kabari_masuk(
         )
 
 
-async def kabari_perubahan_keamanan(pengguna: dict, apa: str) -> None:
+async def kabari_perubahan_keamanan(pengguna: dict, apa: str, paksa: bool = False) -> None:
     alamat_surat = pengguna.get("email")
     if not alamat_surat:
+        return
+    if not paksa and not await _mau(str(pengguna["id"]), "kabar_perubahan"):
         return
 
     try:

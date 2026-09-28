@@ -94,6 +94,9 @@ def _penjaga(isi: str, fungsi: str) -> str:
         ("keamanan.py", "wajah_daftar", "butuh_admin_pendaftar"),
         ("keamanan.py", "wajah_hapus", "butuh_admin_kuat"),
         ("keamanan.py", "keadaan", "butuh_admin"),
+        ("keamanan.py", "ubah_setelan", "butuh_admin_kuat"),
+        ("passkey.py", "buka_mulai", "butuh_admin"),
+        ("passkey.py", "buka_selesai", "butuh_admin"),
     ],
 )
 def test_jalur_faktor_memakai_penjaga_yang_benar(berkas, fungsi, penjaga):

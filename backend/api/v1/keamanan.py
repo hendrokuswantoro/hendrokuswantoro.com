@@ -50,6 +50,9 @@ async def keadaan(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
         "passkey": baris["passkey"],
         "pemulihan_sisa": baris["pemulihan_sisa"],
         "wajah_terdaftar": baris["wajah_didaftar_pada"] is not None,
+        "kabar_masuk": baris["kabar_masuk"],
+        "kabar_perubahan": baris["kabar_perubahan"],
+        "mode_ketat": baris["mode_ketat"],
         "surat_siap": surat.siap(),
         "kunci_kolom_siap": rahasia.siap(),
         "wajah_siap": wajah_modul.siap(),
@@ -121,6 +124,7 @@ async def totp_aktifkan(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(ditolak)
         ) from ditolak
+    await kabar.kabari_perubahan_keamanan(penuh, "authenticator dinyalakan")
     return {
         "aktif": True,
         "kode_pemulihan": kode,
@@ -167,7 +171,7 @@ async def wajah_daftar(
 ) -> dict:
     penuh = await _pengguna_penuh(pengguna)
     try:
-        return await lapis.daftarkan_wajah(penuh, isian.bingkai, alamat)
+        hasil = await lapis.daftarkan_wajah(penuh, isian.bingkai, alamat)
     except lapis.BelumSiap as belum:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(belum)
@@ -176,6 +180,8 @@ async def wajah_daftar(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(ditolak)
         ) from ditolak
+    await kabar.kabari_perubahan_keamanan(penuh, "wajah didaftarkan")
+    return hasil
 
 
 @rute.post("/wajah/hapus", summary="Hapus wajah yang terdaftar")
@@ -185,4 +191,30 @@ async def wajah_hapus(
 ) -> dict:
     penuh = await lapis.pengguna(pengguna["id"])
     await lapis.hapus_wajah(penuh, alamat)
+    await kabar.kabari_perubahan_keamanan(penuh, "wajah dihapus")
     return {"terdaftar": False}
+
+
+class Setelan(BaseModel):
+    kabar_masuk: bool | None = None
+    kabar_perubahan: bool | None = None
+    mode_ketat: bool | None = None
+
+
+@rute.patch("/setelan", summary="Ubah notifikasi keamanan dan mode ketat")
+async def ubah_setelan(
+    isian: Setelan,
+    pengguna: Annotated[dict, Depends(butuh_admin_kuat)],
+    alamat: Annotated[str, Depends(alamat_teringkas)],
+) -> dict:
+    perubahan = isian.model_dump(exclude_none=True)
+    try:
+        ringkasan = await lapis.ubah_setelan(pengguna["id"], perubahan, alamat)
+    except lapis.Ditolak as ditolak:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(ditolak)
+        ) from ditolak
+    if ringkasan:
+        penuh = await _pengguna_penuh(pengguna)
+        await kabar.kabari_perubahan_keamanan(penuh, ", ".join(ringkasan), paksa=True)
+    return await lapis.setelan(pengguna["id"])

@@ -181,7 +181,9 @@ TITIPAN_FAKTOR = AKAR / "cadangan" / "faktor-kedua-sebelum-uji.json"
 KOLOM_FAKTOR = (
     "totp_rahasia", "totp_aktif_pada", "email_terverifikasi_pada",
     "wajah_ciri", "wajah_didaftar_pada", "totp_langkah_terakhir",
+    "kabar_masuk", "kabar_perubahan", "mode_ketat",
 )
+SETELAN_BAWAAN = "kabar_masuk=true, kabar_perubahan=true, mode_ketat=false"
 KOLOM_FAKTOR_DIKOSONGKAN = (
     "totp_rahasia", "totp_aktif_pada", "wajah_ciri", "wajah_didaftar_pada",
     "totp_langkah_terakhir",
@@ -269,8 +271,8 @@ def faktor_kedua_untuk_uji():
             tulis(semula)
 
             k.execute(
-                f"UPDATE users SET {', '.join(f'{n}=NULL' for n in KOLOM_FAKTOR_DIKOSONGKAN)} "
-                "WHERE id=%s",
+                f"UPDATE users SET {', '.join(f'{n}=NULL' for n in KOLOM_FAKTOR_DIKOSONGKAN)}, "
+                f"{SETELAN_BAWAAN} WHERE id=%s",
                 (baris[0],),
             )
             k.execute("DELETE FROM kode_pemulihan WHERE pengguna_id=%s", (baris[0],))

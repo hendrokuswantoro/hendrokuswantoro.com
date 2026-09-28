@@ -132,11 +132,51 @@ async def mulai_masuk() -> dict:
 
 
 async def selesaikan_masuk(jawaban: dict) -> autentikasi.Masuk:
-    rp_id, asal = _rp()
-
     tantangan_mentah = _tantangan_dari(jawaban)
     if await repo.pakai_tantangan("masuk", tantangan_mentah) is None:
         raise Ditolak("tantangan tidak berlaku")
+
+    tersimpan = await _periksa_tanda_tangan(jawaban, tantangan_mentah)
+
+    pengguna = await repo_pengguna.cari_id(str(tersimpan["pengguna_id"]))
+    if pengguna is None:
+        raise Ditolak("kredensial tidak dikenal")
+
+    return await autentikasi.terbitkan(pengguna, faktor_kedua=True)
+
+
+async def mulai_buka(pengguna_id: str) -> dict:
+    rp_id, _ = _rp()
+    milik = await repo.milik(pengguna_id)
+    if not milik:
+        raise Ditolak("belum ada sidik jari atau passkey yang terdaftar")
+    tantangan = await _tantangan_baru("buka", pengguna_id)
+
+    pilihan = webauthn.generate_authentication_options(
+        rp_id=rp_id,
+        challenge=tantangan,
+        timeout=UMUR_TANTANGAN_DETIK * 1000,
+        user_verification=UserVerificationRequirement.REQUIRED,
+        allow_credentials=[
+            PublicKeyCredentialDescriptor(id=bytes(k["kredensial_id"])) for k in milik
+        ],
+    )
+    return {"pilihan": webauthn.options_to_json(pilihan)}
+
+
+async def selesaikan_buka(pengguna_id: str, jawaban: dict) -> None:
+    tantangan_mentah = _tantangan_dari(jawaban)
+    dipakai = await repo.pakai_tantangan("buka", tantangan_mentah)
+    if dipakai is None or str(dipakai["pengguna_id"]) != str(pengguna_id):
+        raise Ditolak("tantangan tidak berlaku")
+
+    tersimpan = await _periksa_tanda_tangan(jawaban, tantangan_mentah)
+    if str(tersimpan["pengguna_id"]) != str(pengguna_id):
+        raise Ditolak("kredensial bukan milik akun ini")
+
+
+async def _periksa_tanda_tangan(jawaban: dict, tantangan_mentah: bytes) -> dict:
+    rp_id, asal = _rp()
 
     try:
         kredensial_id = base64url_to_bytes(jawaban["id"])
@@ -161,12 +201,7 @@ async def selesaikan_masuk(jawaban: dict) -> autentikasi.Masuk:
         raise Ditolak("tanda tangan tidak berlaku") from galat
 
     await repo.perbarui_pemakaian(kredensial_id, hasil.new_sign_count)
-
-    pengguna = await repo_pengguna.cari_id(str(tersimpan["pengguna_id"]))
-    if pengguna is None:
-        raise Ditolak("kredensial tidak dikenal")
-
-    return await autentikasi.terbitkan(pengguna, faktor_kedua=True)
+    return tersimpan
 
 
 async def daftar_milik(pengguna_id: str) -> list[dict]:

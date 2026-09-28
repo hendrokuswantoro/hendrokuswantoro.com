@@ -124,6 +124,40 @@ export async function masuk(): Promise<Sesi> {
   return isi as Sesi;
 }
 
+export async function bukaKunci(): Promise<void> {
+  const mulai = await panggil("/api/v1/auth/passkey/buka/mulai", { method: "POST" });
+  const awal = await mulai.json().catch(() => null);
+  if (!mulai.ok) throw new Error(pesanGalat(awal));
+
+  const pilihan = JSON.parse((awal as { pilihan: string }).pilihan);
+  pilihan.challenge = keBuffer(pilihan.challenge);
+  for (const k of pilihan.allowCredentials ?? []) k.id = keBuffer(k.id);
+
+  const kredensial = (await navigator.credentials.get({
+    publicKey: pilihan,
+  })) as PublicKeyCredential;
+  const jawab = kredensial.response as AuthenticatorAssertionResponse;
+
+  const selesai = await panggil("/api/v1/auth/passkey/buka/selesai", {
+    method: "POST",
+    body: JSON.stringify({
+      jawaban: {
+        id: kredensial.id,
+        rawId: keTeks(kredensial.rawId),
+        type: kredensial.type,
+        response: {
+          clientDataJSON: keTeks(jawab.clientDataJSON),
+          authenticatorData: keTeks(jawab.authenticatorData),
+          signature: keTeks(jawab.signature),
+          userHandle: jawab.userHandle ? keTeks(jawab.userHandle) : null,
+        },
+        clientExtensionResults: kredensial.getClientExtensionResults(),
+      },
+    }),
+  });
+  if (!selesai.ok) throw new Error(pesanGalat(await selesai.json().catch(() => null)));
+}
+
 export async function daftarkan(nama: string, jenis: "perangkat" | "kunci" = "perangkat"): Promise<void> {
   const mulai = await panggil(
     `/api/v1/auth/passkey/daftar/mulai?jenis=${encodeURIComponent(jenis)}`,

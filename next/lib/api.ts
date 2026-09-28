@@ -34,6 +34,18 @@ export type KeadaanKeamanan = {
   surat_siap: boolean;
   kunci_kolom_siap: boolean;
   wajah_siap: boolean;
+  kabar_masuk: boolean;
+  kabar_perubahan: boolean;
+  mode_ketat: boolean;
+};
+
+export type Setelan = Pick<KeadaanKeamanan, "kabar_masuk" | "kabar_perubahan" | "mode_ketat">;
+
+export type SesiPerangkat = {
+  id: string;
+  dibuat_pada: string;
+  kadaluarsa: string;
+  perangkat_ini: boolean;
 };
 
 export type TantanganWajah = {
@@ -222,6 +234,21 @@ export function hapusWajah(): Promise<{ terdaftar: boolean }> {
 
 export function peristiwaKeamanan(): Promise<{ peristiwa: Peristiwa[] }> {
   return ambil("/api/v1/keamanan/peristiwa");
+}
+
+export function ubahSetelan(perubahan: Partial<Setelan>): Promise<Setelan> {
+  return ambil("/api/v1/keamanan/setelan", {
+    method: "PATCH",
+    body: JSON.stringify(perubahan),
+  });
+}
+
+export function daftarSesi(): Promise<{ sesi: SesiPerangkat[] }> {
+  return ambil("/api/v1/auth/sesi");
+}
+
+export function keluarkanPerangkatLain(): Promise<{ sesi_dicabut: number }> {
+  return ambil("/api/v1/auth/sesi/cabut-lain", { method: "POST" });
 }
 
 

@@ -318,3 +318,63 @@ def test_tanpa_konfigurasi_menjawab_503_bukan_menebak(klien):
         if asli is not None:
             os.environ["WEBAUTHN_RP_ID"] = asli
         pengaturan.cache_clear()
+
+
+def buka_dengan(klien, kepala, perangkat):
+    mulai = klien.post("/api/v1/auth/passkey/buka/mulai", headers=kepala)
+    assert mulai.status_code == 200, mulai.text
+    tantangan = tantangan_dari(mulai.json()["pilihan"])
+    return klien.post(
+        "/api/v1/auth/passkey/buka/selesai",
+        headers=kepala,
+        json={"jawaban": perangkat.masuk(tantangan, ASAL)},
+    )
+
+
+def test_kunci_layar_dibuka_dengan_sidik_jari(klien, masuk, perangkat):
+    daftarkan(klien, masuk, perangkat)
+    j = buka_dengan(klien, masuk, perangkat)
+    assert j.status_code == 200, j.text
+    assert j.json() == {"terbuka": True}
+
+
+def test_membuka_kunci_menuntut_sudah_masuk(klien):
+    assert klien.post("/api/v1/auth/passkey/buka/mulai").status_code == 401
+    kosong = {"jawaban": {}}
+    assert klien.post("/api/v1/auth/passkey/buka/selesai", json=kosong).status_code == 401
+
+
+def test_membuka_kunci_tanpa_sidik_jari_ditolak_dengan_alasan(klien, masuk):
+    j = klien.post("/api/v1/auth/passkey/buka/mulai", headers=masuk)
+    assert j.status_code == 400
+    assert "belum ada" in j.text
+
+
+def test_tantangan_buka_tidak_bisa_dipakai_untuk_masuk(klien, masuk, perangkat):
+    daftarkan(klien, masuk, perangkat)
+    mulai = klien.post("/api/v1/auth/passkey/buka/mulai", headers=masuk)
+    tantangan = tantangan_dari(mulai.json()["pilihan"])
+    j = klien.post("/api/v1/auth/passkey/masuk/selesai",
+                   json={"jawaban": perangkat.masuk(tantangan, ASAL)})
+    assert j.status_code == 401, "tantangan kunci layar menerbitkan sesi baru"
+
+
+def test_tantangan_masuk_tidak_bisa_dipakai_membuka(klien, masuk, perangkat):
+    daftarkan(klien, masuk, perangkat)
+    mulai = klien.post("/api/v1/auth/passkey/masuk/mulai")
+    tantangan = tantangan_dari(mulai.json()["pilihan"])
+    j = klien.post("/api/v1/auth/passkey/buka/selesai", headers=masuk,
+                   json={"jawaban": perangkat.masuk(tantangan, ASAL)})
+    assert j.status_code == 401
+
+
+def test_tantangan_buka_hanya_sekali(klien, masuk, perangkat):
+    daftarkan(klien, masuk, perangkat)
+    mulai = klien.post("/api/v1/auth/passkey/buka/mulai", headers=masuk)
+    tantangan = tantangan_dari(mulai.json()["pilihan"])
+    pertama = {"jawaban": perangkat.masuk(tantangan, ASAL)}
+    j = klien.post("/api/v1/auth/passkey/buka/selesai", headers=masuk, json=pertama)
+    assert j.status_code == 200
+    ulang = {"jawaban": perangkat.masuk(tantangan, ASAL)}
+    j = klien.post("/api/v1/auth/passkey/buka/selesai", headers=masuk, json=ulang)
+    assert j.status_code == 401

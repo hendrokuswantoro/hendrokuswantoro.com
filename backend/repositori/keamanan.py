@@ -24,6 +24,7 @@ async def keadaan(pengguna_id: str) -> dict[str, Any] | None:
                    u.totp_aktif_pada,
                    (u.sandi_hash IS NOT NULL) AS punya_sandi,
                    u.wajah_didaftar_pada,
+                   u.kabar_masuk, u.kabar_perubahan, u.mode_ketat,
                    (SELECT count(*) FROM kredensial WHERE pengguna_id = u.id) AS passkey,
                    (SELECT count(*) FROM kode_pemulihan
                      WHERE pengguna_id = u.id AND dipakai_pada IS NULL) AS pemulihan_sisa
@@ -32,6 +33,29 @@ async def keadaan(pengguna_id: str) -> dict[str, Any] | None:
             (pengguna_id,),
         )
         return await k.fetchone()
+
+
+SETELAN = ("kabar_masuk", "kabar_perubahan", "mode_ketat")
+
+
+async def setelan(pengguna_id: str) -> dict[str, Any] | None:
+    async with koneksi() as s, s.cursor() as k:
+        await k.execute(
+            "SELECT kabar_masuk, kabar_perubahan, mode_ketat FROM users WHERE id = %s",
+            (pengguna_id,),
+        )
+        return await k.fetchone()
+
+
+async def simpan_setelan(pengguna_id: str, nilai: dict[str, bool]) -> None:
+    kolom = [n for n in SETELAN if n in nilai]
+    if not kolom:
+        return
+    async with koneksi() as s, s.cursor() as k:
+        await k.execute(
+            f"UPDATE users SET {', '.join(f'{n} = %s' for n in kolom)} WHERE id = %s",
+            (*(nilai[n] for n in kolom), pengguna_id),
+        )
 
 
 async def simpan_kode(

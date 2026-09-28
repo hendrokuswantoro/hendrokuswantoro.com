@@ -155,6 +155,8 @@ const NAMA_PERISTIWA = {
   wajah_hapus: "Wajah dihapus",
   wajah_cocok: "Verifikasi wajah",
   wajah_salah: "Verifikasi wajah gagal",
+  setelan_kabar: "Notifikasi diubah",
+  mode_ketat: "Mode ketat diubah",
 };
 
 async function muatJejak() {

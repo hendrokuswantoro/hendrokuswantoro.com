@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field
 
 from backend.api.tergantung import butuh_admin, butuh_admin_kuat, butuh_admin_pendaftar
 from backend.api.v1.auth import JawabanMasuk, pasang_cookie
+from backend.layanan import kabar
+from backend.layanan import keamanan as lapis
 from backend.layanan import passkey as layanan
 
 rute = APIRouter(prefix="/auth/passkey", tags=["auth"])
@@ -66,6 +68,7 @@ async def daftar_selesai(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=str(ditolak)
         ) from ditolak
+    await _kabari(pengguna, f"sidik jari atau passkey ditambahkan: {hasil.nama}")
     return {"id": hasil.id, "nama": hasil.nama}
 
 
@@ -104,3 +107,35 @@ async def cabut(
 ) -> None:
     if not await layanan.hapus(str(pengguna["id"]), kredensial_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="tidak ada")
+    await _kabari(pengguna, "satu sidik jari atau passkey dihapus")
+
+
+@rute.post("/buka/mulai", summary="Mulai membuka kunci layar dengan sidik jari")
+async def buka_mulai(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
+    _siap()
+    try:
+        return await layanan.mulai_buka(str(pengguna["id"]))
+    except layanan.Ditolak as ditolak:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(ditolak)
+        ) from ditolak
+
+
+@rute.post("/buka/selesai", summary="Selesaikan membuka kunci layar")
+async def buka_selesai(
+    badan: JawabanMasukPasskey, pengguna: Annotated[dict, Depends(butuh_admin)]
+) -> dict:
+    _siap()
+    try:
+        await layanan.selesaikan_buka(str(pengguna["id"]), badan.jawaban)
+    except layanan.Ditolak as ditolak:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="sidik jari tidak cocok"
+        ) from ditolak
+    return {"terbuka": True}
+
+
+async def _kabari(pengguna: dict, apa: str) -> None:
+    penuh = await lapis.pengguna(str(pengguna["id"]))
+    if penuh:
+        await kabar.kabari_perubahan_keamanan(penuh, apa)

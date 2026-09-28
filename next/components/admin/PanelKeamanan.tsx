@@ -2,10 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react";
 import gaya from "@/app/admin/admin.module.css";
+import { HalamanKunci } from "@/components/admin/HalamanKunci";
+import { HalamanLanjutan } from "@/components/admin/HalamanLanjutan";
+import { HalamanNotifikasi } from "@/components/admin/HalamanNotifikasi";
 import { KameraWajah } from "@/components/admin/KameraWajah";
 import { PanelPasskey } from "@/components/admin/PanelPasskey";
+import { PerangkatTepercaya } from "@/components/admin/PerangkatTepercaya";
 import { Kabar, baik, buruk, type IsiKabar } from "@/components/admin/Kabar";
-import { BarisSetelan, Terkunci } from "@/components/admin/Setelan";
+import {
+  BarisMenu,
+  BarisSetelan,
+  Halaman,
+  LabelBagian,
+  Terkunci,
+} from "@/components/admin/Setelan";
 import type { Akses } from "@/components/admin/akses";
 import {
   aktifkanTotp,
@@ -20,6 +30,9 @@ import {
   type KeadaanKeamanan,
   type Peristiwa,
 } from "@/lib/api";
+import { labelJeda, useSetelanPerangkat } from "@/lib/perangkat";
+
+type Bagian = "menu" | "dua-langkah" | "notifikasi" | "kunci" | "lanjutan" | "aktivitas";
 
 const NAMA_PERISTIWA: Record<string, string> = {
   masuk: "Masuk",
@@ -36,6 +49,8 @@ const NAMA_PERISTIWA: Record<string, string> = {
   wajah_hapus: "Wajah dihapus",
   wajah_cocok: "Wajah cocok",
   wajah_salah: "Wajah tidak cocok",
+  setelan_kabar: "Notifikasi diubah",
+  mode_ketat: "Mode ketat diubah",
 };
 
 function waktu(nilai: string): string {
@@ -61,11 +76,15 @@ export function PanelKeamanan({
   akses: Akses;
   muatKeadaan: () => Promise<void>;
 }) {
+  const perangkat = useSetelanPerangkat();
+  const [bagian, setBagian] = useState<Bagian>("menu");
   const [jejak, setJejak] = useState<Peristiwa[]>([]);
   const [kabar, setKabar] = useState<IsiKabar>(null);
   const [sibuk, setSibuk] = useState(false);
 
-  const [pasang, setPasang] = useState<{ rahasia: string; qr: string; otpauth: string } | null>(null);
+  const [pasang, setPasang] = useState<{ rahasia: string; qr: string; otpauth: string } | null>(
+    null,
+  );
   const [kode, setKode] = useState("");
   const [pemulihan, setPemulihan] = useState<string[] | null>(null);
   const [kodeMatikan, setKodeMatikan] = useState("");
@@ -104,6 +123,11 @@ export function PanelKeamanan({
       .catch((e) => setKabar(buruk(pesanDari(e, "Tautan tidak berlaku."))));
   }, [muat]);
 
+  function pindah(ke: Bagian) {
+    setKabar(null);
+    setBagian(ke);
+  }
+
   async function jalankan(kerja: () => Promise<void>) {
     setKabar(null);
     setSibuk(true);
@@ -119,7 +143,11 @@ export function PanelKeamanan({
   if (!keadaan) {
     return (
       <section className={gaya.kartu} id="keamanan">
-        {galatKeadaan ? <Kabar isi={buruk(galatKeadaan)} /> : <p className={gaya.ket}>Sebentar...</p>}
+        {galatKeadaan ? (
+          <Kabar isi={buruk(galatKeadaan)} />
+        ) : (
+          <p className={gaya.ket}>Sebentar...</p>
+        )}
       </section>
     );
   }
@@ -128,281 +156,68 @@ export function PanelKeamanan({
   const daftar = akses.bolehMendaftar;
 
   const gagalTerakhir = jejak.filter((p) => !p.berhasil).length;
+  const duaLangkahAktif = keadaan.totp_aktif || keadaan.passkey > 0 || keadaan.wajah_terdaftar;
+  const kembali = () => pindah("menu");
 
-  return (
-    <section className={gaya.kartu} id="keamanan" aria-labelledby="judul-keamanan">
-      <div className={gaya.tumpuk}>
-        <h2 id="judul-keamanan">Keamanan akun</h2>
-        <span className={gaya.kanan}>
-          <button
-            type="button"
-            className={`${gaya.tombol} ${gaya.kecil}`}
-            onClick={() => void muat()}
-            disabled={sibuk}
-          >
-            Muat ulang
-          </button>
-        </span>
-      </div>
+  const ringkasJejak =
+    jejak.length === 0
+      ? "Belum ada catatan"
+      : gagalTerakhir
+        ? `${jejak.length} catatan, ${gagalTerakhir} gagal`
+        : `${jejak.length} catatan, semua berhasil`;
 
-      <Kabar isi={kabar} />
+  const ringkasKabar =
+    keadaan.kabar_masuk && keadaan.kabar_perubahan
+      ? "Email aktif"
+      : keadaan.kabar_masuk || keadaan.kabar_perubahan
+        ? "Sebagian aktif"
+        : "Mati";
 
-      <ul className={gaya.setelan}>
-        <BarisSetelan
-          ikon="surat"
-          judul="Email"
-          sub={keadaan.email}
-          tanda={keadaan.email_terverifikasi ? "terbukti" : "belum"}
-          baik={keadaan.email_terverifikasi}
-        >
+  if (bagian === "notifikasi") {
+    return (
+      <section className={gaya.kartu} id="keamanan">
+        <HalamanNotifikasi
+          keadaan={keadaan}
+          akses={akses}
+          muatKeadaan={muatKeadaan}
+          kembali={kembali}
+        />
+      </section>
+    );
+  }
+
+  if (bagian === "kunci") {
+    return (
+      <section className={gaya.kartu} id="keamanan">
+        <HalamanKunci keadaan={keadaan} kembali={kembali} />
+      </section>
+    );
+  }
+
+  if (bagian === "lanjutan") {
+    return (
+      <section className={gaya.kartu} id="keamanan">
+        <HalamanLanjutan
+          keadaan={keadaan}
+          akses={akses}
+          muatKeadaan={muatKeadaan}
+          kembali={kembali}
+        />
+      </section>
+    );
+  }
+
+  if (bagian === "aktivitas") {
+    return (
+      <section className={gaya.kartu} id="keamanan">
+        <Halaman judul="Aktivitas akun" kembali={kembali}>
           <p className={gaya.penjelasan}>
-            Email ini dipakai buat bantu kamu masuk kalau cara lain tidak bisa. Buktikan
-            dulu lewat tautan yang kami kirim.
+            Percobaan yang gagal juga dicatat, jadi kamu tahu kalau ada orang lain mencoba masuk.
+            Alamat IP tidak disimpan.
           </p>
-          {!keadaan.surat_siap ? (
-            <p className={`${gaya.kabar} ${gaya.salah}`}>
-              Email belum bisa dikirim. Isi SMTP_HOST, SMTP_PENGGUNA, SMTP_SANDI, dan
-              SURAT_DARI di <code>.env</code> dulu. Sementara itu suratnya disimpan di{" "}
-              <code>cadangan/surat/</code>.
-            </p>
-          ) : null}
-          <div className={gaya.aksi}>
-            <button
-              type="button"
-              className={`${gaya.tombol} ${gaya.kecil}`}
-              disabled={sibuk}
-              onClick={() =>
-                jalankan(async () => {
-                  const hasil = await kirimVerifikasiEmail();
-                  setKabar(hasil.terkirim ? baik("Tautan sudah dikirim. Cek email kamu.") : buruk(hasil.catatan));
-                })
-              }
-            >
-              {keadaan.email_terverifikasi ? "Kirim ulang tautan" : "Kirim tautan"}
-            </button>
-          </div>
-        </BarisSetelan>
-
-        <BarisSetelan
-          ikon="ponsel"
-          judul="Aplikasi authenticator"
-          sub={
-            keadaan.totp_aktif
-              ? `Aktif, ${keadaan.pemulihan_sisa} kode cadangan tersisa`
-              : "Belum dipasang"
-          }
-          tanda={keadaan.totp_aktif ? "aktif" : "belum"}
-          baik={keadaan.totp_aktif}
-        >
-          {!keadaan.kunci_kolom_siap ? (
-            <p className={`${gaya.kabar} ${gaya.salah}`}>
-              Belum bisa dipasang. Isi KUNCI_KOLOM di <code>.env</code> dulu. Buat kuncinya
-              dengan <code>python backend/db/enkripsi.py kunci</code>.
-            </p>
-          ) : null}
-
-          {pemulihan ? (
-            <div className={gaya.pemulihan}>
-              <p className={gaya.penjelasan}>
-                <strong>Simpan 8 kode ini sekarang.</strong> Kodenya cuma muncul sekali. Pakai
-                kalau HP kamu hilang, dan simpan di tempat selain HP itu.
-              </p>
-              <ul className={gaya.kodeGrid}>
-                {pemulihan.map((k) => (
-                  <li key={k}>
-                    <code>{k}</code>
-                  </li>
-                ))}
-              </ul>
-              <button
-                type="button"
-                className={`${gaya.tombol} ${gaya.kecil}`}
-                onClick={() => setPemulihan(null)}
-              >
-                Sudah saya simpan
-              </button>
-            </div>
-          ) : keadaan.totp_aktif ? (
-            <>
-              <p className={gaya.penjelasan}>
-                Sudah aktif. Mau matikan? Ketik kode dari aplikasi. Kode cadangan ikut
-                terhapus.
-              </p>
-              {!kuat ? <Terkunci /> : null}
-              <div className={gaya.barisSebaris}>
-                <input
-                  id="kode-matikan"
-                  aria-label="Kode dari aplikasi"
-                  className={`${gaya.isian} ${gaya.kodeIsian}`}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  value={kodeMatikan}
-                  onChange={(e) => setKodeMatikan(e.target.value)}
-                  placeholder="000000"
-                />
-                <button
-                  type="button"
-                  className={`${gaya.tombol} ${gaya.kecil} ${gaya.bahaya}`}
-                  disabled={sibuk || !kuat || kodeMatikan.trim().length < 6}
-                  onClick={() =>
-                    jalankan(async () => {
-                      await matikanTotp(kodeMatikan.trim());
-                      setKodeMatikan("");
-                      setKabar(baik("Authenticator dimatikan. Kode cadangan ikut terhapus."));
-                      await muat();
-                    })
-                  }
-                >
-                  Matikan
-                </button>
-              </div>
-            </>
-          ) : pasang ? (
-            <>
-              <p className={gaya.penjelasan}>
-                Pindai kode ini pakai aplikasi authenticator, lalu ketik 6 angkanya.
-              </p>
-              <div className={gaya.qr} dangerouslySetInnerHTML={{ __html: pasang.qr }} />
-              <p className={gaya.ket}>
-                Tidak bisa memindai? Ketik kode ini: <code>{pasang.rahasia}</code>
-              </p>
-              <div className={gaya.barisSebaris}>
-                <input
-                  id="kode-totp"
-                  aria-label="Enam angka dari aplikasi"
-                  className={`${gaya.isian} ${gaya.kodeIsian}`}
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  value={kode}
-                  onChange={(e) => setKode(e.target.value)}
-                  placeholder="000000"
-                />
-                <button
-                  type="button"
-                  className={`${gaya.tombol} ${gaya.kecil} ${gaya.utama}`}
-                  disabled={sibuk || kode.trim().length < 6}
-                  onClick={() =>
-                    jalankan(async () => {
-                      const hasil = await aktifkanTotp(kode.trim());
-                      setPemulihan(hasil.kode_pemulihan);
-                      setPasang(null);
-                      setKode("");
-                      await muat();
-                    })
-                  }
-                >
-                  Aktifkan
-                </button>
-                <button
-                  type="button"
-                  className={`${gaya.tombol} ${gaya.kecil}`}
-                  onClick={() => setPasang(null)}
-                >
-                  Batal
-                </button>
-              </div>
-            </>
+          {jejak.length === 0 ? (
+            <p className={gaya.ket}>Belum ada catatan.</p>
           ) : (
-            <>
-              <p className={gaya.penjelasan}>
-                Kode 6 angka dari aplikasi di HP kamu, berganti tiap 30 detik. Bisa pakai
-                Aegis, Google Authenticator, atau 1Password.
-              </p>
-              {!daftar ? <Terkunci /> : null}
-              <div className={gaya.aksi}>
-                <button
-                  type="button"
-                  className={`${gaya.tombol} ${gaya.kecil} ${gaya.utama}`}
-                  disabled={sibuk || !daftar || !keadaan.kunci_kolom_siap}
-                  onClick={() =>
-                    jalankan(async () => {
-                      const hasil = await mulaiTotp();
-                      setPasang(hasil as { rahasia: string; qr: string; otpauth: string });
-                    })
-                  }
-                >
-                  Pasang authenticator
-                </button>
-              </div>
-            </>
-          )}
-        </BarisSetelan>
-
-        <PanelPasskey akses={akses} onBerubah={muatKeadaan} />
-
-        <BarisSetelan
-          ikon="wajah"
-          judul="Verifikasi wajah"
-          sub={keadaan.wajah_terdaftar ? "Aktif" : "Belum didaftarkan"}
-          tanda={keadaan.wajah_terdaftar ? "aktif" : "belum"}
-          baik={keadaan.wajah_terdaftar}
-        >
-          <p className={gaya.penjelasan}>
-            Kamera ambil 3 foto sambil kamu menoleh. Fotonya <strong>tidak disimpan</strong>,
-            cuma 128 angka yang dikunci.
-          </p>
-          <p className={gaya.penjelasan}>
-            <strong>Perlu kamu tahu:</strong> cara ini bisa ditembus rekaman video wajah
-            kamu. Yang paling aman tetap sidik jari.
-          </p>
-
-          {!keadaan.wajah_siap ? (
-            <p className={`${gaya.kabar} ${gaya.salah}`}>
-              Belum bisa dipakai. Jalankan <code>python tools/ambil_model.py</code> di server
-              dulu, sekali saja.
-            </p>
-          ) : null}
-
-          {(keadaan.wajah_terdaftar ? !kuat : !daftar) ? <Terkunci /> : null}
-
-          <div className={gaya.aksi}>
-            {keadaan.wajah_terdaftar ? (
-              <button
-                type="button"
-                className={`${gaya.tombol} ${gaya.kecil} ${gaya.bahaya}`}
-                disabled={sibuk || !kuat}
-                onClick={() =>
-                  jalankan(async () => {
-                    await hapusWajah();
-                    setKabar(baik("Wajah sudah dihapus dari server."));
-                    await muat();
-                  })
-                }
-              >
-                Hapus wajah
-              </button>
-            ) : (
-              <button
-                type="button"
-                className={`${gaya.tombol} ${gaya.kecil} ${gaya.utama}`}
-                disabled={sibuk || !daftar || !keadaan.wajah_siap || !keadaan.kunci_kolom_siap}
-                onClick={() => {
-                  setKabar(null);
-                  setKameraHidup(true);
-                }}
-              >
-                Daftarkan wajah
-              </button>
-            )}
-          </div>
-        </BarisSetelan>
-
-        <BarisSetelan
-          ikon="jam"
-          judul="Aktivitas terakhir"
-          sub={
-            jejak.length === 0
-              ? "Belum ada catatan"
-              : gagalTerakhir
-                ? `${jejak.length} catatan, ${gagalTerakhir} gagal`
-                : `${jejak.length} catatan, semua berhasil`
-          }
-        >
-          <p className={gaya.penjelasan}>
-            Percobaan yang gagal juga dicatat, jadi kamu tahu kalau ada orang lain mencoba
-            masuk. Alamat IP tidak disimpan.
-          </p>
-          {jejak.length === 0 ? null : (
             <ul className={gaya.daftarRingkas}>
               {jejak.map((p, i) => (
                 <li key={`${p.pada}-${i}`}>
@@ -420,24 +235,370 @@ export function PanelKeamanan({
               ))}
             </ul>
           )}
-        </BarisSetelan>
-      </ul>
+        </Halaman>
+      </section>
+    );
+  }
 
-      {kameraHidup ? (
-        <KameraWajah
-          gerakan={["tengah", "kiri", "kanan"]}
-          sibuk={sibuk}
-          batal={() => setKameraHidup(false)}
-          selesai={(bingkai) => {
-            setKameraHidup(false);
-            void jalankan(async () => {
-              await daftarkanWajah(bingkai);
-              setKabar(baik("Wajah kamu terdaftar. Fotonya tidak disimpan."));
-              await muat();
-            });
-          }}
-        />
-      ) : null}
+  if (bagian === "menu") {
+    return (
+      <section className={gaya.kartu} id="keamanan" aria-labelledby="judul-keamanan">
+        <div className={gaya.tumpuk}>
+          <h2 id="judul-keamanan">Keamanan akun</h2>
+          <span className={gaya.kanan}>
+            <button
+              type="button"
+              className={`${gaya.tombol} ${gaya.kecil}`}
+              onClick={() => void muat()}
+              disabled={sibuk}
+            >
+              Muat ulang
+            </button>
+          </span>
+        </div>
+
+        <Kabar isi={kabar} />
+
+        <ul className={gaya.setelan}>
+          <BarisMenu
+            ikon="perisai"
+            judul="Verifikasi dua langkah"
+            sub={duaLangkahAktif ? "Aktif" : "Belum aktif"}
+            buka={() => pindah("dua-langkah")}
+          />
+          <BarisMenu
+            ikon="lonceng"
+            judul="Notifikasi keamanan"
+            sub={ringkasKabar}
+            buka={() => pindah("notifikasi")}
+          />
+          <BarisMenu
+            ikon="gembok"
+            judul="Kunci aplikasi"
+            sub={
+              perangkat.kunci ? `Sidik jari, ${labelJeda(perangkat.jeda).toLowerCase()}` : "Mati"
+            }
+            buka={() => pindah("kunci")}
+          />
+          <BarisMenu
+            ikon="geser"
+            judul="Lanjutan"
+            sub={keadaan.mode_ketat ? "Mode ketat aktif" : "Mode ketat mati"}
+            buka={() => pindah("lanjutan")}
+          />
+          <BarisMenu
+            ikon="jam"
+            judul="Aktivitas akun"
+            sub={ringkasJejak}
+            buka={() => pindah("aktivitas")}
+          />
+        </ul>
+      </section>
+    );
+  }
+
+  return (
+    <section className={gaya.kartu} id="keamanan">
+      <Halaman
+        judul="Verifikasi dua langkah"
+        kembali={kembali}
+        pahlawan="perisai"
+        pengantar="Tambah lapisan pengaman. Selain sandi, kamu butuh satu cara lagi untuk masuk."
+      >
+        <Kabar isi={kabar} />
+
+        <div className={gaya.status}>
+          <strong>Verifikasi dua langkah</strong>
+          <span className={`${gaya.tanda} ${duaLangkahAktif ? gaya.terbit : ""}`}>
+            {duaLangkahAktif ? "aktif" : "belum aktif"}
+          </span>
+        </div>
+
+        <LabelBagian>Metode verifikasi</LabelBagian>
+        <ul className={gaya.setelan}>
+          <BarisSetelan
+            ikon="surat"
+            judul="Email"
+            sub={keadaan.email}
+            tanda={keadaan.email_terverifikasi ? "terbukti" : "belum"}
+            baik={keadaan.email_terverifikasi}
+          >
+            <p className={gaya.penjelasan}>
+              Email ini dipakai buat bantu kamu masuk kalau cara lain tidak bisa. Buktikan dulu
+              lewat tautan yang kami kirim.
+            </p>
+            {!keadaan.surat_siap ? (
+              <p className={`${gaya.kabar} ${gaya.salah}`}>
+                Email belum bisa dikirim. Isi SMTP_HOST, SMTP_PENGGUNA, SMTP_SANDI, dan SURAT_DARI
+                di <code>.env</code> dulu. Sementara itu suratnya disimpan di{" "}
+                <code>cadangan/surat/</code>.
+              </p>
+            ) : null}
+            <div className={gaya.aksi}>
+              <button
+                type="button"
+                className={`${gaya.tombol} ${gaya.kecil}`}
+                disabled={sibuk}
+                onClick={() =>
+                  jalankan(async () => {
+                    const hasil = await kirimVerifikasiEmail();
+                    setKabar(
+                      hasil.terkirim
+                        ? baik("Tautan sudah dikirim. Cek email kamu.")
+                        : buruk(hasil.catatan),
+                    );
+                  })
+                }
+              >
+                {keadaan.email_terverifikasi ? "Kirim ulang tautan" : "Kirim tautan"}
+              </button>
+            </div>
+          </BarisSetelan>
+
+          <BarisSetelan
+            ikon="ponsel"
+            judul="Aplikasi authenticator"
+            sub={
+              keadaan.totp_aktif
+                ? `Aktif, ${keadaan.pemulihan_sisa} kode cadangan tersisa`
+                : "Belum dipasang"
+            }
+            tanda={keadaan.totp_aktif ? "aktif" : "belum"}
+            baik={keadaan.totp_aktif}
+          >
+            {!keadaan.kunci_kolom_siap ? (
+              <p className={`${gaya.kabar} ${gaya.salah}`}>
+                Belum bisa dipasang. Isi KUNCI_KOLOM di <code>.env</code> dulu. Buat kuncinya dengan{" "}
+                <code>python backend/db/enkripsi.py kunci</code>.
+              </p>
+            ) : null}
+
+            {pemulihan ? (
+              <div className={gaya.pemulihan}>
+                <p className={gaya.penjelasan}>
+                  <strong>Simpan 8 kode ini sekarang.</strong> Kodenya cuma muncul sekali. Pakai
+                  kalau HP kamu hilang, dan simpan di tempat selain HP itu.
+                </p>
+                <ul className={gaya.kodeGrid}>
+                  {pemulihan.map((k) => (
+                    <li key={k}>
+                      <code>{k}</code>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  type="button"
+                  className={`${gaya.tombol} ${gaya.kecil}`}
+                  onClick={() => setPemulihan(null)}
+                >
+                  Sudah saya simpan
+                </button>
+              </div>
+            ) : keadaan.totp_aktif ? (
+              <>
+                <p className={gaya.penjelasan}>
+                  Sudah aktif. Mau matikan? Ketik kode dari aplikasi. Kode cadangan ikut terhapus.
+                </p>
+                {!kuat ? <Terkunci /> : null}
+                <div className={gaya.barisSebaris}>
+                  <input
+                    id="kode-matikan"
+                    aria-label="Kode dari aplikasi"
+                    className={`${gaya.isian} ${gaya.kodeIsian}`}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={kodeMatikan}
+                    onChange={(e) => setKodeMatikan(e.target.value)}
+                    placeholder="000000"
+                  />
+                  <button
+                    type="button"
+                    className={`${gaya.tombol} ${gaya.kecil} ${gaya.bahaya}`}
+                    disabled={sibuk || !kuat || kodeMatikan.trim().length < 6}
+                    onClick={() =>
+                      jalankan(async () => {
+                        await matikanTotp(kodeMatikan.trim());
+                        setKodeMatikan("");
+                        setKabar(baik("Authenticator dimatikan. Kode cadangan ikut terhapus."));
+                        await muat();
+                      })
+                    }
+                  >
+                    Matikan
+                  </button>
+                </div>
+              </>
+            ) : pasang ? (
+              <>
+                <p className={gaya.penjelasan}>
+                  Pindai kode ini pakai aplikasi authenticator, lalu ketik 6 angkanya.
+                </p>
+                <div className={gaya.qr} dangerouslySetInnerHTML={{ __html: pasang.qr }} />
+                <p className={gaya.ket}>
+                  Tidak bisa memindai? Ketik kode ini: <code>{pasang.rahasia}</code>
+                </p>
+                <div className={gaya.barisSebaris}>
+                  <input
+                    id="kode-totp"
+                    aria-label="Enam angka dari aplikasi"
+                    className={`${gaya.isian} ${gaya.kodeIsian}`}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={kode}
+                    onChange={(e) => setKode(e.target.value)}
+                    placeholder="000000"
+                  />
+                  <button
+                    type="button"
+                    className={`${gaya.tombol} ${gaya.kecil} ${gaya.utama}`}
+                    disabled={sibuk || kode.trim().length < 6}
+                    onClick={() =>
+                      jalankan(async () => {
+                        const hasil = await aktifkanTotp(kode.trim());
+                        setPemulihan(hasil.kode_pemulihan);
+                        setPasang(null);
+                        setKode("");
+                        await muat();
+                      })
+                    }
+                  >
+                    Aktifkan
+                  </button>
+                  <button
+                    type="button"
+                    className={`${gaya.tombol} ${gaya.kecil}`}
+                    onClick={() => setPasang(null)}
+                  >
+                    Batal
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className={gaya.penjelasan}>
+                  Kode 6 angka dari aplikasi di HP kamu, berganti tiap 30 detik. Bisa pakai Aegis,
+                  Google Authenticator, atau 1Password.
+                </p>
+                {!daftar ? <Terkunci /> : null}
+                <div className={gaya.aksi}>
+                  <button
+                    type="button"
+                    className={`${gaya.tombol} ${gaya.kecil} ${gaya.utama}`}
+                    disabled={sibuk || !daftar || !keadaan.kunci_kolom_siap}
+                    onClick={() =>
+                      jalankan(async () => {
+                        const hasil = await mulaiTotp();
+                        setPasang(hasil as { rahasia: string; qr: string; otpauth: string });
+                      })
+                    }
+                  >
+                    Pasang authenticator
+                  </button>
+                </div>
+              </>
+            )}
+          </BarisSetelan>
+
+          <PanelPasskey akses={akses} onBerubah={muatKeadaan} />
+
+          <BarisSetelan
+            ikon="wajah"
+            judul="Verifikasi wajah"
+            sub={keadaan.wajah_terdaftar ? "Aktif" : "Belum didaftarkan"}
+            tanda={keadaan.wajah_terdaftar ? "aktif" : "belum"}
+            baik={keadaan.wajah_terdaftar}
+          >
+            <p className={gaya.penjelasan}>
+              Kamera ambil 3 foto sambil kamu menoleh. Fotonya <strong>tidak disimpan</strong>, cuma
+              128 angka yang dikunci.
+            </p>
+            <p className={gaya.penjelasan}>
+              <strong>Perlu kamu tahu:</strong> cara ini bisa ditembus rekaman video wajah kamu.
+              Yang paling aman tetap sidik jari.
+            </p>
+
+            {!keadaan.wajah_siap ? (
+              <p className={`${gaya.kabar} ${gaya.salah}`}>
+                Belum bisa dipakai. Jalankan <code>python tools/ambil_model.py</code> di server
+                dulu, sekali saja.
+              </p>
+            ) : null}
+
+            {(keadaan.wajah_terdaftar ? !kuat : !daftar) ? <Terkunci /> : null}
+
+            <div className={gaya.aksi}>
+              {keadaan.wajah_terdaftar ? (
+                <button
+                  type="button"
+                  className={`${gaya.tombol} ${gaya.kecil} ${gaya.bahaya}`}
+                  disabled={sibuk || !kuat}
+                  onClick={() =>
+                    jalankan(async () => {
+                      await hapusWajah();
+                      setKabar(baik("Wajah sudah dihapus dari server."));
+                      await muat();
+                    })
+                  }
+                >
+                  Hapus wajah
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className={`${gaya.tombol} ${gaya.kecil} ${gaya.utama}`}
+                  disabled={sibuk || !daftar || !keadaan.wajah_siap || !keadaan.kunci_kolom_siap}
+                  onClick={() => {
+                    setKabar(null);
+                    setKameraHidup(true);
+                  }}
+                >
+                  Daftarkan wajah
+                </button>
+              )}
+            </div>
+          </BarisSetelan>
+
+          <BarisSetelan
+            ikon="sandi"
+            judul="Kata sandi"
+            sub="••••••••••"
+            tanda={keadaan.punya_sandi ? "aktif" : "belum"}
+            baik={keadaan.punya_sandi}
+          >
+            <p className={gaya.penjelasan}>
+              Sandi dipakai di langkah pertama. Untuk menggantinya, jalankan{" "}
+              <code>python backend/db/buat_admin.py</code> di server.
+            </p>
+          </BarisSetelan>
+        </ul>
+
+        <LabelBagian>Perangkat tepercaya</LabelBagian>
+        <ul className={gaya.setelan}>
+          <BarisSetelan
+            ikon="perangkat"
+            judul="Perangkat yang masuk"
+            sub="Lihat dan keluarkan perangkat"
+          >
+            <PerangkatTepercaya />
+          </BarisSetelan>
+        </ul>
+
+        {kameraHidup ? (
+          <KameraWajah
+            gerakan={["tengah", "kiri", "kanan"]}
+            sibuk={sibuk}
+            batal={() => setKameraHidup(false)}
+            selesai={(bingkai) => {
+              setKameraHidup(false);
+              void jalankan(async () => {
+                await daftarkanWajah(bingkai);
+                setKabar(baik("Wajah kamu terdaftar. Fotonya tidak disimpan."));
+                await muat();
+              });
+            }}
+          />
+        ) : null}
+      </Halaman>
     </section>
   );
 }

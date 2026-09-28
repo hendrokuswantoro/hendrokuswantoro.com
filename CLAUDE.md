@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 875, tanpa peramban, hitungan detik
+python -m pytest                 # 909, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 88, Chromium sungguhan
 sh tools/verifikasi.sh           # 21 langkah, seluruhnya, berurutan
 
@@ -56,13 +56,13 @@ content/template/         template ber-{{slot}}
 backend/api/v1/           router, HTTP saja
 backend/layanan/          aturan bisnis, tidak tahu SQL
 backend/repositori/       satu satunya yang tahu SQL
-backend/db/migrations/    0001 sampai 0008, nomornya wajib unik
+backend/db/migrations/    0001 sampai 0009, nomornya wajib unik
 backend/admin/            dashboard HTML, gaya dan skripnya berkas sendiri
 unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    963 uji
+tests/                    997 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -205,6 +205,31 @@ tengah jalan dipulihkan oleh sesi berikutnya. Sampai 27 September 2026
 passkey buatan autentikator tiruan tidak ikut dibuang: empat puluh menumpuk,
 dan karena `punya_faktor()` menghitungnya, pemilik ditolak saat memasang
 faktor pertamanya.
+
+**Setelan keamanan akun ada dua jenis, dan jangan dicampur.** Sejak 28
+September 2026 halaman keamanan di dashboard Next disusun seperti WhatsApp:
+Verifikasi dua langkah, Notifikasi keamanan, Kunci aplikasi, Lanjutan, dan
+Aktivitas akun.
+
+- Yang tersimpan di server, kolom `kabar_masuk`, `kabar_perubahan`, dan
+  `mode_ketat` di `users` (migrasi 0009), diubah lewat `PATCH
+  /api/v1/keamanan/setelan` yang menuntut `butuh_admin_kuat`. Mematikan
+  notifikasi SELALU dikabarkan lewat surat (`paksa=True`), apa pun
+  setelannya, supaya pengambil alih akun tidak bisa membungkam pemiliknya.
+  Mode ketat menolak wajah sebagai faktor kedua, tetapi hanya selama akun
+  punya authenticator atau passkey; tanpa itu ia tidak menutup satu satunya
+  pintu.
+- Yang tersimpan di perangkat, `localStorage["hk-admin-perangkat"]`: kunci
+  aplikasi dan keluar otomatis. Kunci aplikasi hanya menutup LAYAR di
+  perangkat itu, persis seperti kunci aplikasi WhatsApp, dan layarnya
+  mengatakan begitu. Membukanya lewat `/api/v1/auth/passkey/buka/*`, yang
+  memeriksa tanda tangan passkey milik orang yang sedang masuk dan tidak
+  pernah menerbitkan sesi. Tantangannya bertujuan `buka`, jadi tidak bisa
+  dipakai untuk masuk, dan tantangan masuk tidak bisa dipakai untuk membuka.
+
+Dashboard HTML di `backend/admin/` belum punya halaman ini; ia hanya
+mengenal nama peristiwanya. `tests/conftest.py` menitipkan ketiga kolom
+setelan bersama faktor lain dan mengembalikannya di akhir sesi uji.
 
 **Yang mencabut sesi wajib mencatatnya di `backend/core/cabut.py`.** Access
 token adalah JWT dan tidak pernah ditanyakan ke basis data, jadi mencabut sesi

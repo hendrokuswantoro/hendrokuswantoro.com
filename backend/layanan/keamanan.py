@@ -240,7 +240,8 @@ async def faktor_kedua_yang_berlaku(pengguna: dict) -> list[str]:
         cara.append("totp")
         if baris["pemulihan_sisa"]:
             cara.append("pemulihan")
-    if baris and baris["wajah_didaftar_pada"] and wajah_modul.siap():
+    ketat = bool(baris and baris["mode_ketat"] and (baris["totp_aktif_pada"] or baris["passkey"]))
+    if baris and baris["wajah_didaftar_pada"] and wajah_modul.siap() and not ketat:
         cara.append("wajah")
 
     if baris and baris["passkey"]:
@@ -257,6 +258,37 @@ async def faktor_kedua_yang_berlaku(pengguna: dict) -> list[str]:
 async def punya_faktor(pengguna_id: str) -> bool:
     b = await repo.keadaan(pengguna_id)
     return bool(b and (b["totp_aktif_pada"] or b["passkey"] or b["wajah_didaftar_pada"]))
+
+
+NAMA_SETELAN = {
+    "kabar_masuk": ("kabar masuk dari perangkat baru", "setelan_kabar"),
+    "kabar_perubahan": ("kabar perubahan keamanan", "setelan_kabar"),
+    "mode_ketat": ("mode ketat", "mode_ketat"),
+}
+
+
+async def ubah_setelan(
+    pengguna_id: str, perubahan: dict[str, bool], alamat: str | None
+) -> list[str]:
+    sekarang = await repo.keadaan(pengguna_id)
+    if not sekarang:
+        raise Ditolak("akun tidak ada")
+
+    baru = {k: v for k, v in perubahan.items() if k in NAMA_SETELAN and sekarang[k] != v}
+    if baru.get("mode_ketat") and not (sekarang["totp_aktif_pada"] or sekarang["passkey"]):
+        raise Ditolak("pasang authenticator atau sidik jari dulu, baru mode ketat bisa dinyalakan")
+
+    await repo.simpan_setelan(pengguna_id, baru)
+    ringkasan = []
+    for kunci, nilai in baru.items():
+        nama, jenis = NAMA_SETELAN[kunci]
+        ringkasan.append(f"{nama} {'dinyalakan' if nilai else 'dimatikan'}")
+        await repo.catat(pengguna_id, jenis, True, ringkasan[-1], alamat)
+    return ringkasan
+
+
+async def setelan(pengguna_id: str) -> dict:
+    return dict(await repo.setelan(pengguna_id) or {})
 
 
 async def catat_peristiwa(
