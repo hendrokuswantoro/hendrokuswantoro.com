@@ -79,7 +79,7 @@
     unfull: { en: "Exit full screen", ind: "Keluar layar penuh" },
     close: { en: "Close", ind: "Tutup" },
     legend: { en: "Map key", ind: "Keterangan" },
-    legendTitle: { en: "Map key", ind: "Keterangan peta" },
+    legendTitle: { en: "Map key", ind: "Keterangan" },
     legendHint: { en: "Tap to show or hide.", ind: "Ketuk untuk tampilkan atau sembunyikan." },
     legendHide: { en: "Close", ind: "Tutup" },
     moreDetails: { en: "Show options", ind: "Tampilkan pilihan" },
