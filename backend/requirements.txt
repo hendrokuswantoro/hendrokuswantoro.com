@@ -24,7 +24,7 @@ pyjwt==2.14.0
 # WebAuthn. Membawa cryptography, cbor2, asn1crypto, dan pyOpenSSL.
 # Dipakai supaya tidak ada satu baris pun kriptografi buatan sendiri
 # di jalur masuk, sesuai larangan di bab 15.8.
-webauthn==2.5.2
+webauthn==3.0.1
 # Kode QR untuk memasang aplikasi authenticator. Murni Python, tanpa Pillow:
 # yang dipakai cuma matriks hitam putihnya, dan SVG-nya digambar sendiri di
 # backend/layanan/totp.py.
