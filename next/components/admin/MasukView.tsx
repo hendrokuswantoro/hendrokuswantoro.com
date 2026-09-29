@@ -48,7 +48,13 @@ function IkonMata() {
   );
 }
 
-export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
+export function MasukView({
+  sesudah,
+  hanyaKuat = false,
+}: {
+  sesudah: (s: Sesi) => void;
+  hanyaKuat?: boolean;
+}) {
   const [email, setEmail] = useState("");
   const [sandi, setSandi] = useState("");
   const [sandiTerlihat, setSandiTerlihat] = useState(false);
@@ -106,8 +112,10 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
       setSandi("");
       setSandiTerlihat(false);
       if (hasil.tahap === "faktor2") {
-        setTiket({ nilai: hasil.tiket, cara: hasil.cara });
-        setCara(hasil.cara[0]);
+        const kuat = hasil.cara.filter((c) => c !== "wajah");
+        const pilihan = hanyaKuat && kuat.length ? kuat : hasil.cara;
+        setTiket({ nilai: hasil.tiket, cara: pilihan });
+        setCara(pilihan[0]);
         return;
       }
       sesudah(hasil);
@@ -207,6 +215,12 @@ export function MasukView({ sesudah }: { sesudah: (s: Sesi) => void }) {
           <Kabar isi={kabar} />
 
           <p className={gaya.penjelasan}>Sandi kamu benar. Tinggal satu langkah lagi, waktunya 5 menit.</p>
+
+          {hanyaKuat && !tiket.cara.includes("wajah") ? (
+            <p className={gaya.penjelasan}>
+              Wajah tidak ditawarkan di sini. Lewat wajah, tulisan dan keamanan tetap terkunci.
+            </p>
+          ) : null}
 
           {tiket.cara.length > 1 ? (
             <div className={gaya.baris}>

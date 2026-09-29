@@ -22,6 +22,7 @@ import { useSetelanPerangkat } from "@/lib/perangkat";
 export default function Admin() {
   const [sesi, setSesi] = useState<Sesi | null>(null);
   const [memuat, setMemuat] = useState(true);
+  const [ulangKuat, setUlangKuat] = useState(false);
   const [keadaan, setKeadaan] = useState<KeadaanKeamanan | null>(null);
   const [galatKeadaan, setGalatKeadaan] = useState("");
   const [sunting, setSunting] = useState<{ aktif: boolean; slug: string | null }>({
@@ -83,7 +84,13 @@ export default function Admin() {
   if (!sesi) {
     return (
       <main className={gaya.bingkai}>
-        <MasukView sesudah={setSesi} />
+        <MasukView
+          hanyaKuat={ulangKuat}
+          sesudah={(baru) => {
+            setUlangKuat(false);
+            setSesi(baru);
+          }}
+        />
       </main>
     );
   }
@@ -116,7 +123,14 @@ export default function Admin() {
                 <strong>Akses kamu terbatas.</strong> Kamu belum masuk pakai authenticator atau
                 sidik jari, jadi tulisan dan pengaturan keamanan dikunci.
               </p>
-              <button type="button" className={`${gaya.tombol} ${gaya.utama}`} onClick={keluar}>
+              <button
+                type="button"
+                className={`${gaya.tombol} ${gaya.utama}`}
+                onClick={() => {
+                  setUlangKuat(true);
+                  void keluar();
+                }}
+              >
                 Masuk ulang
               </button>
             </div>

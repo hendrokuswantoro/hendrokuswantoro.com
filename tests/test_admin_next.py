@@ -62,3 +62,15 @@ def test_vps_menyalakan_dashboard_next_dan_deploy_membangunnya():
     assert "npm run build" in VPS and "out/admin/index.html" in VPS
     assert VPS.index("npm run build") < VPS.index("rsync"), "next/out dikirim sebelum dibangun"
     assert "--exclude 'next/.next'" in VPS
+
+
+def test_masuk_ulang_dari_sesi_lemah_tidak_menawarkan_wajah():
+    halaman = (AKAR / "next" / "app" / "admin" / "page.tsx").read_text(encoding="utf-8")
+    masuk = (AKAR / "next" / "components" / "admin" / "MasukView.tsx").read_text(encoding="utf-8")
+    spanduk = halaman[halaman.index("<strong>Akses kamu terbatas.</strong>"):]
+    spanduk = spanduk[:spanduk.index("Masuk ulang")]
+    assert "setUlangKuat(true)" in spanduk, (
+        "tombol Masuk ulang dipakai untuk membuka kunci, jadi wajah yang memberi sesi lemah tidak boleh ditawarkan"
+    )
+    assert "hanyaKuat={ulangKuat}" in halaman
+    assert 'hasil.cara.filter((c) => c !== "wajah")' in masuk
