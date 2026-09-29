@@ -219,3 +219,12 @@ def test_perintah_cadangan_mengurus_unggahan_dari_awal_sampai_pulih(folder, kunc
     assert (sumber / "0a1b2c3d4e5f6071.mp4").read_bytes() == VIDEO
     keluar = capsys.readouterr().out
     assert "2 baru dicadangkan" in keluar and "BERHASIL" in keluar and "dikembalikan: 0a1b2c3d4e5f6071.mp4" in keluar
+
+
+def test_cadangan_harian_laptop_tidak_gagal_diam_diam():
+    skrip = (AKAR / "tools" / "cadangan_harian.sh").read_text(encoding="utf-8")
+    assert "jalankan < /dev/null" in skrip, "tanpa input standar, docker exec dari Python gagal WinError 6"
+    assert "msg.exe" in skrip, "Task Scheduler melaporkan 0 walau gagal; peringatannya harus terlihat"
+    assert "cadangan.py uji-pulih" in skrip
+    pasang = (AKAR / "tools" / "pasang_cadangan_harian.ps1").read_text(encoding="utf-8")
+    assert "-StartWhenAvailable" in pasang and "--headless" in pasang

@@ -198,3 +198,32 @@ Berkasnya ada dan lolos pemeriksaan yang bisa dilakukan tanpa server, lihat
 servernya belum ada.
 
 Retensi di sisi penyedia 30 hari, diatur `CADANGAN_SIMPAN_HARI`.
+
+## Cadangan harian di laptop
+
+Selama dashboard tinggal di laptop (lihat `docs/terowongan.md`), basis data
+laptop menyimpan akun admin dan draf tulisan. Tulisan yang terbit sudah aman
+di git; draf belum. Sejak 29 September 2026 tugas terjadwal Windows
+"hendrokuswantoro cadangan harian" menjalankan `tools/cadangan_harian.sh`
+tiap hari pukul 21.00, atau sesegera mungkin kalau laptop mati pada jam itu.
+
+- Ia menyalakan basis data kalau mati, lalu `cadangan.py buat`: terenkripsi
+  dengan `CADANGAN_KUNCI`, 14 cadangan terakhir disimpan, unggahan ikut.
+- Tiap hari Minggu ia juga menjalankan `uji-pulih`. `--uji-pulih` memaksanya
+  di hari lain.
+- Catatannya di `cadangan/harian.log`, 400 baris terakhir.
+- Kalau gagal, termasuk karena Docker Desktop mati, Windows memunculkan
+  jendela peringatan lewat `msg`. Task Scheduler sendiri TIDAK bisa dipercaya
+  untuk ini: tugasnya berjalan lewat `conhost --headless` supaya tidak ada
+  jendela yang berkedip, dan conhost tidak meneruskan kode keluar, jadi
+  "hasil terakhir" selalu 0.
+- Dijalankan tanpa jendela, proses tidak punya input standar, dan
+  `subprocess` di Python gagal dengan `WinError 6` saat memanggil
+  `docker exec`. Karena itu skripnya membaca `/dev/null`.
+
+Memasang ulang, misalnya di laptop baru: jalankan
+`tools/pasang_cadangan_harian.ps1` dari PowerShell.
+
+Cadangan ini masih di cakram yang sama dengan basis datanya. Laptop yang
+hilang atau rusak membawa keduanya. Salinan di luar mesin butuh
+`CADANGAN_TUJUAN` dan `kirim.sh`.

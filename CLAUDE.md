@@ -765,6 +765,12 @@ lewat terowongan. Passkey pemilik ("Laptop ini") terdaftar untuk alamat itu
 dan tidak berlaku di `localhost`; mode ketat dan kunci aplikasi menyala.
 Salinan `.env` sebelum perubahan ada di `cadangan/env-sebelum-terowongan`.
 
+Laptop mencadangkan basis datanya sendiri tiap hari pukul 21.00 lewat tugas
+terjadwal Windows yang dipasang `tools/pasang_cadangan_harian.ps1`, dan
+membuktikan pemulihannya tiap Minggu. Kegagalannya muncul sebagai jendela
+`msg`, bukan di Task Scheduler, yang selalu melaporkan 0; alasannya di
+`docs/cadangan.md`.
+
 Verifikasi wajah dijalankan dengan kamera sungguhan untuk pertama kalinya pada
 27 September 2026. Model 37 MB-nya tidak ikut git; ambil dengan
 `python tools/ambil_model.py` di mesin baru. Percobaan pertama menolak
