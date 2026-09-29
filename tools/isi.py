@@ -151,6 +151,26 @@ class SumberBerkas:
             raise IsiSalah("badan harus berisi '=== en ===' lalu '=== id ==='")
         return {"en": potong[2].strip("\n"), "id": potong[4].strip("\n")}
 
+KEPALA_TULISAN = ("tanggal_label", "tag", "baca", "judul", "ringkas", "keterangan", "lede")
+
+
+def tulis_tulisan(t: Tulisan) -> str:
+    kepala = [("slug", t.slug), ("tanggal", t.tanggal)]
+    for nama in KEPALA_TULISAN:
+        teks: Teks = getattr(t, nama)
+        kepala += [(f"{nama}_en", teks.en), (f"{nama}_id", teks.id)]
+    baris = ["---"]
+    for kunci, nilai in kepala:
+        if "\n" in nilai or "\r" in nilai or nilai != nilai.strip():
+            raise IsiSalah(f"{t.slug}: {kunci} memuat baris baru atau spasi di tepinya")
+        baris.append(f"{kunci}: {nilai}")
+    for isi in (t.isi_en, t.isi_id):
+        if PISAH.search(isi):
+            raise IsiSalah(f"{t.slug}: isi memuat baris pemisah bahasa")
+    baris += ["---", "", "=== en ===", "", t.isi_en.strip("\n"), "", "=== id ===", "", t.isi_id.strip("\n"), ""]
+    return "\n".join(baris)
+
+
 class SumberApi:
     def __init__(self, pangkal: str, waktu_tunggu: int = 20) -> None:
         self.pangkal = pangkal.rstrip("/")

@@ -19,6 +19,10 @@ cp -r assets dist/assets
 mkdir -p dist/.well-known
 cp .well-known/security.txt dist/.well-known/
 cp -r blog dist/blog
+mkdir -p dist/unggahan
+if [ -d content/unggahan ]; then
+  find content/unggahan -maxdepth 1 -type f ! -name '.*' -exec cp {} dist/unggahan/ \;
+fi
 
 JUMLAH=$(find dist -type f | wc -l | tr -d ' ')
 echo "bangun_situs.sh: dist/ holds $JUMLAH files"

@@ -30,6 +30,11 @@ def main() -> None:
             for path in sorted((ROOT / folder).rglob("*")):
                 if path.is_file():
                     bundle.write(path, path.relative_to(ROOT).as_posix())
+        unggahan = ROOT / "content" / "unggahan"
+        if unggahan.is_dir():
+            for path in sorted(unggahan.iterdir()):
+                if path.is_file() and not path.name.startswith("."):
+                    bundle.write(path, f"unggahan/{path.name}")
 
     with zipfile.ZipFile(OUT) as bundle:
         count = len(bundle.namelist())

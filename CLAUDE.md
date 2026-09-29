@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 995, tanpa peramban, hitungan detik
+python -m pytest                 # 1004, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 111, Chromium sungguhan
 sh tools/verifikasi.sh           # 22 langkah, seluruhnya, berurutan
 
@@ -65,7 +65,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    1106 uji
+tests/                    1115 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -80,6 +80,7 @@ dipakai CI, jadi menyunting hasilnya akan ketahuan, tetapi baru di CI.
 | Hasil | Pembangkit |
 | --- | --- |
 | `blog/*.html`, `blog/index.html` | `tools/bangun_tulisan.py` |
+| `content/unggahan/`, dan `content/blog/*.md` milik tulisan dashboard | `tools/bangun_tulisan.py --sumber api` |
 | `feed.xml`, baris blog di `sitemap.xml` | `tools/build_feed.py` |
 | `next/app/globals.css` | `tools/gaya_next.py` |
 | nomor `?v=` di seluruh HTML, `app.js`, dan gambar karya di port Next | `tools/versi_aset.py` |
@@ -613,6 +614,17 @@ alasan menyapu cadangan. `kirim.sh` memakai `rclone copy`, bukan `sync`, dan
 retensi penyedianya `--max-depth 1`; tanpa itu retensi 30 hari menghapus
 cadangan unggahan yang masih dipakai. `tests/test_cadangan_unggahan.py`
 menahannya, dan sudah dibuktikan gagal saat pengamannya dimatikan.
+
+**Tulisan dari dashboard terbit lewat berkas, bukan langsung dari basis data.**
+`bangun_tulisan.py --sumber api` menulis tiap tulisan terbit ke
+`content/blog/SLUG.md` dan menyalin foto serta video yang disebutnya ke
+`content/unggahan/`, lalu membangun dari berkas; `bangun_situs.sh` menaruh
+foto itu di `/unggahan/` situs, dengan alamat yang sama seperti di dashboard.
+Sampai 29 September 2026 mode itu membangun langsung dari basis data, jadi
+tulisan dashboard pertama yang di-push akan membuat CI merah dan hilang lagi
+pada pembangunan berikutnya. Batas per berkas 25 MB, batas berkas statis
+Cloudflare. `/unggahan/` di `.gitignore` sengaja berawalan garis miring:
+tanpa itu `content/unggahan/` ikut diabaikan dan fotonya tidak pernah sampai.
 
 Deploy sengaja tidak ada di `ci.yml`. Cloudflare membangun dan menerbitkan
 sendiri ketika `main` bergerak, jadi deploy kedua di GitHub Actions berarti

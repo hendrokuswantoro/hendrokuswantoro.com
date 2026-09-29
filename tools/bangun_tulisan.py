@@ -1,10 +1,17 @@
 """Membangun halaman blog dari content/blog/*.md.
 
-    python tools/bangun_tulisan.py            # tulis
-    python tools/bangun_tulisan.py --periksa  # bandingkan saja, jangan tulis
+    python tools/bangun_tulisan.py              # tulis
+    python tools/bangun_tulisan.py --periksa    # bandingkan saja, jangan tulis
+    python tools/bangun_tulisan.py --sumber api # ekspor dari dashboard dulu, lalu tulis
 
 Yang dibangkitkan: satu halaman per tulisan, daftar di blog/index.html,
 lalu sitemap.xml dan feed.xml ikut diperbarui lewat tools/build_feed.py.
+
+--sumber api tidak membangun halaman langsung dari basis data. Ia menulis tiap
+tulisan terbit menjadi content/blog/SLUG.md dan menyalin foto serta video yang
+disebutnya ke content/unggahan/, lalu membangun dari berkas seperti biasa.
+Jadi yang terbit selalu bisa dibangun ulang dari git, dan CI memeriksa hal
+yang sama. Tulisan di content/blog yang tidak ada di dashboard dibiarkan.
 
 Nomor versi aset tidak ditulis di template. Pembangkit membacanya dari
 index.html, sehingga halaman blog tidak mungkin memakai versi yang berbeda
@@ -24,7 +31,8 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 import markah  # noqa: E402
-from isi import SumberApi, SumberBerkas, SumberIsi, Tulisan  # noqa: E402
+import unggahan_publik  # noqa: E402
+from isi import IsiSalah, SumberApi, SumberBerkas, Tulisan, tulis_tulisan  # noqa: E402
 from versi_aset import cap_karya  # noqa: E402
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent
@@ -229,6 +237,28 @@ def sitemap(semua: list[Tulisan]) -> str:
     baris += ["</urlset>", ""]
     return "\n".join(baris)
 
+def ekspor(pangkal: str) -> None:
+    dari_api = SumberApi(pangkal).tulisan()
+    folder = ISI / "blog"
+    for t in dari_api:
+        tujuan = folder / f"{t.slug}.md"
+        baru = tulis_tulisan(t)
+        lama = tujuan.read_text(encoding="utf-8") if tujuan.exists() else None
+        if lama != baru:
+            tujuan.write_text(baru, encoding="utf-8", newline="\n")
+            print(f"tulis {tujuan.relative_to(AKAR).as_posix()}")
+        else:
+            print(f"tetap {tujuan.relative_to(AKAR).as_posix()}")
+    ada = {t.slug for t in dari_api}
+    for berkas in sorted(folder.glob("*.md")):
+        if berkas.stem not in ada:
+            print(f"biar {berkas.relative_to(AKAR).as_posix()}: tidak ada di dashboard, tidak disentuh")
+
+    dipakai = unggahan_publik.rujukan(SumberBerkas(ISI).tulisan())
+    for nama in unggahan_publik.salin(dipakai, ISI / "unggahan", pangkal):
+        print(f"salin content/unggahan/{nama}")
+
+
 def main() -> int:
     alasan = argparse.ArgumentParser(description=__doc__)
     alasan.add_argument("--periksa", action="store_true",
@@ -239,16 +269,33 @@ def main() -> int:
                         help="pangkal API kalau --sumber api")
     pilihan = alasan.parse_args()
 
-    sumber: SumberIsi = (
-        SumberApi(pilihan.api) if pilihan.sumber == "api" else SumberBerkas(ISI)
-    )
+    if pilihan.sumber == "api":
+        if pilihan.periksa:
+            raise SystemExit("--periksa hanya membandingkan dengan content/, tanpa --sumber api")
+        try:
+            ekspor(pilihan.api)
+        except IsiSalah as galat:
+            raise SystemExit(f"ekspor gagal: {galat}") from galat
 
     css, js = versi_aset()
-    semua = sumber.tulisan()
+    semua = SumberBerkas(ISI).tulisan()
     if not semua:
         raise SystemExit("content/blog kosong")
 
     beda = 0
+    folder_unggahan = ISI / "unggahan"
+    try:
+        dipakai = unggahan_publik.rujukan(semua)
+    except IsiSalah as galat:
+        raise SystemExit(str(galat)) from galat
+    if not pilihan.periksa:
+        for nama in unggahan_publik.pangkas(dipakai, folder_unggahan):
+            print(f"buang content/unggahan/{nama}, tidak disebut tulisan mana pun")
+    for masalah in unggahan_publik.periksa(dipakai, folder_unggahan):
+        beda += 1
+        print(masalah)
+    if beda and not pilihan.periksa:
+        raise SystemExit("unggahan belum lengkap; jalankan dengan --sumber api selagi dashboard menyala")
     for t in semua:
         tujuan = AKAR / "blog" / f"{t.slug}.html"
         baru = halaman(t, semua, css, js)

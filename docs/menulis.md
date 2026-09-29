@@ -174,13 +174,26 @@ python backend/db/buat_admin.py
    tidak sama, peringatannya muncul **sebelum** Anda menekan Simpan.
 6. **Simpan.** Statusnya draf. Belum terlihat siapa pun.
 7. **Terbitkan.** Statusnya berubah, dan tulisannya muncul di jalur publik API.
-8. Bangkitkan halamannya lalu dorong:
+8. Selagi dashboard masih menyala, bangkitkan halamannya lalu dorong:
 
 ```bash
 python tools/bangun_tulisan.py --sumber api
 ```
 
-lalu `python tools/build_feed.py`, `python -m pytest`, `git push`.
+lalu `python tools/build_feed.py`, `python -m pytest`, `git add content blog
+sitemap.xml feed.xml`, `git commit`, `git push`.
+
+Perintah pertama tidak membangun halaman langsung dari basis data. Ia menulis
+tiap tulisan terbit menjadi `content/blog/SLUG.md`, menyalin foto dan video
+yang disebutnya ke `content/unggahan/`, lalu membangun dari berkas seperti
+biasa. Sampai 29 September 2026 ia membangun langsung dari basis data, dan
+akibatnya dua: CI, yang memeriksa halaman terhadap `content/blog`, akan merah
+begitu tulisan dashboard pertama di-push, dan pembangunan berikutnya dari
+`content/` diam diam menghapus tulisan itu dari daftar blog.
+
+Tulisan yang dikelola lewat dashboard disunting di dashboard. Menyunting
+berkas `.md`-nya dengan tangan akan tertimpa ekspor berikutnya. Tulisan di
+`content/blog` yang tidak ada di dashboard dibiarkan, tidak dihapus.
 
 ### Dua dashboard, dan cara memilihnya
 
@@ -284,9 +297,21 @@ menyadarinya pembaca.
 ### Dua port, dan batas yang jujur di antaranya
 
 Yang ditulis lewat dashboard hidup di PostgreSQL dan dilayani API. Yang terbit
-ke Cloudflare berkas statis, dan gambarnya harus ikut ke sana: jalankan
-`python tools/bangun_tulisan.py --sumber api`, lalu salin berkas dari folder
-unggahan ke `assets/img/` dan sesuaikan alamatnya, atau sajikan situsnya dari
-VPS yang sama dengan API-nya. Yang kedua yang dirancang; yang pertama jalan
-keluar sementara. Tidak ada langkah otomatis yang menyalinnya, dan tidak
-dibuat berpura pura ada.
+ke Cloudflare berkas statis, dan sejak 29 September 2026 fotonya ikut ke sana
+dengan sendirinya: `bangun_tulisan.py --sumber api` menyalin tiap berkas yang
+disebut tulisan terbit ke `content/unggahan/`, yang ikut git, dan
+`bangun_situs.sh` menaruhnya di `/unggahan/` situs. Alamatnya tidak diubah,
+jadi halaman yang sama benar di Cloudflare maupun di VPS kelak.
+
+- Hanya berkas yang **disebut tulisan terbit** yang ikut. Draf dan unggahan
+  yang belum dipakai tetap di laptop.
+- Berkas yang tidak lagi disebut tulisan mana pun dibuang dari
+  `content/unggahan/` saat membangun. Aslinya tetap di folder unggahan
+  laptop dan di cadangannya.
+- **Batasnya 25 MB per berkas.** Cloudflare menolak berkas statis yang lebih
+  besar, jadi ekspor berhenti dengan nama berkas dan tulisannya. Perkecil
+  videonya lalu unggah ulang. Batas unggah dashboard sendiri 80 MB; video di
+  atas 25 MB baru bisa terbit kalau situsnya disajikan VPS.
+- `bangun_tulisan.py --periksa`, yang dijalankan CI, menolak tulisan yang
+  menyebut berkas yang tidak ada di `content/unggahan/`, dan berkas di sana
+  yang tidak disebut siapa pun. `tests/test_ekspor_tulisan.py` menahannya.

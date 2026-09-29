@@ -93,6 +93,8 @@ def berkas_dari_jalur(jalur: str) -> pathlib.Path:
         return AKAR / "index.html"
     if bersih.endswith("/"):
         return AKAR / bersih.strip("/") / "index.html"
+    if bersih.startswith("/unggahan/"):
+        return AKAR / "content" / bersih.lstrip("/")
     calon = AKAR / bersih.lstrip("/")
     if calon.suffix:
         return calon
