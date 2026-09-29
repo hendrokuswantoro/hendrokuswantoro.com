@@ -3,6 +3,7 @@
     python tools/bangun_tulisan.py              # tulis
     python tools/bangun_tulisan.py --periksa    # bandingkan saja, jangan tulis
     python tools/bangun_tulisan.py --sumber api # ekspor dari dashboard dulu, lalu tulis
+    python tools/bangun_tulisan.py --sumber api --periksa  # dashboard dan git sama?
 
 Yang dibangkitkan: satu halaman per tulisan, daftar di blog/index.html,
 lalu sitemap.xml dan feed.xml ikut diperbarui lewat tools/build_feed.py.
@@ -237,26 +238,33 @@ def sitemap(semua: list[Tulisan]) -> str:
     baris += ["</urlset>", ""]
     return "\n".join(baris)
 
-def ekspor(pangkal: str) -> None:
+def ekspor(pangkal: str, periksa: bool = False) -> int:
     dari_api = SumberApi(pangkal).tulisan()
     folder = ISI / "blog"
+    beda = 0
     for t in dari_api:
         tujuan = folder / f"{t.slug}.md"
+        nama = tujuan.relative_to(AKAR).as_posix()
         baru = tulis_tulisan(t)
         lama = tujuan.read_text(encoding="utf-8") if tujuan.exists() else None
-        if lama != baru:
-            tujuan.write_text(baru, encoding="utf-8", newline="\n")
-            print(f"tulis {tujuan.relative_to(AKAR).as_posix()}")
+        if lama == baru:
+            print(f"{'sama ' if periksa else 'tetap'} {nama}")
+        elif periksa:
+            beda += 1
+            print(f"BEDA  {nama}: dashboard dan git tidak sama")
         else:
-            print(f"tetap {tujuan.relative_to(AKAR).as_posix()}")
+            tujuan.write_text(baru, encoding="utf-8", newline="\n")
+            print(f"tulis {nama}")
     ada = {t.slug for t in dari_api}
     for berkas in sorted(folder.glob("*.md")):
         if berkas.stem not in ada:
             print(f"biar {berkas.relative_to(AKAR).as_posix()}: tidak ada di dashboard, tidak disentuh")
 
-    dipakai = unggahan_publik.rujukan(SumberBerkas(ISI).tulisan())
-    for nama in unggahan_publik.salin(dipakai, ISI / "unggahan", pangkal):
-        print(f"salin content/unggahan/{nama}")
+    if not periksa:
+        dipakai = unggahan_publik.rujukan(SumberBerkas(ISI).tulisan())
+        for nama in unggahan_publik.salin(dipakai, ISI / "unggahan", pangkal):
+            print(f"salin content/unggahan/{nama}")
+    return beda
 
 
 def main() -> int:
@@ -269,11 +277,10 @@ def main() -> int:
                         help="pangkal API kalau --sumber api")
     pilihan = alasan.parse_args()
 
+    beda = 0
     if pilihan.sumber == "api":
-        if pilihan.periksa:
-            raise SystemExit("--periksa hanya membandingkan dengan content/, tanpa --sumber api")
         try:
-            ekspor(pilihan.api)
+            beda += ekspor(pilihan.api, pilihan.periksa)
         except IsiSalah as galat:
             raise SystemExit(f"ekspor gagal: {galat}") from galat
 
@@ -282,7 +289,6 @@ def main() -> int:
     if not semua:
         raise SystemExit("content/blog kosong")
 
-    beda = 0
     folder_unggahan = ISI / "unggahan"
     try:
         dipakai = unggahan_publik.rujukan(semua)

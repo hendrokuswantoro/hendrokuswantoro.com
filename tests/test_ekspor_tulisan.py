@@ -128,6 +128,13 @@ def test_tulisan_dari_dashboard_terbit_lewat_berkas_bersama_fotonya(api, situs, 
     assert "tidak disentuh" in capsys.readouterr().out
 
     assert _jalankan(monkeypatch, "--periksa") == 0, "CI akan menolak hasil ekspor"
+    assert _jalankan(monkeypatch, "--sumber", "api", "--api", pangkal, "--periksa") == 0
+
+    md.write_text(md.read_text(encoding="utf-8").replace("A paragraph.", "Diubah tangan."), encoding="utf-8")
+    assert _jalankan(monkeypatch, "--sumber", "api", "--api", pangkal, "--periksa") == 1
+    assert "catatan-lapangan.md: dashboard dan git tidak sama" in capsys.readouterr().out
+    assert "Diubah tangan." in md.read_text(encoding="utf-8"), "--periksa menulis berkas"
+    assert _jalankan(monkeypatch, "--sumber", "api", "--api", pangkal) == 0
 
     jumlah = len(diminta)
     assert _jalankan(monkeypatch, "--sumber", "api", "--api", pangkal) == 0
