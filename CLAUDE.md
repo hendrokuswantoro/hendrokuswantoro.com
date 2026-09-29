@@ -730,6 +730,12 @@ tidak akan ikut berganti.
 Akun admin di basis data laptop memakai TOTP sejak 27 September 2026, dan
 kode pemulihannya disimpan pemilik di brankas yang sama dengan kuncinya.
 
+Sejak 29 September 2026 `.env` laptop memakai `WEBAUTHN_RP_ID` dan
+`WEBAUTHN_ASAL` milik `admin.hendrokuswantoro.com`, sebab dashboard dibuka
+lewat terowongan. Passkey pemilik ("Laptop ini") terdaftar untuk alamat itu
+dan tidak berlaku di `localhost`; mode ketat dan kunci aplikasi menyala.
+Salinan `.env` sebelum perubahan ada di `cadangan/env-sebelum-terowongan`.
+
 Verifikasi wajah dijalankan dengan kamera sungguhan untuk pertama kalinya pada
 27 September 2026. Model 37 MB-nya tidak ikut git; ambil dengan
 `python tools/ambil_model.py` di mesin baru. Percobaan pertama menolak
