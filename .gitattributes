@@ -11,3 +11,6 @@
 *.pbf binary
 *.woff binary
 *.woff2 binary
+
+# Berkas batch Windows butuh CRLF.
+*.cmd text eol=crlf

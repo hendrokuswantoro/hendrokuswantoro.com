@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import errno
 import pathlib
 import socket
 import sys
@@ -71,13 +72,22 @@ def _soket_loopback(inang: str, porta: int) -> list[socket.socket] | None:
                              (socket.AF_INET6, ("::1", porta))):
         try:
             s = socket.socket(keluarga, socket.SOCK_STREAM)
-            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            if sys.platform == "win32":
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+            else:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind(alamat)
             s.listen(128)
             s.set_inheritable(True)
             dibuka.append(s)
-        except OSError:
-            pass
+        except OSError as galat:
+            if galat.errno == errno.EADDRINUSE or getattr(galat, "winerror", None) == 10048:
+                for lain in dibuka:
+                    lain.close()
+                raise SystemExit(
+                    f"jalan.py: porta {porta} sudah dipakai. Dashboard mungkin sudah menyala; "
+                    f"buka http://localhost:{porta}/admin"
+                ) from galat
 
     if not dibuka:
         return None

@@ -76,9 +76,8 @@ Token terowongan adalah rahasia. Jangan menempelnya ke obrolan atau ke git.
    COOKIE_AMAN=true
    ```
 
-   `ADMIN_NEXT` tidak ditulis di sini: aplikasi membacanya dari lingkungan
-   proses, bukan dari `.env`, dan `tools/nyalakan_dashboard.sh` menyetelnya
-   ke `1` sehingga yang tampil dashboard Next.
+   `ADMIN_NEXT` tidak perlu ditulis di sini: `tools/nyalakan_dashboard.sh`
+   menyetelnya ke `1` bila belum ada, sehingga yang tampil dashboard Next.
 
    Sesudah `WEBAUTHN_RP_ID` diganti, passkey yang didaftarkan di `localhost`
    tidak berlaku lagi; daftarkan passkey baru dari alamat terowongan. Sandi,
@@ -89,8 +88,12 @@ Token terowongan adalah rahasia. Jangan menempelnya ke obrolan atau ke git.
 ## Tiap kali ingin membuka dashboard
 
 1. Buka Docker Desktop.
-2. `sh tools/nyalakan_dashboard.sh`, yang menyalakan basis data, menjalankan
-   migrasi, lalu server. Biarkan jendelanya terbuka.
+2. Klik dua kali `tools
+yalakan_dashboard.cmd` di File Explorer, atau jalankan
+   `sh tools/nyalakan_dashboard.sh` dari Git Bash. Keduanya menyalakan basis
+   data, menjalankan migrasi, lalu server. Biarkan jendelanya terbuka. Kalau
+   dashboard ternyata sudah menyala, skripnya berhenti dengan pesan bahwa
+   porta 8000 sudah dipakai.
 3. Buka `https://admin.hendrokuswantoro.com/admin`, masuk ke Cloudflare Access
    dengan kode email, lalu masuk ke dashboard seperti biasa.
 
