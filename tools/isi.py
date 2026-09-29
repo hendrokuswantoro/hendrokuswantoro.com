@@ -186,7 +186,7 @@ class SumberApi:
             with urllib.request.urlopen(alamat, timeout=self.waktu_tunggu) as jawaban:
                 return json.loads(jawaban.read().decode("utf-8"))
         except urllib.error.URLError as galat:
-            raise IsiSalah(f"{alamat}: {galat}") from galat
+            raise IsiSalah(f"{alamat}: API tidak dapat dihubungi ({galat.reason})") from galat
 
     def tulisan(self) -> list[Tulisan]:
         daftar = self._ambil("/api/v1/blog?batas=100")["isi"]

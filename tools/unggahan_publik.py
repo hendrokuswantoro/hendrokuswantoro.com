@@ -66,7 +66,7 @@ def salin(dipakai: dict[str, list[str]], folder: pathlib.Path, pangkal: str,
             with urllib.request.urlopen(alamat, timeout=waktu_tunggu) as jawaban:
                 data = jawaban.read(batas + 1)
         except urllib.error.URLError as galat:
-            raise IsiSalah(f"{alamat}: {galat}") from galat
+            raise IsiSalah(f"{alamat}: berkas tidak dapat diambil ({galat.reason})") from galat
         if len(data) > batas:
             raise IsiSalah(
                 f"{nama} lebih dari {batas // (1024 * 1024)} MB, disebut {', '.join(dipakai[nama])}. "

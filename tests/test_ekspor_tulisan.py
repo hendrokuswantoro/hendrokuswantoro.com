@@ -160,6 +160,18 @@ def test_foto_yang_hilang_atau_yatim_ketahuan(api, situs, monkeypatch, capsys):
     assert (folder / FOTO).exists() and (folder / VIDEO).exists()
 
 
+def test_api_yang_mati_disebut_dengan_jelas_bukan_dikira_isi_rusak():
+    hasil = subprocess.run(
+        [sys.executable, "tools/bangun_tulisan.py", "--sumber", "api", "--api", "http://127.0.0.1:9", "--periksa"],
+        cwd=AKAR, capture_output=True, text=True,
+    )
+    assert hasil.returncode != 0
+    assert "tidak dapat dihubungi" in hasil.stderr, (
+        "test_admin.py melewati ujinya hanya kalau kalimat ini ada; tanpanya CI merah saat API mati"
+    )
+    assert "Traceback" not in hasil.stderr
+
+
 def test_berkas_di_atas_batas_cloudflare_ditolak(api, tmp_path):
     pangkal, _ = api
     dipakai = {VIDEO: ["catatan-lapangan"]}
