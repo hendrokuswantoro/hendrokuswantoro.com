@@ -721,6 +721,12 @@ memberi situs ini dua tuan.
    membuat subdomain yang tidak HTTPS, sebab domain yang berhenti memenuhi
    syarat dicoret dari daftar dan keluar darinya butuh berbulan bulan.
    Pemeriksaan kesehatan malam menagih ketiga syaratnya.
+   Record CAA `0 issue "letsencrypt.org"` ditambahkan hari itu juga.
+   Cloudflare lalu menambah sendiri `issue` dan `issuewild` untuk pki.goog,
+   ssl.com, digicert.com, dan comodoca.com; record tambahan itu TIDAK tampil
+   di dasbor, hanya terlihat lewat kueri DNS. Jangan hapus record CAA itu
+   dengan anggapan izin Cloudflare ikut hilang: justru tanpanya semua penerbit
+   boleh.
 2. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
    dashboard, serta konfigurasi nginx belum pernah berjalan di server
    sungguhan. Langkahnya ada di `docs/vps.md`. Sejak 28 September 2026 yang
