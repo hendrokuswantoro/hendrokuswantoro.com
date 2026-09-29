@@ -212,3 +212,11 @@ def test_halaman_html_divalidasi_ulang():
 def test_tiruan_produksi_tidak_berjalan_sebagai_root():
     isi = (AKAR / "infrastructure" / "uji-keamanan" / "Dockerfile").read_text(encoding="utf-8")
     assert re.search(r"^USER (?!root)\w+$", isi, re.M)
+
+
+def test_pemeriksaan_malam_menjaga_syarat_preload():
+    isi = ALUR["kesehatan.yml"]
+    langkah = isi[isi.index("The bare domain still meets the HSTS preload requirements"):]
+    langkah = langkah[:langkah.index("- name:", 10)]
+    assert "https://hendrokuswantoro.com/" in langkah
+    assert "31536000" in langkah and "includesubdomains" in langkah and "preload" in langkah

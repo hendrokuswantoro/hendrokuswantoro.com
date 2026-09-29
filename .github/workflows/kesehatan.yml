@@ -86,6 +86,17 @@ jobs:
           done
           exit $gagal
 
+      - name: The bare domain still meets the HSTS preload requirements
+        run: |
+          kepala=$(curl -sSD - -o /dev/null https://hendrokuswantoro.com/ | tr -d '\r' | tr 'A-Z' 'a-z')
+          hsts=$(printf '%s\n' "$kepala" | sed -n 's/^strict-transport-security: //p' | head -1)
+          echo "hsts: $hsts"
+          umur=$(printf '%s' "$hsts" | sed -n 's/.*max-age=\([0-9]*\).*/\1/p')
+          test "${umur:-0}" -ge 31536000 || { echo "FAIL max-age di bawah setahun"; exit 1; }
+          printf '%s' "$hsts" | grep -q includesubdomains || { echo "FAIL includeSubDomains hilang"; exit 1; }
+          printf '%s' "$hsts" | grep -q preload || { echo "FAIL preload hilang"; exit 1; }
+          echo "ok, domain ini didaftarkan ke daftar preload pada 29 September 2026"
+
       - name: The feed is well formed
         run: |
           curl -sS "$situs/feed.xml" -o umpan.xml

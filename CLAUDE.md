@@ -704,6 +704,12 @@ memberi situs ini dua tuan.
    menggandakannya: yang terkirim `max-age=31536000`, bukan 63072000. Web
    Analytics (RUM) dimatikan di hari yang sama; skripnya ditolak CSP dan
    tidak pernah mengumpulkan apa pun.
+   Hari itu juga pemilik mendaftarkan `hendrokuswantoro.com` ke daftar HSTS
+   preload (hstspreload.org, status `pending`). Akibatnya berlaku selamanya:
+   jangan pernah mematikan HSTS, memendekkan `max-age` di bawah setahun, atau
+   membuat subdomain yang tidak HTTPS, sebab domain yang berhenti memenuhi
+   syarat dicoret dari daftar dan keluar darinya butuh berbulan bulan.
+   Pemeriksaan kesehatan malam menagih ketiga syaratnya.
 2. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
    dashboard, serta konfigurasi nginx belum pernah berjalan di server
    sungguhan. Langkahnya ada di `docs/vps.md`. Sejak 28 September 2026 yang
