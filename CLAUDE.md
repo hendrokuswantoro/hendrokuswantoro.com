@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 1039, tanpa peramban, hitungan detik
+python -m pytest                 # 1055, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 115, Chromium sungguhan
 sh tools/verifikasi.sh           # 22 langkah, seluruhnya, berurutan
 
@@ -65,8 +65,8 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    1154 uji
-docs/                     empat belas dokumen, alasan di balik keputusannya
+tests/                    1170 uji
+docs/                     lima belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
 ```
@@ -570,6 +570,19 @@ Uji perubahan CSP dengan menyajikan situs **beserta tajuknya**, bukan dengan
 
 `Permissions-Policy: camera=(self)` hanya dipasang pada `location = /admin`,
 tidak pada seluruh situs.
+
+**Selama VPS belum ada, dashboard di laptop dibuka lewat Cloudflare Tunnel**
+di `admin.hendrokuswantoro.com`, pilihan pemilik pada 29 September 2026.
+Langkahnya di `docs/terowongan.md`. Tanpa nginx di depannya,
+`backend/core/terowongan.py` yang menjaga: permintaan lewat terowongan
+dikenali dari nama host ATAU header Cloudflare apa pun, wajib membawa token
+Cloudflare Access yang sah, hanya boleh ke `/admin`, `/_next/`, `/api/`, dan
+`/unggahan/`, alamat pembacanya dibaca dari `cf-connecting-ip`, dan header
+keamanannya sama dengan nginx. Konfigurasi yang setengah jadi menolak (503),
+tidak pernah membuka. Ia wajib middleware PALING LUAR, supaya pembatas laju
+dan catatan membaca alamat yang sudah diganti. `tests/test_terowongan.py`
+membandingkan header-nya dengan nginx, dan sudah dibuktikan gagal saat
+pemeriksaan tokennya dimatikan.
 
 **Situs, dashboard, dan API akan tinggal di satu VPS, di `www`.** Pemilik
 memilihnya pada 29 September 2026, sehari sesudah memilih subdomain `admin.`

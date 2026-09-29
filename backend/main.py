@@ -24,6 +24,7 @@ from backend.core.csp_admin import kebijakan as kebijakan_admin
 from backend.core.konfigurasi import pengaturan
 from backend.core.laju import BatasiLaju
 from backend.core.tanpa_simpan import TanpaSimpan
+from backend.core.terowongan import Terowongan
 from backend.layanan import pembersihan
 
 
@@ -68,6 +69,7 @@ def buat() -> FastAPI:
     app.add_middleware(BatasiLaju)
     app.add_middleware(TanpaSimpan)
     app.add_middleware(CatatPermintaan)
+    app.add_middleware(Terowongan)
 
     app.include_router(kesehatan.rute)
     for bagian in (tulisan.rute, proyek.rute, peta.rute, auth.rute,

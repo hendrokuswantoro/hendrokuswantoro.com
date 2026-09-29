@@ -71,6 +71,10 @@ class Pengaturan(BaseSettings):
     kolam_min: int = Field(default=1, alias="KOLAM_MIN")
     kolam_maks: int = Field(default=8, alias="KOLAM_MAKS")
 
+    terowongan_host: str = Field(default="", alias="TEROWONGAN_HOST")
+    access_tim: str = Field(default="", alias="ACCESS_TIM")
+    access_aud: str = Field(default="", alias="ACCESS_AUD")
+
     @property
     def siap(self) -> bool:
         return bool(self.dsn)
