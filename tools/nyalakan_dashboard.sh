@@ -22,4 +22,4 @@ docker exec hk_db pg_isready -q || { echo "basis data tidak menjawab dalam 60 de
 
 python backend/db/migrasi.py
 echo "dashboard: http://localhost:8000/admin, dan lewat terowongan bila TEROWONGAN_HOST diisi"
-exec python backend/jalan.py
+ADMIN_NEXT="${ADMIN_NEXT:-1}" exec python backend/jalan.py

@@ -71,11 +71,14 @@ Token terowongan adalah rahasia. Jangan menempelnya ke obrolan atau ke git.
    TEROWONGAN_HOST=admin.hendrokuswantoro.com
    ACCESS_TIM=<nama tim>
    ACCESS_AUD=<AUD tag>
-   ADMIN_NEXT=1
    WEBAUTHN_RP_ID=admin.hendrokuswantoro.com
    WEBAUTHN_ASAL=["https://admin.hendrokuswantoro.com"]
    COOKIE_AMAN=true
    ```
+
+   `ADMIN_NEXT` tidak ditulis di sini: aplikasi membacanya dari lingkungan
+   proses, bukan dari `.env`, dan `tools/nyalakan_dashboard.sh` menyetelnya
+   ke `1` sehingga yang tampil dashboard Next.
 
    Sesudah `WEBAUTHN_RP_ID` diganti, passkey yang didaftarkan di `localhost`
    tidak berlaku lagi; daftarkan passkey baru dari alamat terowongan. Sandi,
