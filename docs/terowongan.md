@@ -88,8 +88,7 @@ Token terowongan adalah rahasia. Jangan menempelnya ke obrolan atau ke git.
 ## Tiap kali ingin membuka dashboard
 
 1. Buka Docker Desktop.
-2. Klik dua kali `tools
-yalakan_dashboard.cmd` di File Explorer, atau jalankan
+2. Klik dua kali `tools/nyalakan_dashboard.cmd` di File Explorer, atau jalankan
    `sh tools/nyalakan_dashboard.sh` dari Git Bash. Keduanya menyalakan basis
    data, menjalankan migrasi, lalu server. Biarkan jendelanya terbuka. Kalau
    dashboard ternyata sudah menyala, skripnya berhenti dengan pesan bahwa
@@ -106,7 +105,7 @@ Menandai tulisan terbit di dashboard belum membuatnya tampil di situs. Situs
 dibangun Cloudflare dari git, jadi tulisannya harus masuk git lebih dulu.
 
 1. Pastikan dashboard menyala.
-2. Klik dua kali `tools	erbitkan.cmd`, atau jalankan `sh tools/terbitkan.sh`.
+2. Klik dua kali `tools/terbitkan.cmd`, atau jalankan `sh tools/terbitkan.sh`.
 3. Tunggu sekitar dua menit, lalu buka `https://www.hendrokuswantoro.com/blog/`.
 
 Skripnya menyamakan laptop dengan GitHub (`git pull --ff-only`), mengambil
