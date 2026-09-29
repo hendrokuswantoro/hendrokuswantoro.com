@@ -70,7 +70,7 @@ WAJIB_MENYEBUT_KARYA = {
 
 
 def _penyebut_gambar_karya() -> dict[str, list[tuple[str, str | None]]]:
-    tidak = {"next", "dist", "backend", ".git", "node_modules", ".claude"}
+    tidak = {"next", "dist", "backend", ".git", "node_modules", ".claude", "hasil-uji-keamanan"}
     calon = [p for p in AKAR.rglob("*.html") if not tidak & set(p.relative_to(AKAR).parts)]
     calon += list((AKAR / "assets" / "js").glob("*.js"))
     for folder in ("app", "components", "content", "lib"):

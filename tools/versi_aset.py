@@ -87,7 +87,7 @@ NEXT = AKAR / "next"
 FOLDER_NEXT = ("app", "components", "content", "lib")
 
 def halaman() -> list[pathlib.Path]:
-    tidak = {"next", "dist", "backend", ".git", ".claude"}
+    tidak = {"next", "dist", "backend", ".git", ".claude", "hasil-uji-keamanan"}
     return sorted(
         p for p in AKAR.rglob("*.html")
         if not tidak & set(p.relative_to(AKAR).parts)

@@ -69,7 +69,7 @@ def test_situs_untuk_vps_dibangun_dengan_token_peta():
 
 def test_deploy_sebelum_situs_pindah_tidak_menuntut_dashboard_di_www():
     langkah = VPS[VPS.index("- name: The dashboard answers"):VPS.index("- name: Say what to do if this failed")]
-    kosong = langkah[langkah.index('if [ -z "$admin" ]; then'):langkah.index("fi")]
+    kosong = langkah[langkah.index('if [ -z "$ADMIN" ]; then'):langkah.index("fi")]
     assert "exit 0" in kosong, (
         "deploy pertama berjalan saat www masih di Worker, yang tidak punya /admin"
     )

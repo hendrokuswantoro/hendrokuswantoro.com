@@ -92,8 +92,9 @@ def test_jalur_masuk_dibatasi_lebih_ketat_daripada_jalur_biasa():
 
 
 def test_alamat_html_lama_tetap_hidup():
-    assert re.search(r"location\s+~\s+\^\(/\.\+\)\\\.html\$", NGINX), (
-        "tidak ada pengalihan dari alamat .html yang lama"
+    assert r"location ~ ^(/[A-Za-z0-9][A-Za-z0-9/_-]*)\.html$ {" in NGINX, (
+        "tidak ada pengalihan dari alamat .html yang lama, atau polanya kembali "
+        "menerima garis miring terbalik yang membuatnya pengalih ke situs lain"
     )
     assert "return 308" in NGINX
 
@@ -232,7 +233,9 @@ def test_deploy_tidak_pernah_mengirim_commit_yang_ci_nya_merah():
 
 
 def test_deploy_menyematkan_kunci_host():
-    assert "ssh-keyscan" in VPS
+    assert "secrets.VPS_KUNCI_HOST" in VPS
+    assert "StrictHostKeyChecking yes" in VPS
+    assert "ssh-keyscan" not in VPS, "kunci yang dipindai saat deploy dipercaya tanpa diperiksa"
     assert "StrictHostKeyChecking=no" not in tanpa_komentar(VPS)
 
 

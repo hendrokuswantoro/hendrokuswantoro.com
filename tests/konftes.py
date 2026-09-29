@@ -28,7 +28,7 @@ def ada_basis_data(dsn: str) -> bool:
     except Exception:
         return False
 
-BUKAN_HALAMAN = {"next", "dist", "content", "backend", ".claude"}
+BUKAN_HALAMAN = {"next", "dist", "content", "backend", ".claude", "hasil-uji-keamanan"}
 
 HALAMAN = sorted(
     p for p in AKAR.rglob("*.html")

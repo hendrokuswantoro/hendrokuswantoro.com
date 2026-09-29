@@ -21,10 +21,18 @@ jobs:
     if: >-
       vars.VPS_AKTIF == '1' &&
       (github.event_name == 'workflow_dispatch' ||
-       github.event.workflow_run.conclusion == 'success')
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_repository.full_name == github.repository))
+    env:
+      SITUS: ${{ vars.SITUS }}
+      ADMIN: ${{ vars.ADMIN }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          persist-credentials: false
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
@@ -53,17 +61,23 @@ jobs:
       - name: Load the deploy key
         env:
           KUNCI: ${{ secrets.VPS_SSH_KUNCI }}
+          KUNCI_HOST: ${{ secrets.VPS_KUNCI_HOST }}
           HOST: ${{ secrets.VPS_HOST }}
           PORTA: ${{ secrets.VPS_PORTA }}
         run: |
           test -n "$KUNCI" || { echo "VPS_SSH_KUNCI kosong"; exit 1; }
           test -n "$HOST"  || { echo "VPS_HOST kosong"; exit 1; }
+          test -n "$KUNCI_HOST" || { echo "VPS_KUNCI_HOST kosong: isi dengan /etc/ssh/ssh_host_ed25519_key.pub milik VPS"; exit 1; }
 
           mkdir -p ~/.ssh
           printf '%s\n' "$KUNCI" > ~/.ssh/deploy
           chmod 600 ~/.ssh/deploy
 
-          ssh-keyscan -p "${PORTA:-22}" -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          porta="${PORTA:-22}"
+          if [ "$porta" = "22" ]; then nama="$HOST"; else nama="[$HOST]:$porta"; fi
+          printf '%s %s\n' "$nama" "$(printf '%s' "$KUNCI_HOST" | cut -d' ' -f1,2)" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          printf 'Host *\n  StrictHostKeyChecking yes\n  UserKnownHostsFile ~/.ssh/known_hosts\n' > ~/.ssh/config
 
       - name: Ship the site and the code
         env:
@@ -119,29 +133,27 @@ jobs:
 
       - name: The published site answers
         run: |
-          situs="${{ vars.SITUS }}"
-          if [ -z "$situs" ]; then
+          if [ -z "$SITUS" ]; then
             echo "variabel SITUS belum diisi, pemeriksaan luar dilewati"
             exit 0
           fi
           for jalur in / /about /project /blog/; do
-            kode=$(curl -s -o /dev/null -w '%{http_code}' "$situs$jalur")
+            kode=$(curl -s -o /dev/null -w '%{http_code}' "$SITUS$jalur")
             test "$kode" = "200" || { echo "FAIL $jalur -> $kode"; exit 1; }
             echo "ok   $jalur"
           done
 
       - name: The dashboard answers
         run: |
-          admin="${{ vars.ADMIN }}"
-          if [ -z "$admin" ]; then
+          if [ -z "$ADMIN" ]; then
             echo "variabel ADMIN belum diisi: situs belum dipindah ke VPS, pemeriksaan dilewati"
             exit 0
           fi
-          kode=$(curl -s -o /dev/null -w '%{http_code}' "$admin/admin")
+          kode=$(curl -s -o /dev/null -w '%{http_code}' "$ADMIN/admin")
           case "$kode" in
-            200) echo "ok, $admin/admin answers 200" ;;
-            302) echo "ok, $admin/admin sits behind Cloudflare Access" ;;
-            *) echo "FAIL, $admin/admin answers $kode"; exit 1 ;;
+            200) echo "ok, $ADMIN/admin answers 200" ;;
+            302) echo "ok, $ADMIN/admin sits behind Cloudflare Access" ;;
+            *) echo "FAIL, $ADMIN/admin answers $kode"; exit 1 ;;
           esac
 
       - name: Say what to do if this failed

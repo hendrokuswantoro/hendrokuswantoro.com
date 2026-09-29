@@ -7,29 +7,30 @@ on:
   workflow_run:
     workflows: [CI]
     types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
-  issues: write
 
 jobs:
   periksa:
     name: Live site
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    permissions:
+      contents: read
+      issues: write
+    env:
+      situs: ${{ vars.SITUS || 'https://www.hendrokuswantoro.com' }}
     steps:
       - name: Resolve the address
-        id: alamat
-        run: |
-          situs="${{ vars.SITUS }}"
-          if [ -z "$situs" ]; then
-            situs="https://www.hendrokuswantoro.com"
-          fi
-          echo "situs=$situs" >> "$GITHUB_OUTPUT"
-          echo "checking $situs"
+        run: echo "checking $situs"
 
       - name: Every page answers
         run: |
-          situs="${{ steps.alamat.outputs.situs }}"
           gagal=0
           while IFS= read -r jalur; do
             [ -n "$jalur" ] || continue
@@ -57,7 +58,6 @@ jobs:
 
       - name: The old .html addresses still lead somewhere
         run: |
-          situs="${{ steps.alamat.outputs.situs }}"
           kode=$(curl -s -o /dev/null -w '%{http_code}' "$situs/about.html")
           case "$kode" in
             30*) echo "ok, /about.html redirects with $kode" ;;
@@ -67,14 +67,12 @@ jobs:
 
       - name: A missing page answers 404, not 200
         run: |
-          situs="${{ steps.alamat.outputs.situs }}"
           kode=$(curl -s -o /dev/null -w '%{http_code}' "$situs/tidak-ada-halaman-ini")
           test "$kode" = "404" || { echo "expected 404, got $kode"; exit 1; }
           echo "ok"
 
       - name: The security headers survived the deploy
         run: |
-          situs="${{ steps.alamat.outputs.situs }}"
           kepala=$(curl -sSD - -o /dev/null "$situs/" | tr 'A-Z' 'a-z')
           gagal=0
           for arahan in content-security-policy strict-transport-security \
@@ -90,7 +88,6 @@ jobs:
 
       - name: The feed is well formed
         run: |
-          situs="${{ steps.alamat.outputs.situs }}"
           curl -sS "$situs/feed.xml" -o umpan.xml
           python3 -c "import xml.etree.ElementTree as ET; \
             d = ET.parse('umpan.xml'); \
@@ -100,7 +97,6 @@ jobs:
 
       - name: The map still asks Mapbox for its tiles
         run: |
-          situs="${{ steps.alamat.outputs.situs }}"
           curl -sS "$situs/assets/js/konfigurasi.js" -o konfigurasi.js
           if grep -q 'mapboxToken: ""' konfigurasi.js; then
             echo "the deployed site has no token: the map fell back to OpenFreeMap"
@@ -111,7 +107,6 @@ jobs:
 
       - name: The canonical address exists
         run: |
-          situs="${{ steps.alamat.outputs.situs }}"
           curl -sS "$situs/" -o beranda.html
           kanonik=$(sed -n 's/.*<link rel="canonical" href="https\?:\/\/\([^"\/]*\).*/\1/p' beranda.html | head -1)
           if [ -z "$kanonik" ]; then
@@ -184,8 +179,14 @@ jobs:
   alamat-cloudflare:
     name: Cloudflare address list
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:

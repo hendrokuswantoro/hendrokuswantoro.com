@@ -368,3 +368,78 @@ alat uji melonggarkan batas laju hanya di tiruannya supaya hasilnya jujur.
   ubin Mapbox dan citra satelit yang tidak mengirim CORP; ZAP menandainya
   Low.
 
+
+## Putaran kedua, dengan alat yang belum dipakai
+
+Masih 29 September 2026. Putaran pertama tidak memeriksa konfigurasi nginx,
+workflow GitHub, dan skrip shell dengan alat yang memang dibuat untuk itu.
+Putaran ini memakainya, dan menemukan cacat yang lolos dari ZAP.
+
+| Alat | Sasaran | Temuan | Sesudah |
+| --- | --- | --- | --- |
+| gixy-ng 0.2.55 | konfigurasi nginx | 2 High, 8 Medium | 0 High, 0 Medium |
+| zizmor 1.30.1 | empat workflow | 3 High, 10 Medium, 10 Info | 0, dua pengecualian tercatat |
+| shellcheck | sepuluh skrip shell | 2 | 0 |
+| hadolint, trivy | Dockerfile, dependensi, rahasia | kontainer tiruan berjalan sebagai root | 0 |
+| semgrep, sepuluh set aturan | 277 berkas | Dependabot tanpa masa tunggu | 0 di kode |
+| Lighthouse 12 | enam halaman, ponsel dan desktop | skrip Cloudflare Web Analytics ditolak CSP | milik pemilik, lihat bawah |
+
+Yang diperbaiki, beserta buktinya:
+
+- **Pengalihan terbuka di nginx.** `location ~ ^(/.+)\.html$` menaruh `$1` ke
+  `Location`. `/%5Cevil.com/x.html` menjadi `Location: /\evil.com/x`, dan
+  peramban membaca `/\` sebagai `//`, jadi pembaca dibawa ke situs lain lewat
+  tautan yang tampak milik situs ini. Polanya kini hanya menerima huruf, angka,
+  garis miring, garis bawah, dan tanda hubung. Dibuktikan dengan nginx
+  sungguhan: konfigurasi lama menjawab 308 ke `/\evil.com/x`, yang baru 404.
+- **Halaman HTML tidak pernah membawa `Cache-Control`.** Blok
+  `location ~* \.html$` tidak pernah tercapai, sebab blok pengalih di atasnya
+  menangkap alamat yang sama lebih dulu, dan halaman disajikan `location /`
+  tanpa header itu. Peramban lalu menebak sendiri berapa lama menyimpannya.
+  Sekarang peta `$cache_halaman` memasangnya di tingkat server, kosong untuk
+  `/api/` dan `/unggahan/` yang mengatur sendiri.
+- **`Cache-Control` ganda di `/assets/` dan `/_next/`.** `expires 1y`
+  menambah satu, `add_header` menambah satu lagi. `expires` dihapus.
+- **Nama tanpa `www` tidak mengirim HSTS**, padahal daftar preload
+  mensyaratkannya. `server_tokens off` dan daftar sandi TLS 1.2 yang hanya
+  ECDHE dengan AEAD kini ditulis di tingkat http.
+- **Deploy bisa mengirim commit yang tidak diuji CI.** Pada `workflow_run`,
+  checkout bawaan mengambil ujung `main`, bukan commit yang baru lolos. Dua
+  push berdekatan cukup untuk mengirim yang kedua. Sekarang yang diambil
+  `workflow_run.head_sha`, dan hanya kalau asalnya push ke repositori ini,
+  bukan permintaan tarik dari fork. semgrep tetap menandai checkout itu,
+  sebab ia tidak membaca syarat `if:` job-nya.
+- **Kunci host VPS dipercaya saat pertama dilihat.** `ssh-keyscan` saat deploy
+  menerima kunci apa pun yang menjawab, termasuk milik penyadap di tengah
+  jalan. Kunci host kini disematkan lewat secret `VPS_KUNCI_HOST`.
+- **Token GitHub tertinggal di `.git/config`** di seluruh checkout, dan nilai
+  `vars` serta keluaran langkah disisipkan langsung ke skrip shell. Keduanya
+  diperbaiki; `issues: write` pindah dari seluruh workflow ke satu job.
+- **Dependabot menunggu tujuh hari** sebelum mengusulkan versi baru. Paket
+  yang dibajak biasanya ketahuan dan ditarik dalam hitungan hari.
+- **Kontainer API tiruan berjalan sebagai `hk`**, seperti di produksi.
+
+`periksa_nginx.sh` kini menyalakan nginx sungguhan dan memeriksa perilakunya,
+bukan hanya `nginx -t`: pengalihan, header cache, HSTS, dan penyebutan
+versi. Terhadap konfigurasi lama ia gagal di empat tempat. zizmor, gixy, dan
+shellcheck berjalan di job Security Scan.
+
+### Angka Lighthouse yang menyesatkan
+
+Lighthouse memberi halaman Project di ponsel LCP 9,5 detik. Diukur langsung
+dengan CPU diperlambat empat kali, LCP-nya 1,1 sampai 1,4 detik, dengan
+maupun tanpa GPU. Angka Lighthouse berasal dari simulasinya: tanpa GPU,
+WebGL digambar perangkat lunak (SwiftShader), dan satu tugas menyiapkan peta
+tercatat enam detik. Ponsel sungguhan punya GPU.
+
+### Milik pemilik
+
+- **Cloudflare Web Analytics menyisipkan skripnya ke tiap halaman**, dan CSP
+  situs menolaknya, jadi tiap halaman mencatat galat di konsol dan
+  analitiknya tidak mengumpulkan apa pun. Pilihannya dua: matikan
+  penyisipan otomatisnya di dasbor, atau izinkan
+  `static.cloudflareinsights.com` di `script-src` dan
+  `cloudflareinsights.com` di `connect-src`.
+- **Pengalihan nama tanpa `www` di Cloudflare tidak mengirim HSTS**, sebab
+  Redirect Rule menjawab sebelum Worker dan `_headers`. Selama itu situs ini
+  tidak memenuhi syarat daftar preload meski header-nya memintanya.

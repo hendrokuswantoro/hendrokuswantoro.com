@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - name: Shell scripts parse
         run: |
@@ -102,6 +104,8 @@ jobs:
         working-directory: next
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: '24'
@@ -134,6 +138,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
@@ -147,6 +153,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: No secret anywhere in the git history
         run: |
@@ -157,6 +164,14 @@ jobs:
         run: |
           pip install -q bandit==1.9.4
           bandit -r backend tools -q -lll
+
+      - name: Workflows, shell scripts, and nginx pass their security linters
+        run: |
+          pip install -q zizmor==1.30.1 gixy-ng==0.2.55
+          zizmor --offline .github/workflows
+          shellcheck -S style $(git ls-files '*.sh')
+          printf 'events{}\nhttp{\ninclude %s/infrastructure/nginx/hendrokuswantoro.conf;\n}\n' "$PWD" > "$RUNNER_TEMP/nginx.conf"
+          gixy -ll "$RUNNER_TEMP/nginx.conf"
 
       - name: No secret may enter the repository
         run: |
@@ -218,6 +233,8 @@ jobs:
       DSN: postgresql://hendro:uji@127.0.0.1:5432/hendrokuswantoro
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
@@ -315,6 +332,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
@@ -376,6 +395,8 @@ jobs:
     needs: [lint, test, keamanan, basisdata, peramban]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
 
       - name: Build the folder Cloudflare serves
         env:

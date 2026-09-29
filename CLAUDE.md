@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 1019, tanpa peramban, hitungan detik
+python -m pytest                 # 1039, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 115, Chromium sungguhan
 sh tools/verifikasi.sh           # 22 langkah, seluruhnya, berurutan
 
@@ -65,7 +65,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    1134 uji
+tests/                    1154 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -645,6 +645,19 @@ tanpa itu `content/unggahan/` ikut diabaikan dan fotonya tidak pernah sampai.
   export, dan dependensi yang tidak terpakai. Salinan MapLibre di
   `next/public/assets/vendor/` dikecualikan dari keduanya: itu kode pihak
   ketiga yang dimuat lewat alamat, bukan lewat import.
+- zizmor, gixy (`-ll`), dan shellcheck berjalan di Security Scan. Tiap
+  checkout memakai `persist-credentials: false`, dan nilai `vars`, `inputs`,
+  atau keluaran langkah masuk ke skrip shell lewat `env`, tidak pernah lewat
+  `${{ }}` di dalam `run:`. Workflow `workflow_run` hanya berjalan untuk push
+  ke repositori ini; pengecualiannya di `.github/zizmor.yml` hanya untuk
+  kedua workflow itu.
+- `periksa_nginx.sh` menyalakan nginx sungguhan dan memeriksa perilakunya.
+  Jangan menulis `expires` di samping `add_header Cache-Control`: keduanya
+  menjadi dua header. Pola pengalih `.html` sengaja sempit; `(/.+)` membuatnya
+  pengalih ke situs lain lewat `/%5C`.
+- Deploy menyematkan kunci host VPS dari secret `VPS_KUNCI_HOST`, bukan
+  `ssh-keyscan`, dan mengambil commit yang lolos CI (`workflow_run.head_sha`),
+  bukan ujung `main`.
 
 Deploy sengaja tidak ada di `ci.yml`. Cloudflare membangun dan menerbitkan
 sendiri ketika `main` bergerak, jadi deploy kedua di GitHub Actions berarti

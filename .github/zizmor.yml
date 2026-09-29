@@ -1,0 +1,5 @@
+rules:
+  dangerous-triggers:
+    ignore:
+      - kesehatan.yml
+      - vps.yml

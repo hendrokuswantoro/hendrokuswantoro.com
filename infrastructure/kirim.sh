@@ -37,10 +37,16 @@ if [ ! -d "$CADANGAN" ]; then
   exit 1
 fi
 
+daftar() {
+  for f in "$CADANGAN"/hk-*.sql.gz.enc; do
+    if [ -f "$f" ]; then printf '%s\n' "$f"; fi
+  done
+}
+
 if [ "$SEMUA" -eq 1 ]; then
-  DAFTAR=$(ls -1 "$CADANGAN"/hk-*.sql.gz.enc 2>/dev/null || true)
+  DAFTAR=$(daftar)
 else
-  DAFTAR=$(ls -1 "$CADANGAN"/hk-*.sql.gz.enc 2>/dev/null | tail -1 || true)
+  DAFTAR=$(daftar | tail -1)
 fi
 
 if [ -z "$DAFTAR" ]; then
@@ -78,13 +84,16 @@ for berkas in $DAFTAR; do
   fi
 done
 
+set +f
+IFS=$IFS_ASLI
+
 UNGGAHAN="$CADANGAN/unggahan"
 if [ -d "$UNGGAHAN" ]; then
   SIAP=$(mktemp)
   JUMLAH=0
-  for berkas in $(ls -1 "$UNGGAHAN" 2>/dev/null); do
-    [ -f "$UNGGAHAN/$berkas" ] || continue
-    case "$berkas" in .*) continue ;; esac
+  for jalur in "$UNGGAHAN"/*; do
+    [ -f "$jalur" ] || continue
+    berkas=${jalur##*/}
     penanda=$(head -c 6 "$UNGGAHAN/$berkas" 2>/dev/null || true)
     case "$berkas" in
       *.enc) ;;
@@ -111,9 +120,6 @@ if [ -d "$UNGGAHAN" ]; then
   fi
   rm -f "$SIAP"
 fi
-
-set +f
-IFS=$IFS_ASLI
 
 if [ "$COBA" -eq 0 ] && [ "$GAGAL" -eq 0 ]; then
   rclone delete --max-depth 1 --min-age "${CADANGAN_SIMPAN_HARI:-30}d" "$TUJUAN/" || true

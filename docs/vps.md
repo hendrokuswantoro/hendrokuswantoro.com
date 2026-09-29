@@ -345,12 +345,19 @@ Yang harus diisi di **Settings > Secrets and variables > Actions**:
 | Secret | `VPS_PENGGUNA` | `deploy` |
 | Secret | `VPS_SSH_KUNCI` | kunci privat OpenSSH, khusus deploy |
 | Secret | `VPS_PORTA` | opsional, bawaannya 22 |
+| Secret | `VPS_KUNCI_HOST` | isi `/etc/ssh/ssh_host_ed25519_key.pub` milik VPS, disalin dari konsol penyedia |
 | Variable | `VPS_AKTIF` | `1` |
 | Variable | `SITUS` | `https://www.hendrokuswantoro.com` |
 | Variable | `ADMIN` | `https://www.hendrokuswantoro.com`, diisi SESUDAH situs pindah (langkah 8); sebelum itu `/admin` di `www` masih milik Worker |
 
 `VPS_HOST` adalah alamat asli VPS, bukan `www.hendrokuswantoro.com`: nama
 itu menunjuk Cloudflare, dan Cloudflare tidak meneruskan SSH.
+
+`VPS_KUNCI_HOST` adalah kunci publik host VPS, satu baris berawalan
+`ssh-ed25519`. Salin dari konsol web penyedia, bukan dari sambungan SSH
+pertama: kunci yang dibaca lewat jaringan bisa milik penyadap di tengah
+jalan, dan itu yang terjadi kalau deploy memakai `ssh-keyscan`. Tanpa secret
+ini deploy menolak berjalan.
 
 Secret `MAPBOX_TOKEN`, yang sudah dipakai CI, juga dipakai membangun situs
 untuk VPS. Deploy menolak berjalan tanpa token itu, sebab tanpa token peta di
