@@ -174,7 +174,13 @@ export function PenyuntingTulisan({
     kerjakan(async () => {
       await kirim(`/api/v1/admin/blog/${slug}/status`, "POST", { status: ke });
       setStatus(ke);
-      setKabar(baik(ke === "terbit" ? "Tulisan sudah terbit." : "Tulisan jadi draf lagi."));
+      setKabar(
+        baik(
+          ke === "terbit"
+            ? "Tulisan ditandai terbit. Supaya tampil di situs, klik dua kali tools/terbitkan.cmd di laptop."
+            : "Tulisan jadi draf lagi.",
+        ),
+      );
       onBerubah();
     });
 

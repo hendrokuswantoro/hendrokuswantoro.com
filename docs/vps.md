@@ -472,6 +472,9 @@ perlindungan DDoS, dan alamat VPS yang tersembunyi.
 
 ## Tulisan dari dashboard ke situs publik
 
+Selama VPS belum ada, tulisan terbit lewat `tools/terbitkan.cmd` di laptop;
+lihat `docs/terowongan.md`. Rencana di bawah ini untuk sesudah VPS menyala.
+
 Situs dan API kini satu mesin, jadi foto di `/unggahan/` tampil di situs
 tanpa disalin ke mana pun. Yang belum ada: situs dibangun dari `content/` di
 git oleh GitHub Actions, bukan dari basis data. Tulisan yang dibuat di

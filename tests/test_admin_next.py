@@ -74,3 +74,16 @@ def test_masuk_ulang_dari_sesi_lemah_tidak_menawarkan_wajah():
     )
     assert "hanyaKuat={ulangKuat}" in halaman
     assert 'hasil.cara.filter((c) => c !== "wajah")' in masuk
+
+
+def test_dashboard_tidak_mengaku_tulisan_sudah_ada_di_situs():
+    next_ = (AKAR / "next" / "components" / "admin" / "PenyuntingTulisan.tsx").read_text(encoding="utf-8")
+    html = (AKAR / "backend" / "admin" / "dasbor-penyunting.js").read_text(encoding="utf-8")
+    for isi in (next_, html):
+        assert "Tulisan sudah terbit." not in isi, "menandai terbit tidak membuatnya tampil di situs"
+        assert "tools/terbitkan.cmd" in isi
+    skrip = (AKAR / "tools" / "terbitkan.sh").read_text(encoding="utf-8")
+    assert "git pull --ff-only" in skrip and "--sumber api" in skrip
+    assert 'git commit --quiet -m "tulisan: terbitkan dari dashboard' in skrip and '-- "$@"' in skrip, (
+        "commit penerbit hanya boleh membawa berkas tulisan, bukan perubahan lain di laptop"
+    )

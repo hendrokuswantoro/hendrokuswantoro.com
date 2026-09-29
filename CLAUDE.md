@@ -584,6 +584,17 @@ dan catatan membaca alamat yang sudah diganti. `tests/test_terowongan.py`
 membandingkan header-nya dengan nginx, dan sudah dibuktikan gagal saat
 pemeriksaan tokennya dimatikan.
 
+Menandai tulisan terbit di dashboard TIDAK menerbitkannya ke situs. Selama
+dashboard di laptop, jalannya `tools/terbitkan.cmd`: ekspor lewat
+`--sumber api`, lalu satu commit yang hanya memuat berkas tulisan, lalu push.
+Sampai 29 September 2026 dashboard Next menjawab "Tulisan sudah terbit." padahal
+situsnya belum berubah; `tests/test_admin_next.py` kini menolak kalimat itu.
+
+Kerja sinkron yang lama (SMTP, OpenCV, Argon2) wajib lewat
+`asyncio.to_thread` di lapisan layanan. Dipanggil langsung dari fungsi async,
+ia membekukan SELURUH server, bukan hanya permintaannya: terukur empat detik
+tiap surat Gmail. `tests/test_tidak_membekukan.py` menolaknya.
+
 **Situs, dashboard, dan API akan tinggal di satu VPS, di `www`.** Pemilik
 memilihnya pada 29 September 2026, sehari sesudah memilih subdomain `admin.`
 untuk dashboard, supaya tulisan dari dashboard bisa terbit di mesin yang sama

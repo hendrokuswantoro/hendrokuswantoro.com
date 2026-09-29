@@ -100,6 +100,26 @@ yalakan_dashboard.cmd` di File Explorer, atau jalankan
 Kalau yang tampil halaman galat Cloudflare 1033 atau 502, terowongannya hidup
 tetapi server di laptop belum berjalan: jalankan langkah 2.
 
+## Menerbitkan tulisan dari dashboard
+
+Menandai tulisan terbit di dashboard belum membuatnya tampil di situs. Situs
+dibangun Cloudflare dari git, jadi tulisannya harus masuk git lebih dulu.
+
+1. Pastikan dashboard menyala.
+2. Klik dua kali `tools	erbitkan.cmd`, atau jalankan `sh tools/terbitkan.sh`.
+3. Tunggu sekitar dua menit, lalu buka `https://www.hendrokuswantoro.com/blog/`.
+
+Skripnya menyamakan laptop dengan GitHub (`git pull --ff-only`), mengambil
+tulisan terbit beserta fotonya lewat `bangun_tulisan.py --sumber api`, lalu
+membuat satu commit yang HANYA memuat `content/blog`, `content/unggahan`,
+`blog/`, `feed.xml`, dan `sitemap.xml`, dan mengirimnya. Perubahan lain yang
+kebetulan ada di laptop tidak ikut. Kalau tidak ada yang baru, ia berhenti
+tanpa membuat commit. Kalau laptop dan GitHub sudah berbeda arah, ia berhenti
+tanpa mengirim apa pun.
+
+Tulisan yang dijadikan draf lagi atau dihapus di dashboard TIDAK ikut hilang
+dari situs; berkasnya di `content/blog/` harus dihapus sendiri.
+
 ## Saat VPS menyala
 
 Terowongan tidak dibutuhkan lagi. Hapus public hostname `admin`, kosongkan

@@ -88,7 +88,7 @@ async function terbitkan() {
   if (!jawaban.ok) { kabar(pesanGalat(hasil)); return; }
   $("tanda-status").textContent = "terbit";
   $("tanda-status").className = "tanda terbit";
-  kabar("Terbit. Jalankan pembangkit situs supaya halamannya ikut terbit.", "baik");
+  kabar("Ditandai terbit. Supaya tampil di situs, klik dua kali tools/terbitkan.cmd di laptop.", "baik");
 }
 
 async function hapus() {
