@@ -85,7 +85,7 @@ dipakai CI, jadi menyunting hasilnya akan ketahuan, tetapi baru di CI.
 | `next/app/globals.css` | `tools/gaya_next.py` |
 | nomor `?v=` di seluruh HTML, `app.js`, dan gambar karya di port Next | `tools/versi_aset.py` |
 | `assets/img/og-cover.png`, ikon | `tools/build_og.py`, `tools/build_icons.py` |
-| `assets/img/work/*.webp` | `tools/build_work_images.py` |
+| `assets/img/work/*.webp`, salinannya di `next/public/assets/img/work/` | `tools/build_work_images.py` |
 | `@font-face` di `style.css` | `tools/ambil_font.py` |
 | `assets/js/parkir-data.js`, `next/content/parkir-data.json` | `tools/bangun_parkir.py` |
 | hash sha256 di `_headers` | `tools/hash_skrip.py` |
@@ -548,11 +548,12 @@ pun. Inilah sebab kegagalan acak di `test_dasbor_peramban.py` yang lama
 tidak ketemu. Sekarang pipanya dikuras utas latar ke `deque` berbatas.
 
 **Halaman web tidak bisa mencegah tangkapan layar**, dengan cara apa pun.
-Tangkapannya diambil sistem operasi, di luar jangkauan halaman. Yang
-dikerjakan sejak 26 September 2026 adalah kebalikannya: tiap gambar karya
-membawa nama situsnya di pojok kanan bawah, digambar `tools/build_work_images.py`,
-jadi gambar yang tertangkap tetap menyebut asalnya. Jangan menambahkan skrip
-yang mengaku menghalangi tangkapan layar.
+Tangkapannya diambil sistem operasi, di luar jangkauan halaman. Jangan
+menambahkan skrip yang mengaku menghalangi tangkapan layar. Dari 26 sampai 29
+September 2026 tiap gambar karya membawa label nama situs di pojok kanan
+bawah; pemilik memintanya dihapus, sebab lembar petanya sendiri sudah memuat
+nama dan hak ciptanya. `tools/build_work_images.py` sekarang juga menyalin
+hasilnya ke `next/public/assets/img/work/`, yang sebelumnya disalin tangan.
 
 **Di balik nginx, uvicorn mendengarkan lewat soket Unix, dan di sana ia
 tidak punya alamat klien sama sekali.** `--forwarded-allow-ips='127.0.0.1'`

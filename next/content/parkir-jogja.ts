@@ -17,7 +17,7 @@ export const PARKIR = {
     id: "Taruh pin di jalan mana pun di Kota Yogyakarta, zona dan tarif parkirnya langsung terlihat. Sama pentingnya, peta ini tahu kapan harus diam.",
   } as Copy,
 
-  image: "/assets/img/work/parking.webp?v=8e000f92a9",
+  image: "/assets/img/work/parking.webp?v=12dc5e71f9",
   alt: {
     en: "The parking map showing the zone and the fee for a street in Yogyakarta",
     id: "Peta parkir yang menampilkan zona dan tarif untuk sebuah ruas di Yogyakarta",

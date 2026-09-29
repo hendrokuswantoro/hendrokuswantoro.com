@@ -1,16 +1,15 @@
+import shutil
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 
 SOURCE = Path("D:/Projects/Portfolio Kerja")
 OUT = Path(__file__).resolve().parent.parent / "assets" / "img" / "work"
+OUT_NEXT = Path(__file__).resolve().parent.parent / "next" / "public" / "assets" / "img" / "work"
 
 WIDTH, HEIGHT = 800, 450
 WIDTHS = (400, 600, 800)
 BACKGROUND = (229, 232, 234)
 QUALITY = 82
-
-TANDA = "hendrokuswantoro.com"
-HURUF = Path(__file__).resolve().parent.parent / "assets" / "fonts" / "poppins-v24-600-latin.woff2"
 
 WORK = {
     "parking": "sistem parkir yogyakarta/Aapppublik.png",
@@ -23,21 +22,6 @@ WORK = {
 }
 
 
-def tandai(canvas: Image.Image) -> Image.Image:
-    huruf = ImageFont.truetype(str(HURUF), 17)
-    kiri, atas, kanan, bawah = huruf.getbbox(TANDA)
-    lebar, tinggi = kanan - kiri, bawah - atas
-    px, py, tepi = 11, 7, 12
-    x1, y1 = WIDTH - tepi, HEIGHT - tepi
-    x0, y0 = x1 - lebar - 2 * px, y1 - tinggi - 2 * py
-
-    lapis = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
-    gambar = ImageDraw.Draw(lapis)
-    gambar.rounded_rectangle((x0, y0, x1, y1), radius=(y1 - y0) // 2, fill=(0, 0, 0, 150))
-    gambar.text((x0 + px - kiri, y0 + py - atas), TANDA, font=huruf, fill=(255, 255, 255, 235))
-    return Image.alpha_composite(canvas.convert("RGBA"), lapis).convert("RGB")
-
-
 def build(name: str, relative: str) -> int:
     source = SOURCE / relative
     with Image.open(source) as image:
@@ -45,7 +29,6 @@ def build(name: str, relative: str) -> int:
         image.thumbnail((WIDTH, HEIGHT), Image.LANCZOS)
         canvas = Image.new("RGB", (WIDTH, HEIGHT), BACKGROUND)
         canvas.paste(image, ((WIDTH - image.width) // 2, (HEIGHT - image.height) // 2))
-    canvas = tandai(canvas)
 
     total = 0
     for width in WIDTHS:
@@ -67,6 +50,10 @@ def main() -> None:
     for name, relative in WORK.items():
         print(f"{name}  from  {(SOURCE / relative).name}")
         total += build(name, relative)
+    salinan = sorted(OUT_NEXT.glob("*.webp"))
+    for berkas in salinan:
+        shutil.copyfile(OUT / berkas.name, berkas)
+    print(f"{len(salinan)} salinan diperbarui di {OUT_NEXT.relative_to(OUT.parents[2])}")
     print(f"\n{len(WORK)} karya x {len(WIDTHS)} lebar = "
           f"{len(WORK) * len(WIDTHS)} berkas, {total / 1024:.0f} KB di cakram")
 

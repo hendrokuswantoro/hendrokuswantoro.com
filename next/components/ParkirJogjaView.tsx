@@ -79,7 +79,7 @@ export function ParkirJogjaView() {
             <img
               className="article__gambar"
               src={PARKIR.image}
-              srcSet="/assets/img/work/parking-400.webp?v=52d7f76f31 400w, /assets/img/work/parking-600.webp?v=6232295625 600w, /assets/img/work/parking.webp?v=8e000f92a9 800w"
+              srcSet="/assets/img/work/parking-400.webp?v=8c0a75ce2b 400w, /assets/img/work/parking-600.webp?v=d514756973 600w, /assets/img/work/parking.webp?v=12dc5e71f9 800w"
               sizes="(min-width: 1080px) 840px, 92vw"
               alt={say(PARKIR.alt)}
               width={800}
