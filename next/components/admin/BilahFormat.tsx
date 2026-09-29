@@ -3,7 +3,7 @@
 import type { KeyboardEvent, ReactNode } from "react";
 import gaya from "@/app/admin/admin.module.css";
 
-export type Sisip = {
+type Sisip = {
   depan: string;
   belakang?: string;
   baris?: boolean;

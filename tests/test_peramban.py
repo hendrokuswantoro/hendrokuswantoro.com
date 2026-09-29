@@ -898,3 +898,23 @@ def test_kartu_punya_kilau_yang_mengikuti_kursor(halaman, situs):
     halaman.mouse.move(kotak["x"] + 60, kotak["y"] + 40, steps=4)
     halaman.wait_for_timeout(300)
     assert kartu.evaluate("el => el.style.getPropertyValue('--mx')") != ""
+
+
+@pytest.mark.parametrize("lebar", [1280, 1024, 768, 390])
+def test_tidak_ada_penanda_karya_tertimbun_kotak_pencarian(peramban, situs, lebar):
+    konteks = peramban.new_context(viewport={"width": lebar, "height": 900})
+    hal = konteks.new_page()
+    try:
+        hal.goto(f"{situs}/project", wait_until="load")
+        peta_siap(hal)
+        hal.wait_for_timeout(400)
+        tertimbun = hal.evaluate("""() => {
+          const c = document.querySelector('.peta__cari').getBoundingClientRect();
+          return [...document.querySelectorAll('button[data-work]')].filter(b => {
+            const r = b.getBoundingClientRect();
+            return r.left < c.right && r.right > c.left && r.top < c.bottom && r.bottom > c.top;
+          }).map(b => b.dataset.work);
+        }""")
+        assert not tertimbun, f"di lebar {lebar} penanda {tertimbun} tertutup kotak pencarian peta"
+    finally:
+        konteks.close()

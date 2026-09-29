@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from "react";
 
-export type JedaKunci = 0 | 60 | 1800;
+type JedaKunci = 0 | 60 | 1800;
 
-export type SetelanPerangkat = {
+type SetelanPerangkat = {
   kunci: boolean;
   jeda: JedaKunci;
   keluarOtomatis: boolean;

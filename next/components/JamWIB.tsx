@@ -52,6 +52,7 @@ export function JamWIB() {
       <span className="kini__tanggal">{kini.tanggal}</span>
       <span
         className="jam"
+        role="timer"
         aria-label={lang === "id" ? "Waktu setempat di Yogyakarta" : "Local time in Yogyakarta"}
       >
         {depan}

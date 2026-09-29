@@ -5,7 +5,7 @@ import gaya from "@/app/admin/admin.module.css";
 import { ambil, pesanDari } from "@/lib/api";
 import { Kabar, buruk } from "./Kabar";
 
-export type Ringkas = {
+type Ringkas = {
   slug: string;
   status: string;
   tanggal: string | null;

@@ -304,3 +304,67 @@ dashboard sekaligus ke VPS, dengan dashboard kembali di `www/admin`. Temuan 1,
 CORS dan `WEBAUTHN_RP_ID` kini menyebut `www`, dan pemisahan asal antara situs
 publik dan dashboard dilepas dengan sadar. Penggantinya Cloudflare Access pada
 jalur `/admin` dan `/api`, di atas CSP situs yang sudah ketat.
+
+## Audit dengan alat keamanan, 29 September 2026
+
+Pemilik meminta situs diuji dengan alat keamanan sungguhan dan dikeraskan
+berlapis. Tidak ada sistem yang bisa dijamin tanpa celah; yang bisa dijamin
+adalah apa yang sudah diuji, dengan alat apa, dan apa yang belum.
+
+| Alat | Sasaran | Hasil |
+| --- | --- | --- |
+| gitleaks 8.30.1 | seluruh riwayat git, 155 commit | bersih. Satu temuan ternyata `JWT_SECRET=` kosong di `.env.example` |
+| pip-audit | `backend/requirements.txt` | tidak ada kerentanan dikenal |
+| npm audit | `next/` | 0 kerentanan |
+| bandit 1.9.4 | `backend/`, `tools/` | 0 High. 13 Medium "SQL injection" diperiksa satu per satu: nama kolom disaring daftar tetap sebelum disisipkan, nilainya selalu parameter |
+| semgrep (OWASP Top 10, Python, JS, TS, rahasia, nginx, GitHub Actions) | seluruh repositori | 0 temuan di kode. 21 action di workflow memakai tag yang bisa dipindah, dan nginx meneruskan `Host` kiriman |
+| testssl.sh | `www.hendrokuswantoro.com` | nilai A+, tanpa protokol atau cipher lemah |
+| OWASP ZAP baseline | situs yang terbit | 64 lulus, 0 gagal |
+| OWASP ZAP aktif, dengan token admin | tiruan produksi: nginx asli, API, basis data kosong | 140 lulus, 0 High, 0 Medium, di 42 endpoint |
+| axe-core, WCAG 2.2 AA | tiap halaman kedua port, dua tema, dua bahasa | 0 pelanggaran sesudah perbaikan |
+| Nu Html Checker | seluruh HTML situs dan dashboard | 0 galat sesudah perbaikan |
+
+Pemindaian aktif pertama melaporkan 15 "SQL injection" dan 101 galat 500.
+Semuanya jawaban 503 dari pembatas laju nginx yang memotong salah satu dari
+dua permintaan pembanding ZAP. Pembatasnya bekerja; di baliknya tidak ada
+celah. Dari situ lahir dua perbaikan: pembatas laju kini menjawab 429, dan
+alat uji melonggarkan batas laju hanya di tiruannya supaya hasilnya jujur.
+
+### Lapisan yang ditambahkan
+
+- **Tiruan produksi untuk diserang**, `tools/uji_keamanan.sh` dan
+  `infrastructure/uji-keamanan/`: nginx dengan konfigurasi produksi, API di
+  soket Unix, basis data dan cache baru, rahasia acak tiap kali, dan `.env`
+  asli ditutup berkas kosong supaya tidak ada surat sungguhan yang terkirim.
+  Tiruannya dibuang beserta datanya di akhir. `UJI_MODE=cepat` melewati
+  pemindaian aktif seluruh situs.
+- **Action GitHub dikunci ke hash commit.** Tag seperti `@v7` bisa dipindah
+  pemiliknya, atau pembobol akunnya, ke kode lain yang lalu berjalan di CI
+  dengan secret repositori. Dependabot memperbaruinya tiap minggu, bersama
+  paket pip dan npm.
+- **gitleaks dan bandit di CI.** gitleaks memindai seluruh riwayat dengan
+  `.gitleaks.toml`, yang hanya mengecualikan baris `NAMA=` yang benar benar
+  kosong di `.env.example`; nilai yang terisi di berkas itu pun tetap
+  tertangkap. bandit menggagalkan CI pada temuan High.
+- **nginx:** `limit_req_status 429`, `Host` yang diteruskan ke aplikasi
+  ditulis tetap (`$server_name`), dan `Cross-Origin-Embedder-Policy:
+  require-corp` di `/admin`. Dashboard hanya memuat berkas dari asalnya
+  sendiri, dan uji CSP menjalankan kedua dashboard di balik header itu.
+- **Uji SQL injection lewat nama kolom** yang menyisipkan kunci jahat ke
+  `tulis.ubah` dan `keamanan.simpan_setelan`, dibuktikan gagal saat
+  penyaringnya dimatikan.
+
+### Yang belum diuji, dan kenapa
+
+- **VPS sungguhan.** Belum ada. Firewall ufw, systemd, dan izin berkas diuji
+  di Ubuntu dalam Docker (`periksa_izin.sh`), bukan di mesin yang menghadap
+  internet.
+- **Cloudflare Access dan WAF** tidak ada di tiruan; mereka lapisan di luar
+  nginx.
+- **Uji penetrasi manusia.** Pemindai otomatis tidak menemukan cacat logika
+  bisnis yang tidak ia kenal polanya. Alur yang paling berharga untuk diuji
+  manusia: pemulihan akun, pemasangan faktor pertama, dan kunci aplikasi.
+- **COEP di situs publik** sengaja tidak dipasang. `require-corp` memutus
+  ubin Mapbox dan citra satelit yang tidak mengirim CORP; ZAP menandainya
+  Low.
+

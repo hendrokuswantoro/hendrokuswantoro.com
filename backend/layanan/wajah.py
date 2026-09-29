@@ -15,9 +15,6 @@ AMBANG = 0.363
 BATAS_BITA = 2 * 1024 * 1024
 SISI_MAKS = 1600
 
-GERAKAN = ("tengah", "kiri", "kanan")
-JUMLAH_BINGKAI = 3
-
 AMBANG_TOLEH = 0.16
 
 
@@ -107,7 +104,6 @@ def _satu_wajah(gambar):
 
 
 def _ciri(gambar, wajah):
-    import cv2
 
     _, pengenal = _mesin()
     lurus = pengenal.alignCrop(gambar, wajah)

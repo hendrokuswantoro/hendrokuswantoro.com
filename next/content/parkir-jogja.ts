@@ -1,8 +1,8 @@
 import type { Copy } from "./i18n";
 
 
-export type Angka = { num: Copy; label: Copy };
-export type Bagian = { h2: Copy; p: Copy[] };
+type Angka = { num: Copy; label: Copy };
+type Bagian = { h2: Copy; p: Copy[] };
 
 export const PARKIR = {
   slug: "parkir-jogja",

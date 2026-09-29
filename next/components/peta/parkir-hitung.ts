@@ -50,9 +50,9 @@ export type Tarif = {
   lanjut: number | null;
 };
 
-export const AMBANG_M = 30;
+const AMBANG_M = 30;
 
-export function meterPerDerajat(lat: number) {
+function meterPerDerajat(lat: number) {
   return { x: 111320 * Math.cos((lat * Math.PI) / 180), y: 110540 };
 }
 

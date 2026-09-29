@@ -1,6 +1,5 @@
 let AKSES = null;
 let SLUG_KINI = null;
-let STATUS_KINI = null;
 
 const $ = (id) => document.getElementById(id);
 const KOLOM = ["slug","tanggal","judul_en","judul_id","ringkas_en","ringkas_id",

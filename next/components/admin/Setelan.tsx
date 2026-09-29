@@ -73,7 +73,7 @@ const GARIS: Record<string, ReactNode> = {
   ),
 };
 
-export function Ikon({ nama }: { nama: keyof typeof GARIS | string }) {
+function Ikon({ nama }: { nama: keyof typeof GARIS | string }) {
   return (
     <span className={gaya.ikon} aria-hidden="true">
       <svg viewBox="0 0 24 24">{GARIS[nama]}</svg>
@@ -81,7 +81,7 @@ export function Ikon({ nama }: { nama: keyof typeof GARIS | string }) {
   );
 }
 
-export function Sakelar({
+function Sakelar({
   nyala,
   ubah,
   labelOleh,

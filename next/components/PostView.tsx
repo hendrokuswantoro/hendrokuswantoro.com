@@ -72,7 +72,7 @@ export function PostView({ post }: { post: Post }) {
   return (
     <main id="main">
       <div className="progres" ref={bar} />
-      <section className="section">
+      <div className="section">
         <div className="wrap">
           <article className="article" ref={article}>
             <Link className="back-link" href="/blog/">
@@ -182,7 +182,7 @@ export function PostView({ post }: { post: Post }) {
             </aside>
           </article>
         </div>
-      </section>
+      </div>
     </main>
   );
 }

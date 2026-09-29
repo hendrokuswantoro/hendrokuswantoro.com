@@ -45,3 +45,4 @@ assets/model/
 # worktree sementara milik sesi Claude Code, berisi salinan seluruh repositori
 .claude/worktrees/
 .claude/launch.json
+/hasil-uji-keamanan/

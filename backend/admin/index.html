@@ -149,7 +149,7 @@
         </div>
         <div class="gulung">
           <table>
-            <thead><tr><th>Judul</th><th>Status</th><th>Tanggal</th><th></th></tr></thead>
+            <thead><tr><th>Judul</th><th>Status</th><th>Tanggal</th><th><span class="tersembunyi">Aksi</span></th></tr></thead>
             <tbody id="daftar"></tbody>
           </table>
         </div>
@@ -168,7 +168,7 @@
         </p>
         <div class="tabel-bungkus">
           <table>
-            <thead><tr><th>Nama</th><th>Jenis</th><th>Terakhir dipakai</th><th></th></tr></thead>
+            <thead><tr><th>Nama</th><th>Jenis</th><th>Terakhir dipakai</th><th><span class="tersembunyi">Aksi</span></th></tr></thead>
             <tbody id="daftar-kunci"></tbody>
           </table>
         </div>
@@ -186,7 +186,7 @@
         </p>
         <div class="gulung">
           <table>
-            <thead><tr><th>Mulai</th><th>Berlaku sampai</th><th></th></tr></thead>
+            <thead><tr><th>Mulai</th><th>Berlaku sampai</th><th><span class="tersembunyi">Aksi</span></th></tr></thead>
             <tbody id="daftar-sesi"></tbody>
           </table>
         </div>
@@ -295,7 +295,7 @@
             <button type="button" class="utama" id="pilih-berkas">Pilih berkas</button>
             <input type="file" id="berkas-masuk" multiple hidden
                    accept="image/png,image/jpeg,image/webp,image/gif,image/avif,video/mp4,video/webm">
-            <div class="laju sembunyi" id="laju" role="progressbar" aria-valuemin="0" aria-valuemax="100"><span></span></div>
+            <div class="laju sembunyi" id="laju" role="progressbar" aria-label="Kemajuan unggahan" aria-valuemin="0" aria-valuemax="100"><span></span></div>
             <p class="petunjuk">Foto sampai 10 MB, video sampai 80 MB.</p>
             <label class="baris-berjajar-tengah" for="buang-metadata">
               <input type="checkbox" id="buang-metadata">

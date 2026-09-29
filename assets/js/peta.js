@@ -1387,6 +1387,18 @@
     });
 
     map.touchZoomRotate.disableRotation();
+
+    function tepi() {
+      var atas = 64;
+      var cari = frame.querySelector(".peta__cari");
+      if (cari) {
+        var r = cari.getBoundingClientRect();
+        var f = frame.getBoundingClientRect();
+        if (r.top >= f.top && r.bottom <= f.bottom) atas = Math.max(atas, Math.round(r.bottom - f.top) + 56);
+        atas = Math.min(atas, Math.max(64, Math.round(f.height / 2) - 64));
+      }
+      return { top: atas, right: 64, bottom: 64, left: 64 };
+    }
     map.dragRotate.disable();
 
     map.on("styleimagemissing", function (event) {
@@ -1580,7 +1592,7 @@
           if (show) visible.extend([entry.item.lng, entry.item.lat]);
         });
         map.fitBounds(current.filter ? visible : bounds, {
-          padding: 64,
+          padding: tepi(),
           maxZoom: current.filter ? 7 : 6,
           duration: ms(700)
         });
@@ -1632,7 +1644,7 @@
         }
         tutupKartu(markers);
         map.easeTo(sudutPandang(current.three, 500));
-        map.fitBounds(bounds, { padding: 64, maxZoom: 6, duration: ms(750) });
+        map.fitBounds(bounds, { padding: tepi(), maxZoom: 6, duration: ms(750) });
         ui.count();
         tulisHash(null);
       },
@@ -1658,7 +1670,7 @@
         applyRelief(map, current.three);
       }
       map.resize();
-      if (!sudahDipusatkan) map.fitBounds(bounds, { padding: 64, maxZoom: 6, duration: 0 });
+      if (!sudahDipusatkan) map.fitBounds(bounds, { padding: tepi(), maxZoom: 6, duration: 0 });
       frame.classList.add("is-ready");
       terjemahkanKontrol();
 

@@ -219,7 +219,7 @@ export function tambahIkon(map: MapLibreMap, id: string) {
   map.addImage(id, c.getImageData(0, 0, ukuran, ukuran), { pixelRatio: 2 });
 }
 
-export const LAYER_NAMA = [
+const LAYER_NAMA = [
   "nama-poi", "nama-transit", "nama-bandara", "nama-gunung", "nama-alam", "nama-kelurahan",
   "nama-kota", "nama-jalan", "nama-provinsi", "nama-provinsi-id", "nama-negara"
 ];

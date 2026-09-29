@@ -124,9 +124,9 @@ def test_token_dengan_rahasia_lain_ditolak():
 
 def test_masuk_dan_identitas(klien):
     akses = masuk(klien)
-    j = klien.get("/api/v1/auth/saya", headers={"Authorization": f"Bearer {akses}"})
+    j = klien.get("/api/v1/keamanan", headers={"Authorization": f"Bearer {akses}"})
     assert j.status_code == 200
-    assert j.json()["peran"] == "admin"
+    assert j.json()["email"].lower() == EMAIL.lower()
 
 
 def test_refresh_ada_di_cookie_httponly(klien):
@@ -157,14 +157,14 @@ def test_keluar_mencabut_sesi(klien):
 
 
 def test_tanpa_token_401_bukan_403(klien):
-    j = klien.get("/api/v1/auth/saya")
+    j = klien.get("/api/v1/keamanan")
     assert j.status_code == 401
     assert "bearer" in j.headers.get("www-authenticate", "").lower()
 
 
 def test_peran_bukan_admin_ditolak_403(klien):
     token, _ = keamanan.buat_access_token("00000000-0000-0000-0000-000000000002", "visitor")
-    j = klien.get("/api/v1/auth/saya", headers={"Authorization": f"Bearer {token}"})
+    j = klien.get("/api/v1/keamanan", headers={"Authorization": f"Bearer {token}"})
     assert j.status_code == 403
 
 

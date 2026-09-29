@@ -64,7 +64,12 @@ export function WorkMap() {
   }, []);
 
   return (
-    <section className="peta" data-peta ref={section}>
+    <section
+      className="peta"
+      data-peta
+      ref={section}
+      aria-label={lang === "id" ? "Peta karya saya" : "Map of my work"}
+    >
       <div className="peta__frame">
         <div className="peta__kanvas" data-peta-kanvas ref={holder} />
       </div>

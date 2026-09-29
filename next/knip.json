@@ -1,0 +1,5 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "ignore": ["public/assets/vendor/maplibre/**"],
+  "ignoreDependencies": ["eslint-config-next"]
+}

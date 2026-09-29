@@ -349,7 +349,7 @@
           return mod;
         }),
         loadOnce("js", "/assets/js/konfigurasi.js").catch(function () { return null; })
-      ]).then(function () { return loadOnce("js", "/assets/js/peta.js?v=269744b2e8"); });
+      ]).then(function () { return loadOnce("js", "/assets/js/peta.js?v=96aa4604ad"); });
     }
     return pustakaPeta;
   }

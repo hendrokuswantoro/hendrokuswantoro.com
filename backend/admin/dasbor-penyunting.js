@@ -4,7 +4,7 @@ function kosongkan() {
 }
 
 function bukaBaru() {
-  SLUG_KINI = null; STATUS_KINI = null;
+  SLUG_KINI = null;
   kosongkan();
   $("judul-sunting").textContent = "Tulisan baru";
   $("tanda-status").textContent = "belum disimpan";
@@ -72,7 +72,6 @@ async function simpan() {
   if (!jawaban.ok) { kabar(pesanGalat(hasil)); return; }
 
   SLUG_KINI = hasil.slug;
-  STATUS_KINI = hasil.status;
   $("slug").disabled = true;
   $("tanda-status").textContent = hasil.status;
   $("tombol-terbit").classList.remove("sembunyi");

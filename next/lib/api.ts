@@ -10,7 +10,7 @@ export type Sesi = {
   peran: string;
 };
 
-export type JawabanMasuk = Sesi & {
+type JawabanMasuk = Sesi & {
   tahap: "selesai" | "faktor2";
   tiket: string;
   cara: CaraFaktorKedua[];
@@ -266,7 +266,7 @@ export type Berkas = {
   markah: string;
 };
 
-export type BerkasBaru = Berkas & { sudah_ada: boolean };
+type BerkasBaru = Berkas & { sudah_ada: boolean };
 
 export function daftarBerkas(): Promise<{ jumlah: number; isi: Berkas[] }> {
   return ambil("/api/v1/admin/berkas");

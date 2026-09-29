@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from backend.api.tergantung import butuh_admin, butuh_admin_kuat
+from backend.api.tergantung import butuh_admin_kuat
 from backend.layanan import pratinjau as layanan_pratinjau
 from backend.layanan import tulis as layanan
 from backend.skema.tulis import PANJANG_ISI, TulisanMasuk, TulisanUbah

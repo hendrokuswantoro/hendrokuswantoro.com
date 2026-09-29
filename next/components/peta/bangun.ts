@@ -45,7 +45,7 @@ const KUNCI_KIND = Object.keys(KIND) as Category[];
 
 const AWALAN_HASH = "#peta-";
 
-export function idDariHash(): string | null {
+function idDariHash(): string | null {
   const hash = window.location.hash || "";
   if (hash.indexOf(AWALAN_HASH) !== 0) return null;
   const id = hash.slice(AWALAN_HASH.length);
@@ -757,6 +757,18 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
 
   let tigaTombol: HTMLButtonElement | null = null;
   map.addControl(new maplibregl.FullscreenControl({ container: frame }), "top-right");
+
+  function tepi() {
+    let atas = 64;
+    const cari = frame.querySelector(".peta__cari");
+    if (cari) {
+      const r = cari.getBoundingClientRect();
+      const f = frame.getBoundingClientRect();
+      if (r.top >= f.top && r.bottom <= f.bottom) atas = Math.max(atas, Math.round(r.bottom - f.top) + 56);
+      atas = Math.min(atas, Math.max(64, Math.round(f.height / 2) - 64));
+    }
+    return { top: atas, right: 64, bottom: 64, left: 64 };
+  }
   map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
   map.addControl(new maplibregl.ScaleControl({ maxWidth: 96, unit: "metric" }), "bottom-right");
   map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), "bottom-right");
@@ -934,7 +946,7 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
         if (show) visible.extend([entry.item.lng, entry.item.lat]);
       });
       map.fitBounds(current.filter ? visible : bounds, {
-        padding: 64,
+        padding: tepi(),
         maxZoom: current.filter ? 7 : 6,
         duration: ms(700),
       });
@@ -988,7 +1000,7 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
       }
       tutupKartu(markers);
       map.easeTo(sudutPandang(current.three, 500));
-      map.fitBounds(bounds, { padding: 64, maxZoom: 6, duration: ms(750) });
+      map.fitBounds(bounds, { padding: tepi(), maxZoom: 6, duration: ms(750) });
       ui.count();
       tulisHash(null);
     },
@@ -1012,7 +1024,7 @@ export function bangun(maplibregl: Pustaka, container: HTMLElement): PetaHidup {
       applyRelief(map, current.three);
     }
     map.resize();
-    if (!sudahDipusatkan) map.fitBounds(bounds, { padding: 64, maxZoom: 6, duration: 0 });
+    if (!sudahDipusatkan) map.fitBounds(bounds, { padding: tepi(), maxZoom: 6, duration: 0 });
     frame.classList.add("is-ready");
     terjemahkanKontrol();
     window.requestAnimationFrame(() => {

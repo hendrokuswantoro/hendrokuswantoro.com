@@ -18,8 +18,8 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 1005, tanpa peramban, hitungan detik
-python -m pytest -m peramban     # 111, Chromium sungguhan
+python -m pytest                 # 1019, tanpa peramban, hitungan detik
+python -m pytest -m peramban     # 115, Chromium sungguhan
 sh tools/verifikasi.sh           # 22 langkah, seluruhnya, berurutan
 
 # backend dan dashboard admin
@@ -65,7 +65,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    1116 uji
+tests/                    1134 uji
 docs/                     empat belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -153,7 +153,10 @@ lisensi OFL di dalamnya; docstring modul di skrip yang memakai `__doc__`
 sebagai teks bantuan baris perintah; berkas migrasi SQL, yang sidiknya
 disimpan `migrasi.py`; isi heredoc yang dicetak atau ditulis ke berkas lain;
 dan sakelar `# if ($admin_boleh = 0)` di nginx, yang tanda pagarnya disuruh
-dihapus pemiliknya di `docs/keamanan.md`.
+dihapus pemiliknya di `docs/keamanan.md`. Sejak 29 September 2026 kaidah ini
+ditegakkan `tools/cari_komentar.py` dan `tests/test_tanpa_komentar.py`, yang
+membaca komentar JS/TS lewat pengurai TypeScript, bukan regex, supaya regex
+`/\//g` dan alamat `https://` tidak dikira komentar.
 
 **Uji CSP dengan menyajikan halamannya beserta tajuknya, dan jalankan
 skripnya.** Ini sudah tertulis di berkas ini sejak lama sebagai kalimat, dan
@@ -625,6 +628,22 @@ tulisan dashboard pertama yang di-push akan membuat CI merah dan hilang lagi
 pada pembangunan berikutnya. Batas per berkas 25 MB, batas berkas statis
 Cloudflare. `/unggahan/` di `.gitignore` sengaja berawalan garis miring:
 tanpa itu `content/unggahan/` ikut diabaikan dan fotonya tidak pernah sampai.
+
+**Keamanan diuji dengan alat, bukan dengan niat.** Hasil audit 29 September
+2026 dan batasnya ada di `docs/keamanan.md`. Yang wajib dijaga:
+
+- Tiap `uses:` di workflow dikunci ke hash commit 40 heksa, bukan tag;
+  `tests/test_lapisan_keamanan.py` menolak tag. Hash tag beranotasi berbeda
+  dari hash commitnya; ambil yang `^{}` dari `git ls-remote`.
+- gitleaks (`.gitleaks.toml`) dan bandit berjalan di job Security Scan.
+- `tools/uji_keamanan.sh` membangun tiruan produksi di Docker lalu
+  menyerangnya dengan OWASP ZAP, termasuk seluruh API dengan token admin.
+  Batas laju nginx sengaja dilonggarkan HANYA di tiruan itu; tanpa itu ZAP
+  melaporkan SQL injection palsu dari jawaban 429.
+- ESLint port Next berjalan dengan `--max-warnings 0`, dan knip menolak berkas,
+  export, dan dependensi yang tidak terpakai. Salinan MapLibre di
+  `next/public/assets/vendor/` dikecualikan dari keduanya: itu kode pihak
+  ketiga yang dimuat lewat alamat, bukan lewat import.
 
 Deploy sengaja tidak ada di `ci.yml`. Cloudflare membangun dan menerbitkan
 sendiri ketika `main` bergerak, jadi deploy kedua di GitHub Actions berarti

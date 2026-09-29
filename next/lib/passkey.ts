@@ -1,6 +1,6 @@
 import { DASAR_KOSONG, panggil, pesanGalat, type Sesi } from "./api";
 
-export function keBuffer(teks: string): ArrayBuffer {
+function keBuffer(teks: string): ArrayBuffer {
   const dasar = teks.replace(/-/g, "+").replace(/_/g, "/");
   const penuh = dasar + "===".slice((dasar.length + 3) % 4);
   const biner = atob(penuh);
@@ -9,7 +9,7 @@ export function keBuffer(teks: string): ArrayBuffer {
   return bita.buffer;
 }
 
-export function keTeks(buffer: ArrayBuffer): string {
+function keTeks(buffer: ArrayBuffer): string {
   let biner = "";
   for (const b of new Uint8Array(buffer)) biner += String.fromCharCode(b);
   return btoa(biner).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");

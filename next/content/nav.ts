@@ -1,6 +1,6 @@
 import type { Copy } from "./i18n";
 
-export type NavItem = {
+type NavItem = {
   href: string;
   label: Copy;
 };

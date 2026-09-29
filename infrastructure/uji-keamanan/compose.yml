@@ -1,0 +1,67 @@
+name: hk-uji-keamanan
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: hendro
+      POSTGRES_PASSWORD: uji
+      POSTGRES_DB: hendrokuswantoro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hendro -d hendrokuswantoro"]
+      interval: 2s
+      retries: 30
+
+  cache:
+    image: redis:7-alpine
+
+  api:
+    build:
+      context: ../../backend
+      dockerfile: ../infrastructure/uji-keamanan/Dockerfile
+    env_file: ${HK_UJI_ENV:?HK_UJI_ENV belum diisi}
+    working_dir: /srv/hendrokuswantoro/app
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ../..:/srv/hendrokuswantoro/app:ro
+      - ${HK_UJI_KOSONG:?HK_UJI_KOSONG belum diisi}:/srv/hendrokuswantoro/app/.env:ro
+      - cadangan:/srv/hendrokuswantoro/app/cadangan
+      - unggahan:/srv/hendrokuswantoro/unggahan
+      - soket:/run/hk-api
+    command:
+      - sh
+      - -eu
+      - -c
+      - |
+        coba=0
+        until python backend/db/migrasi.py; do
+          coba=$$((coba + 1)); [ "$$coba" -lt 30 ] || exit 1; sleep 2
+        done
+        python backend/db/muat_awal.py
+        printf '%s\n' "$$HK_UJI_SANDI" | python backend/db/buat_admin.py --email kuswantoro.hendro01@gmail.com --stdin
+        rm -f /run/hk-api/api.sock
+        (until [ -S /run/hk-api/api.sock ]; do sleep 0.2; done; chmod 666 /run/hk-api/api.sock) &
+        exec python -m uvicorn backend.main:aplikasi --uds /run/hk-api/api.sock --proxy-headers --forwarded-allow-ips='*' --no-access-log
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - api
+    volumes:
+      - ${HK_UJI_NGINX:?HK_UJI_NGINX belum diisi}:/etc/nginx/conf.d/default.conf:ro
+      - ${HK_UJI_SERTIFIKAT:?HK_UJI_SERTIFIKAT belum diisi}:/etc/ssl/hendrokuswantoro:ro
+      - ../../dist:/srv/hendrokuswantoro/situs:ro
+      - ../../next/out:/srv/hendrokuswantoro/app/next/out:ro
+      - soket:/run/hk-api
+    networks:
+      default:
+        aliases:
+          - www.hendrokuswantoro.com
+          - hendrokuswantoro.com
+
+volumes:
+  cadangan:
+  unggahan:
+  soket:

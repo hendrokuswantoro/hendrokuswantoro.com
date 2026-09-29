@@ -27,7 +27,7 @@
 <link rel="preload" href="/assets/fonts/poppins-v24-700-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="alternate" type="application/rss+xml" title="hendrokuswantoro.com" href="/feed.xml">
 <link rel="stylesheet" href="/assets/css/style.css?v=e631bcb8a8">
-<script defer src="/assets/js/app.js?v=0d4f22745a"></script>
+<script defer src="/assets/js/app.js?v=26c741ae88"></script>
 </head>
 <body>
 <a class="skip-link" href="#main" data-ind="Lompat ke isi">Skip to content</a>
@@ -45,7 +45,7 @@
 
     <p class="kini" data-kini hidden>
       <span class="kini__tanggal" data-tanggal></span>
-      <span class="jam" data-jam aria-label="Local time in Yogyakarta" data-ind-label="Waktu setempat di Yogyakarta"></span>
+      <span class="jam" data-jam role="timer" aria-label="Local time in Yogyakarta" data-ind-label="Waktu setempat di Yogyakarta"></span>
       <span class="kini__zona">WIB</span>
     </p>
 
@@ -93,7 +93,7 @@
         <p data-ind="Klik satu titik untuk melihat karyanya.">Click a point to see the work.</p>
       </div>
 
-      <section class="peta" data-peta>
+      <section class="peta" data-peta aria-label="Map of my work" data-ind-label="Peta karya saya">
         <div class="peta__frame" data-gagal="The map could not load. The list of work below still works." data-ind-gagal="Petanya gagal dimuat. Daftar karya di bawah tetap bisa dibuka.">
           <div class="peta__kanvas" data-peta-kanvas></div>
         </div>

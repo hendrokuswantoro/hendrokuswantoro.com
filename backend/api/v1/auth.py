@@ -242,12 +242,6 @@ async def logout(permintaan: Request, jawaban: Response) -> None:
     jawaban.delete_cookie(NAMA_COOKIE, path="/api/v1/auth")
 
 
-@rute.post("/logout-semua", summary="Keluar dari semua perangkat")
-async def logout_semua(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
-    jumlah = await layanan.keluar_semua(pengguna["id"])
-    return {"sesi_dicabut": jumlah}
-
-
 @rute.get("/sesi", summary="Perangkat yang sedang masuk")
 async def sesi(
     permintaan: Request, pengguna: Annotated[dict, Depends(butuh_admin)]
@@ -264,8 +258,3 @@ async def cabut_lain(
         pengguna["id"], permintaan.cookies.get(NAMA_COOKIE)
     )
     return {"sesi_dicabut": jumlah}
-
-
-@rute.get("/saya", summary="Siapa yang sedang masuk")
-async def saya(pengguna: Annotated[dict, Depends(butuh_admin)]) -> dict:
-    return pengguna

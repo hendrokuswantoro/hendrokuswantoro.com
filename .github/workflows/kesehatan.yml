@@ -131,7 +131,7 @@ jobs:
 
       - name: Open an issue when the site is down
         if: failure()
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
           script: |
             const judul = "Health check gagal";
@@ -162,7 +162,7 @@ jobs:
 
       - name: Close the issue once the site is healthy again
         if: success()
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
         with:
           script: |
             const { data: terbuka } = await github.rest.issues.listForRepo({
@@ -185,9 +185,9 @@ jobs:
     name: Cloudflare address list
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - uses: actions/setup-python@v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: '3.12'
 

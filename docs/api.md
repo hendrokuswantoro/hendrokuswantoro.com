@@ -119,8 +119,6 @@ Fase 4. Sudah jalan dan diuji.
 | POST | `/api/v1/auth/login` | publik, dibatasi laju |
 | POST | `/api/v1/auth/refresh` | cookie refresh |
 | POST | `/api/v1/auth/logout` | cookie refresh |
-| POST | `/api/v1/auth/logout-semua` | admin |
-| GET | `/api/v1/auth/saya` | admin |
 
 Memasang sandi:
 

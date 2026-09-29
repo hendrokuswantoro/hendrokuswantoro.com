@@ -50,7 +50,7 @@ export function ParkirJogjaView() {
 
   return (
     <main id="main">
-      <section className="section">
+      <div className="section">
         <div className="wrap">
           <article className="article">
             <Link className="back-link" href="/project/">
@@ -140,7 +140,7 @@ export function ParkirJogjaView() {
             </aside>
           </article>
         </div>
-      </section>
+      </div>
 
       <section className="section section--surface" id="coba">
         <div className="wrap">
