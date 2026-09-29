@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from backend.core import surat
 from backend.core.catat import pasang
 from backend.repositori import keamanan as repo
@@ -27,7 +28,8 @@ async def kabari_masuk(
         return
 
     try:
-        surat.kirim(
+        await asyncio.to_thread(
+            surat.kirim,
             alamat_surat,
             "Ada yang masuk ke akun hendrokuswantoro.com",
             "Ada yang baru saja masuk ke akun Anda dari perangkat yang belum "
@@ -49,7 +51,8 @@ async def kabari_tebakan(pengguna: dict, jumlah: int, menit: int) -> None:
         return
 
     try:
-        surat.kirim(
+        await asyncio.to_thread(
+            surat.kirim,
             alamat_surat,
             "Ada yang berulang kali salah memasukkan sandi Anda",
             f"Sandi akun Anda salah dimasukkan {jumlah} kali dalam {menit} menit, "
@@ -73,7 +76,8 @@ async def kabari_perubahan_keamanan(pengguna: dict, apa: str, paksa: bool = Fals
         return
 
     try:
-        surat.kirim(
+        await asyncio.to_thread(
+            surat.kirim,
             alamat_surat,
             "Pengaturan keamanan akun Anda berubah",
             f"Perubahan yang baru saja terjadi: {apa}.\n\n"

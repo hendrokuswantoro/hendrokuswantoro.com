@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 from dataclasses import dataclass
 
@@ -66,7 +67,7 @@ async def periksa_sandi(email: str, sandi: str, alamat_hash: str) -> dict:
     pengguna = await repo.cari_email(email)
 
     hash_tersimpan = (pengguna or {}).get("sandi_hash") or keamanan.HASH_UMPAN
-    cocok = keamanan.sandi_cocok(sandi, hash_tersimpan)
+    cocok = await asyncio.to_thread(keamanan.sandi_cocok, sandi, hash_tersimpan)
 
     if not pengguna or not pengguna.get("sandi_hash") or not cocok:
         await repo.catat_gagal(email, alamat_hash)
@@ -75,7 +76,7 @@ async def periksa_sandi(email: str, sandi: str, alamat_hash: str) -> dict:
         raise Ditolak("email atau sandi salah")
 
     if keamanan.perlu_dihash_ulang(pengguna["sandi_hash"]):
-        await repo.simpan_hash(pengguna["id"], keamanan.hash_sandi(sandi))
+        await repo.simpan_hash(pengguna["id"], await asyncio.to_thread(keamanan.hash_sandi, sandi))
 
     await repo.bersihkan_gagal(email)
     return pengguna

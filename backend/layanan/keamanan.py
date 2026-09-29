@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import datetime as dt
 import secrets
 from dataclasses import dataclass
@@ -54,7 +55,8 @@ async def kirim_verifikasi_email(pengguna: dict, asal: str, alamat: str | None) 
     kadaluarsa = dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=UMUR_TAUTAN_JAM)
     await repo.simpan_kode(pengguna["id"], "email", inti.ringkas(token), kadaluarsa, alamat)
 
-    hasil = surat.kirim(
+    hasil = await asyncio.to_thread(
+        surat.kirim,
         pengguna["email"],
         "Buktikan alamat email ini untuk hendrokuswantoro.com",
         (
@@ -99,7 +101,8 @@ async def kirim_otp_masuk(pengguna: dict, alamat: str | None) -> Kiriman:
     kadaluarsa = dt.datetime.now(dt.timezone.utc) + dt.timedelta(minutes=UMUR_OTP_MENIT)
     await repo.simpan_kode(pengguna["id"], "masuk", inti.ringkas(kode), kadaluarsa, alamat)
 
-    hasil = surat.kirim(
+    hasil = await asyncio.to_thread(
+        surat.kirim,
         pengguna["email"],
         f"{kode} adalah kode masuk Anda",
         (
@@ -322,7 +325,7 @@ async def daftarkan_wajah(pengguna: dict, bingkai: list[str], alamat: str | None
             "bersama basis datanya."
         )
     try:
-        ciri = wajah_modul.ciri_dari_bingkai(bingkai)
+        ciri = await asyncio.to_thread(wajah_modul.ciri_dari_bingkai, bingkai)
     except wajah_modul.Ditolak as ditolak:
         await repo.catat(pengguna["id"], "wajah_daftar", False, str(ditolak)[:200], alamat)
         raise Ditolak(str(ditolak)) from ditolak
@@ -377,8 +380,8 @@ async def _periksa_wajah(
         return False
 
     try:
-        hasil = wajah_modul.periksa(
-            bingkai, diminta, wajah_modul.dari_untai(rahasia.bukakan(tersimpan))
+        hasil = await asyncio.to_thread(
+            wajah_modul.periksa, bingkai, diminta, wajah_modul.dari_untai(rahasia.bukakan(tersimpan))
         )
     except wajah_modul.Ditolak as ditolak:
         await repo.catat(pengguna_id, "wajah_salah", False, str(ditolak)[:200], alamat)
