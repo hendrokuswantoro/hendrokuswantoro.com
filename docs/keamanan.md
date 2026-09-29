@@ -432,14 +432,15 @@ maupun tanpa GPU. Angka Lighthouse berasal dari simulasinya: tanpa GPU,
 WebGL digambar perangkat lunak (SwiftShader), dan satu tugas menyiapkan peta
 tercatat enam detik. Ponsel sungguhan punya GPU.
 
-### Milik pemilik
+### Milik pemilik, sudah dikerjakan
 
-- **Cloudflare Web Analytics menyisipkan skripnya ke tiap halaman**, dan CSP
-  situs menolaknya, jadi tiap halaman mencatat galat di konsol dan
-  analitiknya tidak mengumpulkan apa pun. Pilihannya dua: matikan
-  penyisipan otomatisnya di dasbor, atau izinkan
-  `static.cloudflareinsights.com` di `script-src` dan
-  `cloudflareinsights.com` di `connect-src`.
-- **Pengalihan nama tanpa `www` di Cloudflare tidak mengirim HSTS**, sebab
-  Redirect Rule menjawab sebelum Worker dan `_headers`. Selama itu situs ini
-  tidak memenuhi syarat daftar preload meski header-nya memintanya.
+Keduanya dikerjakan pemilik di dasbor pada 29 September 2026 dan diperiksa
+dari luar sesudahnya.
+
+- **Cloudflare Web Analytics dimatikan.** Skripnya disisipkan ke tiap
+  halaman, ditolak CSP, dan tidak pernah mengumpulkan apa pun. Sekarang tidak
+  ada lagi skrip `cloudflareinsights` di halaman dan konsolnya bersih.
+  Statistik kunjungan tetap ada di Analytics & Logs, dihitung di server.
+- **HSTS dinyalakan di dasbor**, 12 bulan, includeSubDomains, preload. Nama
+  tanpa `www` kini mengirimnya, begitu pula `admin`. Di `www` Cloudflare
+  mengganti nilai `_headers`, jadi headernya tetap satu.

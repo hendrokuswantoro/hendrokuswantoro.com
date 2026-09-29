@@ -697,7 +697,13 @@ memberi situs ini dua tuan.
    tiga record penolak email (`v=spf1 -all`, DKIM kosong, DMARC `p=reject`),
    sebab domain ini tidak mengirim email. Kalau kelak memakai Email Routing,
    SPF dan DMARC itu wajib diganti lebih dulu, kalau tidak surat sah ikut ditolak.
-   HSTS sengaja TIDAK dinyalakan di dasbor; `_headers` sudah mengirimnya.
+   Sejak 29 September 2026 HSTS dinyalakan juga di dasbor (12 bulan,
+   includeSubDomains, preload), sebab Redirect Rule nama tanpa `www` menjawab
+   sebelum Worker dan `_headers`, jadi nama itu tidak pernah mengirim HSTS.
+   Cloudflare MENGGANTI nilai `_headers` di `www` dengan miliknya, bukan
+   menggandakannya: yang terkirim `max-age=31536000`, bukan 63072000. Web
+   Analytics (RUM) dimatikan di hari yang sama; skripnya ditolak CSP dan
+   tidak pernah mengumpulkan apa pun.
 2. VPS belum dibuat, jadi workflow "Deploy VPS" selalu dilewati dan backend,
    dashboard, serta konfigurasi nginx belum pernah berjalan di server
    sungguhan. Langkahnya ada di `docs/vps.md`. Sejak 28 September 2026 yang
