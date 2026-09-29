@@ -3,7 +3,7 @@
 # Versi dinaikkan 13 September 2026 sesudah pip-audit menemukan 24 temuan
 # pada dua paket. Rinciannya di docs/audit-keamanan.md.
 fastapi==0.141.1
-uvicorn[standard]==0.52.4
+uvicorn[standard]==0.54.0
 # Disebut tersurat meski ia dependensi fastapi. Tanpa baris ini pip akan
 # memasang starlette mana pun yang memenuhi ">=0.46.0", termasuk 0.48.0 yang
 # membawa sembilan temuan. Batas bawah dependensi bukan pilihan versi.
