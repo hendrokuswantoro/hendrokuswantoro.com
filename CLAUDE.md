@@ -776,6 +776,11 @@ lewat terowongan. Passkey pemilik ("Laptop ini") terdaftar untuk alamat itu
 dan tidak berlaku di `localhost`; mode ketat dan kunci aplikasi menyala.
 Salinan `.env` sebelum perubahan ada di `cadangan/env-sebelum-terowongan`.
 
+Sejak 30 September 2026 C: dan D: laptop dienkripsi BitLocker, dengan D:
+terbuka otomatis (auto-unlock). Kalau auto-unlock itu mati, D: terkunci tiap
+laptop menyala, dan dashboard, cadangan harian, serta `terbitkan.cmd` gagal
+membaca folder proyek. Recovery key keduanya ada di akun Microsoft pemilik.
+
 Laptop mencadangkan basis datanya sendiri tiap hari pukul 21.00 lewat tugas
 terjadwal Windows yang dipasang `tools/pasang_cadangan_harian.ps1`, dan
 membuktikan pemulihannya tiap Minggu. Kegagalannya muncul sebagai jendela
