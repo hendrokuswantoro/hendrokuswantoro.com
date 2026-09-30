@@ -71,7 +71,7 @@ def test_nama_provinsi_sama_di_kedua_port():
 
 
 def test_token_tidak_pernah_ikut():
-    abaikan = {"dist", "node_modules", ".git", ".next", "out"}
+    abaikan = {"dist", "node_modules", ".git", ".next", "out", "cadangan"}
     for berkas in AKAR.rglob("*"):
         if not berkas.is_file() or abaikan & set(berkas.parts):
             continue
@@ -83,7 +83,8 @@ def test_token_tidak_pernah_ikut():
             isi = berkas.read_text(encoding="utf-8")
         except (UnicodeDecodeError, PermissionError):
             continue
-        assert not re.search(r"\bpk\.eyJ[A-Za-z0-9]", isi), f"{berkas} carries a Mapbox token"
+        bocor = re.search(r"\bpk\.eyJ[A-Za-z0-9]", isi) is not None
+        assert not bocor, f"{berkas} carries a Mapbox token"
 
 
 def test_konfigurasi_diabaikan_git():

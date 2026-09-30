@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 1055, tanpa peramban, hitungan detik
+python -m pytest                 # 1067, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 115, Chromium sungguhan
 sh tools/verifikasi.sh           # 22 langkah, seluruhnya, berurutan
 
@@ -65,7 +65,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    1170 uji
+tests/                    1182 uji
 docs/                     lima belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -583,6 +583,17 @@ tidak pernah membuka. Ia wajib middleware PALING LUAR, supaya pembatas laju
 dan catatan membaca alamat yang sudah diganti. `tests/test_terowongan.py`
 membandingkan header-nya dengan nginx, dan sudah dibuktikan gagal saat
 pemeriksaan tokennya dimatikan.
+
+Akibatnya di VPS: nginx WAJIB mengosongkan `CF-Ray`, `CF-Connecting-IP`, dan
+`Cf-Access-Jwt-Assertion` di tiap blok `proxy_pass`. Cloudflare memasang
+ketiganya di setiap permintaan, dan tanpa `TEROWONGAN_HOST` aplikasi yang
+melihatnya menjawab 503. Sampai 30 September 2026 nginx meneruskannya, jadi
+seluruh API di VPS akan mati sejak permintaan pertama.
+
+Lewat terowongan tidak ada nginx, jadi batas masuk sepuluh kali per menit milik
+nginx juga tidak ada. Sejak 30 September 2026 `backend/core/laju.py` memberi
+`/api/v1/auth/` batas sendiri, `LAJU_MASUK_JUMLAH` (15 per jendela), di samping
+batas umum 120.
 
 Menandai tulisan terbit di dashboard TIDAK menerbitkannya ke situs. Selama
 dashboard di laptop, jalannya `tools/terbitkan.cmd`: ekspor lewat

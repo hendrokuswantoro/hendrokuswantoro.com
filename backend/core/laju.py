@@ -26,9 +26,27 @@ async def klien():
     return _redis
 
 
-def _kunci(alamat: str) -> str:
+AWALAN_MASUK = "/api/v1/auth/"
+
+
+def _kunci(alamat: str, golongan: str = "laju") -> str:
     ringkas = hashlib.sha256(_GARAM + alamat.encode("utf-8")).hexdigest()[:32]
-    return f"laju:{ringkas}"
+    return f"{golongan}:{ringkas}"
+
+
+async def _hitung(r, kunci: str, jendela: int) -> int:
+    jumlah = await r.incr(kunci)
+    if jumlah == 1:
+        await r.expire(kunci, jendela)
+    return jumlah
+
+
+def _terlalu_banyak(jendela: int) -> JSONResponse:
+    return JSONResponse(
+        {"galat": "terlalu banyak permintaan"},
+        status_code=429,
+        headers={"Retry-After": str(jendela)},
+    )
 
 
 class BatasiLaju(BaseHTTPMiddleware):
@@ -43,18 +61,14 @@ class BatasiLaju(BaseHTTPMiddleware):
         if r is None:
             return await lanjut(permintaan)
 
-        kunci = _kunci(alamat)
+        jendela = atur.laju_jendela_detik
+        masuk = permintaan.url.path.startswith(AWALAN_MASUK)
         try:
-            jumlah = await r.incr(kunci)
-            if jumlah == 1:
-                await r.expire(kunci, atur.laju_jendela_detik)
+            jumlah = await _hitung(r, _kunci(alamat), jendela)
+            jumlah_masuk = await _hitung(r, _kunci(alamat, "laju-masuk"), jendela) if masuk else 0
         except Exception:
             return await lanjut(permintaan)
 
-        if jumlah > atur.laju_jumlah:
-            return JSONResponse(
-                {"galat": "terlalu banyak permintaan"},
-                status_code=429,
-                headers={"Retry-After": str(atur.laju_jendela_detik)},
-            )
+        if jumlah > atur.laju_jumlah or jumlah_masuk > atur.laju_masuk_jumlah:
+            return _terlalu_banyak(jendela)
         return await lanjut(permintaan)

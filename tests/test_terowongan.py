@@ -173,3 +173,21 @@ def test_aplikasi_memasang_terowongan_paling_luar():
     isi = (AKAR / "backend" / "main.py").read_text(encoding="utf-8")
     urutan = re.findall(r"app\.add_middleware\((\w+)", isi)
     assert urutan[-1] == "Terowongan", "alamat pembaca harus diganti sebelum pembatas laju dan catatan membacanya"
+
+
+def test_nginx_tidak_meneruskan_header_cloudflare_ke_aplikasi(monkeypatch):
+    for nama in ("CF-Ray", "CF-Connecting-IP", "Cf-Access-Jwt-Assertion"):
+        assert NGINX.count(f'proxy_set_header {nama} "";') == NGINX.count("proxy_pass http://hk_api;"), (
+            f"{nama} yang lolos dari nginx membuat aplikasi di VPS mengira dirinya di balik terowongan, "
+            "dan tanpa TEROWONGAN_HOST seluruh permintaannya dijawab 503"
+        )
+
+    for nama in ("TEROWONGAN_HOST", "ACCESS_TIM", "ACCESS_AUD"):
+        monkeypatch.setenv(nama, "")
+    konfigurasi.pengaturan.cache_clear()
+    try:
+        vps = TestClient(_aplikasi(), base_url="https://www.hendrokuswantoro.com")
+        assert vps.get("/api/v1/blog").status_code == 200
+        assert vps.get("/api/v1/blog", headers={"cf-ray": "8a1b2c3d4e5f6a7b-SIN"}).status_code == 503
+    finally:
+        konfigurasi.pengaturan.cache_clear()

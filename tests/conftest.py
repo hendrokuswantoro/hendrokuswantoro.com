@@ -8,6 +8,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 
 os.environ.setdefault("LAJU_JUMLAH", "100000")
+os.environ.setdefault("LAJU_MASUK_JUMLAH", "100000")
+os.environ["COOKIE_AMAN"] = "false"
 for _nama in ("SMTP_HOST", "SMTP_PENGGUNA", "SMTP_SANDI", "SURAT_DARI"):
     os.environ[_nama] = ""
 os.environ["SURAT_WAJIB"] = "0"

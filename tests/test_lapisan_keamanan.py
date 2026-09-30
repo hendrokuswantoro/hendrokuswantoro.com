@@ -206,7 +206,7 @@ def test_nama_tanpa_www_mengirim_hsts():
 def test_halaman_html_divalidasi_ulang():
     assert "add_header Cache-Control $cache_halaman always;" in NGINX
     assert '    default       "public, max-age=0, must-revalidate";' in NGINX
-    assert "location ~* \.html$" not in NGINX, "blok ini tidak pernah tercapai dan membuang header keamanan"
+    assert r"location ~* \.html$" not in NGINX, "blok ini tidak pernah tercapai dan membuang header keamanan"
 
 
 def test_tiruan_produksi_tidak_berjalan_sebagai_root():
@@ -220,3 +220,43 @@ def test_pemeriksaan_malam_menjaga_syarat_preload():
     langkah = langkah[:langkah.index("- name:", 10)]
     assert "https://hendrokuswantoro.com/" in langkah
     assert "31536000" in langkah and "includesubdomains" in langkah and "preload" in langkah
+
+
+class _RedisTiruan:
+    def __init__(self):
+        self.isi = {}
+
+    async def incr(self, kunci):
+        self.isi[kunci] = self.isi.get(kunci, 0) + 1
+        return self.isi[kunci]
+
+    async def expire(self, _kunci, _detik):
+        return True
+
+
+def test_jalur_masuk_punya_batas_sendiri_di_aplikasi(monkeypatch):
+    pytest.importorskip("httpx")
+    from types import SimpleNamespace
+
+    from starlette.applications import Starlette
+    from starlette.responses import PlainTextResponse
+    from starlette.routing import Route
+    from starlette.testclient import TestClient
+
+    from backend.core import laju
+
+    async def jawab(_permintaan):
+        return PlainTextResponse("ok")
+
+    monkeypatch.setattr(laju, "pengaturan", lambda: SimpleNamespace(
+        laju_jumlah=1000, laju_jendela_detik=60, laju_masuk_jumlah=3))
+    monkeypatch.setattr(laju, "_redis", _RedisTiruan())
+    app = Starlette(routes=[Route("/api/v1/auth/masuk", jawab, methods=["POST"]),
+                            Route("/api/v1/blog", jawab)])
+    app.add_middleware(laju.BatasiLaju)
+    klien = TestClient(app)
+
+    assert [klien.post("/api/v1/auth/masuk").status_code for _ in range(4)] == [200, 200, 200, 429], (
+        "lewat terowongan tidak ada nginx, jadi batas masuk sepuluh kali per menit hanya ada di sini"
+    )
+    assert [klien.get("/api/v1/blog").status_code for _ in range(10)] == [200] * 10

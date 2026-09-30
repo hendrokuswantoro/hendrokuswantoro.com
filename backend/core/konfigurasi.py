@@ -33,6 +33,7 @@ class Pengaturan(BaseSettings):
 
     laju_jumlah: int = Field(default=120, alias="LAJU_JUMLAH")
     laju_jendela_detik: int = Field(default=60, alias="LAJU_JENDELA_DETIK")
+    laju_masuk_jumlah: int = Field(default=15, alias="LAJU_MASUK_JUMLAH")
 
     jwt_rahasia: str = Field(default="", alias="JWT_SECRET")
 

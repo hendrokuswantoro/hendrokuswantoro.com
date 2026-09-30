@@ -37,6 +37,9 @@ disetel dengan host `localhost` tetap dijaga.
    permintaannya datang dari loopback, tempat `cloudflared` berjalan. Tanpa
    itu seluruh pembaca tampak sebagai `127.0.0.1`, dan pembatas masuk sepuluh
    kali per menit berlaku untuk semua orang sekaligus.
+   Batas masuk itu sendiri milik nginx, jadi di sini digantikan batas aplikasi
+   untuk `/api/v1/auth/`: `LAJU_MASUK_JUMLAH`, 15 permintaan per menit per
+   alamat.
 4. **Header keamanan yang sama dengan nginx**, termasuk CSP dashboard Next yang
    dihitung aplikasi. `tests/test_terowongan.py` membandingkannya dengan
    `infrastructure/nginx/hendrokuswantoro.conf`. Jawaban API memakai CSP
@@ -123,3 +126,9 @@ dari situs; berkasnya di `content/blog/` harus dihapus sendiri.
 
 Terowongan tidak dibutuhkan lagi. Hapus public hostname `admin`, kosongkan
 ketiga variabel di atas, dan ikuti `docs/vps.md`.
+
+Di VPS, Cloudflare tetap memasang `CF-Ray`, `CF-Connecting-IP`, dan
+`Cf-Access-Jwt-Assertion` di setiap permintaan. Aplikasi yang melihatnya
+mengira dirinya di balik terowongan, dan dengan ketiga variabel kosong ia
+menjawab 503. Karena itu tiap blok `proxy_pass` di nginx mengosongkan ketiganya.
+Blok baru yang lupa melakukannya ketahuan di `tests/test_terowongan.py`.
