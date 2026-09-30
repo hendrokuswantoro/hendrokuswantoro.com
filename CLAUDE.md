@@ -774,7 +774,11 @@ Sejak 29 September 2026 `.env` laptop memakai `WEBAUTHN_RP_ID` dan
 `WEBAUTHN_ASAL` milik `admin.hendrokuswantoro.com`, sebab dashboard dibuka
 lewat terowongan. Passkey pemilik ("Laptop ini") terdaftar untuk alamat itu
 dan tidak berlaku di `localhost`; mode ketat dan kunci aplikasi menyala.
-Salinan `.env` sebelum perubahan ada di `cadangan/env-sebelum-terowongan`.
+Salinan `.env` sebelum perubahan pernah disimpan di
+`cadangan/env-sebelum-terowongan`, lalu dihapus pada 30 September 2026 sebab
+isinya rahasia tanpa enkripsi. Sandi aplikasi Gmail di `SMTP_SANDI` diganti hari
+itu juga, sesudah salinan itu sempat tercetak oleh uji yang gagal. Jangan
+menyimpan salinan `.env` polos di dalam repositori lagi.
 
 Sejak 30 September 2026 C: dan D: laptop dienkripsi BitLocker, dengan D:
 terbuka otomatis (auto-unlock). Kalau auto-unlock itu mati, D: terkunci tiap
