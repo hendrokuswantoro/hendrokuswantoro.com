@@ -62,3 +62,9 @@ def test_arahan_alat_dan_penanda_font_tidak_lagi_dikecualikan(tmp_path):
     gaya = tmp_path / "gaya.css"
     gaya.write_bytes(b"/* >>> font */\n/* Poppins, OFL-1.1 */\na { color: red; }\n")
     assert [n for n, _ in cari_komentar.css(gaya)] == [1, 2]
+
+
+def test_migrasi_sql_ikut_diperiksa(tmp_path):
+    berkas = tmp_path / "0099_contoh.sql"
+    berkas.write_bytes(b"-- alasan\nCREATE TABLE t (a int);\n/* blok */\n")
+    assert [n for n, _ in cari_komentar.sql(berkas)] == [1, 3]

@@ -262,3 +262,20 @@ def test_jalur_masuk_punya_batas_sendiri_di_aplikasi(monkeypatch):
         "lewat terowongan tidak ada nginx, jadi batas masuk sepuluh kali per menit hanya ada di sini"
     )
     assert [klien.get("/api/v1/blog").status_code for _ in range(10)] == [200] * 10
+
+
+def test_sidik_migrasi_yang_ditandai_ulang_sama_dengan_berkasnya():
+    import hashlib
+    import importlib.util
+
+    pytest.importorskip("psycopg")
+    spesifikasi = importlib.util.spec_from_file_location("migrasi_uji", AKAR / "backend" / "db" / "migrasi.py")
+    migrasi = importlib.util.module_from_spec(spesifikasi)
+    spesifikasi.loader.exec_module(migrasi)
+
+    for nama, (lama, baru) in migrasi.SIDIK_TANPA_KOMENTAR.items():
+        isi = (migrasi.MIGRASI / nama).read_text(encoding="utf-8")
+        assert hashlib.sha256(isi.encode("utf-8")).hexdigest() == baru, (
+            f"{nama} berubah lagi sesudah komentarnya dipindah; migrasi yang sudah jalan tidak boleh disunting"
+        )
+        assert lama != baru

@@ -74,7 +74,7 @@ kontrolnya sendiri sehingga izin itu wajib. Itu keliru untuk MapLibre 6: ia
 menulis lewat CSSOM, dan CSSOM tidak dijaga `style-src`. Terukur nol
 pelanggaran di lima halaman, peta terbuka penuh.
 
-**Yang seharusnya sudah ada sejak dulu:** `tests/test_csp.py`. CLAUDE.md sudah
+**Yang seharusnya sudah ada sejak dulu:** `tests/test_csp.py`. myweb.md sudah
 melarang menguji CSP tanpa tajuknya, dan larangan tanpa uji cuma kalimat.
 
 ### 2. Jalur tulis menuntut faktor kedua

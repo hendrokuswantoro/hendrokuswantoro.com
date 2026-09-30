@@ -219,10 +219,9 @@ def test_kolom_wajah_disandikan_bukan_disimpan_apa_adanya():
     )
 
 
-def test_migrasi_menyebut_batas_yang_sebenarnya():
-    sql = (AKAR / "backend" / "db" / "migrations" / "0005_wajah.sql").read_text(
-        encoding="utf-8"
-    )
-    assert "TIDAK" in sql
-    assert "rekaman video" in sql.lower()
-    assert "passkey" in sql.lower()
+def test_catatan_migrasi_menyebut_batas_yang_sebenarnya():
+    dok = (AKAR / "docs" / "basis-data.md").read_text(encoding="utf-8")
+    bagian = dok[dok.index("### `0005_wajah.sql`"):dok.index("### `0006_berkas.sql`")]
+    assert "TIDAK" in bagian
+    assert "rekaman video" in bagian.lower()
+    assert "passkey" in bagian.lower()

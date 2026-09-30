@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 1070, tanpa peramban, hitungan detik
+python -m pytest                 # 1072, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 115, Chromium sungguhan
 sh tools/verifikasi.sh           # 22 langkah, seluruhnya, berurutan
 
@@ -65,7 +65,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    1185 uji
+tests/                    1187 uji
 docs/                     enam belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -157,15 +157,15 @@ nama dan nilai, keterangannya di `docs/lingkungan.md`. Yang tersisa bukan
 komentar: shebang (perintah bagi sistem operasi), docstring modul yang dipakai
 `__doc__` sebagai teks bantuan baris perintah, isi heredoc yang dicetak atau
 ditulis ke berkas lain, dan kode pihak ketiga di `assets/vendor/` beserta
-lisensinya. Berkas migrasi SQL masih dikecualikan, sebab sidiknya tersimpan di
-`skema_migrasi` dan menyuntingnya butuh keputusan pemilik.
+lisensinya. Komentar di kesepuluh berkas migrasi SQL pindah ke
+`docs/basis-data.md`; perintah SQL-nya tidak berubah satu baris pun.
 
 Kaidah ini ditegakkan `tools/cari_komentar.py` dan
 `tests/test_tanpa_komentar.py`, yang membaca komentar JS/TS lewat pengurai
 TypeScript, bukan regex, supaya regex `/\//g` dan alamat `https://` tidak
 dikira komentar. Pemeriksa itu juga membaca berkas requirements,
 `.gitignore`, `.gitattributes`, `_headers`, `_redirects`, `.env.example`,
-`.ps1`, dan `.cmd`.
+`.ps1`, `.cmd`, dan migrasi `.sql`.
 
 **Uji CSP dengan menyajikan halamannya beserta tajuknya, dan jalankan
 skripnya.** Ini sudah tertulis di berkas ini sejak lama sebagai kalimat, dan
@@ -389,6 +389,16 @@ sudah pernah tertinggal berhari hari.
 
 **Migrasi bernomor unik dan tidak pernah disunting ulang.** CI memeriksa
 nomornya tidak kembar.
+
+Satu pengecualian yang disengaja: pada 30 September 2026 komentar di migrasi
+0001 sampai 0010 dipindah ke `docs/basis-data.md`, pemilik yang memintanya.
+Sidik tiap berkas di `skema_migrasi` ikut berubah, jadi `migrasi.py` memuat
+`SIDIK_TANPA_KOMENTAR`: pasangan sidik lama dan baru untuk kesepuluhnya. Basis
+data yang masih bersidik lama, termasuk yang dipulihkan dari cadangan sebelum
+tanggal itu, ditandai ulang sekali (`tanda` di keluarannya); suntingan lain
+tetap ditolak. Daftar itu wajib dipertahankan selama cadangan lama masih
+mungkin dipulihkan, dan `tests/test_lapisan_keamanan.py` menolak kalau
+berkasnya berubah lagi.
 
 ## Konvensi teknis
 

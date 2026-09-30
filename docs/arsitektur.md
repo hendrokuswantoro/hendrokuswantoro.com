@@ -142,7 +142,7 @@ memasangnya sendiri di langkah Lint, yang tidak memasang berkas ini.
 - `assets/js/konfigurasi.js` dan `cadangan/` memuat kunci atau salinannya.
 - `assets/model/`, model pengenalan wajah 39 MB, diunduh `tools/ambil_model.py`.
 - `/unggahan/` berisi foto dan video dari dashboard: milik satu pemasangan,
-  bukan milik kode. Garis miring di depannya disengaja; alasannya di CLAUDE.md.
+  bukan milik kode. Garis miring di depannya disengaja; alasannya di myweb.md.
 - `.claude/worktrees/` adalah worktree sementara sesi Claude Code, berisi
   salinan seluruh repositori.
 - `dist-*.zip` dibangun ulang kapan saja oleh `tools/build_dist.py`.

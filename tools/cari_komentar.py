@@ -10,7 +10,7 @@ import tokenize
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent
 LEWATI = ("node_modules", ".next", "next/out", "dist", "assets/vendor", "next/public/assets/vendor",
-          "backend/db/migrations", ".git", "cadangan", "unggahan", "hasil-uji-keamanan",
+          ".git", "cadangan", "unggahan", "hasil-uji-keamanan",
           "next/next-env.d.ts", ".pytest_cache", ".ruff_cache", ".claude", ".venv")
 
 
@@ -141,6 +141,15 @@ def batch(p: pathlib.Path) -> list[tuple[int, str]]:
     return temuan
 
 
+def sql(p: pathlib.Path) -> list[tuple[int, str]]:
+    temuan = []
+    for nomor, baris in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
+        bersih = baris.strip()
+        if bersih.startswith(("--", "/*")):
+            temuan.append((nomor, bersih[:120]))
+    return temuan
+
+
 def ts_ada() -> bool:
     return (AKAR / "next" / "node_modules" / "typescript" / "package.json").exists()
 
@@ -162,6 +171,9 @@ def semua(dengan_skrip: bool = True) -> dict[pathlib.Path, list[tuple[int, str]]
                   NAMA_PAGAR + ("requirements",))
     for p in lain:
         if t := pagar(p):
+            hasil[p] = t
+    for p in berkas((".sql",)):
+        if t := sql(p):
             hasil[p] = t
     for p in berkas((".cmd", ".bat")):
         if t := batch(p):
