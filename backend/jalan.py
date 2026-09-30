@@ -60,7 +60,12 @@ def main() -> int:
     )
 
     soket = _soket_loopback(pilihan.host, pilihan.port)
-    return 0 if asyncio.run(uvicorn.Server(atur).serve(sockets=soket)) is None else 1
+    try:
+        hasil = asyncio.run(uvicorn.Server(atur).serve(sockets=soket))
+    except KeyboardInterrupt:
+        print("jalan.py: dashboard dimatikan")
+        return 0
+    return 0 if hasil is None else 1
 
 
 def _soket_loopback(inang: str, porta: int) -> list[socket.socket] | None:
