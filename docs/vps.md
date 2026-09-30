@@ -64,6 +64,31 @@ Ubuntu buatan Oracle juga membawa aturan iptables sendiri yang menutup semua
 porta kecuali SSH, dan penggunanya `ubuntu`, bukan `root`; `pasang.sh` belum
 menangani keduanya.
 
+Percobaan kedua, 30 September 2026, dengan kartu Debit BCA Mastercard atas
+nama pemilik. Yang dipelajari:
+
+- Kartu itu SAMPAI ke BCA: email "Informasi Transaksi" BCA mencatat merchant
+  `ORACLE SINGAPORE`, SGD 1,38, GAGAL. Jadi Oracle tidak menolak jenis
+  kartunya; yang menolak bank.
+- Percobaan pertama gagal karena "Transaksi Debit Online" di myBCA belum
+  aktif (Akun Saya, Kontrol Akun). Sesudah diaktifkan, beserta Transaksi
+  Internasional dan tujuan OTP myBCA dengan SMS sebagai cadangan, percobaan
+  kedua tetap ditolak. Dugaan terkuat: saldo, sebab hanya sekitar Rp22.000
+  dan sebagian wajib mengendap. Alasan pastinya hanya bisa dilihat Halo BCA
+  (1500 888).
+- Kalau dicoba lagi: saldo sekitar Rp100.000, jendela Chrome biasa (bukan
+  Incognito, yang memblokir cookie pihak ketiga yang dipakai CyberSource dan
+  halaman OTP bank), tanpa VPN, alamat penagihan alamat pemilik sendiri, dan
+  paling banyak satu percobaan sehari.
+- Chat di halaman Oracle adalah Oracle Sales Chatbot, yang menuntut email
+  bisnis. Ia bukan jalan untuk masalah kartu.
+- Server Always Free yang menganggur (CPU persentil 95 di bawah 20% selama
+  7 hari) boleh diambil kembali Oracle, dan situs ini hampir pasti tergolong
+  menganggur. Kredit US$300 hanya 30 hari; jatah Always Free permanen.
+
+Pemilik lalu berhenti mencoba: dashboard sudah bisa dibuka dari mana saja
+lewat Cloudflare Tunnel (`docs/terowongan.md`), jadi VPS tidak lagi mendesak.
+
 2 GB memori adalah batas bawah yang masuk akal: PostGIS, Redis, dan dua
 pekerja uvicorn muat di 1 GB, tetapi tanpa ruang sisa untuk apa pun.
 
