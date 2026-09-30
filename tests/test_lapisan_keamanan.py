@@ -236,6 +236,8 @@ class _RedisTiruan:
 
 def test_jalur_masuk_punya_batas_sendiri_di_aplikasi(monkeypatch):
     pytest.importorskip("httpx")
+    pytest.importorskip("starlette")
+    pytest.importorskip("pydantic_settings")
     from types import SimpleNamespace
 
     from starlette.applications import Starlette
