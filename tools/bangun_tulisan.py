@@ -31,10 +31,10 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-import markah  # noqa: E402
-import unggahan_publik  # noqa: E402
-from isi import IsiSalah, SumberApi, SumberBerkas, Tulisan, tulis_tulisan  # noqa: E402
-from versi_aset import cap_karya  # noqa: E402
+import markah
+import unggahan_publik
+from isi import IsiSalah, SumberApi, SumberBerkas, Tulisan, tulis_tulisan
+from versi_aset import cap_karya
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent
 ISI = AKAR / "content"

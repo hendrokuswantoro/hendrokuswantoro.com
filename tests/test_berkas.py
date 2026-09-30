@@ -5,13 +5,13 @@ import struct
 
 import pytest
 
-try:  # noqa: SIM105
+try:
     from backend.layanan import berkas as layanan
 
     ADA_BACKEND = True
-except ModuleNotFoundError:  # pragma: no cover
+except ModuleNotFoundError:
     ADA_BACKEND = False
-    layanan = None  # type: ignore[assignment]
+    layanan = None
 
 pytestmark = pytest.mark.skipif(
     not ADA_BACKEND,

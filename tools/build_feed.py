@@ -9,9 +9,9 @@ from email.utils import format_datetime
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-import markah  # noqa: E402
-from isi import SumberBerkas, Tulisan  # noqa: E402
-from versi_aset import cap_karya  # noqa: E402
+import markah
+from isi import SumberBerkas, Tulisan
+from versi_aset import cap_karya
 
 SITUS = "https://www.hendrokuswantoro.com"
 AKAR = pathlib.Path(__file__).resolve().parent.parent

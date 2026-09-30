@@ -1,13 +1,3 @@
-"""Mencari komentar di kode sumber, yang dilarang sejak 26 September 2026.
-
-    python tools/cari_komentar.py    # cetak tiap komentar, keluar 1 bila ada
-
-Yang boleh, sesuai CLAUDE.md: arahan alat (noqa, type: ignore, pragma: no
-cover, eslint-disable), shebang, penanda blok font dan atribusi lisensinya di
-style.css, sakelar admin_boleh di nginx, berkas migrasi SQL, isi heredoc, dan
-.env.example, yang memang lembar keterangan variabel.
-"""
-
 from __future__ import annotations
 
 import io
@@ -22,8 +12,6 @@ AKAR = pathlib.Path(__file__).resolve().parent.parent
 LEWATI = ("node_modules", ".next", "next/out", "dist", "assets/vendor", "next/public/assets/vendor",
           "backend/db/migrations", ".git", "cadangan", "unggahan", "hasil-uji-keamanan",
           "next/next-env.d.ts", ".pytest_cache", ".ruff_cache", ".claude", ".venv")
-ARAHAN = re.compile(r"noqa|type:\s*ignore|pragma:\s*no cover|eslint-(disable|enable)|@ts-(expect-error|ignore)")
-BOLEH_BARIS = ("# if ($admin_boleh = 0) { return 404; }",)
 
 
 def _dilewati(p: pathlib.Path) -> bool:
@@ -31,7 +19,7 @@ def _dilewati(p: pathlib.Path) -> bool:
     return any(jalur == x or jalur.startswith(x + "/") or f"/{x}/" in f"/{jalur}" for x in LEWATI)
 
 
-NAMA_PAGAR = ("Dockerfile", ".gitignore", ".gitattributes", "_headers", "_redirects")
+NAMA_PAGAR = ("Dockerfile", ".gitignore", ".gitattributes", "_headers", "_redirects", ".env.example")
 
 
 def _cocok(p: pathlib.Path, akhiran: tuple[str, ...], nama: tuple[str, ...]) -> bool:
@@ -55,8 +43,6 @@ def python(p: pathlib.Path) -> list[tuple[int, str]]:
         if tok.type == tokenize.COMMENT:
             teks = tok.string
             if tok.start[0] == 1 and teks.startswith("#!"):
-                continue
-            if ARAHAN.search(teks):
                 continue
             temuan.append((tok.start[0], teks))
     return temuan
@@ -106,7 +92,7 @@ def skrip(daftar: list[pathlib.Path]) -> dict[pathlib.Path, list[tuple[int, str]
     )
     mentah = json.loads(keluar.stdout or "{}")
     return {
-        pathlib.Path(b): [(n, t) for n, t in isi if not ARAHAN.search(t)]
+        pathlib.Path(b): isi
         for b, isi in mentah.items()
     }
 
@@ -116,10 +102,6 @@ def css(p: pathlib.Path) -> list[tuple[int, str]]:
     temuan = []
     for m in re.finditer(r"/\*.*?\*/", teks, re.S):
         isi = m.group(0)
-        if re.fullmatch(r"/\*\s*(>>>|<<<)\s*font\s*\*/", isi):
-            continue
-        if "font" in isi.lower() and ("ambil_font" in isi or "OFL" in isi or "Poppins" in isi or "SIL" in isi):
-            continue
         temuan.append((teks.count("\n", 0, m.start()) + 1, isi[:120]))
     return temuan
 
@@ -145,8 +127,6 @@ def pagar(p: pathlib.Path) -> list[tuple[int, str]]:
         if not bersih.startswith("#"):
             continue
         if nomor == 1 and bersih.startswith("#!"):
-            continue
-        if bersih in BOLEH_BARIS:
             continue
         temuan.append((nomor, bersih[:120]))
     return temuan

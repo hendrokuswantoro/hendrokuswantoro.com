@@ -17,12 +17,12 @@ class Berkas(BaseModel):
     tinggi: int | None = None
     dibuat_pada: dt.datetime
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field
     @property
     def alamat(self) -> str:
         return f"/unggahan/{self.nama}"
 
-    @computed_field  # type: ignore[prop-decorator]
+    @computed_field
     @property
     def markah(self) -> str:
         if self.jenis == "video":

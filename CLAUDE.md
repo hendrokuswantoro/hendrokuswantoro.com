@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 1069, tanpa peramban, hitungan detik
+python -m pytest                 # 1070, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 115, Chromium sungguhan
 sh tools/verifikasi.sh           # 22 langkah, seluruhnya, berurutan
 
@@ -65,8 +65,8 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    1184 uji
-docs/                     lima belas dokumen, alasan di balik keputusannya
+tests/                    1185 uji
+docs/                     enam belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
 ```
@@ -145,23 +145,27 @@ pustaka gambar. Membuka gambar dengan pustaka berarti mengurai seluruh isinya
 di jalur yang menerima berkas dari luar.
 
 **Kode sumber tidak berkomentar, sejak 26 September 2026.** Alasan di balik
-tiap keputusan tinggal di berkas ini, di `docs/`, dan di pesan commit. Yang
-sengaja dipertahankan hanya yang punya fungsi: arahan alat seperti `noqa`,
-`type: ignore`, `pragma: no cover`, dan `eslint-disable`; shebang; penanda
-blok font yang dicari `ambil_font.py` dan `gaya_next.py`, beserta atribusi
-lisensi OFL di dalamnya; docstring modul di skrip yang memakai `__doc__`
-sebagai teks bantuan baris perintah; berkas migrasi SQL, yang sidiknya
-disimpan `migrasi.py`; isi heredoc yang dicetak atau ditulis ke berkas lain;
-dan sakelar `# if ($admin_boleh = 0)` di nginx, yang tanda pagarnya disuruh
-dihapus pemiliknya di `docs/keamanan.md`. Sejak 29 September 2026 kaidah ini
-ditegakkan `tools/cari_komentar.py` dan `tests/test_tanpa_komentar.py`, yang
-membaca komentar JS/TS lewat pengurai TypeScript, bukan regex, supaya regex
-`/\//g` dan alamat `https://` tidak dikira komentar. Sejak 30 September 2026
-pemeriksa itu juga membaca berkas requirements, `.gitignore`,
-`.gitattributes`, `_headers`, `_redirects`, `.ps1`, dan `.cmd`; alasan yang
-dulu ditulis di sana pindah ke `docs/arsitektur.md`. Satu satunya berkas
-konfigurasi yang sengaja berkomentar adalah `.env.example`, sebab ia lembar
-keterangan variabel yang disalin menjadi `.env`.
+tiap keputusan tinggal di berkas ini, di `docs/`, dan di pesan commit.
+Sejak 30 September 2026 tidak ada lagi pengecualian yang berupa komentar:
+arahan alat (`noqa`, `type: ignore`, `pragma: no cover`) dibuang sebab tidak ada
+pemeriksa Python yang membacanya; pengecualian ESLint pindah ke aturan per
+berkas di `next/eslint.config.mjs`; blok font di `style.css` dikenali dari
+bentuknya, deretan `@font-face` di awal berkas, bukan dari penanda; lisensi
+Poppins tinggal di `assets/fonts/OFL.txt`; sakelar `admin_boleh` di nginx kini
+peta yang aktif, bukan baris ber-tanda pagar; dan `.env.example` hanya berisi
+nama dan nilai, keterangannya di `docs/lingkungan.md`. Yang tersisa bukan
+komentar: shebang (perintah bagi sistem operasi), docstring modul yang dipakai
+`__doc__` sebagai teks bantuan baris perintah, isi heredoc yang dicetak atau
+ditulis ke berkas lain, dan kode pihak ketiga di `assets/vendor/` beserta
+lisensinya. Berkas migrasi SQL masih dikecualikan, sebab sidiknya tersimpan di
+`skema_migrasi` dan menyuntingnya butuh keputusan pemilik.
+
+Kaidah ini ditegakkan `tools/cari_komentar.py` dan
+`tests/test_tanpa_komentar.py`, yang membaca komentar JS/TS lewat pengurai
+TypeScript, bukan regex, supaya regex `/\//g` dan alamat `https://` tidak
+dikira komentar. Pemeriksa itu juga membaca berkas requirements,
+`.gitignore`, `.gitattributes`, `_headers`, `_redirects`, `.env.example`,
+`.ps1`, dan `.cmd`.
 
 **Uji CSP dengan menyajikan halamannya beserta tajuknya, dan jalankan
 skripnya.** Ini sudah tertulis di berkas ini sejak lama sebagai kalimat, dan

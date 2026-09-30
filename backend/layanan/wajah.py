@@ -28,7 +28,7 @@ class BelumSiap(Exception):
 
 def siap() -> bool:
     try:
-        import cv2  # noqa: F401
+        import cv2
     except ImportError:
         return False
     return PENDETEKSI.exists() and PENGENAL.exists()
@@ -36,7 +36,7 @@ def siap() -> bool:
 
 def _alasan_belum_siap() -> str:
     try:
-        import cv2  # noqa: F401
+        import cv2
     except ImportError:
         return (
             "opencv-python-headless belum terpasang. "

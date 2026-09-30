@@ -92,10 +92,9 @@ tumpukan paling atas ke bawah.
 Sampai 30 September 2026 alasan di bawah ini tertulis sebagai komentar di
 berkasnya masing masing. Sejak itu `tools/cari_komentar.py` juga memeriksa
 berkas requirements, `.gitignore`, `.gitattributes`, `_headers`,
-`_redirects`, skrip PowerShell, dan berkas batch, jadi alasannya tinggal di
-sini. Yang sengaja tetap berkomentar hanya `.env.example`: berkas itu lembar
-keterangan variabel yang disalin menjadi `.env`, dan keterangannya adalah
-isinya.
+`_redirects`, `.env.example`, skrip PowerShell, dan berkas batch, jadi
+alasannya tinggal di sini. Keterangan tiap variabel di `.env.example` ada di
+`docs/lingkungan.md`.
 
 ### `backend/requirements.txt`
 
@@ -165,3 +164,13 @@ saat berjalan, `blob:` dan `data:` untuk tekstur kanvasnya, dan gaya sebaris
 yang ditulis MapLibre ke kontrol dan penandanya sendiri. Skrip tetap dibatasi
 ke asal ini. Aturan di `_redirects` baru menyala setelah nama tanpa `www` dan
 dengan `www` sama sama dipasang sebagai custom domain proyeknya.
+
+### `next/eslint.config.mjs`
+
+Dua aturan Next dimatikan per berkas, bukan lewat komentar `eslint-disable`
+di kodenya. `@next/next/no-img-element` mati di empat komponen yang
+menampilkan gambar unggahan dan gambar karya: port ini diekspor statis dengan
+`images: { unoptimized: true }` di `next.config`, jadi `next/image` tidak
+mengoptimalkan apa pun dan hanya menambah pembungkus. `@next/next/no-html-link-for-pages` mati di dua tempat di
+dashboard yang menautkan ke `/`: situs publik bukan halaman aplikasi Next ini,
+jadi tautannya wajib memuat halaman penuh, bukan navigasi klien.

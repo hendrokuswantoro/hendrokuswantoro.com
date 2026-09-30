@@ -10,7 +10,7 @@ from konftes import AKAR
 
 sys.path.insert(0, str(AKAR / "tools"))
 
-from isi import SumberBerkas  # noqa: E402
+from isi import SumberBerkas
 
 PROYEK = SumberBerkas(AKAR / "content").proyek()
 HTML = (AKAR / "project.html").read_text(encoding="utf-8")

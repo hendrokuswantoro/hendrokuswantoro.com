@@ -75,7 +75,6 @@ export function ParkirJogjaView() {
               </div>
             </header>
 
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               className="article__gambar"
               src={PARKIR.image}

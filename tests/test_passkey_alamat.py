@@ -14,15 +14,14 @@ ADMIN_STATIS = "\n".join(
 LIB_TS = (AKAR / "next" / "lib" / "passkey.ts").read_text(encoding="utf-8")
 MASUK_TSX = (AKAR / "next" / "components" / "admin" / "MasukView.tsx").read_text(encoding="utf-8")
 PANEL_TSX = (AKAR / "next" / "components" / "admin" / "PanelPasskey.tsx").read_text(encoding="utf-8")
-CONTOH_ENV = (AKAR / ".env.example").read_text(encoding="utf-8")
 
 
-try:  # noqa: SIM105
-    import pydantic  # noqa: F401
-    import pydantic_settings  # noqa: F401
+try:
+    import pydantic
+    import pydantic_settings
 
     ADA_BACKEND = True
-except ModuleNotFoundError:  # pragma: no cover
+except ModuleNotFoundError:
     ADA_BACKEND = False
 
 butuh_backend = pytest.mark.skipif(
@@ -144,10 +143,10 @@ def test_masuk_memeriksa_sebelum_memanggil_servernya():
     assert badan.index("passkey.kendala()") < badan.index("passkey.masuk()")
 
 
-def test_contoh_env_memperingatkan_alamat_ip():
-    rendah = CONTOH_ENV.lower()
-    assert "127.0.0.1" in CONTOH_ENV
-    assert "nama domain" in rendah
-    assert re.search(r"localhost:\d+/admin", CONTOH_ENV), (
-        ".env.example tidak menyebut alamat gantinya"
+def test_keterangan_env_memperingatkan_alamat_ip():
+    keterangan = (AKAR / "docs" / "lingkungan.md").read_text(encoding="utf-8")
+    assert "127.0.0.1" in keterangan
+    assert "nama domain" in keterangan.lower()
+    assert re.search(r"localhost:\d+/admin", keterangan), (
+        "docs/lingkungan.md tidak menyebut alamat gantinya"
     )

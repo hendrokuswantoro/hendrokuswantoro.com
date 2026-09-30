@@ -12,7 +12,7 @@ from konftes import AKAR
 sys.path.insert(0, str(AKAR))
 sys.path.insert(0, str(AKAR / "tools"))
 
-from muat_env import muat  # noqa: E402
+from muat_env import muat
 
 muat()
 
@@ -75,14 +75,14 @@ def test_security_txt_ikut_terbit():
 psycopg = pytest.importorskip("psycopg")
 pytest.importorskip("fastapi")
 
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi.testclient import TestClient
 
-from backend.core import surat  # noqa: E402
-from backend.layanan import autentikasi  # noqa: E402
-from konftes import EMAIL_UJI as EMAIL  # noqa: E402
-from konftes import SANDI_UJI as SANDI  # noqa: E402
-from konftes import ada_basis_data  # noqa: E402
-from konftes import loop_untuk_psycopg as _loop_untuk_psycopg  # noqa: E402
+from backend.core import surat
+from backend.layanan import autentikasi
+from konftes import EMAIL_UJI as EMAIL
+from konftes import SANDI_UJI as SANDI
+from konftes import ada_basis_data
+from konftes import loop_untuk_psycopg as _loop_untuk_psycopg
 
 DSN = os.environ.get("DSN", "")
 butuh_db = pytest.mark.skipif(not ada_basis_data(DSN), reason="tidak ada basis data")

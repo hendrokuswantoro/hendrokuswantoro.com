@@ -10,8 +10,8 @@ pytest.importorskip("playwright", reason="playwright belum terpasang")
 
 pytestmark = pytest.mark.peramban
 
-from conftest import buka  # noqa: E402
-from playwright.sync_api import Page  # noqa: E402
+from conftest import buka
+from playwright.sync_api import Page
 
 
 @pytest.mark.parametrize("jalur,judul", [

@@ -11,7 +11,7 @@ from konftes import AKAR
 sys.path.insert(0, str(AKAR))
 sys.path.insert(0, str(AKAR / "tools"))
 
-import ip_cloudflare  # noqa: E402
+import ip_cloudflare
 
 INFRA = AKAR / "infrastructure"
 NGINX = (INFRA / "nginx" / "hendrokuswantoro.conf").read_text(encoding="utf-8")
@@ -104,7 +104,7 @@ def test_cookie_sesi_tanpa_domain_dan_hanya_untuk_jalur_masuk():
 
 
 def test_passkey_produksi_terikat_ke_www():
-    contoh = (AKAR / ".env.example").read_text(encoding="utf-8")
-    assert f"# Produksi : WEBAUTHN_RP_ID={WWW}" in contoh
+    keterangan = (AKAR / "docs" / "lingkungan.md").read_text(encoding="utf-8")
+    assert f"Produksi : WEBAUTHN_RP_ID={WWW}" in keterangan
     assert f"WEBAUTHN_RP_ID={WWW}" in PASANG
     assert f'WEBAUTHN_ASAL=["https://{WWW}"]' in PASANG

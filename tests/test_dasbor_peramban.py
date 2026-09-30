@@ -13,7 +13,7 @@ pytestmark = pytest.mark.peramban
 sys.path.insert(0, str(AKAR))
 sys.path.insert(0, str(AKAR / "tools"))
 
-from conftest import masuk_admin, tab_dengan_otentikator  # noqa: E402
+from conftest import masuk_admin, tab_dengan_otentikator
 
 def png_kecil(lebar: int, tinggi: int, warna: tuple[int, int, int]) -> bytes:
     import struct
@@ -113,7 +113,7 @@ def test_dashboard_hidup_dan_jujur(server_admin, peramban):
         }])
         try:
             tab.wait_for_selector("#petak-berkas button.sisip", timeout=25000)
-        except Exception as galat:  # pragma: no cover
+        except Exception as galat:
             raise AssertionError(
                 "unggahan tidak muncul di pustaka. Kabar di layar: "
                 + (tab.inner_text("#kabar-berkas") or "(kosong)")

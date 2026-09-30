@@ -14,7 +14,7 @@ pytestmark = pytest.mark.peramban
 sys.path.insert(0, str(AKAR))
 sys.path.insert(0, str(AKAR / "tools"))
 
-from conftest import masuk_admin, tab_dengan_otentikator  # noqa: E402
+from conftest import masuk_admin, tab_dengan_otentikator
 
 
 @pytest.fixture

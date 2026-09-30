@@ -23,12 +23,12 @@ import sys
 
 try:
     import psycopg
-except ImportError:  # pragma: no cover
+except ImportError:
     sys.exit("psycopg belum terpasang. Jalankan: pip install -r backend/requirements.txt")
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(AKAR / "tools"))
-from muat_env import muat  # noqa: E402
+from muat_env import muat
 
 muat()
 

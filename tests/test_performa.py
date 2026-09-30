@@ -10,8 +10,8 @@ pytest.importorskip("playwright", reason="playwright belum terpasang")
 
 pytestmark = pytest.mark.peramban
 
-from conftest import buka  # noqa: E402
-from test_peramban import peta_siap  # noqa: E402
+from conftest import buka
+from test_peramban import peta_siap
 
 ANGGARAN = {
     "/":                      (210, 12),

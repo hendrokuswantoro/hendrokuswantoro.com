@@ -9,9 +9,9 @@ try:
     from backend.layanan import metadata
 
     ADA_BACKEND = True
-except ModuleNotFoundError:  # pragma: no cover
+except ModuleNotFoundError:
     ADA_BACKEND = False
-    metadata = None  # type: ignore[assignment]
+    metadata = None
 
 pytestmark = pytest.mark.skipif(
     not ADA_BACKEND,

@@ -71,7 +71,7 @@ class Pemindai(HTMLParser):
     def handle_data(self, data: str) -> None:
         self._teks.append(data)
 
-    def close(self) -> None:  # type: ignore[override]
+    def close(self) -> None:
         super().close()
         self.teks = "".join(self._teks)
 

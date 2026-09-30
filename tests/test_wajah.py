@@ -10,11 +10,11 @@ from konftes import AKAR
 sys.path.insert(0, str(AKAR))
 sys.path.insert(0, str(AKAR / "tools"))
 
-from muat_env import muat  # noqa: E402
+from muat_env import muat
 
 muat()
 
-from backend.layanan import wajah  # noqa: E402
+from backend.layanan import wajah
 
 butuh_model = pytest.mark.skipif(
     not wajah.siap(),
@@ -123,7 +123,7 @@ def test_dua_wajah_ditolak(monkeypatch):
     import numpy as np
 
     class DuaWajah:
-        def setInputSize(self, ukuran):  # noqa: N802 
+        def setInputSize(self, ukuran):
             pass
 
         def detect(self, gambar):

@@ -7,7 +7,7 @@ from konftes import AKAR
 
 sys.path.insert(0, str(AKAR))
 
-from backend.core.csp_admin import hash_sebaris, kebijakan  # noqa: E402
+from backend.core.csp_admin import hash_sebaris, kebijakan
 
 NGINX = (AKAR / "infrastructure" / "nginx" / "hendrokuswantoro.conf").read_text(encoding="utf-8")
 MAIN = (AKAR / "backend" / "main.py").read_text(encoding="utf-8")

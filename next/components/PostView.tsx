@@ -120,7 +120,6 @@ export function PostView({ post }: { post: Post }) {
               if (block.kind === "gambar") {
                 return (
                   <figure key={key} className="tulisan__media">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={block.src}
                       alt={say(block.text)}

@@ -200,7 +200,6 @@ export function MasukView({
   );
 
   const kaki = (
-    // eslint-disable-next-line @next/next/no-html-link-for-pages
     <a className={gaya.masukKaki} href="/">
       &larr; Kembali ke situs
     </a>

@@ -9,8 +9,8 @@ from konftes import AKAR
 
 sys.path.insert(0, str(AKAR / "tools"))
 
-import markah  # noqa: E402
-from isi import IsiSalah, SumberBerkas, Teks  # noqa: E402
+import markah
+from isi import IsiSalah, SumberBerkas, Teks
 
 SUMBER = SumberBerkas(AKAR / "content")
 

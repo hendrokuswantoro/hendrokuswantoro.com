@@ -160,7 +160,6 @@ export function PanelBerkas({
                 onClick={() => onSisip(b)}
               >
                 {b.jenis === "gambar" ? (
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={b.alamat} alt="" loading="lazy" decoding="async" />
                 ) : (
                   <video src={b.alamat} preload="metadata" muted playsInline />

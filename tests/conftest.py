@@ -29,8 +29,8 @@ os.environ.setdefault("FAKTOR_KEDUA_WAJIB", "false")
 try:
     from playwright.sync_api import Page, sync_playwright
 except ImportError:
-    Page = object  # type: ignore[assignment,misc]
-    sync_playwright = None  # type: ignore[assignment]
+    Page = object
+    sync_playwright = None
 
 
 def _csp() -> str:
@@ -123,7 +123,7 @@ def peramban():
     with sync_playwright() as p:
         try:
             b = p.chromium.launch()
-        except Exception as galat:  # pragma: no cover
+        except Exception as galat:
             pytest.skip(f"chromium belum diunduh: {galat}")
         yield b
         b.close()
@@ -149,7 +149,7 @@ def buka(halaman: Page, situs: str, jalur: str) -> None:
     halaman.wait_for_selector("html[data-siap]", state="attached", timeout=15000)
 
 
-from konftes import EMAIL_UJI, SANDI_UJI  # noqa: E402
+from konftes import EMAIL_UJI, SANDI_UJI
 
 TITIPAN = AKAR / "cadangan" / "sandi-admin-sebelum-uji.txt"
 
@@ -378,7 +378,7 @@ def server_admin():
     catatan: collections.deque[str] = collections.deque(maxlen=1000)
 
     def kuras() -> None:
-        for baris in proses.stdout:  # type: ignore[union-attr]
+        for baris in proses.stdout:
             catatan.append(baris)
 
     utas = threading.Thread(target=kuras, daemon=True)

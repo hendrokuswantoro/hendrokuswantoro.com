@@ -8,7 +8,7 @@ try:
     from backend.core.konfigurasi import pengaturan
 
     ADA_BACKEND = True
-except ModuleNotFoundError:  # pragma: no cover
+except ModuleNotFoundError:
     ADA_BACKEND = False
 
 pytestmark = pytest.mark.skipif(

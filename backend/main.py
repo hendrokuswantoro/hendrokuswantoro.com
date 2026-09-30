@@ -77,7 +77,7 @@ def buat() -> FastAPI:
         app.include_router(bagian, prefix="/api/v1")
 
     class Unggahan(StaticFiles):
-        def file_response(self, *a, **k):  # type: ignore[override]
+        def file_response(self, *a, **k):
             jawaban = super().file_response(*a, **k)
             jawaban.headers["X-Content-Type-Options"] = "nosniff"
             jawaban.headers["Cache-Control"] = "public, max-age=31536000, immutable"

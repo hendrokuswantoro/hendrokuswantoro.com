@@ -11,23 +11,23 @@ from konftes import AKAR
 sys.path.insert(0, str(AKAR))
 sys.path.insert(0, str(AKAR / "tools"))
 
-from muat_env import muat  # noqa: E402
+from muat_env import muat
 
 muat()
 
 
-from konftes import loop_untuk_psycopg as _loop_untuk_psycopg  # noqa: E402
+from konftes import loop_untuk_psycopg as _loop_untuk_psycopg
 
 
 pytest.importorskip("fastapi", reason="backend belum terpasang")
 pytest.importorskip("httpx", reason="httpx belum terpasang")
 
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi.testclient import TestClient
 
 DSN = os.environ.get("DSN", "")
 
 
-from konftes import ada_basis_data  # noqa: E402
+from konftes import ada_basis_data
 
 
 ADA_DB = ada_basis_data(DSN)

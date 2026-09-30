@@ -10,9 +10,9 @@ from konftes import AKAR, HALAMAN, nama
 
 sys.path.insert(0, str(AKAR / "tools"))
 
-from gaya_next import bangkitkan  # noqa: E402
-from hash_skrip import hash_csp, hash_terpasang, skrip_sebaris  # noqa: E402
-from kontras import AMBANG, matriks, rasio, token  # noqa: E402
+from gaya_next import bangkitkan
+from hash_skrip import hash_csp, hash_terpasang, skrip_sebaris
+from kontras import AMBANG, matriks, rasio, token
 
 GAYA = (AKAR / "assets" / "css" / "style.css").read_text(encoding="utf-8")
 GAYA_TANPA_KOMENTAR = re.sub(r"/\*.*?\*/", "", GAYA, flags=re.DOTALL)

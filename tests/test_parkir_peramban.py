@@ -9,8 +9,8 @@ pytest.importorskip("playwright", reason="playwright belum terpasang")
 
 pytestmark = pytest.mark.peramban
 
-import parkir_rujukan as rujukan  # noqa: E402
-from conftest import buka  # noqa: E402
+import parkir_rujukan as rujukan
+from conftest import buka
 
 
 def _tunggu(halaman, ungkapan: str, batas_ms: int = 45000) -> None:

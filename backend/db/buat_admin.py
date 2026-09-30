@@ -39,13 +39,13 @@ AKAR = pathlib.Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(AKAR))
 sys.path.insert(0, str(AKAR / "tools"))
 
-from muat_env import muat  # noqa: E402
+from muat_env import muat
 
 muat()
 
-import psycopg  # noqa: E402
+import psycopg
 
-from backend.core.keamanan import hash_sandi  # noqa: E402
+from backend.core.keamanan import hash_sandi
 
 PANJANG_MINIMAL = 12
 

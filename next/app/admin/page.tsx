@@ -102,7 +102,6 @@ export default function Admin() {
       {kunci.terkunci ? <KunciLayar terbuka={kunci.buka} keluar={keluar} /> : null}
       <div className={gaya.dasbor} inert={tertutup} aria-hidden={tertutup}>
         <header className={gaya.kepala}>
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a className={gaya.lambang} href="/" aria-label="Kembali ke situs">
             <BrandMark size={30} />
           </a>

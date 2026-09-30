@@ -9,8 +9,8 @@ from konftes import AKAR
 
 sys.path.insert(0, str(AKAR / "tools"))
 
-from isi import SumberBerkas  # noqa: E402
-from muat_env import muat  # noqa: E402
+from isi import SumberBerkas
+from muat_env import muat
 
 muat()
 
@@ -19,7 +19,7 @@ psycopg = pytest.importorskip("psycopg", reason="psycopg belum terpasang")
 DSN = os.environ.get("DSN", "")
 
 
-from konftes import ada_basis_data  # noqa: E402
+from konftes import ada_basis_data
 
 
 pytestmark = pytest.mark.skipif(

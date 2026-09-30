@@ -10,8 +10,8 @@ from konftes import AKAR
 
 sys.path.insert(0, str(AKAR / "tools"))
 
-import bangun_parkir  # noqa: E402
-import parkir_rujukan as rujukan  # noqa: E402
+import bangun_parkir
+import parkir_rujukan as rujukan
 
 PARKIR_JS = (AKAR / "assets" / "js" / "parkir.js").read_text(encoding="utf-8")
 GAYA = (AKAR / "assets" / "css" / "style.css").read_text(encoding="utf-8")

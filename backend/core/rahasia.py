@@ -30,7 +30,7 @@ def _kunci() -> bytes:
         )
     try:
         mentah = base64.b64decode(nilai, validate=True)
-    except Exception as galat:  # noqa: BLE001 
+    except Exception as galat:
         raise KunciTidakAda(f"{NAMA_ENV} bukan base64 yang sah") from galat
     if len(mentah) != enkripsi.PANJANG_KUNCI:
         raise KunciTidakAda(

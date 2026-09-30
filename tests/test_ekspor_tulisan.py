@@ -15,9 +15,9 @@ from konftes import AKAR
 
 sys.path.insert(0, str(AKAR / "tools"))
 
-import bangun_tulisan  # noqa: E402
-import unggahan_publik  # noqa: E402
-from isi import IsiSalah, SumberBerkas, Teks, Tulisan, tulis_tulisan  # noqa: E402
+import bangun_tulisan
+import unggahan_publik
+from isi import IsiSalah, SumberBerkas, Teks, Tulisan, tulis_tulisan
 
 FOTO = "9f3c1a7b2d4e5f60-1600x900.webp"
 VIDEO = "0a1b2c3d4e5f6071.mp4"

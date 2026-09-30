@@ -297,7 +297,7 @@ def test_pengirim_diam_kalau_tujuannya_belum_diisi(tmp_path):
     assert "belum diisi" in hasil.stderr
 
 
-import sys  # noqa: E402
+import sys
 
 sys.path.insert(0, str(AKAR / "tools"))
 

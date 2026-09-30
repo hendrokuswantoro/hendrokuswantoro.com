@@ -10,13 +10,13 @@ from konftes import AKAR
 sys.path.insert(0, str(AKAR))
 sys.path.insert(0, str(AKAR / "tools"))
 
-from muat_env import muat  # noqa: E402
+from muat_env import muat
 
 muat()
 
 pytest.importorskip("cryptography")
 
-from backend.layanan import totp  # noqa: E402
+from backend.layanan import totp
 
 
 RAHASIA_RFC = base64.b32encode(b"12345678901234567890").decode().rstrip("=")
@@ -88,7 +88,7 @@ def test_kode_pemulihan_punya_cukup_entropi():
     assert bit > 45, f"cuma {bit:.1f} bit"
 
 
-from backend.core import rahasia  # noqa: E402
+from backend.core import rahasia
 
 
 @pytest.fixture(autouse=True)
@@ -146,7 +146,7 @@ def test_kolom_yang_diubah_satu_bit_ketahuan(kunci_kolom):
         rahasia.bukakan(base64.b64encode(bytes(tersandi)).decode())
 
 
-from backend.core import surat  # noqa: E402
+from backend.core import surat
 
 
 @pytest.fixture
@@ -210,7 +210,7 @@ def test_siap_hanya_kalau_host_dan_pengirim_ada(monkeypatch, tanpa_smtp):
     assert surat.siap() is True
 
 
-from backend.core import keamanan as inti  # noqa: E402
+from backend.core import keamanan as inti
 
 
 @pytest.fixture

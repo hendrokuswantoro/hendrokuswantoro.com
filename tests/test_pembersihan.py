@@ -12,7 +12,7 @@ from konftes import AKAR, EMAIL_UJI, ada_basis_data, loop_untuk_psycopg
 sys.path.insert(0, str(AKAR))
 sys.path.insert(0, str(AKAR / "tools"))
 
-from muat_env import muat  # noqa: E402
+from muat_env import muat
 
 muat()
 

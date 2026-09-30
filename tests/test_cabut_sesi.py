@@ -11,7 +11,7 @@ from konftes import AKAR
 sys.path.insert(0, str(AKAR))
 sys.path.insert(0, str(AKAR / "tools"))
 
-from muat_env import muat  # noqa: E402
+from muat_env import muat
 
 muat()
 
@@ -19,14 +19,14 @@ pytest.importorskip("fastapi")
 pytest.importorskip("httpx")
 psycopg = pytest.importorskip("psycopg")
 
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi.testclient import TestClient
 
 DSN = os.environ.get("DSN", "")
-from konftes import EMAIL_UJI as EMAIL  # noqa: E402
-from konftes import SANDI_UJI as SANDI  # noqa: E402
+from konftes import EMAIL_UJI as EMAIL
+from konftes import SANDI_UJI as SANDI
 
 
-from konftes import ada_basis_data  # noqa: E402
+from konftes import ada_basis_data
 
 
 def _ada_redis() -> bool:

@@ -66,8 +66,7 @@ PERAMBAN = (
     "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 )
 
-MULAI = "/* >>> font, dibangkitkan tools/ambil_font.py, jangan disunting */"
-SELESAI = "/* <<< font */"
+BLOK_FONT = re.compile(r"\A(?:@font-face \{[^}]*\}\n)+")
 
 
 class Gagal(Exception):
@@ -156,10 +155,7 @@ def baca_catatan() -> list[dict]:
 
 
 def blok_css(entri: list[dict]) -> str:
-    baris = [
-        MULAI,
-        "/* Poppins, OFL-1.1, disimpan sendiri. Lihat assets/fonts/sumber.json. */",
-    ]
+    baris: list[str] = []
     for e in entri:
         baris += [
             "@font-face {",
@@ -171,16 +167,14 @@ def blok_css(entri: list[dict]) -> str:
             f"  unicode-range: {e['rentang']};",
             "}",
         ]
-    baris.append(SELESAI)
     return "\n".join(baris)
 
 
 def gaya_dengan(blok: str) -> str:
     teks = GAYA.read_text(encoding="utf-8")
-    if MULAI in teks:
-        mulai = teks.index(MULAI)
-        akhir = teks.index(SELESAI) + len(SELESAI)
-        return teks[:mulai] + blok + teks[akhir:]
+    cocok = BLOK_FONT.match(teks)
+    if cocok:
+        return blok + "\n" + teks[cocok.end():]
     return blok + "\n\n" + teks
 
 
@@ -214,7 +208,7 @@ def periksa(daring: bool) -> int:
     if daring:
         try:
             baru = dari_google()
-        except Exception as g:  # noqa: BLE001 
+        except Exception as g:
             print(f"  lewat: pemeriksaan daring tidak bisa dijalankan, {g}")
         else:
             versi_lokal = {e["versi"] for e in entri}

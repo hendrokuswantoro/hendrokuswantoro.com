@@ -94,7 +94,7 @@ def kirim(kepada: str, subjek: str, isi: str) -> Hasil:
                 if a["pengguna"]:
                     s.login(a["pengguna"], a["sandi"])
                 s.send_message(pesan)
-    except Exception as galat:  # noqa: BLE001 
+    except Exception as galat:
         if a["wajib"]:
             raise TidakTerkirim(f"SMTP menolak: {type(galat).__name__}") from galat
         return _tulis_ke_berkas(pesan, f"SMTP gagal ({type(galat).__name__}).")

@@ -38,7 +38,7 @@ async def kabari_masuk(
             "Kalau bukan Anda: buka halaman keamanan, tekan Keluarkan "
             "perangkat lain, lalu ganti sandi Anda.",
         )
-    except Exception as galat:  # pragma: no cover
+    except Exception as galat:
         pasang().warning(
             "kabar masuk gagal dikirim",
             extra={"tambahan": {"jenis": type(galat).__name__}},
@@ -61,7 +61,7 @@ async def kabari_tebakan(pengguna: dict, jumlah: int, menit: int) -> None:
             "Kalau bukan Anda, seseorang sedang menebak sandi Anda. Sandinya belum "
             "tertebak. Pastikan authenticator atau sidik jari sudah terpasang.",
         )
-    except Exception as galat:  # pragma: no cover
+    except Exception as galat:
         pasang().warning(
             "kabar tebakan sandi gagal dikirim",
             extra={"tambahan": {"jenis": type(galat).__name__}},
@@ -86,7 +86,7 @@ async def kabari_perubahan_keamanan(pengguna: dict, apa: str, paksa: bool = Fals
             "Buka halaman keamanan, keluarkan semua perangkat, lalu ganti "
             "sandi Anda.",
         )
-    except Exception as galat:  # pragma: no cover
+    except Exception as galat:
         pasang().warning(
             "kabar perubahan keamanan gagal dikirim",
             extra={"tambahan": {"jenis": type(galat).__name__}},

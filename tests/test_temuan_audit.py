@@ -13,7 +13,7 @@ try:
     from backend.core.konfigurasi import pengaturan
 
     ADA_BACKEND = True
-except ModuleNotFoundError:  # pragma: no cover
+except ModuleNotFoundError:
     ADA_BACKEND = False
 
 pytestmark = pytest.mark.skipif(
@@ -324,7 +324,7 @@ def test_halaman_blog_tidak_membawa_tag_mentah():
 
     try:
         t = _tulisan_jahat()
-    except TypeError as galat:  # pragma: no cover
+    except TypeError as galat:
         pytest.skip(f"bentuk Tulisan berbeda: {galat}")
     halaman = bangun_tulisan.halaman(t, [t], "c", "j")
     kartu = bangun_tulisan.kartu(t)

@@ -27,14 +27,14 @@ AKAR = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(AKAR))
 sys.path.insert(0, str(AKAR / "tools"))
 
-from muat_env import muat  # noqa: E402
+from muat_env import muat
 
 muat()
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-import uvicorn  # noqa: E402
+import uvicorn
 
 
 def main() -> int:

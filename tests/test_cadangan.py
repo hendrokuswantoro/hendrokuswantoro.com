@@ -13,7 +13,7 @@ sys.path.insert(0, str(AKAR))
 
 pytest.importorskip("cryptography")
 
-from backend.db import enkripsi  # noqa: E402
+from backend.db import enkripsi
 
 ISI = b"-- pg_dump\nCREATE TABLE contoh (id int);\n" * 200
 

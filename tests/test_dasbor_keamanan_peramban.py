@@ -14,7 +14,7 @@ pytest.importorskip("playwright", reason="playwright belum terpasang")
 
 pytestmark = pytest.mark.peramban
 
-from test_csp import _pasang_pengintai, _pelanggaran, _server, tajuk_nginx  # noqa: E402
+from test_csp import _pasang_pengintai, _pelanggaran, _server, tajuk_nginx
 
 KEADAAN = {
     "faktor_kedua_wajib": True, "sesi_kuat": True, "pencabutan_segera_siap": True,

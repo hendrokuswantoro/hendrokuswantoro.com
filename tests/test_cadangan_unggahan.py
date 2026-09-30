@@ -12,7 +12,7 @@ from konftes import AKAR
 
 pytest.importorskip("cryptography")
 
-from backend.db import enkripsi, unggahan_cadangan as uc  # noqa: E402
+from backend.db import enkripsi, unggahan_cadangan as uc
 
 HARI = dt.date(2026, 9, 29)
 FOTO = b"\xff\xd8\xff" + os.urandom(4000)

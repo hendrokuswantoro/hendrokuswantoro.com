@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import pathlib
+import re
 import sys
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent
@@ -35,21 +36,19 @@ TUJUAN = AKAR / "next" / "app" / "globals.css"
 DARI = 'font-family: "Poppins",'
 JADI = "font-family: var(--font-poppins),"
 
-MULAI = "/* >>> font, dibangkitkan tools/ambil_font.py, jangan disunting */"
-SELESAI = "/* <<< font */"
+BLOK_FONT = re.compile(r"\A(?:@font-face \{[^}]*\}\n)+")
 
 KEPALA = ""
 
 
 def tanpa_font_face(teks: str) -> str:
-    if MULAI not in teks:
+    cocok = BLOK_FONT.match(teks)
+    if not cocok:
         sys.exit(
-            f"tidak menemukan penanda font di {SUMBER.name}. "
+            f"{SUMBER.name} tidak diawali blok @font-face. "
             "Jalankan: python tools/ambil_font.py"
         )
-    mulai = teks.index(MULAI)
-    akhir = teks.index(SELESAI) + len(SELESAI)
-    return (teks[:mulai] + teks[akhir:]).lstrip("\n")
+    return teks[cocok.end():].lstrip("\n")
 
 
 def bangkitkan() -> str:

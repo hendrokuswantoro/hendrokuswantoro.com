@@ -53,16 +53,16 @@ import urllib.parse
 AKAR = pathlib.Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(AKAR / "tools"))
 
-from muat_env import muat  # noqa: E402
+from muat_env import muat
 
 muat()
 
-import os  # noqa: E402
+import os
 
 sys.path.insert(0, str(AKAR))
 
-from backend.db import enkripsi  # noqa: E402
-from backend.db import unggahan_cadangan  # noqa: E402
+from backend.db import enkripsi
+from backend.db import unggahan_cadangan
 
 
 def _folder(nama_env: str, bawaan: str) -> pathlib.Path:

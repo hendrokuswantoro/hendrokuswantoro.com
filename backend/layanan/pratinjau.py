@@ -7,8 +7,8 @@ AKAR = pathlib.Path(__file__).resolve().parents[2]
 if str(AKAR / "tools") not in sys.path:
     sys.path.insert(0, str(AKAR / "tools"))
 
-import bangun_tulisan  # noqa: E402
-import markah  # noqa: E402
+import bangun_tulisan
+import markah
 
 
 class Ditolak(Exception):

@@ -109,9 +109,13 @@ mengatakannya alih alih mendiamkannya.
 
 ### 4. Kunci jaringan untuk /admin
 
-`map $admin_boleh` di konfigurasi nginx, mati secara bawaan. Isi daftarnya,
-lalu hilangkan tanda pagar pada `if ($admin_boleh = 0) { return 404; }`.
-Menjawab 404, bukan 403: 403 memberi tahu bahwa ada sesuatu di sana.
+`map $admin_boleh` di konfigurasi nginx. Bawaannya `default 1;`, jadi semua
+alamat boleh. Untuk menyalakannya, ganti menjadi `default 0;` lalu tambahkan
+satu baris per alamat yang boleh, misalnya `203.0.113.5 1;`. Blok `/admin`
+selalu memeriksanya lewat `if ($admin_boleh = 0) { return 404; }`, jadi tidak
+ada baris yang perlu dihapus tanda pagarnya. Menjawab 404, bukan 403: 403
+memberi tahu bahwa ada sesuatu di sana. Sampai 30 September 2026 sakelar ini
+berupa baris ber-tanda pagar.
 
 Untuk kebanyakan orang yang alamat rumahnya berganti, yang lebih cocok adalah
 Cloudflare Access di depannya, yang memakai identitas dan bukan alamat.

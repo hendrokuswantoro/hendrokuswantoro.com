@@ -9,7 +9,7 @@ import tempfile
 
 try:
     import yaml
-except ImportError:  # pragma: no cover
+except ImportError:
     sys.exit("pyyaml belum terpasang. Jalankan: pip install pyyaml")
 
 AKAR = pathlib.Path(__file__).resolve().parent.parent
