@@ -86,3 +86,82 @@ ditemukan lewat kegagalan, bukan lewat dokumentasi.
 38 lapisan, disusun dari tanah sampai nama. Urutan lapisan nama sengaja dari
 yang terkecil ke yang terbesar, sebab MapLibre menempatkan simbol dari
 tumpukan paling atas ke bawah.
+
+## Alasan di balik berkas konfigurasi
+
+Sampai 30 September 2026 alasan di bawah ini tertulis sebagai komentar di
+berkasnya masing masing. Sejak itu `tools/cari_komentar.py` juga memeriksa
+berkas requirements, `.gitignore`, `.gitattributes`, `_headers`,
+`_redirects`, skrip PowerShell, dan berkas batch, jadi alasannya tinggal di
+sini. Yang sengaja tetap berkomentar hanya `.env.example`: berkas itu lembar
+keterangan variabel yang disalin menjadi `.env`, dan keterangannya adalah
+isinya.
+
+### `backend/requirements.txt`
+
+Kebutuhan uji dipisah ke `tests/requirements.txt` supaya pytest tidak pernah
+ikut ke server. Versinya dinaikkan 13 September 2026 sesudah pip-audit
+menemukan 24 temuan pada dua paket; rinciannya di `docs/audit-keamanan.md`.
+
+- **starlette** disebut tersurat meski ia dependensi fastapi. Tanpa baris itu
+  pip memasang starlette mana pun yang memenuhi `>=0.46.0`, termasuk 0.48.0
+  yang membawa sembilan temuan. Batas bawah dependensi bukan pilihan versi.
+- **email-validator** dituntut `EmailStr` di `backend/api/v1/auth.py`.
+  Pydantic baru mengimpornya saat modelnya dibangun, jadi ketiadaannya tidak
+  terlihat sampai aplikasi dimuat. Di pemasangan bersih, termasuk CI,
+  `import backend.main` langsung gagal. Ketahuan lewat CI yang gagal tiga kali
+  berturut turut, bukan lewat membaca kode.
+- **webauthn** membawa cryptography, cbor2, asn1crypto, dan pyOpenSSL, supaya
+  tidak ada satu baris pun kriptografi buatan sendiri di jalur masuk.
+- **qrcode** menggambar kode QR authenticator tanpa Pillow; yang dipakai hanya
+  matriksnya, dan SVG-nya digambar sendiri di `backend/layanan/totp.py`. Ia
+  menggantikan layanan "buat QR gratis" mana pun: alamat otpauth MEMUAT
+  rahasia TOTP-nya, jadi mengirimnya ke pembuat QR pihak ketiga berarti
+  menyerahkan faktor kedua.
+- **opencv-python-headless** untuk verifikasi wajah yang opsional, tanpa GTK
+  dan tanpa jendela sebab server tidak punya layar. Modelnya (37 MB) tidak ikut;
+  ia diunduh `tools/ambil_model.py` dan dicatat sidiknya. Tanpa model,
+  verifikasi wajah mati dan halaman keamanannya mengatakan begitu.
+- **python-multipart** dituntut jalur unggah foto dan video. Ia dependensi
+  opsional FastAPI, jadi ketiadaannya baru terlihat saat `import backend.main`,
+  sama seperti email-validator. Batas bawahnya bukan selera: 0.0.18 menutup
+  penolakan layanan lewat multipart yang disusun khusus, dan jalur unggah
+  justru menerima multipart dari luar.
+
+### `tests/requirements.txt`
+
+Hanya untuk uji, supaya pelari uji tidak pernah sampai ke server. PyYAML
+dipakai `tools/periksa_alur.py` untuk membaca `.github/workflows`; CI
+memasangnya sendiri di langkah Lint, yang tidak memasang berkas ini.
+
+### `.gitignore`
+
+- `.env` dan `.env.*` tidak pernah masuk git, kecuali `!.env.example`. Tanpa
+  pengecualian itu `.env.example` ikut terjaring, dan satu satunya keterangan
+  variabel apa saja yang dibutuhkan hanya ada di mesin penulisnya. Sudah
+  pernah terjadi.
+- `assets/js/konfigurasi.js` dan `cadangan/` memuat kunci atau salinannya.
+- `assets/model/`, model pengenalan wajah 39 MB, diunduh `tools/ambil_model.py`.
+- `/unggahan/` berisi foto dan video dari dashboard: milik satu pemasangan,
+  bukan milik kode. Garis miring di depannya disengaja; alasannya di CLAUDE.md.
+- `.claude/worktrees/` adalah worktree sementara sesi Claude Code, berisi
+  salinan seluruh repositori.
+- `dist-*.zip` dibangun ulang kapan saja oleh `tools/build_dist.py`.
+
+### `.gitattributes`
+
+Satu jenis akhir baris di repositori (`eol=lf`), mesin apa pun penulisnya.
+Gambar, font, arsip, dan ubin `.pbf` ditandai `binary` supaya tidak pernah
+diubah. Berkas batch Windows (`*.cmd`) tetap CRLF: cmd.exe membaca berkas
+batch dengan anggapan CRLF, dan pada berkas ber-LF label serta `goto` dikenal
+meleset.
+
+### `next/public/_headers` dan `next/public/_redirects`
+
+Keduanya milik port Next, dibaca Cloudflare Pages atau Netlify kalau port itu
+kelak diterbitkan di sana. CSP-nya memberi peta karya empat pengecualian:
+host ubin dan gaya peta, pekerja `blob:` karena MapLibre membangun pekerjanya
+saat berjalan, `blob:` dan `data:` untuk tekstur kanvasnya, dan gaya sebaris
+yang ditulis MapLibre ke kontrol dan penandanya sendiri. Skrip tetap dibatasi
+ke asal ini. Aturan di `_redirects` baru menyala setelah nama tanpa `www` dan
+dengan `www` sama sama dipasang sebagai custom domain proyeknya.

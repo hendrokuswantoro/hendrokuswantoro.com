@@ -1,53 +1,14 @@
-# Kebutuhan backend. Kebutuhan uji terpisah di tests/requirements.txt supaya
-# pytest tidak pernah ikut ke citra jalan.
-# Versi dinaikkan 13 September 2026 sesudah pip-audit menemukan 24 temuan
-# pada dua paket. Rinciannya di docs/audit-keamanan.md.
 fastapi==0.141.1
 uvicorn[standard]==0.52.4
-# Disebut tersurat meski ia dependensi fastapi. Tanpa baris ini pip akan
-# memasang starlette mana pun yang memenuhi ">=0.46.0", termasuk 0.48.0 yang
-# membawa sembilan temuan. Batas bawah dependensi bukan pilihan versi.
 starlette==1.6.0
 psycopg[binary,pool]==3.2.3
 pydantic==2.11.7
-# Dituntut EmailStr di backend/api/v1/auth.py. Pydantic mengimpornya baru
-# saat modelnya dibangun, jadi ketiadaannya tidak terlihat sampai aplikasi
-# benar benar dimuat, dan pesannya pun hanya muncul di sana. Di mesin ini ia
-# kebetulan sudah terpasang lewat paket lain; di pemasangan bersih, termasuk
-# CI dan server sungguhan, `import backend.main` langsung gagal. Ketahuan
-# lewat CI yang gagal tiga kali berturut turut, bukan lewat membaca kode.
 email-validator==2.3.0
 pydantic-settings==2.7.1
 redis==5.2.1
 argon2-cffi==23.1.0
 pyjwt==2.14.0
-# WebAuthn. Membawa cryptography, cbor2, asn1crypto, dan pyOpenSSL.
-# Dipakai supaya tidak ada satu baris pun kriptografi buatan sendiri
-# di jalur masuk, sesuai larangan di bab 15.8.
 webauthn==2.5.2
-# Kode QR untuk memasang aplikasi authenticator. Murni Python, tanpa Pillow:
-# yang dipakai cuma matriks hitam putihnya, dan SVG-nya digambar sendiri di
-# backend/layanan/totp.py.
-#
-# Ini yang menggantikan layanan "buat QR gratis" mana pun. Alamat otpauth
-# MEMUAT rahasia TOTP-nya, jadi mengirimnya ke pembuat QR pihak ketiga berarti
-# menyerahkan faktor kedua kepada orang yang tidak pernah diminta menjaganya.
 qrcode==8.2
-# Deteksi dan pengenalan wajah, dipakai verifikasi selfie yang opsional.
-# Headless: tanpa GTK dan tanpa jendela, sebab server tidak punya layar.
-#
-# Modelnya TIDAK ikut di sini, 37 MB, diunduh dengan tools/ambil_model.py dan
-# dicatat sidiknya. Tanpa modelnya, verifikasi wajah mati dan halaman
-# keamanannya mengatakan begitu; ia tidak pernah diam diam melewatkan orang.
 opencv-python-headless==4.11.0.86
-# Pengurai multipart, dituntut jalur unggah foto dan video.
-#
-# Ia dependensi opsional FastAPI, jadi ketiadaannya tidak terlihat sampai
-# router yang memakai UploadFile benar benar dibangun, dan galatnya muncul
-# saat `import backend.main`, bukan saat ada yang mengunggah. Sama persis
-# dengan yang pernah terjadi pada email-validator di atas.
-#
-# Batas bawahnya bukan selera: 0.0.18 memperbaiki penolakan layanan yang
-# dipicu multipart yang disusun khusus, dan jalur ini justru jalur yang
-# menerima multipart dari luar.
 python-multipart==0.0.32

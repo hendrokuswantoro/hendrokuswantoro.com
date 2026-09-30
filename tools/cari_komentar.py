@@ -4,7 +4,8 @@
 
 Yang boleh, sesuai CLAUDE.md: arahan alat (noqa, type: ignore, pragma: no
 cover, eslint-disable), shebang, penanda blok font dan atribusi lisensinya di
-style.css, sakelar admin_boleh di nginx, berkas migrasi SQL, dan isi heredoc.
+style.css, sakelar admin_boleh di nginx, berkas migrasi SQL, isi heredoc, dan
+.env.example, yang memang lembar keterangan variabel.
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ import tokenize
 AKAR = pathlib.Path(__file__).resolve().parent.parent
 LEWATI = ("node_modules", ".next", "next/out", "dist", "assets/vendor", "next/public/assets/vendor",
           "backend/db/migrations", ".git", "cadangan", "unggahan", "hasil-uji-keamanan",
-          "next/next-env.d.ts")
+          "next/next-env.d.ts", ".pytest_cache", ".ruff_cache", ".claude", ".venv")
 ARAHAN = re.compile(r"noqa|type:\s*ignore|pragma:\s*no cover|eslint-(disable|enable)|@ts-(expect-error|ignore)")
 BOLEH_BARIS = ("# if ($admin_boleh = 0) { return 404; }",)
 
@@ -30,10 +31,19 @@ def _dilewati(p: pathlib.Path) -> bool:
     return any(jalur == x or jalur.startswith(x + "/") or f"/{x}/" in f"/{jalur}" for x in LEWATI)
 
 
-def berkas(akhiran: tuple[str, ...]) -> list[pathlib.Path]:
+NAMA_PAGAR = ("Dockerfile", ".gitignore", ".gitattributes", "_headers", "_redirects")
+
+
+def _cocok(p: pathlib.Path, akhiran: tuple[str, ...], nama: tuple[str, ...]) -> bool:
+    return p.suffix in akhiran or p.name in nama or (
+        "requirements" in nama and p.name.startswith("requirements") and p.suffix == ".txt"
+    )
+
+
+def berkas(akhiran: tuple[str, ...], nama: tuple[str, ...] = ()) -> list[pathlib.Path]:
     hasil = []
     for p in AKAR.rglob("*"):
-        if p.is_file() and p.suffix in akhiran and not _dilewati(p):
+        if p.is_file() and _cocok(p, akhiran, nama) and not _dilewati(p):
             hasil.append(p)
     return sorted(hasil)
 
@@ -142,6 +152,15 @@ def pagar(p: pathlib.Path) -> list[tuple[int, str]]:
     return temuan
 
 
+def batch(p: pathlib.Path) -> list[tuple[int, str]]:
+    temuan = []
+    for nomor, baris in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
+        bersih = baris.strip()
+        if bersih.lower().startswith(("rem ", "::")) or bersih.lower() == "rem":
+            temuan.append((nomor, bersih[:120]))
+    return temuan
+
+
 def ts_ada() -> bool:
     return (AKAR / "next" / "node_modules" / "typescript" / "package.json").exists()
 
@@ -159,10 +178,13 @@ def semua(dengan_skrip: bool = True) -> dict[pathlib.Path, list[tuple[int, str]]
     for p in berkas((".html",)):
         if t := html(p):
             hasil[p] = t
-    lain = berkas((".sh", ".yml", ".yaml", ".conf", ".toml", ".service", ".timer"))
-    lain += [p for p in AKAR.rglob("Dockerfile") if not _dilewati(p)]
+    lain = berkas((".sh", ".yml", ".yaml", ".conf", ".toml", ".service", ".timer", ".ps1"),
+                  NAMA_PAGAR + ("requirements",))
     for p in lain:
         if t := pagar(p):
+            hasil[p] = t
+    for p in berkas((".cmd", ".bat")):
+        if t := batch(p):
             hasil[p] = t
     return {p: t for p, t in hasil.items() if t}
 

@@ -18,7 +18,7 @@ python -m http.server 8080
 
 # uji
 pip install -r tests/requirements.txt
-python -m pytest                 # 1068, tanpa peramban, hitungan detik
+python -m pytest                 # 1069, tanpa peramban, hitungan detik
 python -m pytest -m peramban     # 115, Chromium sungguhan
 sh tools/verifikasi.sh           # 22 langkah, seluruhnya, berurutan
 
@@ -65,7 +65,7 @@ unggahan/                 foto dan video dari dashboard, TIDAK ikut git
 next/                     port Next.js, situs dan dashboard admin
 next/components/peta/     gaya.ts dan bangun.ts, cermin peta.js untuk port Next
 tools/                    pembangkit dan pemeriksa, lihat di bawah
-tests/                    1183 uji
+tests/                    1184 uji
 docs/                     lima belas dokumen, alasan di balik keputusannya
 _headers                  tajuk keamanan dan cache, dibaca Workers dan Pages
 dist/                     keluaran build, jangan disunting
@@ -156,7 +156,12 @@ dan sakelar `# if ($admin_boleh = 0)` di nginx, yang tanda pagarnya disuruh
 dihapus pemiliknya di `docs/keamanan.md`. Sejak 29 September 2026 kaidah ini
 ditegakkan `tools/cari_komentar.py` dan `tests/test_tanpa_komentar.py`, yang
 membaca komentar JS/TS lewat pengurai TypeScript, bukan regex, supaya regex
-`/\//g` dan alamat `https://` tidak dikira komentar.
+`/\//g` dan alamat `https://` tidak dikira komentar. Sejak 30 September 2026
+pemeriksa itu juga membaca berkas requirements, `.gitignore`,
+`.gitattributes`, `_headers`, `_redirects`, `.ps1`, dan `.cmd`; alasan yang
+dulu ditulis di sana pindah ke `docs/arsitektur.md`. Satu satunya berkas
+konfigurasi yang sengaja berkomentar adalah `.env.example`, sebab ia lembar
+keterangan variabel yang disalin menjadi `.env`.
 
 **Uji CSP dengan menyajikan halamannya beserta tajuknya, dan jalankan
 skripnya.** Ini sudah tertulis di berkas ini sejak lama sebagai kalimat, dan

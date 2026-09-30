@@ -1,7 +1,5 @@
-# One line ending in the repository, whatever the machine that wrote it used.
 * text=auto eol=lf
 
-# These are not text and must never be converted.
 *.png binary
 *.webp binary
 *.jpg binary
@@ -12,5 +10,4 @@
 *.woff binary
 *.woff2 binary
 
-# Berkas batch Windows butuh CRLF.
 *.cmd text eol=crlf

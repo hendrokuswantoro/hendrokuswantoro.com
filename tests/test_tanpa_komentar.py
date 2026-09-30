@@ -39,3 +39,17 @@ def test_pemindai_menangkap_komentar_tetapi_tidak_regex_atau_alamat(tmp_path, mo
     )
     hasil = cari_komentar.skrip([contoh])[contoh]
     assert [n for n, _ in hasil] == [3, 4], hasil
+
+
+def test_berkas_konfigurasi_ikut_diperiksa(tmp_path):
+    for nama in (".gitignore", ".gitattributes", "_headers", "_redirects", "Dockerfile", "requirements.txt",
+                 "requirements-dev.txt", "pasang.ps1"):
+        p = tmp_path / nama
+        assert cari_komentar._cocok(p, (".ps1",), cari_komentar.NAMA_PAGAR + ("requirements",)), nama
+        p.write_text("# alasan\nisi\n", encoding="utf-8")
+        assert cari_komentar.pagar(p) == [(1, "# alasan")], nama
+    assert not cari_komentar._cocok(tmp_path / ".env.example", (".ps1",), cari_komentar.NAMA_PAGAR + ("requirements",))
+
+    batch = tmp_path / "nyala.cmd"
+    batch.write_bytes(b"@echo off\r\nREM alasan\r\n:: alasan\r\necho ok\r\n")
+    assert [n for n, _ in cari_komentar.batch(batch)] == [2, 3]

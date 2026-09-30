@@ -1,48 +1,34 @@
-# OS and editor noise
 Thumbs.db
 Desktop.ini
 .DS_Store
 .vscode/
 .idea/
 
-# Secrets and local config - never commit these
 .env
 .env.*
 *.pem
 *.key
 
-# ...except the one that lists variable NAMES and never their values.
-# Tanpa baris ini .env.example ikut terjaring .env.* dan tidak pernah sampai
-# ke repositori, sehingga satu satunya keterangan variabel apa saja yang
-# dibutuhkan hanya ada di mesin penulisnya. Sudah terjadi.
 !.env.example
 
-# Python bytecode, never source
 __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# Build output, if a build step is added later
 node_modules/
 .next/
 out/
 dist/
 
-# Upload bundle, rebuilt on demand by tools/build_dist.py
 dist-*.zip
 
-# Local settings that carry a key
 assets/js/konfigurasi.js
 cadangan/
 
-# Model pengenalan wajah, 39 MB, diunduh dengan tools/ambil_model.py
 assets/model/
 
-# Foto dan video yang diunggah lewat dashboard. Milik satu pemasangan,
-# bukan milik kode. Catatannya di basis data, berkasnya di sini.
 /unggahan/
 
-# worktree sementara milik sesi Claude Code, berisi salinan seluruh repositori
 .claude/worktrees/
 .claude/launch.json
 /hasil-uji-keamanan/
