@@ -918,3 +918,28 @@ def test_tidak_ada_penanda_karya_tertimbun_kotak_pencarian(peramban, situs, leba
         assert not tertimbun, f"di lebar {lebar} penanda {tertimbun} tertutup kotak pencarian peta"
     finally:
         konteks.close()
+
+
+@pytest.mark.parametrize("lebar,tinggi", [(390, 844), (820, 1180)])
+def test_tekan_lama_di_layar_sentuh_tidak_memunculkan_catatan(peramban, situs, lebar, tinggi):
+    konteks = peramban.new_context(viewport={"width": lebar, "height": tinggi}, is_mobile=True, has_touch=True)
+    tab = konteks.new_page()
+    try:
+        buka(tab, situs, "/blog/kapan-peta-diam")
+        hasil = tab.evaluate("""() => {
+            const ev = new MouseEvent('contextmenu', {bubbles: true, cancelable: true});
+            document.querySelector('.article').dispatchEvent(ev);
+            return {ditolak: ev.defaultPrevented, catatan: document.querySelectorAll('.salin-catatan.is-in').length};
+        }""")
+        assert hasil["ditolak"], "tekan lama tidak lagi ditolak di layar sentuh"
+        assert hasil["catatan"] == 0, "catatan hak cipta masih muncul di HP atau tablet"
+    finally:
+        konteks.close()
+
+
+def test_klik_kanan_di_desktop_tetap_memunculkan_catatan(halaman, situs):
+    buka(halaman, situs, "/blog/kapan-peta-diam")
+    assert halaman.evaluate("""() => {
+        document.querySelector('.article').dispatchEvent(new MouseEvent('contextmenu', {bubbles: true, cancelable: true}));
+        return document.querySelectorAll('.salin-catatan.is-in').length;
+    }""") == 1

@@ -130,7 +130,12 @@
   var catatanEl = null;
   var catatanWaktu = 0;
 
+  function layarSentuh() {
+    return Boolean(window.matchMedia && window.matchMedia("(hover: none), (pointer: coarse)").matches);
+  }
+
   function beriTahu() {
+    if (layarSentuh()) return;
     if (!catatanEl) {
       catatanEl = doc.createElement("div");
       catatanEl.className = "salin-catatan";
