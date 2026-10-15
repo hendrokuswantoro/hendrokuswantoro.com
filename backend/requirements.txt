@@ -2,7 +2,7 @@ fastapi==0.141.1
 uvicorn[standard]==0.52.4
 starlette==1.6.0
 psycopg[binary,pool]==3.2.3
-pydantic==2.11.7
+pydantic==2.13.5
 email-validator==2.3.0
 pydantic-settings==2.7.1
 redis==5.2.1
