@@ -1,5 +1,5 @@
 fastapi==0.141.1
-uvicorn[standard]==0.52.4
+uvicorn[standard]==0.53.0
 starlette==1.6.0
 psycopg[binary,pool]==3.2.3
 pydantic==2.11.7
