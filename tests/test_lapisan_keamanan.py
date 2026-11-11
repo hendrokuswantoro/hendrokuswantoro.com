@@ -279,3 +279,12 @@ def test_sidik_migrasi_yang_ditandai_ulang_sama_dengan_berkasnya():
             f"{nama} berubah lagi sesudah komentarnya dipindah; migrasi yang sudah jalan tidak boleh disunting"
         )
         assert lama != baru
+
+
+def test_tiruan_produksi_bisa_menyala_tanpa_env():
+    skrip = (AKAR / "tools" / "uji_keamanan.sh").read_text(encoding="utf-8")
+    assert "if [ ! -e .env ]; then\n  : > .env\n  ENV_SEMENTARA=1" in skrip, (
+        "tanpa .env, Docker tidak bisa membuat titik pasang di folder hanya-baca dan tiruan produksi gagal menyala di CI"
+    )
+    assert 'if [ "$ENV_SEMENTARA" = "1" ] && [ ! -s .env ]; then rm -f .env; fi' in skrip
+    assert skrip.index("trap bersihkan") < skrip.index(": > .env")

@@ -14,11 +14,18 @@ jalur() {
 }
 
 SEMENTARA=$(mktemp -d)
+ENV_SEMENTARA=0
 bersihkan() {
   MSYS_NO_PATHCONV=1 docker compose -f "$TUMPUKAN" down -v --remove-orphans >/dev/null 2>&1 || true
   rm -rf "$SEMENTARA"
+  if [ "$ENV_SEMENTARA" = "1" ] && [ ! -s .env ]; then rm -f .env; fi
 }
 trap bersihkan EXIT INT TERM
+
+if [ ! -e .env ]; then
+  : > .env
+  ENV_SEMENTARA=1
+fi
 
 mkdir -p "$HASIL" cadangan "$SEMENTARA/sertifikat"
 chmod 777 "$HASIL"
